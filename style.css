@@ -1,0 +1,163 @@
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    background:#0b0b0b;
+    color:#f2f2f2;
+    font-family:Inter,system-ui,sans-serif;
+}
+
+main{
+    min-height:100vh;
+}
+
+.hero{
+    min-height:80vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:40px;
+}
+
+.kanasaka-logo{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    margin-bottom:32px;
+}
+
+.logo-side{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.logo-side div{
+    width:50px;
+    height:2px;
+    background:#cfcfcf;
+}
+
+.logo-center{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:0.8;
+}
+
+.logo-center span{
+    font-size:64px;
+    font-weight:800;
+}
+
+h1{
+    margin:0;
+    font-size:clamp(52px,8vw,96px);
+    letter-spacing:0.12em;
+}
+
+.hero p{
+    max-width:700px;
+    margin-top:20px;
+    color:#9a9a9a;
+    font-size:18px;
+    line-height:1.6;
+}
+
+.products{
+    max-width:1100px;
+    margin:auto;
+    padding:80px 24px;
+    border-top:1px solid #222;
+}
+
+.products h2{
+    text-align:center;
+    color:#888;
+    letter-spacing:0.25em;
+    margin-bottom:40px;
+}
+
+.product-card{
+    display:flex;
+    justify-content:space-between;
+    gap:40px;
+    padding:30px;
+    border:1px solid #2a2a2a;
+    background:#121212;
+}
+
+.product-info h3{
+    margin-top:0;
+    font-size:32px;
+}
+
+.product-info p{
+    color:#a0a0a0;
+    line-height:1.7;
+    max-width:700px;
+}
+
+.meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+}
+
+.meta span{
+    border:1px solid #333;
+    background:#0b0b0b;
+    padding:8px 12px;
+    font-size:12px;
+    text-transform:uppercase;
+    color:#bdbdbd;
+}
+
+.actions{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-width:220px;
+}
+
+.button{
+    text-decoration:none;
+    text-align:center;
+    padding:14px;
+    border:1px solid #555;
+    background:#e8e8e8;
+    color:#111;
+}
+
+.button.secondary{
+    background:#141414;
+    color:#eee;
+}
+
+.button:hover{
+    border-color:#888;
+}
+
+footer{
+    text-align:center;
+    padding:40px;
+    border-top:1px solid #222;
+    color:#777;
+}
+
+@media(max-width:768px){
+
+    .product-card{
+        flex-direction:column;
+    }
+
+    .actions{
+        width:100%;
+    }
+
+}
