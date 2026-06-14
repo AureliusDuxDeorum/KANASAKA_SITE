@@ -30,6 +30,11 @@ main{
     margin-bottom:32px;
 }
 
+.kanasaka-logo.small{
+    transform:scale(0.72);
+    margin-bottom:12px;
+}
+
 .logo-side{
     display:flex;
     flex-direction:column;
@@ -60,7 +65,8 @@ h1{
     letter-spacing:0.12em;
 }
 
-.hero p{
+.hero p,
+.download-hero p{
     max-width:700px;
     margin-top:20px;
     color:#9a9a9a;
@@ -68,7 +74,8 @@ h1{
     line-height:1.6;
 }
 
-.products{
+.products,
+.downloads-section{
     max-width:1100px;
     margin:auto;
     padding:80px 24px;
@@ -82,7 +89,9 @@ h1{
     margin-bottom:40px;
 }
 
-.product-card{
+.product-card,
+.download-card,
+.download-notes{
     display:flex;
     justify-content:space-between;
     gap:40px;
@@ -91,12 +100,32 @@ h1{
     background:#121212;
 }
 
-.product-info h3{
+.download-card{
+    align-items:center;
+}
+
+.featured-download{
+    border-color:#3a3a3a;
+}
+
+.product-info h3,
+.download-info h2{
     margin-top:0;
     font-size:32px;
 }
 
-.product-info p{
+.download-kicker{
+    display:block;
+    margin-bottom:10px;
+    color:#888;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.18em;
+}
+
+.product-info p,
+.download-info p,
+.download-notes p{
     color:#a0a0a0;
     line-height:1.7;
     max-width:700px;
@@ -118,7 +147,8 @@ h1{
     color:#bdbdbd;
 }
 
-.actions{
+.actions,
+.download-actions{
     display:flex;
     flex-direction:column;
     gap:12px;
@@ -143,6 +173,46 @@ h1{
     border-color:#888;
 }
 
+.download-hero{
+    min-height:52vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:56px 24px;
+}
+
+.download-hero h1{
+    font-size:clamp(44px,7vw,82px);
+}
+
+.back-link{
+    position:absolute;
+    top:28px;
+    left:28px;
+    color:#aaa;
+    text-decoration:none;
+    border:1px solid #2a2a2a;
+    padding:10px 14px;
+    background:#111;
+}
+
+.back-link:hover{
+    color:#fff;
+    border-color:#555;
+}
+
+.download-notes{
+    display:block;
+    margin-top:24px;
+}
+
+.download-notes h3{
+    margin-top:0;
+    color:#ddd;
+}
+
 footer{
     text-align:center;
     padding:40px;
@@ -152,12 +222,20 @@ footer{
 
 @media(max-width:768px){
 
-    .product-card{
+    .product-card,
+    .download-card{
         flex-direction:column;
+        align-items:stretch;
     }
 
-    .actions{
+    .actions,
+    .download-actions{
         width:100%;
+    }
+
+    .back-link{
+        position:static;
+        margin-bottom:32px;
     }
 
 }
