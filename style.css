@@ -239,3 +239,26 @@ footer{
     }
 
 }
+
+/* BUTTON ANIMATIONS */
+
+.button,
+.back-link {
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease,
+        color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.button:hover,
+.back-link:hover {
+    transform: scale(1.045);
+    box-shadow: 0 0 24px rgba(255,255,255,0.08);
+}
+
+.button:active,
+.back-link:active {
+    transform: scale(0.985);
+}
