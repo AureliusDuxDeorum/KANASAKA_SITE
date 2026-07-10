@@ -18,7 +18,6 @@ COMING_SOON_PAGES = [
     ("company/careers", "Careers"),
     ("support/documentation", "Documentation"),
     ("support/faq", "FAQ"),
-    ("support/contact", "Contact"),
     ("support/system-status", "System Status"),
     ("developers/api", "API"),
     ("developers/sdk", "SDK"),
@@ -260,6 +259,50 @@ def downloads_page() -> str:
     return shell("Downloads", body)
 
 
+def contact_page() -> str:
+    body = """
+  <section class="hero compact">
+    <div class="kanasaka-logo small">
+      <div class="logo-side"><div></div><div></div></div>
+      <div class="logo-center"><span>K</span><span>S</span></div>
+      <div class="logo-side"><div></div><div></div></div>
+    </div>
+
+    <h1>Contact</h1>
+
+    <p>Reach the KANASAKA team for product, support, and partnership inquiries.</p>
+  </section>
+
+  <section class="page-section">
+    <article class="content-card featured-card">
+      <div class="product-info">
+        <span class="section-kicker">Support</span>
+        <h2>Get in Touch</h2>
+
+        <p>
+          For general inquiries, product questions, or support requests,
+          use the contact details below.
+        </p>
+
+        <dl class="contact-details">
+          <div class="contact-item">
+            <dt>Email</dt>
+            <dd><a href="mailto:contact@kanasaka.com">contact@kanasaka.com</a></dd>
+          </div>
+
+          <div class="contact-item">
+            <dt>Telephone</dt>
+            <dd><a href="tel:+4915223693645">+49 01522 3693645</a></dd>
+            <dd class="contact-note">Available 2:00–6:00 PM on business days only.</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+  </section>
+"""
+    return shell("Contact", body)
+
+
 def write_page(rel_path: str, content: str) -> None:
     if rel_path == "index.html":
         path = ROOT / "index.html"
@@ -275,11 +318,12 @@ def main() -> None:
     write_page("index.html", home_page())
     write_page("products/ks-unify", ks_unify_page())
     write_page("downloads", downloads_page())
+    write_page("support/contact", contact_page())
 
     for rel, title in COMING_SOON_PAGES:
         write_page(rel, coming_soon(title))
 
-    print(f"Done — {2 + len(COMING_SOON_PAGES)} pages generated.")
+    print(f"Done — {3 + len(COMING_SOON_PAGES)} pages generated.")
 
 
 if __name__ == "__main__":
