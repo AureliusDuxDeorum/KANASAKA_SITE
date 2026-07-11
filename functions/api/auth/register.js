@@ -60,6 +60,16 @@ function registerFailure(err) {
     return errorResponse(message.replace(/^D1_ERROR:\s*/, "").slice(0, 180), 500);
   }
 
+  if (
+    message.includes("SQLITE_CONSTRAINT") ||
+    message.includes("readonly") ||
+    message.includes("read-only") ||
+    message.includes("OperationError") ||
+    message.includes("DataError")
+  ) {
+    return errorResponse(message.slice(0, 180), 500);
+  }
+
   return errorResponse("Registration failed. Please try again later.", 500);
 }
 
@@ -109,7 +119,14 @@ export async function onRequestPost(context) {
     const sent = await sendVerificationEmail(env, email, token);
 
     if (!sent) {
-      await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(userId).run();
+      try {
+        await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ?")
+          .bind(userId)
+          .run();
+        await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(userId).run();
+      } catch (rollbackErr) {
+        console.error("Register rollback failed:", errorMessage(rollbackErr));
+      }
       return errorResponse(
         "Could not send verification email. Check RESEND_API_KEY and domain setup in Cloudflare.",
         503

@@ -256,7 +256,14 @@ export function errorMessage(err) {
     if (current.message) {
       parts.push(String(current.message));
     }
+    if (current.name && current.name !== "Error") {
+      parts.push(String(current.name));
+    }
     current = current.cause;
+  }
+
+  if (!parts.length && err != null) {
+    parts.push(String(err));
   }
 
   return parts.join(" | ") || "Unknown error";
