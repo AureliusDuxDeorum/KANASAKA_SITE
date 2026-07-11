@@ -118,9 +118,9 @@ export async function onRequestPost(context) {
     const passwordHash = await hashPassword(password);
     const userId = await insertUser(env, email, passwordHash);
     const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
-    const sent = await sendVerificationEmail(env, email, token);
+    const emailResult = await sendVerificationEmail(env, email, token);
 
-    if (!sent) {
+    if (!emailResult.ok) {
       try {
         await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ?")
           .bind(userId)
@@ -129,10 +129,7 @@ export async function onRequestPost(context) {
       } catch (rollbackErr) {
         console.error("Register rollback failed:", errorMessage(rollbackErr));
       }
-      return errorResponse(
-        "Could not send verification email. Check RESEND_API_KEY and domain setup in Cloudflare.",
-        503
-      );
+      return errorResponse(emailResult.reason, 503);
     }
 
     return jsonResponse(
