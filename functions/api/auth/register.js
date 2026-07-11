@@ -65,7 +65,9 @@ function registerFailure(err) {
     message.includes("readonly") ||
     message.includes("read-only") ||
     message.includes("OperationError") ||
-    message.includes("DataError")
+    message.includes("DataError") ||
+    message.includes("CPU") ||
+    message.includes("exceeded")
   ) {
     return errorResponse(message.slice(0, 180), 500);
   }
