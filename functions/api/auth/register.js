@@ -59,7 +59,20 @@ export async function onRequestPost(context) {
       .bind(email, passwordHash)
       .run();
 
-    const userId = result.meta.last_row_id;
+    let userId = result.meta && result.meta.last_row_id;
+    if (!userId) {
+      const inserted = await env.DB.prepare(
+        "SELECT id FROM users WHERE email = ? COLLATE NOCASE"
+      )
+        .bind(email)
+        .first();
+      userId = inserted && inserted.id;
+    }
+
+    if (!userId) {
+      throw new Error("User insert did not return an id.");
+    }
+
     const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
     const sent = await sendVerificationEmail(env, email, token);
 
@@ -83,10 +96,28 @@ export async function onRequestPost(context) {
     const message = String(err && err.message ? err.message : err);
     console.error("Register failed:", message);
 
-    if (message.includes("no such column") || message.includes("email_tokens")) {
+    if (
+      message.includes("no such column") ||
+      message.includes("no such table") ||
+      message.includes("email_tokens")
+    ) {
       return errorResponse(
         "Auth database is outdated. Run migrations/002_email_auth.sql on D1.",
         503
+      );
+    }
+
+    if (message.includes("FOREIGN KEY constraint failed")) {
+      return errorResponse(
+        "Registration failed due to a database error. Please try again.",
+        500
+      );
+    }
+
+    if (message.includes("UNIQUE constraint failed")) {
+      return errorResponse(
+        "An account with this email already exists. Try signing in or resetting your password.",
+        409
       );
     }
 
