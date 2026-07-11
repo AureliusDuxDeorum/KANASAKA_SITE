@@ -1,7 +1,9 @@
 import {
   createEmailToken,
+  errorMessage,
   errorResponse,
   hashPassword,
+  insertUser,
   jsonResponse,
   normalizeEmail,
   readJson,
@@ -10,6 +12,56 @@ import {
   VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
 import { sendVerificationEmail } from "../../lib/email.js";
+
+function registerFailure(err) {
+  const message = errorMessage(err);
+  console.error("Register failed:", message);
+
+  if (
+    message.includes("no such column") ||
+    message.includes("no such table") ||
+    message.includes("email_tokens")
+  ) {
+    return errorResponse(
+      "Auth database is outdated. Run migrations/002_email_auth.sql on D1.",
+      503
+    );
+  }
+
+  if (message.includes("FOREIGN KEY constraint failed")) {
+    return errorResponse(
+      "Registration failed due to a database error. Please try again.",
+      500
+    );
+  }
+
+  if (message.includes("UNIQUE constraint failed")) {
+    return errorResponse(
+      "An account with this email already exists. Try signing in or resetting your password.",
+      409
+    );
+  }
+
+  if (message.includes("Invalid user id for email token")) {
+    return errorResponse(
+      "Registration failed while creating your verification link. Please try again.",
+      500
+    );
+  }
+
+  if (message.includes("User insert")) {
+    return errorResponse(
+      "Registration failed while saving your account. Please try again.",
+      500
+    );
+  }
+
+  if (message.includes("D1_ERROR")) {
+    return errorResponse(message.replace(/^D1_ERROR:\s*/, "").slice(0, 180), 500);
+  }
+
+  return errorResponse("Registration failed. Please try again later.", 500);
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -52,27 +104,7 @@ export async function onRequestPost(context) {
     }
 
     const passwordHash = await hashPassword(password);
-
-    const result = await env.DB.prepare(
-      "INSERT INTO users (email, password_hash, email_verified) VALUES (?, ?, 0)"
-    )
-      .bind(email, passwordHash)
-      .run();
-
-    let userId = result.meta && result.meta.last_row_id;
-    if (!userId) {
-      const inserted = await env.DB.prepare(
-        "SELECT id FROM users WHERE email = ? COLLATE NOCASE"
-      )
-        .bind(email)
-        .first();
-      userId = inserted && inserted.id;
-    }
-
-    if (!userId) {
-      throw new Error("User insert did not return an id.");
-    }
-
+    const userId = await insertUser(env, email, passwordHash);
     const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
     const sent = await sendVerificationEmail(env, email, token);
 
@@ -93,34 +125,6 @@ export async function onRequestPost(context) {
       201
     );
   } catch (err) {
-    const message = String(err && err.message ? err.message : err);
-    console.error("Register failed:", message);
-
-    if (
-      message.includes("no such column") ||
-      message.includes("no such table") ||
-      message.includes("email_tokens")
-    ) {
-      return errorResponse(
-        "Auth database is outdated. Run migrations/002_email_auth.sql on D1.",
-        503
-      );
-    }
-
-    if (message.includes("FOREIGN KEY constraint failed")) {
-      return errorResponse(
-        "Registration failed due to a database error. Please try again.",
-        500
-      );
-    }
-
-    if (message.includes("UNIQUE constraint failed")) {
-      return errorResponse(
-        "An account with this email already exists. Try signing in or resetting your password.",
-        409
-      );
-    }
-
-    return errorResponse("Registration failed. Please try again later.", 500);
+    return registerFailure(err);
   }
 }
