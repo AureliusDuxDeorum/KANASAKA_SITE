@@ -197,17 +197,22 @@ export async function getSessionUser(request, env) {
 }
 
 export async function createEmailToken(env, userId, type, hours) {
+  const uid = Number(userId);
+  if (!Number.isFinite(uid) || uid <= 0) {
+    throw new Error("Invalid user id for email token.");
+  }
+
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
   await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ? AND type = ?")
-    .bind(userId, type)
+    .bind(uid, type)
     .run();
 
   await env.DB.prepare(
     "INSERT INTO email_tokens (id, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
   )
-    .bind(token, userId, type, expiresAt)
+    .bind(token, uid, type, expiresAt)
     .run();
 
   return token;
@@ -237,6 +242,48 @@ export async function readJson(request) {
   } catch {
     return null;
   }
+}
+
+export function errorMessage(err) {
+  const parts = [];
+  let current = err;
+
+  while (current) {
+    if (typeof current === "string") {
+      parts.push(current);
+      break;
+    }
+    if (current.message) {
+      parts.push(String(current.message));
+    }
+    current = current.cause;
+  }
+
+  return parts.join(" | ") || "Unknown error";
+}
+
+export async function insertUser(env, email, passwordHash) {
+  const result = await env.DB.prepare(
+    "INSERT INTO users (email, password_hash, email_verified) VALUES (?, ?, 0)"
+  )
+    .bind(email, passwordHash)
+    .run();
+
+  if (!result.success) {
+    throw new Error("User insert failed.");
+  }
+
+  const row = await env.DB.prepare(
+    "SELECT id FROM users WHERE email = ? COLLATE NOCASE"
+  )
+    .bind(email)
+    .first();
+
+  if (!row || row.id == null) {
+    throw new Error("User insert did not return an id.");
+  }
+
+  return Number(row.id);
 }
 
 export function sessionPayload(user) {
