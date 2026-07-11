@@ -23,23 +23,34 @@ export async function sendEmail(env, { to, subject, html }) {
     return false;
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromAddress(env),
-      to: [to],
-      subject,
-      html,
-      text: plainText(html),
-    }),
-  });
+  let response;
+  try {
+    response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromAddress(env),
+        to: [to],
+        subject,
+        html,
+        text: plainText(html),
+      }),
+    });
+  } catch (err) {
+    console.error("Email send request failed:", err);
+    return false;
+  }
 
   if (!response.ok) {
-    const body = await response.text();
+    let body = "";
+    try {
+      body = await response.text();
+    } catch (err) {
+      console.error("Email send response read failed:", err);
+    }
     console.error("Email send failed:", response.status, body);
     return false;
   }
