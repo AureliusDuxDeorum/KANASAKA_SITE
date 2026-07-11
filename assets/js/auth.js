@@ -19,11 +19,15 @@
       ...options,
     });
 
+    const text = await response.text();
     let data = null;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
+
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { error: text.slice(0, 240) };
+      }
     }
 
     return { response, data };
@@ -109,6 +113,14 @@
     success.hidden = false;
   }
 
+  function clearFormSuccess(form) {
+    const success = form.querySelector(".auth-success");
+    if (success) {
+      success.hidden = true;
+      success.textContent = "";
+    }
+  }
+
   function bindEmailPasswordForm(formId, handler, options) {
     const form = document.getElementById(formId);
     if (!form) return;
@@ -116,25 +128,30 @@
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
       clearFormError(form);
+      clearFormSuccess(form);
 
       const email = form.querySelector('[name="email"]').value.trim();
       const passwordField = form.querySelector('[name="password"]');
       const password = passwordField ? passwordField.value : "";
       const submit = form.querySelector('[type="submit"]');
+      const defaultLabel = submit.textContent;
 
       submit.disabled = true;
+      submit.textContent = "Please wait...";
 
       try {
         const result = await handler(email, password, form);
         if (options && options.onSuccess) {
           options.onSuccess(result, form);
           submit.disabled = false;
+          submit.textContent = defaultLabel;
           return;
         }
         window.location.href = getNextPath();
       } catch (error) {
         showFormError(form, error.message || "Request failed.");
         submit.disabled = false;
+        submit.textContent = defaultLabel;
       }
     });
   }
