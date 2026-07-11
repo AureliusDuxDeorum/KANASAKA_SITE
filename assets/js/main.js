@@ -114,6 +114,49 @@
     updateThemeLabel(next);
   }
 
+  function buildAuthControls() {
+    const wrap = document.createElement("div");
+    wrap.className = "header-auth";
+
+    const session =
+      window.KanasakaAuth && window.KanasakaAuth.getSession
+        ? window.KanasakaAuth.getSession()
+        : { authenticated: false };
+
+    if (session.authenticated) {
+      const user = document.createElement("span");
+      user.className = "header-username";
+      user.textContent = session.username;
+
+      const logoutBtn = document.createElement("button");
+      logoutBtn.type = "button";
+      logoutBtn.className = "auth-link";
+      logoutBtn.textContent = "Log Out";
+      logoutBtn.addEventListener("click", async function () {
+        await window.KanasakaAuth.logout();
+        window.location.href = "/";
+      });
+
+      wrap.appendChild(user);
+      wrap.appendChild(logoutBtn);
+      return wrap;
+    }
+
+    const login = document.createElement("a");
+    login.className = "auth-link";
+    login.href = "/login/";
+    login.textContent = "Log In";
+
+    const register = document.createElement("a");
+    register.className = "auth-link secondary";
+    register.href = "/register/";
+    register.textContent = "Register";
+
+    wrap.appendChild(login);
+    wrap.appendChild(register);
+    return wrap;
+  }
+
   function buildNav() {
     const nav = document.createElement("nav");
     nav.className = "site-nav";
@@ -193,6 +236,8 @@
     const actions = document.createElement("div");
     actions.className = "header-actions";
 
+    actions.appendChild(buildAuthControls());
+
     const themeBtn = document.createElement("button");
     themeBtn.type = "button";
     themeBtn.className = "theme-toggle";
@@ -263,6 +308,20 @@
     }
   }
 
-  initTheme();
-  document.addEventListener("DOMContentLoaded", mountLayout);
+  async function boot() {
+    initTheme();
+
+    if (window.KanasakaAuth) {
+      await window.KanasakaAuth.initSession();
+    }
+
+    mountLayout();
+
+    if (window.KanasakaAuth) {
+      window.KanasakaAuth.initAuthForms();
+      window.KanasakaAuth.initProtectedPages();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", boot);
 })();

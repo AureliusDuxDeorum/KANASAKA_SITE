@@ -51,6 +51,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
 </head>
 <body>
@@ -216,7 +217,7 @@ def downloads_page() -> str:
 
     <h1>Downloads</h1>
 
-    <p>Get the latest public builds for KANASAKA products.</p>
+    <p>Sign in to download the latest KANASAKA product builds.</p>
   </section>
 
   <section class="page-section">
@@ -239,16 +240,10 @@ def downloads_page() -> str:
         </div>
       </div>
 
-      <div class="download-actions">
-        <a class="button" href="https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_x64-setup.exe" download>
-          Download for Windows
-        </a>
-
-        <a class="button secondary" href="https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_amd64.deb" download>
-          Download for Linux .deb
-        </a>
-      </div>
+      <div id="download-actions" class="download-actions" hidden></div>
     </article>
+
+    <div id="auth-gate-downloads" class="auth-gate" hidden></div>
 
     <div class="download-notes">
       <h3>Notes</h3>
@@ -288,27 +283,73 @@ def contact_page() -> str:
         <h2>Get in Touch</h2>
 
         <p>
-          For general inquiries, product questions, or support requests,
-          use the contact details below.
+          Contact details are available to signed-in users.
         </p>
 
-        <dl class="contact-details">
-          <div class="contact-item">
-            <dt>Email</dt>
-            <dd><a href="mailto:contact@kanasaka.com">contact@kanasaka.com</a></dd>
-          </div>
-
-          <div class="contact-item">
-            <dt>Telephone</dt>
-            <dd><a href="tel:+4915223693645">+49 01522 3693645</a></dd>
-            <dd class="contact-note">Available 2:00–6:00 PM on business days only.</dd>
-          </div>
-        </dl>
+        <div id="contact-details" class="contact-details" hidden></div>
       </div>
     </article>
+
+    <div id="auth-gate-contact" class="auth-gate" hidden></div>
   </section>
 """
     return shell("Contact", body)
+
+
+def login_page() -> str:
+    body = """
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Log In</h1>
+      <p>Access downloads and contact details with your KANASAKA account.</p>
+
+      <form id="login-form" class="auth-form">
+        <div class="auth-field">
+          <label for="login-username">Username</label>
+          <input id="login-username" name="username" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+
+        <button class="button" type="submit">Log In</button>
+      </form>
+
+      <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
+    </div>
+  </section>
+"""
+    return shell("Log In", body)
+
+
+def register_page() -> str:
+    body = """
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Register</h1>
+      <p>Create a free account to download KS Unify and view contact details.</p>
+
+      <form id="register-form" class="auth-form">
+        <div class="auth-field">
+          <label for="register-username">Username</label>
+          <input id="register-username" name="username" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="register-password">Password</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+
+        <button class="button" type="submit">Create Account</button>
+      </form>
+
+      <p class="auth-switch">Already registered? <a href="/login/">Log in</a></p>
+    </div>
+  </section>
+"""
+    return shell("Register", body)
 
 
 def write_page(rel_path: str, content: str) -> None:
@@ -327,11 +368,13 @@ def main() -> None:
     write_page("products/ks-unify", ks_unify_page())
     write_page("downloads", downloads_page())
     write_page("support/contact", contact_page())
+    write_page("login", login_page())
+    write_page("register", register_page())
 
     for rel, title in COMING_SOON_PAGES:
         write_page(rel, coming_soon(title))
 
-    print(f"Done — {3 + len(COMING_SOON_PAGES)} pages generated.")
+    print(f"Done — {5 + len(COMING_SOON_PAGES)} pages generated.")
 
 
 if __name__ == "__main__":
