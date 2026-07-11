@@ -18,6 +18,9 @@ export const CONTACT_INFO = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Cloudflare Pages Functions on the free plan allow ~10 ms CPU per request.
+// 210k PBKDF2 iterations exceed that; keep this under the budget.
+export const PBKDF2_ITERATIONS = 60000;
 
 export function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -97,8 +100,28 @@ function timingSafeEqual(a, b) {
   return result === 0;
 }
 
-export async function hashPassword(password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+function parsePasswordHash(stored) {
+  const parts = stored.split(":");
+  if (parts.length === 4 && parts[0] === "pbkdf2") {
+    return {
+      iterations: Number(parts[1]),
+      salt: base64ToBytes(parts[2]),
+      expected: base64ToBytes(parts[3]),
+    };
+  }
+
+  if (parts.length === 3 && parts[0] === "pbkdf2") {
+    return {
+      iterations: 210000,
+      salt: base64ToBytes(parts[1]),
+      expected: base64ToBytes(parts[2]),
+    };
+  }
+
+  return null;
+}
+
+async function derivePasswordHash(password, salt, iterations) {
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -107,46 +130,36 @@ export async function hashPassword(password) {
     false,
     ["deriveBits"]
   );
+
   const hash = await crypto.subtle.deriveBits(
     {
       name: "PBKDF2",
       salt,
-      iterations: 210000,
+      iterations,
       hash: "SHA-256",
     },
     keyMaterial,
     256
   );
 
-  return `pbkdf2:${bytesToBase64(salt)}:${bytesToBase64(new Uint8Array(hash))}`;
+  return new Uint8Array(hash);
+}
+
+export async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const hash = await derivePasswordHash(password, salt, PBKDF2_ITERATIONS);
+
+  return `pbkdf2:${PBKDF2_ITERATIONS}:${bytesToBase64(salt)}:${bytesToBase64(hash)}`;
 }
 
 export async function verifyPassword(password, stored) {
-  const parts = stored.split(":");
-  if (parts.length !== 3 || parts[0] !== "pbkdf2") return false;
+  const parsed = parsePasswordHash(stored);
+  if (!parsed || !Number.isFinite(parsed.iterations) || parsed.iterations <= 0) {
+    return false;
+  }
 
-  const salt = base64ToBytes(parts[1]);
-  const expected = base64ToBytes(parts[2]);
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  );
-  const hash = await crypto.subtle.deriveBits(
-    {
-      name: "PBKDF2",
-      salt,
-      iterations: 210000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    256
-  );
-
-  return timingSafeEqual(new Uint8Array(hash), expected);
+  const hash = await derivePasswordHash(password, parsed.salt, parsed.iterations);
+  return timingSafeEqual(hash, parsed.expected);
 }
 
 export function sessionMaxAge(env) {
