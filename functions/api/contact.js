@@ -1,4 +1,4 @@
-import { CONTACT_INFO, errorResponse, getSessionUser, jsonResponse } from "../../lib/auth.js";
+import { CONTACT_INFO, errorResponse, getSessionUser, jsonResponse } from "../lib/auth.js";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
