@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Publications | KANASAKA</title>
+  <title>Register | KANASAKA</title>
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -22,11 +22,26 @@
 
 <main>
 
-  <section class="coming-soon">
-    <div class="coming-soon-box">
-      <span class="coming-soon-label">Coming Soon</span>
-      <h1>Publications</h1>
-      <p>This section is under development. Check back for updates.</p>
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Register</h1>
+      <p>Create a free account to download KS Unify and view contact details.</p>
+
+      <form id="register-form" class="auth-form">
+        <div class="auth-field">
+          <label for="register-username">Username</label>
+          <input id="register-username" name="username" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="register-password">Password</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+
+        <button class="button" type="submit">Create Account</button>
+      </form>
+
+      <p class="auth-switch">Already registered? <a href="/login/">Log in</a></p>
     </div>
   </section>
 

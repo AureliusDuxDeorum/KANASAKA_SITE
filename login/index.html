@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Publications | KANASAKA</title>
+  <title>Log In | KANASAKA</title>
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -22,11 +22,26 @@
 
 <main>
 
-  <section class="coming-soon">
-    <div class="coming-soon-box">
-      <span class="coming-soon-label">Coming Soon</span>
-      <h1>Publications</h1>
-      <p>This section is under development. Check back for updates.</p>
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Log In</h1>
+      <p>Access downloads and contact details with your KANASAKA account.</p>
+
+      <form id="login-form" class="auth-form">
+        <div class="auth-field">
+          <label for="login-username">Username</label>
+          <input id="login-username" name="username" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+
+        <button class="button" type="submit">Log In</button>
+      </form>
+
+      <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
     </div>
   </section>
 

@@ -13,6 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
 </head>
 <body>
@@ -40,24 +41,14 @@
         <h2>Get in Touch</h2>
 
         <p>
-          For general inquiries, product questions, or support requests,
-          use the contact details below.
+          Contact details are available to signed-in users.
         </p>
 
-        <dl class="contact-details">
-          <div class="contact-item">
-            <dt>Email</dt>
-            <dd><a href="mailto:contact@kanasaka.com">contact@kanasaka.com</a></dd>
-          </div>
-
-          <div class="contact-item">
-            <dt>Telephone</dt>
-            <dd><a href="tel:+4915223693645">+49 01522 3693645</a></dd>
-            <dd class="contact-note">Available 2:00–6:00 PM on business days only.</dd>
-          </div>
-        </dl>
+        <div id="contact-details" class="contact-details" hidden></div>
       </div>
     </article>
+
+    <div id="auth-gate-contact" class="auth-gate" hidden></div>
   </section>
 
 </main>
