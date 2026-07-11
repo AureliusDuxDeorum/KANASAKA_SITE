@@ -1,0 +1,46 @@
+import {
+  createEmailToken,
+  errorResponse,
+  jsonResponse,
+  normalizeEmail,
+  readJson,
+  RESET_TOKEN_HOURS,
+  validateEmail,
+} from "../../lib/auth.js";
+import { sendPasswordResetEmail } from "../../lib/email.js";
+
+export async function onRequestPost(context) {
+  const { request, env } = context;
+
+  if (!env.DB) {
+    return errorResponse("Authentication service is not configured.", 503);
+  }
+
+  const body = await readJson(request);
+  if (!body) {
+    return errorResponse("Invalid request body.");
+  }
+
+  const email = normalizeEmail(body.email);
+  const genericMessage =
+    "If an account exists for that email, a password reset link has been sent.";
+
+  if (!validateEmail(email)) {
+    return jsonResponse({ success: true, message: genericMessage });
+  }
+
+  const user = await env.DB.prepare(
+    "SELECT id, email_verified FROM users WHERE email = ? COLLATE NOCASE"
+  )
+    .bind(email)
+    .first();
+
+  if (!user || !user.email_verified) {
+    return jsonResponse({ success: true, message: genericMessage });
+  }
+
+  const token = await createEmailToken(env, user.id, "reset", RESET_TOKEN_HOURS);
+  await sendPasswordResetEmail(env, email, token);
+
+  return jsonResponse({ success: true, message: genericMessage });
+}

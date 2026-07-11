@@ -2,10 +2,10 @@ name = "kanasaka-site"
 compatibility_date = "2024-11-12"
 pages_build_output_dir = "."
 
-# Create D1: wrangler d1 create kanasaka-auth
-# Apply schema: wrangler d1 execute kanasaka-auth --remote --file=./schema.sql
-# Set secret: wrangler pages secret put SESSION_SECRET --project-name=kanasaka-site
-# Bind D1 in Cloudflare Pages dashboard → Settings → Functions → D1 bindings (name: DB)
+# D1: wrangler d1 execute kanasaka-auth --remote --file=./migrations/002_email_auth.sql
+# Email secret (Pages → Settings → Variables and secrets):
+#   RESEND_API_KEY = your Resend API key
+# Bind D1 in Pages → Settings → Bindings (variable name: DB)
 
 [[d1_databases]]
 binding = "DB"
@@ -14,3 +14,6 @@ database_id = "b76e77d3-4056-4ba2-8356-c69fb65a13d9"
 
 [vars]
 SESSION_DAYS = "30"
+SITE_URL = "https://kanasaka.com"
+FROM_EMAIL = "noreply@kanasaka.com"
+FROM_NAME = "KANASAKA"

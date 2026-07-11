@@ -1,5 +1,7 @@
 export const SESSION_COOKIE = "kanasaka_session";
 export const SESSION_DAYS = 30;
+export const VERIFY_TOKEN_HOURS = 24;
+export const RESET_TOKEN_HOURS = 1;
 
 export const DOWNLOAD_URLS = {
   windows:
@@ -15,7 +17,7 @@ export const CONTACT_INFO = {
   hours: "Available 2:00–6:00 PM on business days only.",
 };
 
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,32}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -57,8 +59,12 @@ export function clearSessionCookieHeader() {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 }
 
-export function validateUsername(username) {
-  return typeof username === "string" && USERNAME_RE.test(username);
+export function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+export function validateEmail(email) {
+  return typeof email === "string" && EMAIL_RE.test(email) && email.length <= 254;
 }
 
 export function validatePassword(password) {
@@ -176,7 +182,7 @@ export async function getSessionUser(request, env) {
   if (!token) return null;
 
   const row = await env.DB.prepare(
-    `SELECT u.id, u.username
+    `SELECT u.id, u.email, u.email_verified
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.id = ?
@@ -185,7 +191,44 @@ export async function getSessionUser(request, env) {
     .bind(token)
     .first();
 
-  return row || null;
+  if (!row || !row.email_verified) return null;
+
+  return row;
+}
+
+export async function createEmailToken(env, userId, type, hours) {
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+
+  await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ? AND type = ?")
+    .bind(userId, type)
+    .run();
+
+  await env.DB.prepare(
+    "INSERT INTO email_tokens (id, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
+  )
+    .bind(token, userId, type, expiresAt)
+    .run();
+
+  return token;
+}
+
+export async function consumeEmailToken(env, token, type) {
+  const row = await env.DB.prepare(
+    `SELECT et.id, et.user_id, u.email
+     FROM email_tokens et
+     JOIN users u ON u.id = et.user_id
+     WHERE et.id = ?
+       AND et.type = ?
+       AND et.expires_at > datetime('now')`
+  )
+    .bind(token, type)
+    .first();
+
+  if (!row) return null;
+
+  await env.DB.prepare("DELETE FROM email_tokens WHERE id = ?").bind(token).run();
+  return row;
 }
 
 export async function readJson(request) {
@@ -194,4 +237,11 @@ export async function readJson(request) {
   } catch {
     return null;
   }
+}
+
+export function sessionPayload(user) {
+  return {
+    authenticated: true,
+    email: user.email,
+  };
 }
