@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register | KANASAKA</title>
+  <title>Forgot Password | KANASAKA</title>
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -24,24 +24,19 @@
 
   <section class="auth-page">
     <div class="auth-card">
-      <h1>Register</h1>
-      <p>Create a free account to download KS Unify and view contact details.</p>
+      <h1>Forgot Password</h1>
+      <p>Enter your email address and we will send you a reset link.</p>
 
-      <form id="register-form" class="auth-form">
+      <form id="forgot-password-form" class="auth-form">
         <div class="auth-field">
-          <label for="register-email">Email</label>
-          <input id="register-email" name="email" type="email" autocomplete="email" required>
+          <label for="forgot-email">Email</label>
+          <input id="forgot-email" name="email" type="email" autocomplete="email" required>
         </div>
 
-        <div class="auth-field">
-          <label for="register-password">Password</label>
-          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
-        </div>
-
-        <button class="button" type="submit">Create Account</button>
+        <button class="button" type="submit">Send Reset Link</button>
       </form>
 
-      <p class="auth-switch">Already registered? <a href="/login/">Log in</a></p>
+      <p class="auth-switch"><a href="/login/">Back to log in</a></p>
     </div>
   </section>
 

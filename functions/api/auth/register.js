@@ -1,13 +1,15 @@
 import {
-  createSession,
+  createEmailToken,
   errorResponse,
   hashPassword,
   jsonResponse,
+  normalizeEmail,
   readJson,
-  sessionCookieHeader,
+  validateEmail,
   validatePassword,
-  validateUsername,
+  VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
+import { sendVerificationEmail } from "../../lib/email.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -21,13 +23,11 @@ export async function onRequestPost(context) {
     return errorResponse("Invalid request body.");
   }
 
-  const username = String(body.username || "").trim();
+  const email = normalizeEmail(body.email);
   const password = String(body.password || "");
 
-  if (!validateUsername(username)) {
-    return errorResponse(
-      "Username must be 3–32 characters and use letters, numbers, or underscores."
-    );
+  if (!validateEmail(email)) {
+    return errorResponse("Enter a valid email address.");
   }
 
   if (!validatePassword(password)) {
@@ -35,31 +35,47 @@ export async function onRequestPost(context) {
   }
 
   const existing = await env.DB.prepare(
-    "SELECT id FROM users WHERE username = ? COLLATE NOCASE"
+    "SELECT id, email_verified FROM users WHERE email = ? COLLATE NOCASE"
   )
-    .bind(username)
+    .bind(email)
     .first();
 
   if (existing) {
-    return errorResponse("Username is already taken.", 409);
+    if (existing.email_verified) {
+      return errorResponse("An account with this email already exists.", 409);
+    }
+    return errorResponse(
+      "This email is already registered but not verified. Check your inbox or request a new verification email.",
+      409
+    );
   }
 
   const passwordHash = await hashPassword(password);
 
   const result = await env.DB.prepare(
-    "INSERT INTO users (username, password_hash) VALUES (?, ?)"
+    "INSERT INTO users (email, password_hash, email_verified) VALUES (?, ?, 0)"
   )
-    .bind(username, passwordHash)
+    .bind(email, passwordHash)
     .run();
 
   const userId = result.meta.last_row_id;
-  const session = await createSession(env, userId);
+  const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
+  const sent = await sendVerificationEmail(env, email, token);
+
+  if (!sent) {
+    await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(userId).run();
+    return errorResponse(
+      "Could not send verification email. Try again later.",
+      503
+    );
+  }
 
   return jsonResponse(
-    { authenticated: true, username },
-    201,
     {
-      "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),
-    }
+      success: true,
+      message: "Check your email to confirm your account before signing in.",
+      email,
+    },
+    201
   );
 }

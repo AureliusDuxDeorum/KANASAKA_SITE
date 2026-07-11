@@ -126,7 +126,7 @@
     if (session.authenticated) {
       const user = document.createElement("span");
       user.className = "header-username";
-      user.textContent = session.username;
+      user.textContent = session.email;
 
       const logoutBtn = document.createElement("button");
       logoutBtn.type = "button";

@@ -1,4 +1,4 @@
-import { getSessionUser, jsonResponse } from "../../lib/auth.js";
+import { getSessionUser, jsonResponse, sessionPayload } from "../../lib/auth.js";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -14,8 +14,7 @@ export async function onRequestGet(context) {
   }
 
   return jsonResponse({
-    authenticated: true,
+    ...sessionPayload(user),
     configured: true,
-    username: user.username,
   });
 }

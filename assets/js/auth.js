@@ -43,10 +43,10 @@
     return sessionCache || { authenticated: false };
   }
 
-  async function login(username, password) {
+  async function login(email, password) {
     const { response, data } = await apiRequest("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
@@ -57,17 +57,16 @@
     return data;
   }
 
-  async function register(username, password) {
+  async function register(email, password) {
     const { response, data } = await apiRequest("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
       throw new Error((data && data.error) || "Registration failed.");
     }
 
-    sessionCache = data;
     return data;
   }
 
@@ -99,7 +98,18 @@
     }
   }
 
-  function bindAuthForm(formId, handler) {
+  function showFormSuccess(form, message) {
+    let success = form.querySelector(".auth-success");
+    if (!success) {
+      success = document.createElement("p");
+      success.className = "auth-success";
+      form.insertBefore(success, form.firstChild);
+    }
+    success.textContent = message;
+    success.hidden = false;
+  }
+
+  function bindEmailPasswordForm(formId, handler, options) {
     const form = document.getElementById(formId);
     if (!form) return;
 
@@ -107,20 +117,135 @@
       event.preventDefault();
       clearFormError(form);
 
-      const username = form.querySelector('[name="username"]').value.trim();
-      const password = form.querySelector('[name="password"]').value;
+      const email = form.querySelector('[name="email"]').value.trim();
+      const passwordField = form.querySelector('[name="password"]');
+      const password = passwordField ? passwordField.value : "";
       const submit = form.querySelector('[type="submit"]');
 
       submit.disabled = true;
 
       try {
-        await handler(username, password);
+        const result = await handler(email, password, form);
+        if (options && options.onSuccess) {
+          options.onSuccess(result, form);
+          submit.disabled = false;
+          return;
+        }
         window.location.href = getNextPath();
       } catch (error) {
         showFormError(form, error.message || "Request failed.");
         submit.disabled = false;
       }
     });
+  }
+
+  function bindForgotPasswordForm() {
+    const form = document.getElementById("forgot-password-form");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(form);
+
+      const email = form.querySelector('[name="email"]').value.trim();
+      const submit = form.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/auth/forgot-password", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Request failed.");
+        }
+
+        showFormSuccess(form, data.message);
+        form.querySelector('[name="email"]').value = "";
+      } catch (error) {
+        showFormError(form, error.message || "Request failed.");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
+
+  function bindResetPasswordForm() {
+    const form = document.getElementById("reset-password-form");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(form);
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const password = form.querySelector('[name="password"]').value;
+      const submit = form.querySelector('[type="submit"]');
+
+      if (!token) {
+        showFormError(form, "Reset link is invalid or missing.");
+        return;
+      }
+
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/auth/reset-password", {
+          method: "POST",
+          body: JSON.stringify({ token, password }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Reset failed.");
+        }
+
+        showFormSuccess(form, data.message);
+        window.setTimeout(function () {
+          window.location.href = "/login/";
+        }, 2000);
+      } catch (error) {
+        showFormError(form, error.message || "Request failed.");
+        submit.disabled = false;
+      }
+    });
+  }
+
+  async function initVerifyPage() {
+    const box = document.getElementById("verify-status");
+    if (!box) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (!token) {
+      box.textContent = "Verification link is invalid or missing.";
+      return;
+    }
+
+    box.textContent = "Verifying your email address...";
+
+    try {
+      const response = await fetch(
+        "/api/auth/verify?token=" + encodeURIComponent(token),
+        { credentials: "include" }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        box.textContent = (data && data.error) || "Verification failed.";
+        return;
+      }
+
+      sessionCache = data;
+      box.textContent = "Email verified. Redirecting...";
+      window.setTimeout(function () {
+        window.location.href = getNextPath() === "/" ? "/downloads/" : getNextPath();
+      }, 1500);
+    } catch {
+      box.textContent = "Verification failed. Try again later.";
+    }
   }
 
   function renderAuthGate(gateId, message) {
@@ -232,11 +357,26 @@
     if (path.indexOf("/downloads") === 0) {
       initDownloadsPage();
     }
+
+    if (path.indexOf("/verify") === 0) {
+      initVerifyPage();
+    }
   }
 
   function initAuthForms() {
-    bindAuthForm("login-form", login);
-    bindAuthForm("register-form", register);
+    bindEmailPasswordForm("login-form", login);
+    bindEmailPasswordForm("register-form", register, {
+      onSuccess: function (result, form) {
+        showFormSuccess(
+          form,
+          result.message ||
+            "Check your email to confirm your account before signing in."
+        );
+        form.querySelector('[name="password"]').value = "";
+      },
+    });
+    bindForgotPasswordForm();
+    bindResetPasswordForm();
   }
 
   window.KanasakaAuth = {

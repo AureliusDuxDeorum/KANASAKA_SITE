@@ -305,8 +305,8 @@ def login_page() -> str:
 
       <form id="login-form" class="auth-form">
         <div class="auth-field">
-          <label for="login-username">Username</label>
-          <input id="login-username" name="username" type="text" autocomplete="username" required>
+          <label for="login-email">Email</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" required>
         </div>
 
         <div class="auth-field">
@@ -317,6 +317,7 @@ def login_page() -> str:
         <button class="button" type="submit">Log In</button>
       </form>
 
+      <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
       <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
     </div>
   </section>
@@ -333,8 +334,8 @@ def register_page() -> str:
 
       <form id="register-form" class="auth-form">
         <div class="auth-field">
-          <label for="register-username">Username</label>
-          <input id="register-username" name="username" type="text" autocomplete="username" required>
+          <label for="register-email">Email</label>
+          <input id="register-email" name="email" type="email" autocomplete="email" required>
         </div>
 
         <div class="auth-field">
@@ -350,6 +351,64 @@ def register_page() -> str:
   </section>
 """
     return shell("Register", body)
+
+
+def verify_page() -> str:
+    body = """
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Verify Email</h1>
+      <p id="verify-status">Preparing verification...</p>
+    </div>
+  </section>
+"""
+    return shell("Verify Email", body)
+
+
+def forgot_password_page() -> str:
+    body = """
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Forgot Password</h1>
+      <p>Enter your email address and we will send you a reset link.</p>
+
+      <form id="forgot-password-form" class="auth-form">
+        <div class="auth-field">
+          <label for="forgot-email">Email</label>
+          <input id="forgot-email" name="email" type="email" autocomplete="email" required>
+        </div>
+
+        <button class="button" type="submit">Send Reset Link</button>
+      </form>
+
+      <p class="auth-switch"><a href="/login/">Back to log in</a></p>
+    </div>
+  </section>
+"""
+    return shell("Forgot Password", body)
+
+
+def reset_password_page() -> str:
+    body = """
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1>Reset Password</h1>
+      <p>Choose a new password for your KANASAKA account.</p>
+
+      <form id="reset-password-form" class="auth-form">
+        <div class="auth-field">
+          <label for="reset-password">New Password</label>
+          <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+
+        <button class="button" type="submit">Update Password</button>
+      </form>
+
+      <p class="auth-switch"><a href="/login/">Back to log in</a></p>
+    </div>
+  </section>
+"""
+    return shell("Reset Password", body)
 
 
 def write_page(rel_path: str, content: str) -> None:
@@ -370,11 +429,14 @@ def main() -> None:
     write_page("support/contact", contact_page())
     write_page("login", login_page())
     write_page("register", register_page())
+    write_page("verify", verify_page())
+    write_page("forgot-password", forgot_password_page())
+    write_page("reset-password", reset_password_page())
 
     for rel, title in COMING_SOON_PAGES:
         write_page(rel, coming_soon(title))
 
-    print(f"Done — {5 + len(COMING_SOON_PAGES)} pages generated.")
+    print(f"Done — {8 + len(COMING_SOON_PAGES)} pages generated.")
 
 
 if __name__ == "__main__":
