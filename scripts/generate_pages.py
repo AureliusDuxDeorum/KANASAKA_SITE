@@ -222,7 +222,7 @@ def downloads_page() -> str:
   </section>
 
   <section class="page-section">
-    <article class="download-card featured-download">
+    <article class="download-card featured-download download-card-wide">
       <div class="download-info">
         <span class="download-kicker">KS Unify</span>
 
@@ -248,16 +248,17 @@ def downloads_page() -> str:
     <div id="auth-gate-downloads" class="auth-gate" hidden></div>
 
     <div class="download-notes">
-      <h3>Notes</h3>
+      <h3>Install notes</h3>
 
       <p>
         KS Unify is currently in active development. Early builds may change quickly.
       </p>
 
-      <p>
-        Windows users may see a security warning because the installer is not yet code-signed.
-        This is expected for early independent builds.
-      </p>
+      <ul class="download-notes-list">
+        <li><strong>Windows</strong> — You may see a SmartScreen warning because the installer is not yet code-signed. Choose “More info”, then “Run anyway”.</li>
+        <li><strong>macOS</strong> — This build is for Apple Silicon (M1/M2/M3). After opening the DMG, if macOS blocks the app, go to System Settings → Privacy &amp; Security → Open Anyway.</li>
+        <li><strong>Linux</strong> — Install with <code>sudo dpkg -i KS.Unify_0.1.0_amd64.deb</code>. Requires WebKitGTK 4.1.</li>
+      </ul>
     </div>
   </section>
 """
