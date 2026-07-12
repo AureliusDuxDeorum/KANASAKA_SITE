@@ -43,7 +43,7 @@ export async function onRequestPost(context) {
     return errorResponse("Account not found.", 404);
   }
 
-  const valid = await verifyPassword(password, row.password_hash);
+  const valid = await verifyPassword(password, row.password_hash, env);
   if (!valid) {
     return errorResponse("Password is incorrect.", 401);
   }

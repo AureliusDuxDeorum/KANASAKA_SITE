@@ -1,4 +1,4 @@
-import { errorResponse, getSessionUser } from "../../lib/auth.js";
+import { errorResponse, resolveSession } from "../../lib/auth.js";
 import {
   AVATAR_MAX_BYTES,
   AVATAR_MIME_TYPES,
@@ -24,7 +24,7 @@ function avatarResponse(record) {
 }
 
 export async function onRequestGet(context) {
-  const user = await getSessionUser(context.request, context.env);
+  const { user, sessionHeaders } = await resolveSession(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to view your profile picture.", 401);
   }
@@ -34,14 +34,18 @@ export async function onRequestGet(context) {
     return errorResponse("No profile picture uploaded.", 404);
   }
 
-  return avatarResponse(record);
+  const response = avatarResponse(record);
+  Object.entries(sessionHeaders).forEach(function ([key, value]) {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 export async function onRequestPost(context) {
   const originError = requireSameOrigin(context.request, context.env);
   if (originError) return originError;
 
-  const user = await getSessionUser(context.request, context.env);
+  const { user, sessionHeaders } = await resolveSession(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to upload a profile picture.", 401);
   }
@@ -75,6 +79,11 @@ export async function onRequestPost(context) {
   await saveAvatar(context.env, user.id, mimeType, bytes);
 
   const profile = await getUserProfile(context.env, user.id);
+  const headers = {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store",
+    ...sessionHeaders,
+  };
   return new Response(
     JSON.stringify({
       success: true,
@@ -83,10 +92,7 @@ export async function onRequestPost(context) {
     }),
     {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
+      headers,
     }
   );
 }
@@ -95,7 +101,7 @@ export async function onRequestDelete(context) {
   const originError = requireSameOrigin(context.request, context.env);
   if (originError) return originError;
 
-  const user = await getSessionUser(context.request, context.env);
+  const { user, sessionHeaders } = await resolveSession(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to remove your profile picture.", 401);
   }
@@ -103,6 +109,11 @@ export async function onRequestDelete(context) {
   await deleteAvatar(context.env, user.id);
 
   const profile = await getUserProfile(context.env, user.id);
+  const headers = {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store",
+    ...sessionHeaders,
+  };
   return new Response(
     JSON.stringify({
       success: true,
@@ -111,10 +122,7 @@ export async function onRequestDelete(context) {
     }),
     {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
+      headers,
     }
   );
 }

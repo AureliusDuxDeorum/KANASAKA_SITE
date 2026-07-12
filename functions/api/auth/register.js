@@ -13,12 +13,7 @@ import {
   VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
 import { sendVerificationEmail } from "../../lib/email.js";
-import {
-  clientIp,
-  enforceRateLimit,
-  logAuthEvent,
-  requireSameOrigin,
-} from "../../lib/security.js";
+import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 function registerFailure(err) {
   const message = errorMessage(err);
@@ -96,8 +91,6 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
-  const rateLimited = await enforceRateLimit(env, `register:ip:${ip}`, "registerIp");
-  if (rateLimited) return rateLimited;
 
   try {
     const body = await readJson(request);
@@ -137,7 +130,7 @@ export async function onRequestPost(context) {
       return registerSuccessResponse(200);
     }
 
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(password, env);
     const userId = await insertUser(env, email, passwordHash);
     const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
     const emailResult = await sendVerificationEmail(env, email, token);

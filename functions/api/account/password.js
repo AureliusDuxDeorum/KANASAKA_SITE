@@ -10,12 +10,7 @@ import {
   sessionCookieHeader,
   verifyPassword,
 } from "../../lib/auth.js";
-import {
-  clientIp,
-  enforceRateLimit,
-  logAuthEvent,
-  requireSameOrigin,
-} from "../../lib/security.js";
+import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -29,9 +24,6 @@ export async function onRequestPost(context) {
   }
 
   const ip = clientIp(request);
-  const rateLimited = await enforceRateLimit(env, `password:ip:${ip}`, "passwordIp");
-  if (rateLimited) return rateLimited;
-
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -53,7 +45,7 @@ export async function onRequestPost(context) {
     return errorResponse("Account not found.", 404);
   }
 
-  const valid = await verifyPassword(currentPassword, row.password_hash);
+  const valid = await verifyPassword(currentPassword, row.password_hash, env);
   if (!valid) {
     await logAuthEvent(env, "password_change_failed", {
       ip,
@@ -63,12 +55,12 @@ export async function onRequestPost(context) {
     return errorResponse("Current password is incorrect.", 401);
   }
 
-  const samePassword = await verifyPassword(newPassword, row.password_hash);
+  const samePassword = await verifyPassword(newPassword, row.password_hash, env);
   if (samePassword) {
     return errorResponse("Choose a different password than your current one.");
   }
 
-  const passwordHash = await hashPassword(newPassword);
+  const passwordHash = await hashPassword(newPassword, env);
   await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?")
     .bind(passwordHash, user.id)
     .run();
