@@ -414,55 +414,132 @@ def reset_password_page() -> str:
 def settings_page() -> str:
     body = """
   <section class="auth-page settings-page">
-    <div class="auth-card settings-card">
-      <h1>Account Settings</h1>
-      <p>Update your profile picture, display name, and password.</p>
-
-      <div id="settings-gate" class="auth-gate" hidden></div>
-
-      <div id="settings-content" hidden>
-        <div class="settings-profile">
-          <div id="settings-avatar" class="settings-avatar" aria-hidden="true"></div>
-          <div class="settings-profile-actions">
-            <label class="button secondary settings-upload-label" for="settings-avatar-input">
-              Upload Photo
-            </label>
-            <input id="settings-avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-            <button id="settings-avatar-remove" class="auth-link secondary" type="button" hidden>
-              Remove Photo
-            </button>
-          </div>
+    <div class="settings-layout">
+      <div class="settings-sidebar">
+        <div class="settings-sidebar-head">
+          <h1>Account Settings</h1>
+          <p>Manage your profile, appearance, and account.</p>
         </div>
+        <nav id="settings-nav" class="settings-nav" aria-label="Account settings sections">
+          <button type="button" class="settings-nav-item is-active" data-settings-panel="personal">
+            Personal Information
+          </button>
+          <button type="button" class="settings-nav-item" data-settings-panel="customization">
+            Customization
+          </button>
+          <button type="button" class="settings-nav-item" data-settings-panel="account">
+            Account Management
+          </button>
+          <button type="button" class="settings-nav-item" data-settings-panel="billing">
+            Billing
+          </button>
+        </nav>
+      </div>
 
-        <form id="settings-profile-form" class="auth-form settings-form">
-          <div class="auth-field">
-            <label for="settings-display-name">Display Name</label>
-            <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
-          </div>
+      <div class="settings-main auth-card settings-card">
+        <div id="settings-gate" class="auth-gate" hidden></div>
 
-          <div class="auth-field">
-            <label for="settings-email">Email</label>
-            <input id="settings-email" name="email" type="email" disabled>
-          </div>
+        <div id="settings-content" hidden>
+          <section id="settings-panel-personal" class="settings-panel is-active">
+            <h2>Personal Information</h2>
+            <p class="settings-panel-intro">Update your profile picture and display name.</p>
 
-          <button class="button" type="submit">Save Profile</button>
-        </form>
+            <div class="settings-profile">
+              <div id="settings-avatar" class="settings-avatar" aria-hidden="true"></div>
+              <div class="settings-profile-actions">
+                <label class="button secondary settings-upload-label" for="settings-avatar-input">
+                  Upload Photo
+                </label>
+                <input id="settings-avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+                <button id="settings-avatar-remove" class="auth-link secondary" type="button" hidden>
+                  Remove Photo
+                </button>
+              </div>
+            </div>
 
-        <form id="settings-password-form" class="auth-form settings-form">
-          <h2 class="settings-section-title">Change Password</h2>
+            <form id="settings-profile-form" class="auth-form settings-form">
+              <div class="auth-field">
+                <label for="settings-display-name">Display Name</label>
+                <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
+              </div>
 
-          <div class="auth-field">
-            <label for="settings-current-password">Current Password</label>
-            <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
-          </div>
+              <div class="auth-field">
+                <label for="settings-email">Email</label>
+                <input id="settings-email" name="email" type="email" disabled>
+              </div>
 
-          <div class="auth-field">
-            <label for="settings-new-password">New Password</label>
-            <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8">
-          </div>
+              <button class="button" type="submit">Save Profile</button>
+            </form>
+          </section>
 
-          <button class="button secondary" type="submit">Update Password</button>
-        </form>
+          <section id="settings-panel-customization" class="settings-panel" hidden>
+            <h2>Customization</h2>
+            <p class="settings-panel-intro">Choose how KANASAKA looks on your device.</p>
+
+            <div class="theme-picker" role="group" aria-label="Theme selection">
+              <button type="button" class="theme-option" data-theme-option="dark">
+                <span class="theme-option-label">Dark Mode</span>
+                <span class="theme-option-preview theme-preview-dark"></span>
+              </button>
+              <button type="button" class="theme-option" data-theme-option="light">
+                <span class="theme-option-label">Light Mode</span>
+                <span class="theme-option-preview theme-preview-light"></span>
+              </button>
+              <button type="button" class="theme-option" data-theme-option="accent">
+                <span class="theme-option-label">Accent Mode</span>
+                <span class="theme-option-preview theme-preview-accent"></span>
+              </button>
+            </div>
+          </section>
+
+          <section id="settings-panel-account" class="settings-panel" hidden>
+            <h2>Account Management</h2>
+            <p class="settings-panel-intro">Update your password or permanently delete your account.</p>
+
+            <form id="settings-password-form" class="auth-form settings-form">
+              <h3 class="settings-subsection-title">Change Password</h3>
+
+              <div class="auth-field">
+                <label for="settings-current-password">Current Password</label>
+                <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
+              </div>
+
+              <div class="auth-field">
+                <label for="settings-new-password">New Password</label>
+                <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8">
+              </div>
+
+              <button class="button secondary" type="submit">Update Password</button>
+            </form>
+
+            <form id="settings-delete-form" class="auth-form settings-form settings-danger-zone">
+              <h3 class="settings-subsection-title">Delete Account</h3>
+              <p class="settings-danger-copy">
+                This permanently removes your account, profile picture, and access to downloads.
+              </p>
+
+              <div class="auth-field">
+                <label for="settings-delete-password">Password</label>
+                <input id="settings-delete-password" name="password" type="password" autocomplete="current-password">
+              </div>
+
+              <div class="auth-field">
+                <label for="settings-delete-confirm">Type DELETE to confirm</label>
+                <input id="settings-delete-confirm" name="confirmation" type="text" autocomplete="off">
+              </div>
+
+              <button class="button settings-delete-button" type="submit">Delete Account</button>
+            </form>
+          </section>
+
+          <section id="settings-panel-billing" class="settings-panel" hidden>
+            <h2>Billing</h2>
+            <div class="settings-coming-soon">
+              <span class="coming-soon-label">Coming Soon</span>
+              <p>Subscription and billing management will appear here.</p>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   </section>
