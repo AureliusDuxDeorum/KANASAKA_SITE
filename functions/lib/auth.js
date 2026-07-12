@@ -195,9 +195,12 @@ export async function getSessionUser(request, env) {
   if (!token) return null;
 
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.email_verified
+    `SELECT u.id, u.email, u.email_verified, u.display_name,
+            ua.updated_at AS avatar_updated_at,
+            CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM sessions s
      JOIN users u ON u.id = s.user_id
+     LEFT JOIN user_avatars ua ON ua.user_id = u.id
      WHERE s.id = ?
        AND s.expires_at > datetime('now')`
   )
@@ -307,8 +310,31 @@ export async function insertUser(env, email, passwordHash) {
 }
 
 export function sessionPayload(user) {
+  const hasAvatar = Boolean(user && (user.has_avatar === 1 || user.has_avatar === true));
+  const version =
+    user && user.avatar_updated_at ? encodeURIComponent(user.avatar_updated_at) : "";
+
   return {
     authenticated: true,
     email: user.email,
+    displayName: user.display_name || null,
+    displayLabel:
+      user.display_name ||
+      (user.email ? user.email.split("@")[0] : "Account"),
+    hasAvatar,
+    avatarUrl: hasAvatar ? "/api/account/avatar?v=" + version : null,
+    initials: initialsFromUser(user),
   };
+}
+
+function initialsFromUser(user) {
+  const label =
+    user.display_name || (user.email ? user.email.split("@")[0] : "Account");
+  const parts = label.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  return label.slice(0, 2).toUpperCase();
 }

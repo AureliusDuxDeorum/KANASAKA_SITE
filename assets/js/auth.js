@@ -364,6 +364,202 @@
     renderDownloadActions(actions);
   }
 
+  function updateSession(data) {
+    sessionCache = Object.assign({ authenticated: true }, data);
+    if (window.KanasakaLayout && window.KanasakaLayout.remount) {
+      window.KanasakaLayout.remount();
+    }
+  }
+
+  function renderAvatarElement(container, profile) {
+    container.innerHTML = "";
+    if (profile.hasAvatar && profile.avatarUrl) {
+      const img = document.createElement("img");
+      img.src = profile.avatarUrl;
+      img.alt = "Profile picture";
+      container.appendChild(img);
+      return;
+    }
+
+    container.textContent = profile.initials || "KS";
+  }
+
+  async function initSettingsPage() {
+    const gate = document.getElementById("settings-gate");
+    const content = document.getElementById("settings-content");
+    if (!gate || !content) return;
+
+    const session = getSession();
+    if (!session.authenticated) {
+      gate.hidden = false;
+      renderAuthGate(
+        "settings-gate",
+        "Log in to manage your account settings."
+      );
+      content.hidden = true;
+      return;
+    }
+
+    gate.hidden = true;
+    content.hidden = false;
+
+    const avatarBox = document.getElementById("settings-avatar");
+    const avatarInput = document.getElementById("settings-avatar-input");
+    const avatarRemove = document.getElementById("settings-avatar-remove");
+    const profileForm = document.getElementById("settings-profile-form");
+    const passwordForm = document.getElementById("settings-password-form");
+    const displayNameInput = document.getElementById("settings-display-name");
+    const emailInput = document.getElementById("settings-email");
+
+    let profile = session;
+
+    try {
+      const { response, data } = await apiRequest("/api/account/profile", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error((data && data.error) || "Could not load settings.");
+      }
+
+      profile = Object.assign({ authenticated: true }, data);
+      updateSession(profile);
+    } catch (error) {
+      showFormError(profileForm, error.message || "Could not load settings.");
+      return;
+    }
+
+    displayNameInput.value = profile.displayName || "";
+    emailInput.value = profile.email || "";
+    renderAvatarElement(avatarBox, profile);
+    avatarRemove.hidden = !profile.hasAvatar;
+
+    avatarInput.addEventListener("change", async function () {
+      const file = avatarInput.files && avatarInput.files[0];
+      if (!file) return;
+
+      clearFormError(profileForm);
+      clearFormSuccess(profileForm);
+      avatarRemove.disabled = true;
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      try {
+        const response = await fetch("/api/account/avatar", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Upload failed.");
+        }
+
+        profile = Object.assign({ authenticated: true }, data);
+        updateSession(profile);
+        renderAvatarElement(avatarBox, profile);
+        avatarRemove.hidden = false;
+        showFormSuccess(profileForm, data.message || "Profile picture updated.");
+      } catch (error) {
+        showFormError(profileForm, error.message || "Upload failed.");
+      } finally {
+        avatarInput.value = "";
+        avatarRemove.disabled = false;
+      }
+    });
+
+    avatarRemove.addEventListener("click", async function () {
+      clearFormError(profileForm);
+      clearFormSuccess(profileForm);
+      avatarRemove.disabled = true;
+
+      try {
+        const response = await fetch("/api/account/avatar", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Remove failed.");
+        }
+
+        profile = Object.assign({ authenticated: true }, data);
+        updateSession(profile);
+        renderAvatarElement(avatarBox, profile);
+        avatarRemove.hidden = true;
+        showFormSuccess(profileForm, data.message || "Profile picture removed.");
+      } catch (error) {
+        showFormError(profileForm, error.message || "Remove failed.");
+      } finally {
+        avatarRemove.disabled = false;
+      }
+    });
+
+    profileForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(profileForm);
+      clearFormSuccess(profileForm);
+
+      const submit = profileForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/account/profile", {
+          method: "PATCH",
+          body: JSON.stringify({
+            displayName: displayNameInput.value.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Save failed.");
+        }
+
+        profile = Object.assign({ authenticated: true }, data);
+        updateSession(profile);
+        displayNameInput.value = profile.displayName || "";
+        showFormSuccess(profileForm, data.message || "Profile updated.");
+      } catch (error) {
+        showFormError(profileForm, error.message || "Save failed.");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    passwordForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(passwordForm);
+      clearFormSuccess(passwordForm);
+
+      const submit = passwordForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/account/password", {
+          method: "POST",
+          body: JSON.stringify({
+            currentPassword: passwordForm.querySelector('[name="currentPassword"]').value,
+            newPassword: passwordForm.querySelector('[name="newPassword"]').value,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Password update failed.");
+        }
+
+        passwordForm.reset();
+        showFormSuccess(passwordForm, data.message || "Password updated.");
+      } catch (error) {
+        showFormError(passwordForm, error.message || "Password update failed.");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
+
   function initProtectedPages() {
     const path = window.location.pathname;
 
@@ -399,10 +595,12 @@
   window.KanasakaAuth = {
     initSession: initSession,
     getSession: getSession,
+    updateSession: updateSession,
     login: login,
     register: register,
     logout: logout,
     initProtectedPages: initProtectedPages,
     initAuthForms: initAuthForms,
+    initSettingsPage: initSettingsPage,
   };
 })();

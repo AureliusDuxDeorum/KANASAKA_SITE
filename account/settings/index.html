@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings | KANASAKA</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script defer src="/assets/js/auth.js"></script>
+  <script defer src="/assets/js/main.js"></script>
+</head>
+<body>
+
+<div id="site-header"></div>
+
+<main>
+
+  <section class="auth-page settings-page">
+    <div class="auth-card settings-card">
+      <h1>Account Settings</h1>
+      <p>Update your profile picture, display name, and password.</p>
+
+      <div id="settings-gate" class="auth-gate" hidden></div>
+
+      <div id="settings-content" hidden>
+        <div class="settings-profile">
+          <div id="settings-avatar" class="settings-avatar" aria-hidden="true"></div>
+          <div class="settings-profile-actions">
+            <label class="button secondary settings-upload-label" for="settings-avatar-input">
+              Upload Photo
+            </label>
+            <input id="settings-avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+            <button id="settings-avatar-remove" class="auth-link secondary" type="button" hidden>
+              Remove Photo
+            </button>
+          </div>
+        </div>
+
+        <form id="settings-profile-form" class="auth-form settings-form">
+          <div class="auth-field">
+            <label for="settings-display-name">Display Name</label>
+            <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
+          </div>
+
+          <div class="auth-field">
+            <label for="settings-email">Email</label>
+            <input id="settings-email" name="email" type="email" disabled>
+          </div>
+
+          <button class="button" type="submit">Save Profile</button>
+        </form>
+
+        <form id="settings-password-form" class="auth-form settings-form">
+          <h2 class="settings-section-title">Change Password</h2>
+
+          <div class="auth-field">
+            <label for="settings-current-password">Current Password</label>
+            <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
+          </div>
+
+          <div class="auth-field">
+            <label for="settings-new-password">New Password</label>
+            <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8">
+          </div>
+
+          <button class="button secondary" type="submit">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+
+</body>
+</html>
