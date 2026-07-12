@@ -1248,6 +1248,10 @@ h1 {
     min-width: 0;
   }
 
+  .download-platform-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hero {
     min-height: 60vh;
     padding: 64px 20px;
