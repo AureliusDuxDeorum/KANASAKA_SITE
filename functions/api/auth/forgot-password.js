@@ -8,12 +8,7 @@ import {
   validateEmail,
 } from "../../lib/auth.js";
 import { sendPasswordResetEmail } from "../../lib/email.js";
-import {
-  clientIp,
-  enforceRateLimit,
-  logAuthEvent,
-  requireSameOrigin,
-} from "../../lib/security.js";
+import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -26,9 +21,6 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
-  const ipLimited = await enforceRateLimit(env, `forgot:ip:${ip}`, "forgotIp");
-  if (ipLimited) return ipLimited;
-
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -41,13 +33,6 @@ export async function onRequestPost(context) {
   if (!validateEmail(email)) {
     return jsonResponse({ success: true, message: genericMessage });
   }
-
-  const emailLimited = await enforceRateLimit(
-    env,
-    `forgot:email:${email}`,
-    "forgotEmail"
-  );
-  if (emailLimited) return emailLimited;
 
   const user = await env.DB.prepare(
     "SELECT id, email_verified FROM users WHERE email = ? COLLATE NOCASE"

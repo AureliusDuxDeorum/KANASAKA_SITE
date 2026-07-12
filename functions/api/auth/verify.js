@@ -7,12 +7,7 @@ import {
   sessionCookieHeader,
   sessionPayload,
 } from "../../lib/auth.js";
-import {
-  clientIp,
-  enforceRateLimit,
-  logAuthEvent,
-  requireSameOrigin,
-} from "../../lib/security.js";
+import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 async function verifyWithToken(env, token, ip) {
   const record = await consumeEmailToken(env, token, "verify");
@@ -62,9 +57,6 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
-  const rateLimited = await enforceRateLimit(env, `verify:ip:${ip}`, "verifyIp");
-  if (rateLimited) return rateLimited;
-
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");

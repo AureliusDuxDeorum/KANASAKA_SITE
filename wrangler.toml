@@ -5,10 +5,18 @@ pages_build_output_dir = "."
 # D1 migrations (run in order on remote):
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/004_security.sql
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/005_auth_hardening.sql
 # Email secret (Pages → Settings → Variables and secrets):
 #   RESEND_API_KEY = your Resend API key
+# Required session pepper (Pages → Production secrets):
+#   SESSION_SECRET = long random string (32+ bytes)
 # Optional admin secret for /api/auth/email-status:
 #   ADMIN_SECRET = long random string (send as Authorization: Bearer …)
+# Optional Argon2 tuning (Pages → Variables):
+#   ARGON2_MEMORY_KIB = 8192
+#   ARGON2_ITERATIONS = 2
+#   SESSION_ROTATE_HOURS = 24
+# WAF setup: see docs/CLOUDFLARE_WAF.md
 # Bind D1 in Pages → Settings → Bindings (variable name: DB)
 
 [[d1_databases]]

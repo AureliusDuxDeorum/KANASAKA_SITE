@@ -1,5 +1,13 @@
-export const SESSION_COOKIE = "kanasaka_session";
+import {
+  hashPasswordArgon2,
+  isArgon2Hash,
+  verifyPasswordArgon2,
+} from "./argon2.js";
+import { generateRawToken, hashSecret } from "./tokens.js";
+
+export const SESSION_COOKIE = "__Host-kanasaka_session";
 export const SESSION_DAYS = 30;
+export const SESSION_ROTATE_HOURS = 24;
 export const VERIFY_TOKEN_HOURS = 24;
 export const RESET_TOKEN_HOURS = 1;
 
@@ -44,9 +52,6 @@ export const CONTACT_INFO = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Cloudflare Pages Functions on the free plan allow ~10 ms CPU per request.
-// 210k PBKDF2 iterations exceed that; keep this under the budget.
-export const PBKDF2_ITERATIONS = 60000;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
 export const LOGIN_FAILURE_MESSAGE = "Invalid email or password.";
@@ -59,6 +64,7 @@ export function jsonResponse(data, status = 200, headers = {}) {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
+      Pragma: "no-cache",
       ...headers,
     },
   });
@@ -86,11 +92,11 @@ export function parseCookies(request) {
 }
 
 export function sessionCookieHeader(token, maxAgeSeconds) {
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAgeSeconds}`;
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAgeSeconds}`;
 }
 
 export function clearSessionCookieHeader() {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
 }
 
 export function normalizeEmail(value) {
@@ -162,7 +168,7 @@ function parsePasswordHash(stored) {
   return null;
 }
 
-async function derivePasswordHash(password, salt, iterations) {
+async function derivePasswordHashPbkdf2(password, salt, iterations) {
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -186,29 +192,55 @@ async function derivePasswordHash(password, salt, iterations) {
   return new Uint8Array(hash);
 }
 
-export async function hashPassword(password) {
-  if (passwordValidationError(password)) {
-    throw new Error("Invalid password for hashing.");
-  }
-
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const hash = await derivePasswordHash(password, salt, PBKDF2_ITERATIONS);
-
-  return `pbkdf2:${PBKDF2_ITERATIONS}:${bytesToBase64(salt)}:${bytesToBase64(hash)}`;
-}
-
-export async function verifyPassword(password, stored) {
-  if (typeof password !== "string" || password.length > PASSWORD_MAX_LENGTH) {
-    return false;
-  }
-
+async function verifyPasswordPbkdf2(password, stored) {
   const parsed = parsePasswordHash(stored);
   if (!parsed || !Number.isFinite(parsed.iterations) || parsed.iterations <= 0) {
     return false;
   }
 
-  const hash = await derivePasswordHash(password, parsed.salt, parsed.iterations);
+  const hash = await derivePasswordHashPbkdf2(password, parsed.salt, parsed.iterations);
   return timingSafeEqual(hash, parsed.expected);
+}
+
+export function needsPasswordUpgrade(stored) {
+  return !isArgon2Hash(stored);
+}
+
+export async function hashPassword(password, env) {
+  if (passwordValidationError(password)) {
+    throw new Error("Invalid password for hashing.");
+  }
+
+  return hashPasswordArgon2(password, env);
+}
+
+export async function verifyPassword(password, stored, env) {
+  if (typeof password !== "string" || password.length > PASSWORD_MAX_LENGTH) {
+    return false;
+  }
+
+  if (isArgon2Hash(stored)) {
+    return verifyPasswordArgon2(password, stored);
+  }
+
+  return verifyPasswordPbkdf2(password, stored);
+}
+
+export async function upgradePasswordHash(env, userId, password, stored) {
+  if (!needsPasswordUpgrade(stored)) {
+    return stored;
+  }
+
+  const valid = await verifyPasswordPbkdf2(password, stored);
+  if (!valid) {
+    return stored;
+  }
+
+  const nextHash = await hashPassword(password, env);
+  await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+    .bind(nextHash, userId)
+    .run();
+  return nextHash;
 }
 
 export function sessionMaxAge(env) {
@@ -217,52 +249,97 @@ export function sessionMaxAge(env) {
   return Math.floor(days * 24 * 60 * 60);
 }
 
+export function sessionRotateMs(env) {
+  const hours = Number(env.SESSION_ROTATE_HOURS || SESSION_ROTATE_HOURS);
+  if (!Number.isFinite(hours) || hours <= 0) {
+    return SESSION_ROTATE_HOURS * 60 * 60 * 1000;
+  }
+  return hours * 60 * 60 * 1000;
+}
+
 export async function createSession(env, userId) {
-  const token = crypto.randomUUID();
+  const rawToken = generateRawToken(32);
+  const tokenHash = await hashSecret(rawToken, env);
   const maxAge = sessionMaxAge(env);
   const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString();
 
   await env.DB.prepare(
-    "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)"
+    `INSERT INTO sessions (token_hash, user_id, expires_at, last_rotated_at)
+     VALUES (?, ?, ?, datetime('now'))`
   )
-    .bind(token, userId, expiresAt)
+    .bind(tokenHash, userId, expiresAt)
     .run();
 
-  return { token, maxAge };
+  return { token: rawToken, maxAge };
 }
 
-export async function deleteSession(env, token) {
-  if (!token) return;
-  await env.DB.prepare("DELETE FROM sessions WHERE id = ?").bind(token).run();
+export async function deleteSession(env, rawToken) {
+  if (!rawToken) return;
+  const tokenHash = await hashSecret(rawToken, env);
+  await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash).run();
 }
 
 export async function deleteAllUserSessions(env, userId) {
   await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId).run();
 }
 
-export async function getSessionUser(request, env) {
-  if (!env.DB) return null;
-
-  const cookies = parseCookies(request);
-  const token = cookies[SESSION_COOKIE];
-  if (!token) return null;
-
-  const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.email_verified, u.display_name,
+async function loadSessionUser(env, tokenHash) {
+  return env.DB.prepare(
+    `SELECT s.token_hash, s.last_rotated_at,
+            u.id, u.email, u.email_verified, u.display_name,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
-     WHERE s.id = ?
+     WHERE s.token_hash = ?
        AND s.expires_at > datetime('now')`
   )
-    .bind(token)
+    .bind(tokenHash)
     .first();
+}
 
-  if (!row || !row.email_verified) return null;
+export async function rotateSession(env, userId, currentTokenHash) {
+  await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?")
+    .bind(currentTokenHash)
+    .run();
+  return createSession(env, userId);
+}
 
-  return row;
+export async function resolveSession(request, env) {
+  if (!env.DB) {
+    return { user: null, sessionHeaders: {} };
+  }
+
+  const cookies = parseCookies(request);
+  const rawToken = cookies[SESSION_COOKIE];
+  if (!rawToken) {
+    return { user: null, sessionHeaders: {} };
+  }
+
+  const tokenHash = await hashSecret(rawToken, env);
+  const row = await loadSessionUser(env, tokenHash);
+  if (!row || !row.email_verified) {
+    return { user: null, sessionHeaders: {} };
+  }
+
+  const sessionHeaders = {};
+  const rotatedAtMs = Date.parse(row.last_rotated_at || "");
+  const shouldRotate =
+    !Number.isFinite(rotatedAtMs) ||
+    Date.now() - rotatedAtMs >= sessionRotateMs(env);
+
+  if (shouldRotate) {
+    const session = await rotateSession(env, row.id, tokenHash);
+    sessionHeaders["Set-Cookie"] = sessionCookieHeader(session.token, session.maxAge);
+  }
+
+  return { user: row, sessionHeaders };
+}
+
+export async function getSessionUser(request, env) {
+  const { user } = await resolveSession(request, env);
+  return user;
 }
 
 export async function createEmailToken(env, userId, type, hours) {
@@ -271,7 +348,8 @@ export async function createEmailToken(env, userId, type, hours) {
     throw new Error("Invalid user id for email token.");
   }
 
-  const token = crypto.randomUUID();
+  const rawToken = generateRawToken(32);
+  const tokenHash = await hashSecret(rawToken, env);
   const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
   await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ? AND type = ?")
@@ -279,29 +357,32 @@ export async function createEmailToken(env, userId, type, hours) {
     .run();
 
   await env.DB.prepare(
-    "INSERT INTO email_tokens (id, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
+    "INSERT INTO email_tokens (token_hash, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
   )
-    .bind(token, uid, type, expiresAt)
+    .bind(tokenHash, uid, type, expiresAt)
     .run();
 
-  return token;
+  return rawToken;
 }
 
-export async function consumeEmailToken(env, token, type) {
+export async function consumeEmailToken(env, rawToken, type) {
+  const tokenHash = await hashSecret(rawToken, env);
   const row = await env.DB.prepare(
-    `SELECT et.id, et.user_id, u.email
+    `SELECT et.token_hash, et.user_id, u.email
      FROM email_tokens et
      JOIN users u ON u.id = et.user_id
-     WHERE et.id = ?
+     WHERE et.token_hash = ?
        AND et.type = ?
        AND et.expires_at > datetime('now')`
   )
-    .bind(token, type)
+    .bind(tokenHash, type)
     .first();
 
   if (!row) return null;
 
-  await env.DB.prepare("DELETE FROM email_tokens WHERE id = ?").bind(token).run();
+  await env.DB.prepare("DELETE FROM email_tokens WHERE token_hash = ?")
+    .bind(tokenHash)
+    .run();
   return row;
 }
 

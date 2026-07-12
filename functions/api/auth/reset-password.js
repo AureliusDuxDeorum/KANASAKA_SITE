@@ -7,12 +7,7 @@ import {
   passwordValidationError,
   readJson,
 } from "../../lib/auth.js";
-import {
-  clientIp,
-  enforceRateLimit,
-  logAuthEvent,
-  requireSameOrigin,
-} from "../../lib/security.js";
+import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -25,9 +20,6 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
-  const rateLimited = await enforceRateLimit(env, `reset:ip:${ip}`, "resetIp");
-  if (rateLimited) return rateLimited;
-
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -51,7 +43,7 @@ export async function onRequestPost(context) {
     return errorResponse("Reset link is invalid or has expired.", 400);
   }
 
-  const passwordHash = await hashPassword(password);
+  const passwordHash = await hashPassword(password, env);
 
   await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?")
     .bind(passwordHash, record.user_id)

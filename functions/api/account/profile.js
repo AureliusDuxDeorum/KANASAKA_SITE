@@ -1,9 +1,9 @@
-import { errorResponse, getSessionUser, jsonResponse, readJson } from "../../lib/auth.js";
+import { errorResponse, jsonResponse, readJson, resolveSession } from "../../lib/auth.js";
 import { getUserProfile, profilePayload, validateDisplayName } from "../../lib/profile.js";
 import { requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestGet(context) {
-  const user = await getSessionUser(context.request, context.env);
+  const { user, sessionHeaders } = await resolveSession(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to view account settings.", 401);
   }
@@ -13,14 +13,14 @@ export async function onRequestGet(context) {
     return errorResponse("Account not found.", 404);
   }
 
-  return jsonResponse(profilePayload(profile));
+  return jsonResponse(profilePayload(profile), 200, sessionHeaders);
 }
 
 export async function onRequestPatch(context) {
   const originError = requireSameOrigin(context.request, context.env);
   if (originError) return originError;
 
-  const user = await getSessionUser(context.request, context.env);
+  const { user, sessionHeaders } = await resolveSession(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to update account settings.", 401);
   }
@@ -40,9 +40,13 @@ export async function onRequestPatch(context) {
     .run();
 
   const profile = await getUserProfile(context.env, user.id);
-  return jsonResponse({
-    success: true,
-    message: "Profile updated.",
-    ...profilePayload(profile),
-  });
+  return jsonResponse(
+    {
+      success: true,
+      message: "Profile updated.",
+      ...profilePayload(profile),
+    },
+    200,
+    sessionHeaders
+  );
 }

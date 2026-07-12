@@ -1,0 +1,8 @@
+{
+  "name": "kanasaka-site",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "argon2-wasm-edge": "^1.0.23"
+  }
+}

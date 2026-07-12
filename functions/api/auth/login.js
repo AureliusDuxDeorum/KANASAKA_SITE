@@ -9,15 +9,11 @@ import {
   readJson,
   sessionCookieHeader,
   sessionPayload,
+  upgradePasswordHash,
   validateEmail,
   verifyPassword,
 } from "../../lib/auth.js";
-import {
-  clientIp,
-  enforceRateLimit,
-  logAuthEvent,
-  requireSameOrigin,
-} from "../../lib/security.js";
+import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -30,9 +26,6 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
-  const rateLimited = await enforceRateLimit(env, `login:ip:${ip}`, "loginIp");
-  if (rateLimited) return rateLimited;
-
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -63,7 +56,7 @@ export async function onRequestPost(context) {
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
-  const valid = await verifyPassword(password, user.password_hash);
+  const valid = await verifyPassword(password, user.password_hash, env);
   if (!valid) {
     await logAuthEvent(env, "login_failed", { ip, reason: "bad_password" });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
@@ -74,6 +67,7 @@ export async function onRequestPost(context) {
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
+  await upgradePasswordHash(env, user.id, password, user.password_hash);
   await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
