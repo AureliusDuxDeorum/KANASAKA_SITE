@@ -389,8 +389,13 @@
     const content = document.getElementById("settings-content");
     if (!gate || !content) return;
 
+    initSettingsNavigation();
+
     const session = getSession();
+    const sidebar = document.querySelector(".settings-sidebar");
+
     if (!session.authenticated) {
+      if (sidebar) sidebar.hidden = true;
       gate.hidden = false;
       renderAuthGate(
         "settings-gate",
@@ -400,6 +405,7 @@
       return;
     }
 
+    if (sidebar) sidebar.hidden = false;
     gate.hidden = true;
     content.hidden = false;
 
@@ -408,6 +414,7 @@
     const avatarRemove = document.getElementById("settings-avatar-remove");
     const profileForm = document.getElementById("settings-profile-form");
     const passwordForm = document.getElementById("settings-password-form");
+    const deleteForm = document.getElementById("settings-delete-form");
     const displayNameInput = document.getElementById("settings-display-name");
     const emailInput = document.getElementById("settings-email");
 
@@ -433,6 +440,8 @@
     emailInput.value = profile.email || "";
     renderAvatarElement(avatarBox, profile);
     avatarRemove.hidden = !profile.hasAvatar;
+
+    initThemePicker();
 
     avatarInput.addEventListener("change", async function () {
       const file = avatarInput.files && avatarInput.files[0];
@@ -557,6 +566,81 @@
       } finally {
         submit.disabled = false;
       }
+    });
+
+    deleteForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(deleteForm);
+      clearFormSuccess(deleteForm);
+
+      const submit = deleteForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/account/delete", {
+          method: "POST",
+          body: JSON.stringify({
+            password: deleteForm.querySelector('[name="password"]').value,
+            confirmation: deleteForm.querySelector('[name="confirmation"]').value,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Account deletion failed.");
+        }
+
+        sessionCache = { authenticated: false };
+        window.location.href = "/";
+      } catch (error) {
+        showFormError(deleteForm, error.message || "Account deletion failed.");
+        submit.disabled = false;
+      }
+    });
+  }
+
+  function initSettingsNavigation() {
+    const nav = document.getElementById("settings-nav");
+    if (!nav) return;
+
+    nav.querySelectorAll("[data-settings-panel]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        showSettingsPanel(button.getAttribute("data-settings-panel"));
+      });
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const panel = params.get("section");
+    if (panel) {
+      showSettingsPanel(panel);
+    }
+  }
+
+  function showSettingsPanel(panelId) {
+    const nav = document.getElementById("settings-nav");
+    if (!nav) return;
+
+    nav.querySelectorAll("[data-settings-panel]").forEach(function (button) {
+      const active = button.getAttribute("data-settings-panel") === panelId;
+      button.classList.toggle("is-active", active);
+    });
+
+    document.querySelectorAll(".settings-panel").forEach(function (panel) {
+      const active = panel.id === "settings-panel-" + panelId;
+      panel.hidden = !active;
+      panel.classList.toggle("is-active", active);
+    });
+  }
+
+  function initThemePicker() {
+    if (!window.KanasakaTheme) return;
+
+    window.KanasakaTheme.syncThemePicker(window.KanasakaTheme.getTheme());
+
+    document.querySelectorAll("[data-theme-option]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const theme = button.getAttribute("data-theme-option");
+        window.KanasakaTheme.setTheme(theme);
+      });
     });
   }
 

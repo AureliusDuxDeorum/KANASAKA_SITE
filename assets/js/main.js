@@ -93,25 +93,34 @@
 
   function initTheme() {
     const stored = localStorage.getItem("kanasaka-theme");
-    const theme = stored === "light" || stored === "dark" ? stored : "dark";
+    const theme =
+      stored === "light" || stored === "dark" || stored === "accent" ? stored : "dark";
+    applyTheme(theme);
+  }
+
+  function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    updateThemeLabel(theme);
+    localStorage.setItem("kanasaka-theme", theme);
+    syncThemePicker(theme);
   }
 
-  function updateThemeLabel(theme) {
-    const btn = document.querySelector(".theme-toggle");
-    if (btn) {
-      btn.textContent = theme === "dark" ? "Light" : "Dark";
-      btn.setAttribute("aria-label", "Switch to " + (theme === "dark" ? "light" : "dark") + " mode");
+  function syncThemePicker(theme) {
+    document.querySelectorAll("[data-theme-option]").forEach(function (button) {
+      const selected = button.getAttribute("data-theme-option") === theme;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+  }
+
+  function getTheme() {
+    return document.documentElement.getAttribute("data-theme") || "dark";
+  }
+
+  function setTheme(theme) {
+    if (theme !== "dark" && theme !== "light" && theme !== "accent") {
+      return;
     }
-  }
-
-  function toggleTheme() {
-    const current = document.documentElement.getAttribute("data-theme") || "dark";
-    const next = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("kanasaka-theme", next);
-    updateThemeLabel(next);
+    applyTheme(theme);
   }
 
   function buildAuthControls() {
@@ -147,11 +156,6 @@
       profileLink.appendChild(avatar);
       profileLink.appendChild(name);
 
-      const settingsLink = document.createElement("a");
-      settingsLink.className = "header-settings-link";
-      settingsLink.href = "/account/settings/";
-      settingsLink.textContent = "Settings";
-
       const logoutBtn = document.createElement("button");
       logoutBtn.type = "button";
       logoutBtn.className = "auth-link";
@@ -162,7 +166,6 @@
       });
 
       wrap.appendChild(profileLink);
-      wrap.appendChild(settingsLink);
       wrap.appendChild(logoutBtn);
       return wrap;
     }
@@ -264,11 +267,6 @@
 
     actions.appendChild(buildAuthControls());
 
-    const themeBtn = document.createElement("button");
-    themeBtn.type = "button";
-    themeBtn.className = "theme-toggle";
-    themeBtn.addEventListener("click", toggleTheme);
-
     const navToggle = document.createElement("button");
     navToggle.type = "button";
     navToggle.className = "nav-toggle";
@@ -283,7 +281,6 @@
       navToggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
 
-    actions.appendChild(themeBtn);
     actions.appendChild(navToggle);
 
     inner.appendChild(logo);
@@ -337,6 +334,12 @@
 
   window.KanasakaLayout = {
     remount: mountLayout,
+  };
+
+  window.KanasakaTheme = {
+    getTheme: getTheme,
+    setTheme: setTheme,
+    syncThemePicker: syncThemePicker,
   };
 
   async function boot() {
