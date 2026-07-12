@@ -2,7 +2,7 @@ name = "kanasaka-site"
 compatibility_date = "2024-11-12"
 pages_build_output_dir = "."
 
-# D1: wrangler d1 execute kanasaka-auth --remote --file=./migrations/002_email_auth.sql
+# D1: wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
 # Email secret (Pages → Settings → Variables and secrets):
 #   RESEND_API_KEY = your Resend API key
 # Bind D1 in Pages → Settings → Bindings (variable name: DB)

@@ -124,9 +124,33 @@
         : { authenticated: false };
 
     if (session.authenticated) {
-      const user = document.createElement("span");
-      user.className = "header-username";
-      user.textContent = session.email;
+      const profileLink = document.createElement("a");
+      profileLink.className = "header-user";
+      profileLink.href = "/account/settings/";
+      profileLink.title = "Account settings";
+
+      const avatar = document.createElement("span");
+      avatar.className = "header-avatar";
+      if (session.hasAvatar && session.avatarUrl) {
+        const img = document.createElement("img");
+        img.src = session.avatarUrl;
+        img.alt = "";
+        avatar.appendChild(img);
+      } else {
+        avatar.textContent = session.initials || "KS";
+      }
+
+      const name = document.createElement("span");
+      name.className = "header-display-name";
+      name.textContent = session.displayLabel || session.email;
+
+      profileLink.appendChild(avatar);
+      profileLink.appendChild(name);
+
+      const settingsLink = document.createElement("a");
+      settingsLink.className = "header-settings-link";
+      settingsLink.href = "/account/settings/";
+      settingsLink.textContent = "Settings";
 
       const logoutBtn = document.createElement("button");
       logoutBtn.type = "button";
@@ -137,7 +161,8 @@
         window.location.href = "/";
       });
 
-      wrap.appendChild(user);
+      wrap.appendChild(profileLink);
+      wrap.appendChild(settingsLink);
       wrap.appendChild(logoutBtn);
       return wrap;
     }
@@ -217,6 +242,7 @@
 
   function buildHeader() {
     const header = document.createElement("header");
+    header.id = "site-header";
     header.className = "site-header";
 
     const inner = document.createElement("div");
@@ -270,6 +296,7 @@
 
   function buildFooter() {
     const footer = document.createElement("footer");
+    footer.id = "site-footer";
     footer.className = "site-footer";
 
     const inner = document.createElement("div");
@@ -308,6 +335,10 @@
     }
   }
 
+  window.KanasakaLayout = {
+    remount: mountLayout,
+  };
+
   async function boot() {
     initTheme();
 
@@ -320,6 +351,7 @@
     if (window.KanasakaAuth) {
       window.KanasakaAuth.initAuthForms();
       window.KanasakaAuth.initProtectedPages();
+      window.KanasakaAuth.initSettingsPage();
     }
   }
 

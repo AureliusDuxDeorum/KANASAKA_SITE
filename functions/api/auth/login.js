@@ -31,7 +31,12 @@ export async function onRequestPost(context) {
   }
 
   const user = await env.DB.prepare(
-    "SELECT id, email, password_hash, email_verified FROM users WHERE email = ? COLLATE NOCASE"
+    `SELECT u.id, u.email, u.password_hash, u.email_verified, u.display_name,
+            ua.updated_at AS avatar_updated_at,
+            CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+     FROM users u
+     LEFT JOIN user_avatars ua ON ua.user_id = u.id
+     WHERE u.email = ? COLLATE NOCASE`
   )
     .bind(email)
     .first();

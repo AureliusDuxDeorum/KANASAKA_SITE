@@ -411,6 +411,65 @@ def reset_password_page() -> str:
     return shell("Reset Password", body)
 
 
+def settings_page() -> str:
+    body = """
+  <section class="auth-page settings-page">
+    <div class="auth-card settings-card">
+      <h1>Account Settings</h1>
+      <p>Update your profile picture, display name, and password.</p>
+
+      <div id="settings-gate" class="auth-gate" hidden></div>
+
+      <div id="settings-content" hidden>
+        <div class="settings-profile">
+          <div id="settings-avatar" class="settings-avatar" aria-hidden="true"></div>
+          <div class="settings-profile-actions">
+            <label class="button secondary settings-upload-label" for="settings-avatar-input">
+              Upload Photo
+            </label>
+            <input id="settings-avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+            <button id="settings-avatar-remove" class="auth-link secondary" type="button" hidden>
+              Remove Photo
+            </button>
+          </div>
+        </div>
+
+        <form id="settings-profile-form" class="auth-form settings-form">
+          <div class="auth-field">
+            <label for="settings-display-name">Display Name</label>
+            <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
+          </div>
+
+          <div class="auth-field">
+            <label for="settings-email">Email</label>
+            <input id="settings-email" name="email" type="email" disabled>
+          </div>
+
+          <button class="button" type="submit">Save Profile</button>
+        </form>
+
+        <form id="settings-password-form" class="auth-form settings-form">
+          <h2 class="settings-section-title">Change Password</h2>
+
+          <div class="auth-field">
+            <label for="settings-current-password">Current Password</label>
+            <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
+          </div>
+
+          <div class="auth-field">
+            <label for="settings-new-password">New Password</label>
+            <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8">
+          </div>
+
+          <button class="button secondary" type="submit">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </section>
+"""
+    return shell("Account Settings", body)
+
+
 def write_page(rel_path: str, content: str) -> None:
     if rel_path == "index.html":
         path = ROOT / "index.html"
@@ -432,11 +491,12 @@ def main() -> None:
     write_page("verify", verify_page())
     write_page("forgot-password", forgot_password_page())
     write_page("reset-password", reset_password_page())
+    write_page("account/settings", settings_page())
 
     for rel, title in COMING_SOON_PAGES:
         write_page(rel, coming_soon(title))
 
-    print(f"Done — {8 + len(COMING_SOON_PAGES)} pages generated.")
+    print(f"Done — {9 + len(COMING_SOON_PAGES)} pages generated.")
 
 
 if __name__ == "__main__":

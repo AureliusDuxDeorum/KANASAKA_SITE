@@ -30,7 +30,12 @@ export async function onRequestGet(context) {
     .run();
 
   const user = await env.DB.prepare(
-    "SELECT id, email, email_verified FROM users WHERE id = ?"
+    `SELECT u.id, u.email, u.email_verified, u.display_name,
+            ua.updated_at AS avatar_updated_at,
+            CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+     FROM users u
+     LEFT JOIN user_avatars ua ON ua.user_id = u.id
+     WHERE u.id = ?`
   )
     .bind(record.user_id)
     .first();
