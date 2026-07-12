@@ -2,9 +2,13 @@ name = "kanasaka-site"
 compatibility_date = "2024-11-12"
 pages_build_output_dir = "."
 
-# D1: wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
+# D1 migrations (run in order on remote):
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/004_security.sql
 # Email secret (Pages → Settings → Variables and secrets):
 #   RESEND_API_KEY = your Resend API key
+# Optional admin secret for /api/auth/email-status:
+#   ADMIN_SECRET = long random string (send as Authorization: Bearer …)
 # Bind D1 in Pages → Settings → Bindings (variable name: DB)
 
 [[d1_databases]]

@@ -8,6 +8,7 @@ import {
   profilePayload,
   saveAvatar,
 } from "../../lib/profile.js";
+import { requireSameOrigin } from "../../lib/security.js";
 
 function avatarResponse(record) {
   const body =
@@ -37,6 +38,9 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
+  const originError = requireSameOrigin(context.request, context.env);
+  if (originError) return originError;
+
   const user = await getSessionUser(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to upload a profile picture.", 401);
@@ -88,6 +92,9 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestDelete(context) {
+  const originError = requireSameOrigin(context.request, context.env);
+  if (originError) return originError;
+
   const user = await getSessionUser(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to remove your profile picture.", 401);

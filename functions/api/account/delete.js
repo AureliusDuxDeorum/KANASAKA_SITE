@@ -10,9 +10,13 @@ import {
   verifyPassword,
 } from "../../lib/auth.js";
 import { deleteAvatar } from "../../lib/profile.js";
+import { logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
 
   const user = await getSessionUser(request, env);
   if (!user) {
@@ -51,6 +55,8 @@ export async function onRequestPost(context) {
   await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ?").bind(user.id).run();
   await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
   await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(user.id).run();
+
+  await logAuthEvent(env, "account_deleted", { userId: user.id });
 
   if (sessionToken) {
     await deleteSession(env, sessionToken);

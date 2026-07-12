@@ -47,6 +47,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Cloudflare Pages Functions on the free plan allow ~10 ms CPU per request.
 // 210k PBKDF2 iterations exceed that; keep this under the budget.
 export const PBKDF2_ITERATIONS = 60000;
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 128;
+export const LOGIN_FAILURE_MESSAGE = "Invalid email or password.";
+export const REGISTER_SUCCESS_MESSAGE =
+  "If this email can be used, check your inbox to confirm your account before signing in.";
 
 export function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -96,8 +101,18 @@ export function validateEmail(email) {
   return typeof email === "string" && EMAIL_RE.test(email) && email.length <= 254;
 }
 
+export function passwordValidationError(password) {
+  if (typeof password !== "string" || password.length < PASSWORD_MIN_LENGTH) {
+    return "Password must be at least 8 characters.";
+  }
+  if (password.length > PASSWORD_MAX_LENGTH) {
+    return `Password must be at most ${PASSWORD_MAX_LENGTH} characters.`;
+  }
+  return null;
+}
+
 export function validatePassword(password) {
-  return typeof password === "string" && password.length >= 8;
+  return passwordValidationError(password) === null;
 }
 
 function bytesToBase64(bytes) {
@@ -172,6 +187,10 @@ async function derivePasswordHash(password, salt, iterations) {
 }
 
 export async function hashPassword(password) {
+  if (passwordValidationError(password)) {
+    throw new Error("Invalid password for hashing.");
+  }
+
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await derivePasswordHash(password, salt, PBKDF2_ITERATIONS);
 
@@ -179,6 +198,10 @@ export async function hashPassword(password) {
 }
 
 export async function verifyPassword(password, stored) {
+  if (typeof password !== "string" || password.length > PASSWORD_MAX_LENGTH) {
+    return false;
+  }
+
   const parsed = parsePasswordHash(stored);
   if (!parsed || !Number.isFinite(parsed.iterations) || parsed.iterations <= 0) {
     return false;
@@ -211,6 +234,10 @@ export async function createSession(env, userId) {
 export async function deleteSession(env, token) {
   if (!token) return;
   await env.DB.prepare("DELETE FROM sessions WHERE id = ?").bind(token).run();
+}
+
+export async function deleteAllUserSessions(env, userId) {
+  await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId).run();
 }
 
 export async function getSessionUser(request, env) {
