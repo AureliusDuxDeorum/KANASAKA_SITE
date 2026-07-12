@@ -8,6 +8,32 @@ export const DOWNLOAD_URLS = {
     "https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_x64-setup.exe",
   linux:
     "https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_amd64.deb",
+  macos:
+    "https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_aarch64.dmg",
+};
+
+export const DOWNLOAD_META = {
+  windows: {
+    label: "Windows",
+    title: "x64 Installer",
+    file: "KS.Unify_0.1.0_x64-setup.exe",
+    size: "~21 MB",
+    detail: "Windows 10/11 · 64-bit",
+  },
+  macos: {
+    label: "macOS",
+    title: "Apple Silicon",
+    file: "KS.Unify_0.1.0_aarch64.dmg",
+    size: "~23 MB",
+    detail: "M1 / M2 / M3 · macOS 11+",
+  },
+  linux: {
+    label: "Linux",
+    title: "Debian Package",
+    file: "KS.Unify_0.1.0_amd64.deb",
+    size: "~31 MB",
+    detail: "Ubuntu / Debian · amd64",
+  },
 };
 
 export const CONTACT_INFO = {

@@ -310,9 +310,67 @@
   }
 
   function renderDownloadActions(container) {
+    const platforms = [
+      {
+        id: "windows",
+        label: "Windows",
+        title: "x64 Installer",
+        file: "KS.Unify_0.1.0_x64-setup.exe",
+        size: "~21 MB",
+        detail: "Windows 10/11 · 64-bit",
+        primary: true,
+      },
+      {
+        id: "macos",
+        label: "macOS",
+        title: "Apple Silicon",
+        file: "KS.Unify_0.1.0_aarch64.dmg",
+        size: "~23 MB",
+        detail: "M1 / M2 / M3 · macOS 11+",
+        primary: false,
+      },
+      {
+        id: "linux",
+        label: "Linux",
+        title: "Debian Package",
+        file: "KS.Unify_0.1.0_amd64.deb",
+        size: "~31 MB",
+        detail: "Ubuntu / Debian · amd64",
+        primary: false,
+      },
+    ];
+
     container.innerHTML =
-      '<a class="button" href="/api/download/windows">Download for Windows</a>' +
-      '<a class="button secondary" href="/api/download/linux">Download for Linux .deb</a>';
+      '<div class="download-platform-grid">' +
+      platforms
+        .map(function (platform) {
+          const buttonClass = platform.primary ? "button" : "button secondary";
+          return (
+            '<article class="download-platform-card">' +
+            '<span class="platform-label">' +
+            platform.label +
+            "</span>" +
+            "<strong class=\"platform-title\">" +
+            platform.title +
+            "</strong>" +
+            '<span class="platform-detail">' +
+            platform.detail +
+            "</span>" +
+            '<span class="platform-file">' +
+            platform.file +
+            " · " +
+            platform.size +
+            "</span>" +
+            '<a class="' +
+            buttonClass +
+            '" href="/api/download/' +
+            platform.id +
+            '">Download</a>' +
+            "</article>"
+          );
+        })
+        .join("") +
+      "</div>";
     container.hidden = false;
   }
 
