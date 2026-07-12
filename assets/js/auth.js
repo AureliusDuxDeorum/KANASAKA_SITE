@@ -312,6 +312,7 @@
   function renderDownloadActions(container) {
     container.innerHTML =
       '<a class="button" href="/api/download/windows">Download for Windows</a>' +
+      '<a class="button secondary" href="/api/download/macos">Download for macOS</a>' +
       '<a class="button secondary" href="/api/download/linux">Download for Linux .deb</a>';
     container.hidden = false;
   }

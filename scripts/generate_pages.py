@@ -160,6 +160,7 @@ def ks_unify_page() -> str:
         <div class="meta">
           <span>Version 0.1.0</span>
           <span>Windows</span>
+          <span>macOS</span>
           <span>Linux</span>
           <span>Active Development</span>
         </div>
@@ -235,6 +236,7 @@ def downloads_page() -> str:
         <div class="meta">
           <span>Version 0.1.0</span>
           <span>Windows</span>
+          <span>macOS</span>
           <span>Linux</span>
           <span>Active Development</span>
         </div>

@@ -8,6 +8,8 @@ export const DOWNLOAD_URLS = {
     "https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_x64-setup.exe",
   linux:
     "https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_amd64.deb",
+  macos:
+    "https://github.com/AureliusDuxDeorum/KS_UNIFY/releases/download/v0.1.0/KS.Unify_0.1.0_aarch64.dmg",
 };
 
 export const CONTACT_INFO = {
