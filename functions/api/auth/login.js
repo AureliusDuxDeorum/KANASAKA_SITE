@@ -1,15 +1,23 @@
 import {
   createSession,
+  deleteAllUserSessions,
   errorResponse,
   jsonResponse,
+  LOGIN_FAILURE_MESSAGE,
   normalizeEmail,
+  passwordValidationError,
   readJson,
   sessionCookieHeader,
   sessionPayload,
   validateEmail,
-  validatePassword,
   verifyPassword,
 } from "../../lib/auth.js";
+import {
+  clientIp,
+  enforceRateLimit,
+  logAuthEvent,
+  requireSameOrigin,
+} from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -18,6 +26,13 @@ export async function onRequestPost(context) {
     return errorResponse("Authentication service is not configured.", 503);
   }
 
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
+
+  const ip = clientIp(request);
+  const rateLimited = await enforceRateLimit(env, `login:ip:${ip}`, "loginIp");
+  if (rateLimited) return rateLimited;
+
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -25,9 +40,11 @@ export async function onRequestPost(context) {
 
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
+  const passwordError = passwordValidationError(password);
 
-  if (!validateEmail(email) || !validatePassword(password)) {
-    return errorResponse("Invalid email or password.", 401);
+  if (!validateEmail(email) || passwordError) {
+    await logAuthEvent(env, "login_failed", { ip, reason: "invalid_input" });
+    return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
   const user = await env.DB.prepare(
@@ -42,22 +59,24 @@ export async function onRequestPost(context) {
     .first();
 
   if (!user) {
-    return errorResponse("Invalid email or password.", 401);
+    await logAuthEvent(env, "login_failed", { ip, reason: "unknown_user" });
+    return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
   const valid = await verifyPassword(password, user.password_hash);
   if (!valid) {
-    return errorResponse("Invalid email or password.", 401);
+    await logAuthEvent(env, "login_failed", { ip, reason: "bad_password" });
+    return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
   if (!user.email_verified) {
-    return errorResponse(
-      "Confirm your email address before signing in. Check your inbox for the verification link.",
-      403
-    );
+    await logAuthEvent(env, "login_failed", { ip, reason: "unverified" });
+    return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
+  await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id);
+  await logAuthEvent(env, "login_success", { ip, userId: user.id });
 
   return jsonResponse(sessionPayload(user), 200, {
     "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),

@@ -1,11 +1,18 @@
 import {
   consumeEmailToken,
+  deleteAllUserSessions,
   errorResponse,
   hashPassword,
   jsonResponse,
+  passwordValidationError,
   readJson,
-  validatePassword,
 } from "../../lib/auth.js";
+import {
+  clientIp,
+  enforceRateLimit,
+  logAuthEvent,
+  requireSameOrigin,
+} from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -13,6 +20,13 @@ export async function onRequestPost(context) {
   if (!env.DB) {
     return errorResponse("Authentication service is not configured.", 503);
   }
+
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
+
+  const ip = clientIp(request);
+  const rateLimited = await enforceRateLimit(env, `reset:ip:${ip}`, "resetIp");
+  if (rateLimited) return rateLimited;
 
   const body = await readJson(request);
   if (!body) {
@@ -26,12 +40,14 @@ export async function onRequestPost(context) {
     return errorResponse("Reset token is required.", 400);
   }
 
-  if (!validatePassword(password)) {
-    return errorResponse("Password must be at least 8 characters.");
+  const passwordError = passwordValidationError(password);
+  if (passwordError) {
+    return errorResponse(passwordError);
   }
 
   const record = await consumeEmailToken(env, token, "reset");
   if (!record) {
+    await logAuthEvent(env, "password_reset_failed", { ip, reason: "invalid_token" });
     return errorResponse("Reset link is invalid or has expired.", 400);
   }
 
@@ -41,9 +57,8 @@ export async function onRequestPost(context) {
     .bind(passwordHash, record.user_id)
     .run();
 
-  await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?")
-    .bind(record.user_id)
-    .run();
+  await deleteAllUserSessions(env, record.user_id);
+  await logAuthEvent(env, "password_reset_success", { ip, userId: record.user_id });
 
   return jsonResponse({
     success: true,

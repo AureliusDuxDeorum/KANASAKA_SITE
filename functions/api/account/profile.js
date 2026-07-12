@@ -1,5 +1,6 @@
 import { errorResponse, getSessionUser, jsonResponse, readJson } from "../../lib/auth.js";
 import { getUserProfile, profilePayload, validateDisplayName } from "../../lib/profile.js";
+import { requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestGet(context) {
   const user = await getSessionUser(context.request, context.env);
@@ -16,6 +17,9 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPatch(context) {
+  const originError = requireSameOrigin(context.request, context.env);
+  if (originError) return originError;
+
   const user = await getSessionUser(context.request, context.env);
   if (!user) {
     return errorResponse("Log in to update account settings.", 401);

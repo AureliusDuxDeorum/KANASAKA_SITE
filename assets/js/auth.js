@@ -244,10 +244,12 @@
     box.textContent = "Verifying your email address...";
 
     try {
-      const response = await fetch(
-        "/api/auth/verify?token=" + encodeURIComponent(token),
-        { credentials: "include" }
-      );
+      const response = await fetch("/api/auth/verify", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token }),
+      });
       const data = await response.json();
 
       if (!response.ok) {

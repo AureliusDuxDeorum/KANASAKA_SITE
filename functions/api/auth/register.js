@@ -7,11 +7,18 @@ import {
   jsonResponse,
   normalizeEmail,
   readJson,
+  REGISTER_SUCCESS_MESSAGE,
   validateEmail,
-  validatePassword,
+  passwordValidationError,
   VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
 import { sendVerificationEmail } from "../../lib/email.js";
+import {
+  clientIp,
+  enforceRateLimit,
+  logAuthEvent,
+  requireSameOrigin,
+} from "../../lib/security.js";
 
 function registerFailure(err) {
   const message = errorMessage(err);
@@ -23,7 +30,7 @@ function registerFailure(err) {
     message.includes("email_tokens")
   ) {
     return errorResponse(
-      "Auth database is outdated. Run migrations/002_email_auth.sql on D1.",
+      "Auth database is outdated. Run migrations on D1 (see migrations/).",
       503
     );
   }
@@ -32,13 +39,6 @@ function registerFailure(err) {
     return errorResponse(
       "Registration failed due to a database error. Please try again.",
       500
-    );
-  }
-
-  if (message.includes("UNIQUE constraint failed")) {
-    return errorResponse(
-      "An account with this email already exists. Try signing in or resetting your password.",
-      409
     );
   }
 
@@ -75,12 +75,29 @@ function registerFailure(err) {
   return errorResponse("Registration failed. Please try again later.", 500);
 }
 
+function registerSuccessResponse(status = 201) {
+  return jsonResponse(
+    {
+      success: true,
+      message: REGISTER_SUCCESS_MESSAGE,
+    },
+    status
+  );
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
   if (!env.DB) {
     return errorResponse("Authentication service is not configured.", 503);
   }
+
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
+
+  const ip = clientIp(request);
+  const rateLimited = await enforceRateLimit(env, `register:ip:${ip}`, "registerIp");
+  if (rateLimited) return rateLimited;
 
   try {
     const body = await readJson(request);
@@ -95,8 +112,9 @@ export async function onRequestPost(context) {
       return errorResponse("Enter a valid email address.");
     }
 
-    if (!validatePassword(password)) {
-      return errorResponse("Password must be at least 8 characters.");
+    const passwordError = passwordValidationError(password);
+    if (passwordError) {
+      return errorResponse(passwordError);
     }
 
     const existing = await env.DB.prepare(
@@ -106,13 +124,17 @@ export async function onRequestPost(context) {
       .first();
 
     if (existing) {
-      if (existing.email_verified) {
-        return errorResponse("An account with this email already exists.", 409);
+      if (!existing.email_verified) {
+        const token = await createEmailToken(
+          env,
+          existing.id,
+          "verify",
+          VERIFY_TOKEN_HOURS
+        );
+        await sendVerificationEmail(env, email, token);
       }
-      return errorResponse(
-        "This email is already registered but not verified. Check your inbox or request a new verification email.",
-        409
-      );
+      await logAuthEvent(env, "register_existing", { ip });
+      return registerSuccessResponse(200);
     }
 
     const passwordHash = await hashPassword(password);
@@ -132,14 +154,8 @@ export async function onRequestPost(context) {
       return errorResponse(emailResult.reason, 503);
     }
 
-    return jsonResponse(
-      {
-        success: true,
-        message: "Check your email to confirm your account before signing in.",
-        email,
-      },
-      201
-    );
+    await logAuthEvent(env, "register_success", { ip, userId });
+    return registerSuccessResponse(201);
   } catch (err) {
     return registerFailure(err);
   }

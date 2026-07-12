@@ -3,25 +3,21 @@ import {
   createSession,
   errorResponse,
   jsonResponse,
+  readJson,
   sessionCookieHeader,
   sessionPayload,
 } from "../../lib/auth.js";
+import {
+  clientIp,
+  enforceRateLimit,
+  logAuthEvent,
+  requireSameOrigin,
+} from "../../lib/security.js";
 
-export async function onRequestGet(context) {
-  const { request, env } = context;
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
-
-  if (!env.DB) {
-    return errorResponse("Authentication service is not configured.", 503);
-  }
-
-  if (!token) {
-    return errorResponse("Verification token is required.", 400);
-  }
-
+async function verifyWithToken(env, token, ip) {
   const record = await consumeEmailToken(env, token, "verify");
   if (!record) {
+    await logAuthEvent(env, "verify_failed", { ip, reason: "invalid_token" });
     return errorResponse("Verification link is invalid or has expired.", 400);
   }
 
@@ -41,6 +37,7 @@ export async function onRequestGet(context) {
     .first();
 
   const session = await createSession(env, user.id);
+  await logAuthEvent(env, "verify_success", { ip, userId: user.id });
 
   return jsonResponse(
     {
@@ -51,5 +48,39 @@ export async function onRequestGet(context) {
     {
       "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),
     }
+  );
+}
+
+export async function onRequestPost(context) {
+  const { request, env } = context;
+
+  if (!env.DB) {
+    return errorResponse("Authentication service is not configured.", 503);
+  }
+
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
+
+  const ip = clientIp(request);
+  const rateLimited = await enforceRateLimit(env, `verify:ip:${ip}`, "verifyIp");
+  if (rateLimited) return rateLimited;
+
+  const body = await readJson(request);
+  if (!body) {
+    return errorResponse("Invalid request body.");
+  }
+
+  const token = String(body.token || "").trim();
+  if (!token) {
+    return errorResponse("Verification token is required.", 400);
+  }
+
+  return verifyWithToken(env, token, ip);
+}
+
+export async function onRequestGet(context) {
+  return errorResponse(
+    "Open the verification link from your email in a browser.",
+    405
   );
 }
