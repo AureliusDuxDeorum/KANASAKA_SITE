@@ -32,11 +32,12 @@ export function isArgon2Hash(stored) {
 
 export async function hashPasswordArgon2(password, env) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  return argon2id({
+  const hash = await argon2id({
     ...argon2Params(env),
-    password,
+    password: String(password),
     salt,
   });
+  return String(hash);
 }
 
 export async function verifyPasswordArgon2(password, stored) {

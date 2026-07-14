@@ -359,7 +359,7 @@ export async function createEmailToken(env, userId, type, hours) {
   await env.DB.prepare(
     "INSERT INTO email_tokens (token_hash, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
   )
-    .bind(tokenHash, uid, type, expiresAt)
+    .bind(String(tokenHash), uid, String(type), String(expiresAt))
     .run();
 
   return rawToken;
@@ -423,7 +423,7 @@ export async function insertUser(env, email, passwordHash) {
   const result = await env.DB.prepare(
     "INSERT INTO users (email, password_hash, email_verified) VALUES (?, ?, 0)"
   )
-    .bind(email, passwordHash)
+    .bind(String(email), String(passwordHash))
     .run();
 
   if (!result.success) {
