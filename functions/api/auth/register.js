@@ -22,10 +22,11 @@ function registerFailure(err) {
   if (
     message.includes("no such column") ||
     message.includes("no such table") ||
-    message.includes("email_tokens")
+    message.includes("email_tokens") ||
+    message.includes("SQLITE_MISMATCH")
   ) {
     return errorResponse(
-      "Auth database is outdated. Run migrations on D1 (see migrations/).",
+      "Auth database schema is outdated. Run migrations/005_auth_hardening.sql on D1, then try again.",
       503
     );
   }
