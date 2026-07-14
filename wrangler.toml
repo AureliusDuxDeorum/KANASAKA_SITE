@@ -5,7 +5,8 @@ pages_build_output_dir = "."
 # D1 migrations (run in order on remote):
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/004_security.sql
-#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/005_auth_hardening.sql
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/006_repair_token_schema.sql
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/007_wipe_accounts.sql
 # Email secret (Pages → Settings → Variables and secrets):
 #   RESEND_API_KEY = your Resend API key
 # Required session pepper (Pages → Production secrets):
