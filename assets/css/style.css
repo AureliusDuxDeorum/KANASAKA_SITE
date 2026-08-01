@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: "Michroma";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/Michroma-Regular.ttf") format("truetype");
+}
+
 :root,
 [data-theme="dark"] {
   --color-base: #000000;
@@ -322,8 +330,7 @@ main {
   overflow: visible;
 }
 
-.logo-line,
-.logo-signal {
+.logo-line {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -331,19 +338,20 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-signal {
+.logo-pulse-group {
   opacity: 0;
-  stroke-width: 3;
+  pointer-events: none;
+}
+
+.logo-pulse {
   filter: url("#logo-pulse-glow");
 }
 
 .logo-letter {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.logo-letter path {
   fill: currentColor;
+  font-family: "Michroma", Inter, system-ui, -apple-system, sans-serif;
+  font-size: 46px;
+  letter-spacing: 0.08em;
 }
 
 .logo-tag {
@@ -473,8 +481,11 @@ body.splash-complete .site-footer {
   opacity: 0.28;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-signal {
+.kanasaka-logo--hero.is-ambient .logo-pulse-group {
   opacity: 1;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-pulse {
   filter: url("#logo-pulse-glow")
     drop-shadow(0 0 4px rgba(255, 255, 255, 0.95))
     drop-shadow(0 0 12px rgba(255, 255, 255, 0.65))
@@ -485,7 +496,7 @@ body.splash-complete .site-footer {
   opacity: 1;
 }
 
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-pulse {
   filter: url("#logo-pulse-glow")
     drop-shadow(0 0 4px rgba(0, 0, 0, 0.55))
     drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
@@ -504,7 +515,7 @@ body.splash-complete .site-footer {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-signal {
+  .kanasaka-logo--hero.is-ambient .logo-pulse-group {
     opacity: 0;
   }
 }
