@@ -1,17 +1,8 @@
 (function () {
   var INTRO_KEY = "kanasaka-intro-seen";
   var INTRO_MS = 3400;
-  var PULSE_SEGMENT = 12;
-  var SEGMENT_CYCLE_MS = 3000;
-  var LINE_STAGGER_S = 0.8;
+  var PULSE_SEGMENT = 8;
   var LOGO_FONT = '600 50px "Tektur"';
-
-  var CIRCUIT_SEGMENTS = [
-    ["M 80 40 H 108", "M 108 40 L 120 52", "M 120 52 H 188"],
-    ["M 80 70 H 108", "M 108 70 L 120 58", "M 120 58 H 188"],
-    ["M 400 40 H 372", "M 372 40 L 360 52", "M 360 52 H 292"],
-    ["M 400 70 H 372", "M 372 70 L 360 58", "M 360 58 H 292"],
-  ];
 
   var LOGO_LETTERS =
     '<g class="logo-letters">' +
@@ -19,38 +10,29 @@
     '<text class="logo-letter logo-letter-s" x="240" y="100" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">S</text>' +
     "</g>";
 
-  function circuitLineMarkup(lineIndex, fullPath, tagMarkup) {
-    var segments = CIRCUIT_SEGMENTS[lineIndex];
-    var signalPaths = segments
-      .map(function (segment) {
-        return '<path class="logo-signal" d="' + segment + '"></path>';
-      })
-      .join("");
-
-    return (
-      '<path class="logo-line" d="' + fullPath + '"></path>' +
-      '<g class="logo-signal-wrap" filter="url(#logo-signal-glow)">' +
-      signalPaths +
-      "</g>" +
-      tagMarkup
-    );
-  }
-
   var LOGO_SVG =
     '<svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">' +
     "<title>Kanasaka</title>" +
     '<defs><filter id="logo-signal-glow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">' +
-    '<feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="blur"></feGaussianBlur>' +
+    '<feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"></feGaussianBlur>' +
     '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
     "</filter></defs>" +
     '<g class="logo-side logo-side-left">' +
-    circuitLineMarkup(0, "M 80 40 H 108 L 120 52 H 188", '<text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>') +
-    circuitLineMarkup(1, "M 80 70 H 108 L 120 58 H 188", '<text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>') +
+    '<path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>' +
+    '<g class="logo-signal-wrap" filter="url(#logo-signal-glow)"><path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path></g>' +
+    '<text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>' +
+    '<path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>' +
+    '<g class="logo-signal-wrap" filter="url(#logo-signal-glow)"><path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path></g>' +
+    '<text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>' +
     "</g>" +
     LOGO_LETTERS +
     '<g class="logo-side logo-side-right">' +
-    circuitLineMarkup(2, "M 400 40 H 372 L 360 52 H 292", '<text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>') +
-    circuitLineMarkup(3, "M 400 70 H 372 L 360 58 H 292", '<text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>') +
+    '<path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>' +
+    '<g class="logo-signal-wrap" filter="url(#logo-signal-glow)"><path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path></g>' +
+    '<text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>' +
+    '<path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>' +
+    '<g class="logo-signal-wrap" filter="url(#logo-signal-glow)"><path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path></g>' +
+    '<text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>' +
     "</g>" +
     "</svg>";
 
@@ -130,21 +112,20 @@
         return;
       }
 
-      wrap.style.setProperty("--pulse-delay", String(lineIndex * LINE_STAGGER_S) + "s");
+      var signal = wrap.querySelector(".logo-signal");
+      if (!signal) {
+        return;
+      }
 
-      wrap.querySelectorAll(".logo-signal").forEach(function (signal, segmentIndex) {
-        var length = signal.getTotalLength();
-        if (length <= 0) {
-          return;
-        }
+      var length = signal.getTotalLength();
+      if (length <= 0) {
+        return;
+      }
 
-        var gap = length + PULSE_SEGMENT;
-        signal.style.setProperty("--path-length", String(length));
-        signal.style.setProperty("--pulse-segment", String(PULSE_SEGMENT));
-        signal.style.setProperty("--segment-index", String(segmentIndex));
-        signal.style.strokeDasharray = PULSE_SEGMENT + " " + gap;
-        signal.style.strokeDashoffset = String(length);
-      });
+      var gap = length + PULSE_SEGMENT;
+      wrap.style.setProperty("--pulse-delay", String(lineIndex * 0.8) + "s");
+      signal.style.strokeDasharray = PULSE_SEGMENT + " " + gap;
+      signal.style.strokeDashoffset = String(length);
     });
   }
 
@@ -252,6 +233,5 @@
     init: init,
     prepareLinePaths: prepareLinePaths,
     prepareSignalPaths: prepareSignalPaths,
-    SEGMENT_CYCLE_MS: SEGMENT_CYCLE_MS,
   };
 })();
