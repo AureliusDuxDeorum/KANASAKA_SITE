@@ -2,9 +2,6 @@ name = "kanasaka-site"
 compatibility_date = "2024-11-12"
 pages_build_output_dir = "."
 
-[build]
-command = "npm ci && npm run build"
-
 # D1 migrations (run in order on remote):
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/004_security.sql
