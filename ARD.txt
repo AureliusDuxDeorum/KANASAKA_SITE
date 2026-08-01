@@ -36,12 +36,19 @@ functions/lib/profile.js    Display name + avatar BLOB storage
 functions/api/auth/*        Register, login, logout, verify, reset, session
 functions/api/account/*     Profile, password, avatar, delete
 functions/api/contact.js    Gated contact info (logged-in only)
-functions/api/download/     Gated installer redirects (windows/linux)
+functions/api/download/     Gated signed downloads (R2 stream via /api/download/file)
+functions/lib/downloads.js  HMAC-signed download tokens + R2 object keys
+functions/lib/totp.js       RFC 6238 TOTP (Web Crypto HMAC-SHA1)
+functions/lib/two-factor.js 2FA setup/enable/disable + login challenges
 functions/vendor/argon2-wasm-edge/  Vendored Argon2 lib + WASM (no npm install on CI)
-migrations/002–007.sql      D1 schema migrations (run manually on remote)
-wrangler.toml               Pages + D1 binding config
+migrations/002–008.sql      D1 schema migrations (run manually on remote)
+wrangler.toml               Pages + D1 + R2 binding config
 scripts/pages-build.mjs     No-op build step (Cloudflare Pages)
 scripts/generate_pages.py   Static HTML page generator
+scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
+scripts/upload-installers-r2.mjs  Upload KS Unify installers to R2
+docs/R2_INSTALLERS.md       R2 bucket setup + upload instructions
+docs/WAF_STATUS.txt         Last WAF audit output (scripts/check-waf-rules.mjs)
 docs/CLOUDFLARE_WAF.md      WAF rule documentation
 
 
@@ -69,9 +76,20 @@ Email verification
 
 Login / session
   POST /api/auth/login — cookie __Host-kanasaka_session (HttpOnly, SameSite=Strict)
+  If totp_enabled: returns { twoFactorRequired, challenge, expiresIn } (no cookie yet)
+  POST /api/auth/two-factor — completes login with TOTP or backup code
   Session token: 32-byte random, only HMAC digest stored in D1 (needs SESSION_SECRET)
   Session rotation: every SESSION_ROTATE_HOURS (default 24h) via resolveSession()
   GET /api/auth/session — current user payload
+
+Two-factor authentication (TOTP)
+  Optional per account; RFC 6238 via functions/lib/totp.js
+  Secrets encrypted at rest (AES-GCM, key derived from SESSION_SECRET)
+  POST /api/account/two-factor/setup — pending secret + otpauth URL
+  POST /api/account/two-factor/enable — confirm code, returns backup codes
+  POST /api/account/two-factor/disable — password + TOTP required; clears sessions
+  Backup codes: one-time, stored hashed in twofa_backup_codes
+  UI: login 2FA step + Account Settings → Two-Factor Authentication panel
 
 Password reset
   POST /api/auth/forgot-password → email with reset link
@@ -86,11 +104,13 @@ Security
   Legacy PBKDF2 hashes still verify; upgraded to Argon2 on login
 
 
-5. D1 SCHEMA (CURRENT — post migration 006)
+5. D1 SCHEMA (CURRENT — post migration 008)
 -------------------------------------------
 users
   id INTEGER PK, email TEXT UNIQUE NOCASE, password_hash TEXT,
-  email_verified INTEGER, created_at TEXT, display_name TEXT
+  email_verified INTEGER, created_at TEXT, display_name TEXT,
+  totp_secret TEXT, totp_pending_secret TEXT,
+  totp_enabled INTEGER DEFAULT 0, totp_enabled_at TEXT
 
 sessions
   id INTEGER PK, token_hash TEXT UNIQUE, user_id INTEGER FK,
@@ -106,6 +126,13 @@ user_avatars
 auth_events
   id INTEGER PK, event_type TEXT, meta TEXT JSON, created_at TEXT
 
+twofa_backup_codes
+  id INTEGER PK, user_id INTEGER FK, code_hash TEXT, used_at TEXT, created_at TEXT
+
+twofa_challenges
+  id INTEGER PK, challenge_hash TEXT UNIQUE, user_id INTEGER FK,
+  expires_at TEXT, created_at TEXT
+
 rate_limits
   key TEXT PK, count INTEGER, window_start TEXT
   (legacy table; app no longer writes — WAF handles rate limits)
@@ -119,6 +146,7 @@ Required
   DB              D1 binding → kanasaka-auth
   SESSION_SECRET  HMAC pepper for session/email tokens (32+ random bytes)
   RESEND_API_KEY  Transactional email
+  INSTALLERS      R2 binding → kanasaka-installers (signed download streaming)
 
 Optional
   ADMIN_SECRET    Bearer token for /api/auth/email-status
@@ -127,6 +155,7 @@ Optional
 
 Public vars (wrangler.toml)
   SITE_URL, FROM_EMAIL, FROM_NAME, SESSION_DAYS
+  ARGON2_MEMORY_KIB=19456, ARGON2_ITERATIONS=3 (Workers Paid defaults)
 
 
 7. MIGRATIONS (RUN FROM ~/KANASAKA_SITE)
@@ -136,9 +165,13 @@ Public vars (wrangler.toml)
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/005_auth_hardening.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/006_repair_token_schema.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/007_wipe_accounts.sql
+  npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/008_security_hardening.sql
 
 007_wipe_accounts.sql — IRREVERSIBLE data wipe (users, sessions, tokens, avatars,
   auth_events, rate_limits). Schema preserved.
+
+008_security_hardening.sql — TOTP columns on users, twofa_backup_codes,
+  twofa_challenges tables.
 
 
 8. DEPLOY / BUILD
@@ -159,8 +192,12 @@ GitHub PR checks: Cloudflare Pages must pass for merge (was failing before c1417
 9. DOWNLOADS
 ------------
 Gated behind login at /downloads/
-/api/download/windows → GitHub Release .exe
-/api/download/linux   → GitHub Release .deb
+GET /api/download/{platform} — auth check → 302 to signed /api/download/file?token=...
+GET /api/download/file — validates HMAC token (5 min TTL), streams object from R2
+Platforms: windows (.exe), linux (.deb), macos (.dmg)
+R2 bucket: kanasaka-installers (enable R2 in dashboard, bind INSTALLERS in Pages)
+Upload: node scripts/upload-installers-r2.mjs (see docs/R2_INSTALLERS.md)
+Legacy GitHub URLs removed from download flow (DOWNLOAD_URLS may remain in auth.js)
 KS Unify desktop app (separate repo) uses cookie-jar auth client — no localStorage tokens.
 
 
@@ -174,6 +211,9 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-08-01  Security hardening: TOTP 2FA, R2 signed downloads, Argon2 bump (19 MiB / 3 iter).
+2026-08-01  Migration 008 applied on remote D1 (2FA schema).
+2026-08-01  WAF audit script added; API token lacks ruleset scope — verify manually in dashboard.
 2026-08-01  Added full password policy (12+ chars, classes, blocklist, live UI checklist).
 2026-08-01  ARD created. Documented full auth stack, D1 schema, deploy model.
 2026-08-01  PR #18 merged: schema detection, D1 bind fixes, vendored Argon2 WASM.

@@ -57,6 +57,28 @@
       throw new Error((data && data.error) || "Login failed.");
     }
 
+    if (data && data.twoFactorRequired) {
+      return data;
+    }
+
+    sessionCache = data;
+    return data;
+  }
+
+  async function verifyTwoFactor(challenge, code, backupCode) {
+    const { response, data } = await apiRequest("/api/auth/two-factor", {
+      method: "POST",
+      body: JSON.stringify({
+        challenge: challenge,
+        code: code || "",
+        backupCode: backupCode || "",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error((data && data.error) || "Two-factor verification failed.");
+    }
+
     sessionCache = data;
     return data;
   }
@@ -179,6 +201,86 @@
         return { email: emailInput ? emailInput.value.trim() : "" };
       },
     });
+  }
+
+  function bindLoginForm() {
+    const form = document.getElementById("login-form");
+    const twoFactorForm = document.getElementById("login-2fa-form");
+    const cancelButton = document.getElementById("login-2fa-cancel");
+    if (!form) return;
+
+    let pendingChallenge = null;
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(form);
+      clearFormSuccess(form);
+
+      const email = form.querySelector('[name="email"]').value.trim();
+      const password = form.querySelector('[name="password"]').value;
+      const submit = form.querySelector('[type="submit"]');
+      const defaultLabel = submit.textContent;
+
+      submit.disabled = true;
+      submit.textContent = "Please wait...";
+
+      try {
+        const result = await login(email, password);
+        if (result && result.twoFactorRequired) {
+          pendingChallenge = result.challenge;
+          form.hidden = true;
+          if (twoFactorForm) {
+            twoFactorForm.hidden = false;
+            clearFormError(twoFactorForm);
+          }
+          submit.disabled = false;
+          submit.textContent = defaultLabel;
+          return;
+        }
+        window.location.href = getNextPath();
+      } catch (error) {
+        showFormError(form, error.message || "Login failed.");
+        submit.disabled = false;
+        submit.textContent = defaultLabel;
+      }
+    });
+
+    if (!twoFactorForm) return;
+
+    twoFactorForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(twoFactorForm);
+
+      if (!pendingChallenge) {
+        showFormError(twoFactorForm, "Sign in again to continue.");
+        return;
+      }
+
+      const submit = twoFactorForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        await verifyTwoFactor(
+          pendingChallenge,
+          twoFactorForm.querySelector('[name="code"]').value,
+          twoFactorForm.querySelector('[name="backupCode"]').value
+        );
+        window.location.href = getNextPath();
+      } catch (error) {
+        showFormError(twoFactorForm, error.message || "Verification failed.");
+        submit.disabled = false;
+      }
+    });
+
+    if (cancelButton) {
+      cancelButton.addEventListener("click", function () {
+        pendingChallenge = null;
+        twoFactorForm.hidden = true;
+        twoFactorForm.reset();
+        clearFormError(twoFactorForm);
+        form.hidden = false;
+      });
+    }
   }
 
   function bindEmailPasswordForm(formId, handler, options) {
@@ -518,6 +620,141 @@
     container.textContent = profile.initials || "KS";
   }
 
+  function renderTwoFactorSettings(profile) {
+    const status = document.getElementById("settings-twofa-status");
+    const disabledBox = document.getElementById("settings-twofa-disabled");
+    const enabledBox = document.getElementById("settings-twofa-enabled");
+    const setupBox = document.getElementById("settings-twofa-setup-box");
+    const backupBox = document.getElementById("settings-twofa-backup");
+
+    if (!status || !disabledBox || !enabledBox) return;
+
+    if (profile.twoFactorEnabled) {
+      status.textContent = "Two-factor authentication is enabled.";
+      disabledBox.hidden = true;
+      enabledBox.hidden = false;
+      if (setupBox) setupBox.hidden = true;
+      if (backupBox) backupBox.hidden = true;
+      return;
+    }
+
+    status.textContent = "Protect your account with an authenticator app.";
+    disabledBox.hidden = false;
+    enabledBox.hidden = true;
+  }
+
+  function bindTwoFactorSettings(profile) {
+    const setupButton = document.getElementById("settings-twofa-setup");
+    const setupBox = document.getElementById("settings-twofa-setup-box");
+    const secretBox = document.getElementById("settings-twofa-secret");
+    const link = document.getElementById("settings-twofa-link");
+    const enableForm = document.getElementById("settings-twofa-enable-form");
+    const disableForm = document.getElementById("settings-twofa-disable-form");
+    const backupBox = document.getElementById("settings-twofa-backup");
+
+    renderTwoFactorSettings(profile);
+
+    if (setupButton && setupBox) {
+      setupButton.addEventListener("click", async function () {
+        clearFormError(setupBox);
+        setupButton.disabled = true;
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/setup", {
+            method: "POST",
+            body: "{}",
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Setup failed.");
+          }
+
+          setupBox.hidden = false;
+          if (secretBox) secretBox.textContent = data.secret;
+          if (link) {
+            link.href = data.otpauthUrl;
+            link.textContent = data.otpauthUrl;
+          }
+        } catch (error) {
+          showFormError(setupBox, error.message || "Setup failed.");
+        } finally {
+          setupButton.disabled = false;
+        }
+      });
+    }
+
+    if (enableForm) {
+      enableForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(enableForm);
+
+        const submit = enableForm.querySelector('[type="submit"]');
+        submit.disabled = true;
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/enable", {
+            method: "POST",
+            body: JSON.stringify({
+              code: enableForm.querySelector('[name="code"]').value,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Enable failed.");
+          }
+
+          profile.twoFactorEnabled = true;
+          renderTwoFactorSettings(profile);
+          if (backupBox) {
+            backupBox.hidden = false;
+            backupBox.textContent =
+              "Backup codes (store safely):\n" + (data.backupCodes || []).join("\n");
+          }
+          showFormSuccess(enableForm, data.message || "Two-factor enabled.");
+        } catch (error) {
+          showFormError(enableForm, error.message || "Enable failed.");
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    }
+
+    if (disableForm) {
+      disableForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(disableForm);
+
+        const submit = disableForm.querySelector('[type="submit"]');
+        submit.disabled = true;
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/disable", {
+            method: "POST",
+            body: JSON.stringify({
+              password: disableForm.querySelector('[name="password"]').value,
+              code: disableForm.querySelector('[name="code"]').value,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Disable failed.");
+          }
+
+          profile.twoFactorEnabled = false;
+          renderTwoFactorSettings(profile);
+          disableForm.reset();
+          if (setupBox) setupBox.hidden = true;
+          if (backupBox) backupBox.hidden = true;
+          showFormSuccess(disableForm, data.message || "Two-factor disabled.");
+        } catch (error) {
+          showFormError(disableForm, error.message || "Disable failed.");
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    }
+  }
+
   async function initSettingsPage() {
     const gate = document.getElementById("settings-gate");
     const content = document.getElementById("settings-content");
@@ -575,6 +812,7 @@
     emailInput.dispatchEvent(new Event("input", { bubbles: true }));
     renderAvatarElement(avatarBox, profile);
     avatarRemove.hidden = !profile.hasAvatar;
+    bindTwoFactorSettings(profile);
 
     initThemePicker();
 
@@ -806,7 +1044,7 @@
   }
 
   function initAuthForms() {
-    bindEmailPasswordForm("login-form", login);
+    bindLoginForm();
     bindEmailPasswordForm("register-form", register, {
       onSuccess: function (result, form) {
         showFormSuccess(

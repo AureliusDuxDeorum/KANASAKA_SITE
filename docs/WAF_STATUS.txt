@@ -1,0 +1,17 @@
+KANASAKA WAF STATUS
+Generated: 2026-08-01T12:28:12.457Z
+Zone: kanasaka.com (7f14b4e10962c43a4eb1d7e5b90e4c23)
+
+Ruleset lookup failed: [{"code":10000,"message":"Authentication error"}]
+Matched custom/WAF rules found: 0
+
+- [MISSING/UNVERIFIED] Rate limit auth POST routes (30 / 10 min / IP)
+- [MISSING/UNVERIFIED] Tighter login limit (10 / 10 min / IP)
+- [MISSING/UNVERIFIED] Password reset limit (8 / hour / IP)
+- [MISSING/UNVERIFIED] Registration limit (6 / hour / IP)
+- [MISSING/UNVERIFIED] Challenge bots on auth paths
+
+Notes:
+- Cloudflare API visibility varies by plan and token scope.
+- If any rule shows MISSING/UNVERIFIED, apply it manually from docs/CLOUDFLARE_WAF.md.
+- Rule 5 (origin block) is intentionally skipped when KS Unify desktop auth is used.

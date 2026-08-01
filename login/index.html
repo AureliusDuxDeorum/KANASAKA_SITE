@@ -41,6 +41,23 @@
         <button class="button" type="submit">Log In</button>
       </form>
 
+      <form id="login-2fa-form" class="auth-form" hidden>
+        <p class="auth-note">Enter the 6-digit code from your authenticator app.</p>
+
+        <div class="auth-field">
+          <label for="login-2fa-code">Authenticator Code</label>
+          <input id="login-2fa-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        </div>
+
+        <div class="auth-field">
+          <label for="login-backup-code">Or Backup Code</label>
+          <input id="login-backup-code" name="backupCode" type="text" autocomplete="off" placeholder="XXXX-XXXX-XX">
+        </div>
+
+        <button class="button" type="submit">Verify &amp; Sign In</button>
+        <button id="login-2fa-cancel" class="auth-link secondary" type="button">Back</button>
+      </form>
+
       <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
       <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
     </div>
