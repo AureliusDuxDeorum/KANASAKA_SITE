@@ -342,6 +342,21 @@
     syncThemePicker: syncThemePicker,
   };
 
+  function loadLogoAnimation() {
+    return new Promise(function (resolve) {
+      if (window.KanasakaLogoAnimation) {
+        resolve();
+        return;
+      }
+
+      var script = document.createElement("script");
+      script.src = "/assets/js/logo-animation.js";
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
+    });
+  }
+
   async function boot() {
     initTheme();
 
@@ -355,6 +370,11 @@
       window.KanasakaAuth.initAuthForms();
       window.KanasakaAuth.initProtectedPages();
       window.KanasakaAuth.initSettingsPage();
+    }
+
+    await loadLogoAnimation();
+    if (window.KanasakaLogoAnimation) {
+      window.KanasakaLogoAnimation.init();
     }
   }
 

@@ -23,9 +23,10 @@
 <main>
 
   <section class="auth-page">
-    <div class="auth-card">
+    <div class="auth-card auth-card-elevated">
+      <p class="auth-eyebrow">Account</p>
       <h1>Log In</h1>
-      <p>Access downloads and contact details with your KANASAKA account.</p>
+      <p class="auth-lead">Access downloads and contact details with your KANASAKA account.</p>
 
       <form id="login-form" class="auth-form">
         <div class="auth-field">
@@ -38,19 +39,7 @@
           <input id="login-password" name="password" type="password" autocomplete="current-password" required>
         </div>
 
-        <button class="button" type="submit">Log In</button>
-      </form>
-
-      <form id="login-2fa-form" class="auth-form" hidden>
-        <p id="login-2fa-note" class="auth-note">Enter the 6-digit code we sent to your phone.</p>
-
-        <div class="auth-field">
-          <label for="login-2fa-code">Verification Code</label>
-          <input id="login-2fa-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        </div>
-
-        <button class="button" type="submit">Verify &amp; Sign In</button>
-        <button id="login-2fa-cancel" class="auth-link secondary" type="button">Back</button>
+        <button class="button auth-submit" type="submit">Log In</button>
       </form>
 
       <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
