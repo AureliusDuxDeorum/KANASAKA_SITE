@@ -27,15 +27,6 @@
     <div class="kanasaka-logo kanasaka-logo--hero">
       <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
         <title>Kanasaka</title>
-        <defs>
-          <filter id="logo-pulse-glow" x="-120%" y="-400%" width="340%" height="900%" color-interpolation-filters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="blur"></feGaussianBlur>
-            <feMerge>
-              <feMergeNode in="blur"></feMergeNode>
-              <feMergeNode in="SourceGraphic"></feMergeNode>
-            </feMerge>
-          </filter>
-        </defs>
         <g class="logo-side logo-side-left">
           <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
           <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
@@ -52,6 +43,7 @@
           <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
           <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
+        <g class="logo-pulses" aria-hidden="true"></g>
       </svg>
     </div>
 

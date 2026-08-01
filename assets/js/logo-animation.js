@@ -1,8 +1,8 @@
 (function () {
   var INTRO_KEY = "kanasaka-intro-seen";
   var INTRO_MS = 3400;
-  var PULSE_WIDTH = 36;
-  var PULSE_HEIGHT = 4;
+  var PULSE_WIDTH = 44;
+  var PULSE_HEIGHT = 5;
   var PULSE_DURATION = 3000;
   var PULSE_STAGGER = 0.8;
   var LOGO_FONT = '600 50px "Tektur"';
@@ -17,10 +17,6 @@
   var LOGO_SVG =
     '<svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">' +
     "<title>Kanasaka</title>" +
-    '<defs><filter id="logo-pulse-glow" x="-120%" y="-400%" width="340%" height="900%" color-interpolation-filters="sRGB">' +
-    '<feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="blur"></feGaussianBlur>' +
-    '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
-    "</filter></defs>" +
     '<g class="logo-side logo-side-left">' +
     '<path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>' +
     '<text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>' +
@@ -34,43 +30,39 @@
     '<path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>' +
     '<text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>' +
     "</g>" +
+    '<g class="logo-pulses" aria-hidden="true"></g>' +
     "</svg>";
 
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  function ensurePulseGlowFilter(root) {
+  function getPulseLayer(root) {
     var svg = root.querySelector(".kanasaka-logo-svg");
-    if (!svg || svg.querySelector("#logo-pulse-glow")) {
-      return;
+    if (!svg) {
+      return null;
     }
 
-    var defs = document.createElementNS(SVG_NS, "defs");
-    defs.innerHTML =
-      '<filter id="logo-pulse-glow" x="-120%" y="-400%" width="340%" height="900%" color-interpolation-filters="sRGB">' +
-      '<feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="blur"></feGaussianBlur>' +
-      '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
-      "</filter>";
-    svg.insertBefore(defs, svg.firstChild);
+    var layer = svg.querySelector(".logo-pulses");
+    if (!layer) {
+      layer = document.createElementNS(SVG_NS, "g");
+      layer.setAttribute("class", "logo-pulses");
+      layer.setAttribute("aria-hidden", "true");
+      svg.appendChild(layer);
+    }
+
+    return layer;
   }
 
   function getPulseWrap(line) {
-    var node = line.nextElementSibling;
-    while (node) {
-      if (node.classList && node.classList.contains("logo-pulse-wrap")) {
-        return node;
-      }
-      if (node.classList && node.classList.contains("logo-line")) {
-        break;
-      }
-      node = node.nextElementSibling;
-    }
-    return null;
+    return line._pulseWrap || null;
   }
 
   function ensurePulseWraps(root) {
-    ensurePulseGlowFilter(root);
+    var layer = getPulseLayer(root);
+    if (!layer) {
+      return;
+    }
 
     root.querySelectorAll(".logo-line").forEach(function (line) {
       if (getPulseWrap(line)) {
@@ -79,7 +71,6 @@
 
       var wrap = document.createElementNS(SVG_NS, "g");
       wrap.setAttribute("class", "logo-pulse-wrap");
-      wrap.setAttribute("filter", "url(#logo-pulse-glow)");
 
       var pulse = document.createElementNS(SVG_NS, "rect");
       pulse.setAttribute("class", "logo-pulse");
@@ -87,14 +78,24 @@
       pulse.setAttribute("height", String(PULSE_HEIGHT));
       pulse.setAttribute("x", String(-PULSE_WIDTH / 2));
       pulse.setAttribute("y", String(-PULSE_HEIGHT / 2));
-      pulse.setAttribute("fill", "currentColor");
+      pulse.setAttribute("fill", "#ffffff");
 
       wrap.appendChild(pulse);
-      if (line.nextSibling) {
-        line.parentNode.insertBefore(wrap, line.nextSibling);
-      } else {
-        line.parentNode.appendChild(wrap);
-      }
+      layer.appendChild(wrap);
+      line._pulseWrap = wrap;
+      wrap._logoLine = line;
+    });
+  }
+
+  function showPulseWraps(root) {
+    root.querySelectorAll(".logo-pulse-wrap").forEach(function (wrap) {
+      wrap.style.opacity = "1";
+    });
+  }
+
+  function hidePulseWraps(root) {
+    root.querySelectorAll(".logo-pulse-wrap").forEach(function (wrap) {
+      wrap.style.opacity = "";
     });
   }
 
@@ -106,6 +107,7 @@
         wrap._pulseFrameId = null;
       }
     });
+    hidePulseWraps(root);
   }
 
   function placePulse(wrap, line, distance) {
@@ -133,6 +135,7 @@
     }
 
     wrap.dataset.pulseActive = "1";
+    wrap.style.opacity = "1";
 
     if (prefersReducedMotion()) {
       placePulse(wrap, line, length * 0.5);
@@ -164,6 +167,7 @@
   function startPulseAnimations(root) {
     stopPulseAnimations(root);
     ensurePulseWraps(root);
+    showPulseWraps(root);
 
     var pulseIndex = 0;
     root.querySelectorAll(".logo-line").forEach(function (line) {
