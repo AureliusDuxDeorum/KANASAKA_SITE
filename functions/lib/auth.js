@@ -3,6 +3,7 @@ import {
   isArgon2Hash,
   verifyPasswordArgon2,
 } from "./argon2.js";
+import { getAuthSchema } from "./schema.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 
 export const SESSION_COOKIE = "__Host-kanasaka_session";
@@ -211,7 +212,7 @@ export async function hashPassword(password, env) {
     throw new Error("Invalid password for hashing.");
   }
 
-  return hashPasswordArgon2(password, env);
+  return String(await hashPasswordArgon2(password, env));
 }
 
 export async function verifyPassword(password, stored, env) {
@@ -258,51 +259,96 @@ export function sessionRotateMs(env) {
 }
 
 export async function createSession(env, userId) {
+  const uid = Math.trunc(Number(userId));
+  const schema = await getAuthSchema(env);
   const rawToken = generateRawToken(32);
   const tokenHash = await hashSecret(rawToken, env);
   const maxAge = sessionMaxAge(env);
   const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString();
 
-  await env.DB.prepare(
-    `INSERT INTO sessions (token_hash, user_id, expires_at, last_rotated_at)
-     VALUES (?, ?, ?, datetime('now'))`
-  )
-    .bind(tokenHash, userId, expiresAt)
-    .run();
+  if (schema.sessionsHashed) {
+    await env.DB.prepare(
+      `INSERT INTO sessions (token_hash, user_id, expires_at, last_rotated_at)
+       VALUES (?, ?, ?, datetime('now'))`
+    )
+      .bind(String(tokenHash), uid, String(expiresAt))
+      .run();
+  } else {
+    await env.DB.prepare(
+      "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)"
+    )
+      .bind(String(tokenHash), uid, String(expiresAt))
+      .run();
+  }
 
   return { token: rawToken, maxAge };
 }
 
 export async function deleteSession(env, rawToken) {
   if (!rawToken) return;
+
+  const schema = await getAuthSchema(env);
   const tokenHash = await hashSecret(rawToken, env);
-  await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash).run();
+
+  if (schema.sessionsHashed) {
+    await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?")
+      .bind(String(tokenHash))
+      .run();
+    return;
+  }
+
+  await env.DB.prepare("DELETE FROM sessions WHERE id = ?").bind(String(tokenHash)).run();
 }
 
 export async function deleteAllUserSessions(env, userId) {
   await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId).run();
 }
 
-async function loadSessionUser(env, tokenHash) {
+async function loadSessionUser(env, tokenHash, schema) {
+  if (schema.sessionsHashed) {
+    return env.DB.prepare(
+      `SELECT s.token_hash, s.last_rotated_at,
+              u.id, u.email, u.email_verified, u.display_name,
+              ua.updated_at AS avatar_updated_at,
+              CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+       FROM sessions s
+       JOIN users u ON u.id = s.user_id
+       LEFT JOIN user_avatars ua ON ua.user_id = u.id
+       WHERE s.token_hash = ?
+         AND s.expires_at > datetime('now')`
+    )
+      .bind(String(tokenHash))
+      .first();
+  }
+
   return env.DB.prepare(
-    `SELECT s.token_hash, s.last_rotated_at,
+    `SELECT s.id AS token_hash, s.created_at AS last_rotated_at,
             u.id, u.email, u.email_verified, u.display_name,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
-     WHERE s.token_hash = ?
+     WHERE s.id = ?
        AND s.expires_at > datetime('now')`
   )
-    .bind(tokenHash)
+    .bind(String(tokenHash))
     .first();
 }
 
 export async function rotateSession(env, userId, currentTokenHash) {
-  await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?")
-    .bind(currentTokenHash)
-    .run();
+  const schema = await getAuthSchema(env);
+
+  if (schema.sessionsHashed) {
+    await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?")
+      .bind(String(currentTokenHash))
+      .run();
+  } else {
+    await env.DB.prepare("DELETE FROM sessions WHERE id = ?")
+      .bind(String(currentTokenHash))
+      .run();
+  }
+
   return createSession(env, userId);
 }
 
@@ -311,6 +357,7 @@ export async function resolveSession(request, env) {
     return { user: null, sessionHeaders: {} };
   }
 
+  const schema = await getAuthSchema(env);
   const cookies = parseCookies(request);
   const rawToken = cookies[SESSION_COOKIE];
   if (!rawToken) {
@@ -318,7 +365,7 @@ export async function resolveSession(request, env) {
   }
 
   const tokenHash = await hashSecret(rawToken, env);
-  const row = await loadSessionUser(env, tokenHash);
+  const row = await loadSessionUser(env, tokenHash, schema);
   if (!row || !row.email_verified) {
     return { user: null, sessionHeaders: {} };
   }
@@ -326,8 +373,9 @@ export async function resolveSession(request, env) {
   const sessionHeaders = {};
   const rotatedAtMs = Date.parse(row.last_rotated_at || "");
   const shouldRotate =
-    !Number.isFinite(rotatedAtMs) ||
-    Date.now() - rotatedAtMs >= sessionRotateMs(env);
+    schema.sessionsRotatable &&
+    (!Number.isFinite(rotatedAtMs) ||
+      Date.now() - rotatedAtMs >= sessionRotateMs(env));
 
   if (shouldRotate) {
     const session = await rotateSession(env, row.id, tokenHash);
@@ -343,46 +391,76 @@ export async function getSessionUser(request, env) {
 }
 
 export async function createEmailToken(env, userId, type, hours) {
-  const uid = Number(userId);
+  const uid = Math.trunc(Number(userId));
   if (!Number.isFinite(uid) || uid <= 0) {
     throw new Error("Invalid user id for email token.");
   }
 
+  const schema = await getAuthSchema(env);
   const rawToken = generateRawToken(32);
   const tokenHash = await hashSecret(rawToken, env);
   const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
   await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ? AND type = ?")
-    .bind(uid, type)
+    .bind(uid, String(type))
     .run();
 
-  await env.DB.prepare(
-    "INSERT INTO email_tokens (token_hash, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
-  )
-    .bind(String(tokenHash), uid, String(type), String(expiresAt))
-    .run();
+  if (schema.emailTokensHashed) {
+    await env.DB.prepare(
+      "INSERT INTO email_tokens (token_hash, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
+    )
+      .bind(String(tokenHash), uid, String(type), String(expiresAt))
+      .run();
+  } else {
+    await env.DB.prepare(
+      "INSERT INTO email_tokens (id, user_id, type, expires_at) VALUES (?, ?, ?, ?)"
+    )
+      .bind(String(tokenHash), uid, String(type), String(expiresAt))
+      .run();
+  }
 
   return rawToken;
 }
 
 export async function consumeEmailToken(env, rawToken, type) {
+  const schema = await getAuthSchema(env);
   const tokenHash = await hashSecret(rawToken, env);
-  const row = await env.DB.prepare(
-    `SELECT et.token_hash, et.user_id, u.email
+  let row;
+
+  if (schema.emailTokensHashed) {
+    row = await env.DB.prepare(
+      `SELECT et.token_hash, et.user_id, u.email
+       FROM email_tokens et
+       JOIN users u ON u.id = et.user_id
+       WHERE et.token_hash = ?
+         AND et.type = ?
+         AND et.expires_at > datetime('now')`
+    )
+      .bind(String(tokenHash), String(type))
+      .first();
+
+    if (!row) return null;
+
+    await env.DB.prepare("DELETE FROM email_tokens WHERE token_hash = ?")
+      .bind(String(tokenHash))
+      .run();
+    return row;
+  }
+
+  row = await env.DB.prepare(
+    `SELECT et.id AS token_hash, et.user_id, u.email
      FROM email_tokens et
      JOIN users u ON u.id = et.user_id
-     WHERE et.token_hash = ?
+     WHERE et.id = ?
        AND et.type = ?
        AND et.expires_at > datetime('now')`
   )
-    .bind(tokenHash, type)
+    .bind(String(tokenHash), String(type))
     .first();
 
   if (!row) return null;
 
-  await env.DB.prepare("DELETE FROM email_tokens WHERE token_hash = ?")
-    .bind(tokenHash)
-    .run();
+  await env.DB.prepare("DELETE FROM email_tokens WHERE id = ?").bind(String(tokenHash)).run();
   return row;
 }
 
@@ -440,7 +518,7 @@ export async function insertUser(env, email, passwordHash) {
     throw new Error("User insert did not return an id.");
   }
 
-  return Number(row.id);
+  return Math.trunc(Number(row.id));
 }
 
 export function sessionPayload(user) {

@@ -1,2 +1,3 @@
-// Cloudflare Pages runs `npm run build` when package.json exists.
-// This site is static; the step exists so npm dependencies bundle for Functions.
+// Cloudflare Pages runs `npm run build` when a build command is configured.
+// Auth WASM is vendored under functions/vendor/, so deploy works without npm install.
+console.log("Pages build OK.");

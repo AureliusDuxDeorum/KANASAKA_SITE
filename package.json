@@ -4,8 +4,5 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/pages-build.mjs"
-  },
-  "dependencies": {
-    "argon2-wasm-edge": "^1.0.23"
   }
 }

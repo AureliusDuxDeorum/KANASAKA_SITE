@@ -1,6 +1,6 @@
-import { argon2Verify, argon2id, setWASMModules } from "argon2-wasm-edge";
-import argon2WASM from "argon2-wasm-edge/wasm/argon2.wasm";
-import blake2bWASM from "argon2-wasm-edge/wasm/blake2b.wasm";
+import { argon2Verify, argon2id, setWASMModules } from "../vendor/argon2-wasm-edge/index.esm.js";
+import argon2WASM from "../vendor/argon2-wasm-edge/wasm/argon2.wasm";
+import blake2bWASM from "../vendor/argon2-wasm-edge/wasm/blake2b.wasm";
 
 setWASMModules({ argon2WASM, blake2bWASM });
 
