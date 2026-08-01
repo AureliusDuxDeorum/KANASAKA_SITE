@@ -5,11 +5,11 @@
 }
 
 @font-face {
-  font-family: "Michroma";
+  font-family: "Tektur";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 600;
   font-display: swap;
-  src: url("/assets/fonts/Michroma-Regular.ttf") format("truetype");
+  src: url("/assets/fonts/Tektur-SemiBold.ttf") format("truetype");
 }
 
 :root,
@@ -330,7 +330,8 @@ main {
   overflow: visible;
 }
 
-.logo-line {
+.logo-line,
+.logo-signal {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -338,20 +339,17 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-pulse-group {
+.logo-signal {
   opacity: 0;
-  pointer-events: none;
-}
-
-.logo-pulse {
-  filter: url("#logo-pulse-glow");
+  stroke-width: 3;
 }
 
 .logo-letter {
   fill: currentColor;
-  font-family: "Michroma", Inter, system-ui, -apple-system, sans-serif;
-  font-size: 46px;
-  letter-spacing: 0.08em;
+  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-size: 50px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 
 .logo-tag {
@@ -481,13 +479,9 @@ body.splash-complete .site-footer {
   opacity: 0.28;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-pulse-group {
+.kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-pulse {
-  filter: url("#logo-pulse-glow")
-    drop-shadow(0 0 4px rgba(255, 255, 255, 0.95))
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.95))
     drop-shadow(0 0 12px rgba(255, 255, 255, 0.65))
     drop-shadow(0 0 22px rgba(255, 255, 255, 0.35));
 }
@@ -496,9 +490,8 @@ body.splash-complete .site-footer {
   opacity: 1;
 }
 
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-pulse {
-  filter: url("#logo-pulse-glow")
-    drop-shadow(0 0 4px rgba(0, 0, 0, 0.55))
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.55))
     drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
 }
 
@@ -515,7 +508,7 @@ body.splash-complete .site-footer {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-pulse-group {
+  .kanasaka-logo--hero.is-ambient .logo-signal {
     opacity: 0;
   }
 }
