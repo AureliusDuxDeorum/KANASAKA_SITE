@@ -7,8 +7,12 @@
     "<title>Kanasaka</title>" +
     '<g class="logo-side logo-side-left">' +
     '<path class="logo-line" d="M 80 36 H 158 L 184 46 H 188"></path>' +
+    '<path class="logo-flow" d="M 80 36 H 158 L 184 46 H 188"></path>' +
+    '<path class="logo-signal" d="M 80 36 H 158 L 184 46 H 188"></path>' +
     '<text class="logo-tag" x="76" y="40" text-anchor="end">Software</text>' +
     '<path class="logo-line" d="M 80 64 H 158 L 184 54 H 188"></path>' +
+    '<path class="logo-flow" d="M 80 64 H 158 L 184 54 H 188"></path>' +
+    '<path class="logo-signal" d="M 80 64 H 158 L 184 54 H 188"></path>' +
     '<text class="logo-tag" x="76" y="68" text-anchor="end">AI</text>' +
     "</g>" +
     '<g class="logo-letters">' +
@@ -17,8 +21,12 @@
     "</g>" +
     '<g class="logo-side logo-side-right">' +
     '<path class="logo-line" d="M 400 36 H 322 L 296 46 H 292"></path>' +
+    '<path class="logo-flow" d="M 400 36 H 322 L 296 46 H 292"></path>' +
+    '<path class="logo-signal" d="M 400 36 H 322 L 296 46 H 292"></path>' +
     '<text class="logo-tag" x="404" y="40" text-anchor="start">Robotics</text>' +
     '<path class="logo-line" d="M 400 64 H 322 L 296 54 H 292"></path>' +
+    '<path class="logo-flow" d="M 400 64 H 322 L 296 54 H 292"></path>' +
+    '<path class="logo-signal" d="M 400 64 H 322 L 296 54 H 292"></path>' +
     '<text class="logo-tag" x="404" y="68" text-anchor="start">Biotech</text>' +
     "</g>" +
     "</svg>";
@@ -28,14 +36,35 @@
   }
 
   function prepareLinePaths(root, forDraw) {
+    var signalIndex = 0;
+    var flowIndex = 0;
+
     root.querySelectorAll(".logo-line").forEach(function (line, index) {
       var length = line.getTotalLength();
       line.style.setProperty("--line-length", String(length));
-      line.style.setProperty("--line-delay", String(index * 0.25) + "s");
       if (forDraw) {
         line.style.strokeDasharray = String(length);
         line.style.strokeDashoffset = String(length);
+        line.style.setProperty("--line-delay", String(0.1 + index * 0.14) + "s");
+      } else {
+        line.style.setProperty("--line-delay", String(index * 0.25) + "s");
       }
+    });
+
+    root.querySelectorAll(".logo-signal").forEach(function (line) {
+      var length = line.getTotalLength();
+      line.style.setProperty("--line-length", String(length));
+      line.style.strokeDasharray = "32 " + Math.max(length - 32, 1);
+      line.style.setProperty("--signal-delay", String(signalIndex * 0.4) + "s");
+      signalIndex += 1;
+    });
+
+    root.querySelectorAll(".logo-flow").forEach(function (line) {
+      var length = line.getTotalLength();
+      line.style.setProperty("--line-length", String(length));
+      line.style.strokeDasharray = "10 18";
+      line.style.setProperty("--flow-delay", String(flowIndex * 0.22) + "s");
+      flowIndex += 1;
     });
   }
 
