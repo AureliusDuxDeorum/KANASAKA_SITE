@@ -256,14 +256,34 @@ main {
 /* ── Hero & page sections ── */
 
 .hero {
-  min-height: 78vh;
+  min-height: 82vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 96px 24px 88px;
+  padding: 88px 24px 72px;
   background: var(--color-base);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-lead {
+  max-width: 680px;
+  margin: 28px auto 0;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1.7;
 }
 
 .hero.compact {
@@ -289,40 +309,45 @@ main {
 }
 
 .kanasaka-logo--hero {
-  margin-bottom: 44px;
+  margin-bottom: 0;
 }
 
 .kanasaka-logo-svg {
   display: block;
-  width: min(520px, 92vw);
+  width: min(760px, 96vw);
   height: auto;
   color: var(--color-text);
   overflow: visible;
 }
 
 .kanasaka-logo--splash .kanasaka-logo-svg {
-  width: min(620px, 96vw);
+  width: min(820px, 98vw);
 }
 
 .logo-line,
+.logo-flow,
 .logo-signal {
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.5;
+  stroke-width: 2;
   stroke-linecap: square;
   stroke-linejoin: miter;
+}
+
+.logo-flow {
+  opacity: 0;
 }
 
 .logo-signal {
   opacity: 0;
   stroke: var(--color-text);
-  stroke-width: 3.5;
+  stroke-width: 3;
 }
 
 .logo-letter {
   fill: currentColor;
   font-family: Inter, system-ui, -apple-system, sans-serif;
-  font-size: 44px;
+  font-size: 36px;
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -400,124 +425,80 @@ body.splash-complete .site-footer {
 @keyframes logo-letter-in-top {
   from {
     opacity: 0;
-    transform: translateY(-28px) scale(0.88);
+    transform: translateY(-14px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes logo-letter-in-bottom {
   from {
     opacity: 0;
-    transform: translateY(28px) scale(0.88);
+    transform: translateY(14px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 /* ── Home hero ambient loop ── */
 
-.kanasaka-logo--hero.is-ambient {
-  animation: logo-hero-glow 3.5s ease-in-out infinite;
-}
-
 .kanasaka-logo--hero.is-ambient .logo-line {
   stroke-dashoffset: 0;
-  animation: logo-line-breathe 3.5s ease-in-out infinite;
+  stroke-dasharray: none;
+  opacity: 0.24;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-letter-k,
-.kanasaka-logo--hero.is-ambient .logo-letter-s {
-  animation: logo-letter-breathe 3.5s ease-in-out infinite;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-letter-s {
-  animation-delay: 0.45s;
+.kanasaka-logo--hero.is-ambient .logo-flow {
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.55));
+  animation: logo-circuit-flow 2s linear infinite;
+  animation-delay: var(--flow-delay, 0s);
 }
 
 .kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.85));
-  animation: logo-signal-travel 2.1s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+  animation: logo-signal-travel 1.8s linear infinite;
   animation-delay: var(--signal-delay, 0s);
 }
 
-@keyframes logo-hero-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+@keyframes logo-circuit-flow {
+  from {
+    stroke-dashoffset: 0;
   }
 
-  50% {
-    filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.28));
-  }
-}
-
-@keyframes logo-line-breathe {
-  0%,
-  100% {
-    opacity: 0.42;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes logo-letter-breathe {
-  0%,
-  100% {
-    opacity: 0.7;
-    transform: scale(0.94);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
+  to {
+    stroke-dashoffset: calc(var(--line-length, 180) * -1);
   }
 }
 
 @keyframes logo-signal-travel {
   from {
     stroke-dashoffset: var(--line-length, 180);
-    opacity: 0.35;
+    opacity: 0.2;
   }
 
-  20%,
-  80% {
+  15%,
+  85% {
     opacity: 1;
   }
 
   to {
     stroke-dashoffset: calc(var(--line-length, 180) * -1);
-    opacity: 0.35;
+    opacity: 0.2;
   }
 }
 
 [data-theme="light"] .site-splash.is-playing .logo-line,
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-flow,
 [data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
-  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.35));
-}
-
-[data-theme="light"] .kanasaka-logo--hero.is-ambient {
-  animation-name: logo-hero-glow-light;
-}
-
-@keyframes logo-hero-glow-light {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
-  }
-
-  50% {
-    filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.22));
-  }
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.35));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -525,12 +506,14 @@ body.splash-complete .site-footer {
     display: none !important;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-line,
-  .kanasaka-logo--hero.is-ambient .logo-letter-k,
-  .kanasaka-logo--hero.is-ambient .logo-letter-s,
+  .kanasaka-logo--hero.is-ambient .logo-line {
+    opacity: 1;
+  }
+
+  .kanasaka-logo--hero.is-ambient .logo-flow,
   .kanasaka-logo--hero.is-ambient .logo-signal {
     animation: none !important;
-    opacity: 1;
+    opacity: 0;
     stroke-dashoffset: 0;
   }
 }
