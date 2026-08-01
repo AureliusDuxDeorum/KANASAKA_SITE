@@ -4,14 +4,6 @@
   box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "Tektur";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/assets/fonts/Tektur-SemiBold.ttf") format("truetype");
-}
-
 :root,
 [data-theme="dark"] {
   --color-base: #000000;
@@ -346,11 +338,12 @@ main {
 }
 
 .logo-letter {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.logo-letter path {
   fill: currentColor;
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
-  font-size: 50px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
 }
 
 .logo-tag {
