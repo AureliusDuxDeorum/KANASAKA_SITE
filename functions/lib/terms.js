@@ -1,0 +1,65 @@
+export const TERMS_EFFECTIVE_DATE = "1 August 2026";
+
+export function getTermsEmailHtml() {
+  return `
+    <div style="font-family:Inter,Arial,sans-serif;line-height:1.65;color:#111111;max-width:680px;">
+      <h1 style="font-size:24px;letter-spacing:0.08em;text-transform:uppercase;">KANASAKA Terms of Service</h1>
+      <p style="color:#444444;">Effective date: ${TERMS_EFFECTIVE_DATE}</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">1. Agreement to Terms</h2>
+      <p>By accessing or using the KANASAKA website at kanasaka.com (the "Site"), creating an account, or downloading software made available through the Site, you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Site or our services.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">2. Description of Service</h2>
+      <p>KANASAKA provides an informational website, user accounts, authenticated access to product downloads (including KS Unify), support and contact channels, and related online services. Features may change, be limited, or be withdrawn during active development.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">3. Eligibility</h2>
+      <p>You must be at least 16 years old and able to form a binding contract under applicable law. By using the Site, you represent that you meet these requirements.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">4. Accounts and Security</h2>
+      <p>You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. You must provide accurate registration information, keep it up to date, and notify us promptly of unauthorized access. We may suspend or terminate accounts that violate these Terms or pose a security risk.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">5. Acceptable Use</h2>
+      <p>You agree not to:</p>
+      <ul>
+        <li>use the Site or downloads for unlawful, harmful, or fraudulent purposes;</li>
+        <li>attempt to gain unauthorized access to systems, accounts, or data;</li>
+        <li>interfere with or disrupt the Site, its infrastructure, or other users;</li>
+        <li>reverse engineer, decompile, or redistribute software except as expressly permitted;</li>
+        <li>scrape, harvest, or automate access in a manner that burdens our services;</li>
+        <li>upload malware or submit false, misleading, or abusive content.</li>
+      </ul>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">6. Software Downloads</h2>
+      <p>Software such as KS Unify is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads is prohibited unless we authorize it in writing.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">7. Intellectual Property</h2>
+      <p>The Site, KANASAKA branding, logos, text, graphics, and software are owned by KANASAKA or its licensors and protected by intellectual property laws. These Terms do not grant you any ownership rights except the limited right to use the Site and permitted downloads in accordance with these Terms.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">8. Privacy</h2>
+      <p>Our handling of personal data is described in our Privacy Policy. By using the Site, you acknowledge that we process account, security, and usage data as needed to operate the service.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">9. Disclaimers</h2>
+      <p>The Site and all software are provided "as is" and "as available" without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">10. Limitation of Liability</h2>
+      <p>To the fullest extent permitted by law, KANASAKA and its operators will not be liable for indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, or goodwill arising from your use of the Site or downloaded software. Our total liability for any claim relating to the Site or services will not exceed the greater of €100 or the amount you paid us (if any) in the twelve months before the claim.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">11. Indemnification</h2>
+      <p>You agree to indemnify and hold harmless KANASAKA from claims, damages, and expenses (including reasonable legal fees) arising from your misuse of the Site, violation of these Terms, or infringement of third-party rights.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">12. Termination</h2>
+      <p>You may stop using the Site at any time. We may suspend or terminate access if you breach these Terms or if required for legal, security, or operational reasons. Provisions that by nature should survive termination will remain in effect.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">13. Changes to Terms</h2>
+      <p>We may update these Terms from time to time. Material changes will be indicated by updating the effective date above. Continued use after changes become effective constitutes acceptance of the revised Terms.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">14. Governing Law</h2>
+      <p>These Terms are governed by the laws of Germany, excluding conflict-of-law rules. Mandatory consumer protections in your country of residence remain unaffected where applicable.</p>
+
+      <h2 style="font-size:16px;letter-spacing:0.06em;text-transform:uppercase;">15. Contact</h2>
+      <p>Questions about these Terms: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a></p>
+
+      <p style="margin-top:32px;color:#666666;font-size:13px;">You requested a copy of the KANASAKA Terms of Service from kanasaka.com.</p>
+    </div>
+  `;
+}

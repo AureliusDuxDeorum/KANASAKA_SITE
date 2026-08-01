@@ -206,3 +206,13 @@ export async function sendPasswordResetEmail(env, email, token) {
     html,
   });
 }
+
+export async function sendTermsEmail(env, email) {
+  const { getTermsEmailHtml } = await import("./terms.js");
+
+  return sendEmail(env, {
+    to: email,
+    subject: "KANASAKA Terms of Service",
+    html: getTermsEmailHtml(),
+  });
+}
