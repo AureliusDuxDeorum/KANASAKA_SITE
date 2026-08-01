@@ -13,6 +13,8 @@ import {
   VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
 import { sendVerificationEmail } from "../../lib/email.js";
+import { CURRENT_TOS_VERSION } from "../../lib/terms.js";
+import { usersHaveTosColumns } from "../../lib/schema.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 function registerFailure(err) {
@@ -111,6 +113,18 @@ export async function onRequestPost(context) {
       return errorResponse(passwordError);
     }
 
+    const hasTos = await usersHaveTosColumns(env);
+    const tosAccepted = body.tosAccepted === true || body.tosAccepted === "true";
+    const tosVersion = String(body.tosVersion || "");
+
+    if (hasTos) {
+      if (!tosAccepted || tosVersion !== CURRENT_TOS_VERSION) {
+        return errorResponse(
+          "You must accept the current Terms of Service and Privacy Policy to register."
+        );
+      }
+    }
+
     const existing = await env.DB.prepare(
       "SELECT id, email_verified FROM users WHERE email = ? COLLATE NOCASE"
     )
@@ -132,7 +146,12 @@ export async function onRequestPost(context) {
     }
 
     const passwordHash = await hashPassword(password, env);
-    const userId = await insertUser(env, email, passwordHash);
+    const userId = await insertUser(
+      env,
+      email,
+      passwordHash,
+      hasTos ? CURRENT_TOS_VERSION : null
+    );
     const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
     const emailResult = await sendVerificationEmail(env, email, token);
 

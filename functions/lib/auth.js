@@ -499,12 +499,24 @@ export function errorMessage(err) {
   return parts.join(" | ") || "Unknown error";
 }
 
-export async function insertUser(env, email, passwordHash) {
-  const result = await env.DB.prepare(
-    "INSERT INTO users (email, password_hash, email_verified) VALUES (?, ?, 0)"
-  )
-    .bind(String(email), String(passwordHash))
-    .run();
+export async function insertUser(env, email, passwordHash, tosVersion) {
+  const { usersHaveTosColumns } = await import("./schema.js");
+  const hasTos = await usersHaveTosColumns(env);
+
+  let result;
+  if (hasTos && tosVersion) {
+    result = await env.DB.prepare(
+      "INSERT INTO users (email, password_hash, email_verified, tos_accepted_at, tos_version) VALUES (?, ?, 0, datetime('now'), ?)"
+    )
+      .bind(String(email), String(passwordHash), String(tosVersion))
+      .run();
+  } else {
+    result = await env.DB.prepare(
+      "INSERT INTO users (email, password_hash, email_verified) VALUES (?, ?, 0)"
+    )
+      .bind(String(email), String(passwordHash))
+      .run();
+  }
 
   if (!result.success) {
     throw new Error("User insert failed.");

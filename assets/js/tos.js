@@ -114,6 +114,7 @@
       '<input type="checkbox" id="tos-accept-checkbox">' +
       "<span>I have read and agree to the Terms of Service</span>" +
       "</label>" +
+      '<p class="tos-legal-links"><a href="/legal/terms/" target="_blank" rel="noopener">Terms of Service</a> · <a href="/legal/privacy/" target="_blank" rel="noopener">Privacy Policy</a></p>' +
       '<div class="tos-dialog-actions">' +
       '<div class="tos-email-panel" id="tos-email-panel" hidden>' +
       '<label class="tos-email-label" for="tos-email-input">Email address</label>' +
@@ -215,6 +216,21 @@
         localStorage.setItem(TOS_KEY, TOS_VERSION);
       } catch (err) {
         /* continue even if storage is blocked */
+      }
+
+      if (
+        window.KanasakaAuth &&
+        window.KanasakaAuth.getSession &&
+        window.KanasakaAuth.getSession().authenticated
+      ) {
+        fetch("/api/tos/accept", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tosVersion: TOS_VERSION }),
+        }).catch(function () {
+          /* best effort */
+        });
       }
 
       overlay.classList.remove("is-visible");

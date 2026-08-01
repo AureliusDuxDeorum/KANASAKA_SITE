@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=48">
+  <link rel="stylesheet" href="/assets/css/style.css?v=50">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -41,6 +41,11 @@
           <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
           <ul id="register-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
+
+        <label class="auth-legal-consent">
+          <input id="register-tos" name="tosAccepted" type="checkbox" value="1" required>
+          <span>I agree to the <a href="/legal/terms/" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy/" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+        </label>
 
         <button class="button auth-submit" type="submit">Create Account</button>
       </form>

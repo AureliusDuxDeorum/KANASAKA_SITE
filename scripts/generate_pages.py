@@ -27,10 +27,8 @@ COMING_SOON_PAGES = [
     ("media/brand-assets", "Brand Assets"),
     ("media/gallery", "Gallery"),
     ("media/videos", "Videos"),
-    ("legal/privacy", "Privacy"),
     ("legal/licenses", "Licenses"),
     ("legal/security", "Security"),
-    ("legal/impressum", "Impressum"),
 ]
 
 
@@ -50,7 +48,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=48">
+  <link rel="stylesheet" href="/assets/css/style.css?v=50">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -444,6 +442,158 @@ def terms_page() -> str:
     return shell("Terms of Service", TERMS_BODY)
 
 
+PRIVACY_BODY = """
+  <section class="hero compact">
+    <div class="kanasaka-logo small">
+      <div class="logo-side"><div></div><div></div></div>
+      <div class="logo-center"><span>K</span><span>S</span></div>
+      <div class="logo-side"><div></div><div></div></div>
+    </div>
+
+    <h1>Privacy Policy</h1>
+
+    <p>Effective date: 1 August 2026</p>
+  </section>
+
+  <section class="page-section legal-document">
+    <article class="content-card legal-card">
+      <section class="tos-section">
+        <h2>1. Overview</h2>
+        <p>This Privacy Policy explains how KANASAKA (&ldquo;we&rdquo;, &ldquo;us&rdquo;) processes personal data when you use kanasaka.com, create an account, download software, or contact us. We process data in accordance with applicable data protection laws, including the GDPR where it applies.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>2. Data Controller</h2>
+        <p>Controller: KANASAKA<br>Email: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a><br>Website: <a href="https://kanasaka.com">https://kanasaka.com</a></p>
+      </section>
+
+      <section class="tos-section">
+        <h2>3. Data We Collect</h2>
+        <ul>
+          <li><strong>Account data:</strong> email address, password hash, optional display name, profile avatar, email verification status.</li>
+          <li><strong>Security data:</strong> session identifiers, authentication events, optional two-factor phone number if you enable SMS 2FA.</li>
+          <li><strong>Usage data:</strong> IP address, browser/device information, and request metadata processed by our hosting provider for security and delivery.</li>
+          <li><strong>Communications:</strong> messages you send us and email delivery metadata when we send account or legal notices.</li>
+        </ul>
+      </section>
+
+      <section class="tos-section">
+        <h2>4. Purposes and Legal Bases</h2>
+        <ul>
+          <li><strong>Provide the service</strong> (account creation, login, downloads, contact access) — contract performance and legitimate interests.</li>
+          <li><strong>Security and fraud prevention</strong> — legitimate interests and legal obligations.</li>
+          <li><strong>Transactional email</strong> (verification, password reset, requested legal documents) — contract performance and consent where required.</li>
+          <li><strong>Legal compliance</strong> — legal obligation.</li>
+        </ul>
+      </section>
+
+      <section class="tos-section">
+        <h2>5. Processors and Hosting</h2>
+        <p>We use trusted infrastructure providers to operate the Site, including Cloudflare (hosting, security, database, object storage), Resend (transactional email), and Twilio (SMS verification when 2FA is enabled). These providers process data on our behalf under appropriate contractual safeguards.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>6. Cookies and Local Storage</h2>
+        <p>We use a strictly necessary session cookie for authenticated access. Your browser may store local preferences such as theme selection and Terms acceptance state. We do not use third-party advertising cookies on the Site at this time.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>7. Retention</h2>
+        <p>We retain account data while your account is active and for a reasonable period afterward for security, backup, and legal purposes. Security logs are retained for a limited period. You may request account deletion through your account settings.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>8. Your Rights</h2>
+        <p>Depending on your location, you may have the right to access, rectify, erase, restrict, or object to processing of your personal data, and to data portability. You may also lodge a complaint with a supervisory authority. Contact us at <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a> to exercise your rights.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>9. International Transfers</h2>
+        <p>Our providers may process data in countries outside your own. Where required, we rely on appropriate safeguards such as standard contractual clauses or equivalent mechanisms.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>10. Children</h2>
+        <p>The Site is not directed to children under 16. We do not knowingly collect personal data from children under 16.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>11. Changes</h2>
+        <p>We may update this Privacy Policy from time to time. Material changes will be reflected by updating the effective date above.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>12. Contact</h2>
+        <p>Privacy inquiries: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a></p>
+      </section>
+    </article>
+  </section>
+"""
+
+
+IMPRESSUM_BODY = """
+  <section class="hero compact">
+    <div class="kanasaka-logo small">
+      <div class="logo-side"><div></div><div></div></div>
+      <div class="logo-center"><span>K</span><span>S</span></div>
+      <div class="logo-side"><div></div><div></div></div>
+    </div>
+
+    <h1>Impressum</h1>
+
+    <p>Legal notice pursuant to &sect; 5 TMG</p>
+  </section>
+
+  <section class="page-section legal-document">
+    <article class="content-card legal-card">
+      <section class="tos-section">
+        <h2>Service Provider</h2>
+        <p>
+          KANASAKA<br>
+          Germany
+        </p>
+      </section>
+
+      <section class="tos-section">
+        <h2>Contact</h2>
+        <p>
+          Email: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a><br>
+          Website: <a href="https://kanasaka.com">https://kanasaka.com</a>
+        </p>
+      </section>
+
+      <section class="tos-section">
+        <h2>Responsible for Content (&sect; 55 Abs. 2 RStV)</h2>
+        <p>KANASAKA<br>contactns@kanasaka.com</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>Dispute Resolution</h2>
+        <p>The European Commission provides a platform for online dispute resolution (ODR): <a href="https://ec.europa.eu/consumers/odr/" rel="noopener noreferrer" target="_blank">https://ec.europa.eu/consumers/odr/</a>. We are not obliged or willing to participate in dispute resolution proceedings before a consumer arbitration board unless required by law.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>Liability for Content and Links</h2>
+        <p>We make reasonable efforts to keep Site content accurate and current but cannot guarantee completeness or correctness. We are responsible for our own content under general law. External links are provided for convenience; we are not responsible for third-party content.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>Copyright</h2>
+        <p>Content and works on this Site are subject to copyright. Reproduction, editing, or distribution beyond what is permitted by law requires prior written consent.</p>
+      </section>
+    </article>
+  </section>
+"""
+
+
+def privacy_page() -> str:
+    return shell("Privacy Policy", PRIVACY_BODY)
+
+
+def impressum_page() -> str:
+    return shell("Impressum", IMPRESSUM_BODY)
+
+
 def login_page() -> str:
     body = """
   <section class="auth-page">
@@ -493,6 +643,11 @@ def register_page() -> str:
           <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
           <ul id="register-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
+
+        <label class="auth-legal-consent">
+          <input id="register-tos" name="tosAccepted" type="checkbox" value="1" required>
+          <span>I agree to the <a href="/legal/terms/" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy/" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+        </label>
 
         <button class="button auth-submit" type="submit">Create Account</button>
       </form>
@@ -718,6 +873,8 @@ def main() -> None:
     write_page("downloads", downloads_page())
     write_page("support/contact", contact_page())
     write_page("legal/terms", terms_page())
+    write_page("legal/privacy", privacy_page())
+    write_page("legal/impressum", impressum_page())
     write_page("login", login_page())
     write_page("register", register_page())
     write_page("verify", verify_page())
@@ -728,7 +885,7 @@ def main() -> None:
     for rel, title in COMING_SOON_PAGES:
         write_page(rel, coming_soon(title))
 
-    print(f"Done — {10 + len(COMING_SOON_PAGES)} pages generated.")
+    print(f"Done — {12 + len(COMING_SOON_PAGES)} pages generated.")
 
 
 if __name__ == "__main__":
