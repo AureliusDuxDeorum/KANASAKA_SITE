@@ -330,7 +330,8 @@ main {
   overflow: visible;
 }
 
-.logo-line {
+.logo-line,
+.logo-signal {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -338,13 +339,10 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-pulse-wrap {
+.logo-signal {
   opacity: 0;
+  stroke-width: 3;
   pointer-events: none;
-}
-
-.logo-pulse {
-  fill: currentColor;
 }
 
 .logo-letter {
@@ -482,23 +480,12 @@ body.splash-complete .site-footer {
   opacity: 0.28;
 }
 
-.kanasaka-logo--hero.is-ambient.is-pulsing .logo-pulse-wrap {
+.kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-pulse {
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.95))
-    drop-shadow(0 0 12px rgba(255, 255, 255, 0.65))
-    drop-shadow(0 0 22px rgba(255, 255, 255, 0.35));
 }
 
 .kanasaka-logo--hero.is-ambient .logo-tag {
   opacity: 1;
-}
-
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-pulse {
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.55))
-    drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -514,7 +501,7 @@ body.splash-complete .site-footer {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient.is-pulsing .logo-pulse-wrap {
+  .kanasaka-logo--hero.is-ambient .logo-signal {
     opacity: 0;
   }
 }
