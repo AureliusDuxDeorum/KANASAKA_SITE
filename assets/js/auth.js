@@ -121,6 +121,66 @@
     }
   }
 
+  function getPasswordPolicy() {
+    return window.KanasakaPasswordPolicy || null;
+  }
+
+  function validateNewPassword(password, context) {
+    const policy = getPasswordPolicy();
+    if (!policy) {
+      return null;
+    }
+    return policy.error(password, context || {});
+  }
+
+  function bindPasswordPolicyField(config) {
+    const policy = getPasswordPolicy();
+    if (!policy || !config.passwordInput || !config.checklist) {
+      return;
+    }
+
+    function refresh() {
+      const context = config.getContext ? config.getContext() : {};
+      policy.renderChecklist(config.checklist, config.passwordInput.value, context);
+    }
+
+    config.passwordInput.addEventListener("input", refresh);
+    config.passwordInput.addEventListener("blur", refresh);
+
+    if (config.contextInput) {
+      config.contextInput.addEventListener("input", refresh);
+    }
+
+    refresh();
+  }
+
+  function initPasswordPolicyFields() {
+    bindPasswordPolicyField({
+      passwordInput: document.getElementById("register-password"),
+      checklist: document.getElementById("register-password-policy"),
+      contextInput: document.getElementById("register-email"),
+      getContext: function () {
+        const emailInput = document.getElementById("register-email");
+        return { email: emailInput ? emailInput.value.trim() : "" };
+      },
+    });
+
+    bindPasswordPolicyField({
+      passwordInput: document.getElementById("reset-password"),
+      checklist: document.getElementById("reset-password-policy"),
+    });
+
+    bindPasswordPolicyField({
+      passwordInput: document.getElementById("settings-new-password"),
+      checklist: document.getElementById("settings-new-password-policy"),
+      contextInput: document.getElementById("settings-email"),
+      getContext: function () {
+        const emailInput = document.getElementById("settings-email");
+        return { email: emailInput ? emailInput.value.trim() : "" };
+      },
+    });
+  }
+
   function bindEmailPasswordForm(formId, handler, options) {
     const form = document.getElementById(formId);
     if (!form) return;
@@ -135,6 +195,14 @@
       const password = passwordField ? passwordField.value : "";
       const submit = form.querySelector('[type="submit"]');
       const defaultLabel = submit.textContent;
+
+      if (formId === "register-form") {
+        const passwordError = validateNewPassword(password, { email });
+        if (passwordError) {
+          showFormError(form, passwordError);
+          return;
+        }
+      }
 
       submit.disabled = true;
       submit.textContent = "Please wait...";
@@ -203,6 +271,12 @@
 
       if (!token) {
         showFormError(form, "Reset link is invalid or missing.");
+        return;
+      }
+
+      const passwordError = validateNewPassword(password);
+      if (passwordError) {
+        showFormError(form, passwordError);
         return;
       }
 
@@ -498,6 +572,7 @@
 
     displayNameInput.value = profile.displayName || "";
     emailInput.value = profile.email || "";
+    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
     renderAvatarElement(avatarBox, profile);
     avatarRemove.hidden = !profile.hasAvatar;
 
@@ -604,6 +679,16 @@
       clearFormSuccess(passwordForm);
 
       const submit = passwordForm.querySelector('[type="submit"]');
+      const newPassword = passwordForm.querySelector('[name="newPassword"]').value;
+      const passwordError = validateNewPassword(newPassword, {
+        email: emailInput.value.trim(),
+      });
+
+      if (passwordError) {
+        showFormError(passwordForm, passwordError);
+        return;
+      }
+
       submit.disabled = true;
 
       try {
@@ -734,6 +819,7 @@
     });
     bindForgotPasswordForm();
     bindResetPasswordForm();
+    initPasswordPolicyFields();
   }
 
   window.KanasakaAuth = {

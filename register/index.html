@@ -13,6 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
 </head>
@@ -35,7 +36,8 @@
 
         <div class="auth-field">
           <label for="register-password">Password</label>
-          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <ul id="register-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
 
         <button class="button" type="submit">Create Account</button>

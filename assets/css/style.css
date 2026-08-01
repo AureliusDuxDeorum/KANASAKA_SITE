@@ -755,6 +755,52 @@ h1 {
   border-color: var(--color-border-light);
 }
 
+.password-policy {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.password-policy-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.password-policy-mark {
+  width: 10px;
+  height: 10px;
+  margin-top: 3px;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.password-policy-item.is-pass {
+  color: var(--color-text);
+}
+
+.password-policy-item.is-pass .password-policy-mark {
+  background: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.password-policy-item.is-fail {
+  color: #c85a5a;
+}
+
+.password-policy-item.is-fail .password-policy-mark {
+  border-color: #c85a5a;
+}
+
+.password-policy-item.is-pending .password-policy-mark {
+  background: transparent;
+}
+
 .auth-error {
   margin: 0 0 8px;
   padding: 12px 14px;

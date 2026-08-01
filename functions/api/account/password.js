@@ -32,7 +32,7 @@ export async function onRequestPost(context) {
   const currentPassword = String(body.currentPassword || "");
   const newPassword = String(body.newPassword || "");
 
-  const passwordError = passwordValidationError(newPassword);
+  const passwordError = passwordValidationError(newPassword, { email: user.email });
   if (passwordError) {
     return errorResponse(passwordError);
   }
