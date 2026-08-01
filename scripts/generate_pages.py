@@ -87,31 +87,31 @@ def home_page() -> str:
     body = """
   <section class="hero">
     <div class="kanasaka-logo kanasaka-logo--hero">
-      <svg class="kanasaka-logo-svg" viewBox="0 0 480 100" role="img" aria-label="Kanasaka">
+      <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
         <title>Kanasaka</title>
         <g class="logo-side logo-side-left">
-          <path class="logo-line" d="M 80 36 H 128 L 168 46 H 188"></path>
-          <path class="logo-flow" d="M 80 36 H 128 L 168 46 H 188"></path>
-          <path class="logo-signal" d="M 80 36 H 128 L 168 46 H 188"></path>
-          <text class="logo-tag" x="76" y="40" text-anchor="end">Software</text>
-          <path class="logo-line" d="M 80 64 H 128 L 168 54 H 188"></path>
-          <path class="logo-flow" d="M 80 64 H 128 L 168 54 H 188"></path>
-          <path class="logo-signal" d="M 80 64 H 128 L 168 54 H 188"></path>
-          <text class="logo-tag" x="76" y="68" text-anchor="end">AI</text>
+          <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
+          <path class="logo-flow" d="M 80 40 H 108 L 120 52 H 188"></path>
+          <path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>
+          <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
+          <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
+          <path class="logo-flow" d="M 80 70 H 108 L 120 58 H 188"></path>
+          <path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>
+          <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
         </g>
         <g class="logo-letters">
-          <text class="logo-letter logo-letter-k" x="240" y="44" text-anchor="middle">K</text>
-          <text class="logo-letter logo-letter-s" x="240" y="80" text-anchor="middle">S</text>
+          <text class="logo-letter logo-letter-k" x="240" y="38" text-anchor="middle">K</text>
+          <text class="logo-letter logo-letter-s" x="240" y="92" text-anchor="middle">S</text>
         </g>
         <g class="logo-side logo-side-right">
-          <path class="logo-line" d="M 400 36 H 352 L 312 46 H 292"></path>
-          <path class="logo-flow" d="M 400 36 H 352 L 312 46 H 292"></path>
-          <path class="logo-signal" d="M 400 36 H 352 L 312 46 H 292"></path>
-          <text class="logo-tag" x="404" y="40" text-anchor="start">Robotics</text>
-          <path class="logo-line" d="M 400 64 H 352 L 312 54 H 292"></path>
-          <path class="logo-flow" d="M 400 64 H 352 L 312 54 H 292"></path>
-          <path class="logo-signal" d="M 400 64 H 352 L 312 54 H 292"></path>
-          <text class="logo-tag" x="404" y="68" text-anchor="start">Biotech</text>
+          <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
+          <path class="logo-flow" d="M 400 40 H 372 L 360 52 H 292"></path>
+          <path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>
+          <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
+          <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
+          <path class="logo-flow" d="M 400 70 H 372 L 360 58 H 292"></path>
+          <path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>
+          <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
       </svg>
     </div>

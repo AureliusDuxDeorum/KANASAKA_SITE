@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: "Rajdhani";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/Rajdhani-Bold.ttf") format("truetype");
+}
+
 :root,
 [data-theme="dark"] {
   --color-base: #000000;
@@ -307,7 +315,7 @@ main {
 .kanasaka-logo--hero,
 .kanasaka-logo--splash {
   gap: 0;
-  width: min(2280px, 98vw, calc(80vh * 4.8));
+  width: min(2280px, 98vw, calc(80vh * 4.36));
 }
 
 .kanasaka-logo--hero {
@@ -343,10 +351,10 @@ main {
 
 .logo-letter {
   fill: currentColor;
-  font-family: Inter, system-ui, -apple-system, sans-serif;
-  font-size: 52px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-family: "Rajdhani", Inter, system-ui, -apple-system, sans-serif;
+  font-size: 50px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
 .logo-tag {
