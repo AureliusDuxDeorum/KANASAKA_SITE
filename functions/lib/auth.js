@@ -312,7 +312,7 @@ async function loadSessionUser(env, tokenHash, schema) {
   if (schema.sessionsHashed) {
     return env.DB.prepare(
       `SELECT s.token_hash, s.last_rotated_at,
-              u.id, u.email, u.email_verified, u.display_name,
+              u.id, u.email, u.email_verified, u.display_name, u.totp_enabled,
               ua.updated_at AS avatar_updated_at,
               CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
        FROM sessions s
@@ -327,7 +327,7 @@ async function loadSessionUser(env, tokenHash, schema) {
 
   return env.DB.prepare(
     `SELECT s.id AS token_hash, s.created_at AS last_rotated_at,
-            u.id, u.email, u.email_verified, u.display_name,
+            u.id, u.email, u.email_verified, u.display_name, u.totp_enabled,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM sessions s
@@ -540,6 +540,7 @@ export function sessionPayload(user) {
     hasAvatar,
     avatarUrl: hasAvatar ? "/api/account/avatar?v=" + version : null,
     initials: initialsFromUser(user),
+    twoFactorEnabled: Boolean(user && user.totp_enabled),
   };
 }
 

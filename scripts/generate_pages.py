@@ -321,6 +321,23 @@ def login_page() -> str:
         <button class="button" type="submit">Log In</button>
       </form>
 
+      <form id="login-2fa-form" class="auth-form" hidden>
+        <p class="auth-note">Enter the 6-digit code from your authenticator app.</p>
+
+        <div class="auth-field">
+          <label for="login-2fa-code">Authenticator Code</label>
+          <input id="login-2fa-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        </div>
+
+        <div class="auth-field">
+          <label for="login-backup-code">Or Backup Code</label>
+          <input id="login-backup-code" name="backupCode" type="text" autocomplete="off" placeholder="XXXX-XXXX-XX">
+        </div>
+
+        <button class="button" type="submit">Verify &amp; Sign In</button>
+        <button id="login-2fa-cancel" class="auth-link secondary" type="button">Back</button>
+      </form>
+
       <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
       <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
     </div>
@@ -518,6 +535,44 @@ def settings_page() -> str:
 
               <button class="button secondary" type="submit">Update Password</button>
             </form>
+
+            <div id="settings-twofa-panel" class="settings-form settings-twofa-panel">
+              <h3 class="settings-subsection-title">Two-Factor Authentication</h3>
+              <p id="settings-twofa-status" class="settings-panel-intro">Checking two-factor status...</p>
+
+              <div id="settings-twofa-disabled" hidden>
+                <button id="settings-twofa-setup" class="button secondary" type="button">Set Up Authenticator</button>
+                <div id="settings-twofa-setup-box" class="settings-twofa-box" hidden>
+                  <p class="settings-panel-intro">Add this key to Google Authenticator, 1Password, or another TOTP app.</p>
+                  <code id="settings-twofa-secret" class="settings-code"></code>
+                  <p class="settings-panel-intro"><a id="settings-twofa-link" href="#" rel="noopener">Open otpauth link</a></p>
+                  <form id="settings-twofa-enable-form" class="auth-form">
+                    <div class="auth-field">
+                      <label for="settings-twofa-code">Verification Code</label>
+                      <input id="settings-twofa-code" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+                    </div>
+                    <button class="button" type="submit">Enable 2FA</button>
+                  </form>
+                </div>
+              </div>
+
+              <div id="settings-twofa-enabled" hidden>
+                <p class="settings-panel-intro">Two-factor authentication is active on this account.</p>
+                <form id="settings-twofa-disable-form" class="auth-form">
+                  <div class="auth-field">
+                    <label for="settings-twofa-disable-password">Current Password</label>
+                    <input id="settings-twofa-disable-password" name="password" type="password" autocomplete="current-password">
+                  </div>
+                  <div class="auth-field">
+                    <label for="settings-twofa-disable-code">Authenticator Code</label>
+                    <input id="settings-twofa-disable-code" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+                  </div>
+                  <button class="button secondary" type="submit">Disable 2FA</button>
+                </form>
+              </div>
+
+              <pre id="settings-twofa-backup" class="settings-code" hidden></pre>
+            </div>
 
             <form id="settings-delete-form" class="auth-form settings-form settings-danger-zone">
               <h3 class="settings-subsection-title">Delete Account</h3>

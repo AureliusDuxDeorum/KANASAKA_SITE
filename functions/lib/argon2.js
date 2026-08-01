@@ -6,8 +6,8 @@ setWASMModules({ argon2WASM, blake2bWASM });
 
 export const ARGON2_DEFAULTS = {
   parallelism: 1,
-  iterations: 2,
-  memorySize: 8192,
+  iterations: 3,
+  memorySize: 19456,
   hashLength: 32,
   outputType: "encoded",
 };
@@ -19,8 +19,8 @@ export function argon2Params(env) {
 
   return {
     parallelism: Number.isFinite(parallelism) && parallelism > 0 ? parallelism : 1,
-    iterations: Number.isFinite(iterations) && iterations > 0 ? iterations : 2,
-    memorySize: Number.isFinite(memorySize) && memorySize >= 8192 ? memorySize : 8192,
+    iterations: Number.isFinite(iterations) && iterations > 0 ? iterations : 3,
+    memorySize: Number.isFinite(memorySize) && memorySize >= 8192 ? memorySize : 19456,
     hashLength: 32,
     outputType: "encoded",
   };

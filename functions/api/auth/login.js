@@ -6,7 +6,6 @@ import {
   LOGIN_FAILURE_MESSAGE,
   normalizeEmail,
   loginPasswordValidationError,
-  passwordValidationError,
   readJson,
   sessionCookieHeader,
   sessionPayload,
@@ -14,6 +13,7 @@ import {
   validateEmail,
   verifyPassword,
 } from "../../lib/auth.js";
+import { createTwoFactorChallenge } from "../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -42,7 +42,7 @@ export async function onRequestPost(context) {
   }
 
   const user = await env.DB.prepare(
-    `SELECT u.id, u.email, u.password_hash, u.email_verified, u.display_name,
+    `SELECT u.id, u.email, u.password_hash, u.email_verified, u.display_name, u.totp_enabled,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM users u
@@ -69,6 +69,18 @@ export async function onRequestPost(context) {
   }
 
   await upgradePasswordHash(env, user.id, password, user.password_hash);
+
+  if (user.totp_enabled) {
+    const challenge = await createTwoFactorChallenge(env, user.id);
+    await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
+    return jsonResponse({
+      twoFactorRequired: true,
+      challenge: challenge.challenge,
+      expiresIn: challenge.expiresIn,
+      email: user.email,
+    });
+  }
+
   await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });

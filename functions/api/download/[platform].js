@@ -1,4 +1,11 @@
-import { DOWNLOAD_URLS, errorResponse, getSessionUser } from "../../lib/auth.js";
+import {
+  createSignedDownloadToken,
+  installerConfig,
+  installersConfigured,
+  signedDownloadUrl,
+} from "../../lib/downloads.js";
+import { errorResponse, getSessionUser } from "../../lib/auth.js";
+import { clientIp, logAuthEvent } from "../../lib/security.js";
 
 export async function onRequestGet(context) {
   const { request, env, params } = context;
@@ -13,10 +20,28 @@ export async function onRequestGet(context) {
     return errorResponse("Authentication required.", 401);
   }
 
-  const url = DOWNLOAD_URLS[platform];
-  if (!url) {
+  const config = installerConfig(platform);
+  if (!config) {
     return errorResponse("Unknown platform.", 404);
   }
 
-  return Response.redirect(url, 302);
+  if (!installersConfigured(env)) {
+    return errorResponse(
+      "Private downloads are not configured yet. Bind the INSTALLERS R2 bucket in Cloudflare Pages.",
+      503
+    );
+  }
+
+  try {
+    const token = await createSignedDownloadToken(env, user.id, platform);
+    await logAuthEvent(env, "download_issued", {
+      ip: clientIp(request),
+      userId: user.id,
+      platform,
+    });
+
+    return Response.redirect(signedDownloadUrl(request, token), 302);
+  } catch (err) {
+    return errorResponse(err.message || "Could not create download link.", 500);
+  }
 }
