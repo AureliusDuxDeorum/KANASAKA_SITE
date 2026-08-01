@@ -350,7 +350,7 @@
       }
 
       var script = document.createElement("script");
-      script.src = "/assets/js/logo-animation.js";
+      script.src = "/assets/js/logo-animation.js?v=42";
       script.onload = resolve;
       script.onerror = resolve;
       document.head.appendChild(script);
