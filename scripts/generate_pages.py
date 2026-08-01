@@ -28,7 +28,6 @@ COMING_SOON_PAGES = [
     ("media/gallery", "Gallery"),
     ("media/videos", "Videos"),
     ("legal/privacy", "Privacy"),
-    ("legal/terms", "Terms"),
     ("legal/licenses", "Licenses"),
     ("legal/security", "Security"),
     ("legal/impressum", "Impressum"),
@@ -51,7 +50,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=47">
+  <link rel="stylesheet" href="/assets/css/style.css?v=48">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -339,6 +338,112 @@ def contact_page() -> str:
     return shell("Contact", body)
 
 
+TERMS_BODY = """
+  <section class="hero compact">
+    <div class="kanasaka-logo small">
+      <div class="logo-side"><div></div><div></div></div>
+      <div class="logo-center"><span>K</span><span>S</span></div>
+      <div class="logo-side"><div></div><div></div></div>
+    </div>
+
+    <h1>Terms of Service</h1>
+
+    <p>Effective date: 1 August 2026</p>
+  </section>
+
+  <section class="page-section legal-document">
+    <article class="content-card legal-card">
+      <section class="tos-section">
+        <h2>1. Agreement to Terms</h2>
+        <p>By accessing or using the KANASAKA website at kanasaka.com (the &ldquo;Site&rdquo;), creating an account, or downloading software made available through the Site, you agree to be bound by these Terms of Service (&ldquo;Terms&rdquo;). If you do not agree, do not use the Site or our services.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>2. Description of Service</h2>
+        <p>KANASAKA provides an informational website, user accounts, authenticated access to product downloads (including KS Unify), support and contact channels, and related online services. Features may change, be limited, or be withdrawn during active development.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>3. Eligibility</h2>
+        <p>You must be at least 16 years old and able to form a binding contract under applicable law. By using the Site, you represent that you meet these requirements.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>4. Accounts and Security</h2>
+        <p>You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. You must provide accurate registration information, keep it up to date, and notify us promptly of unauthorized access. We may suspend or terminate accounts that violate these Terms or pose a security risk.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>5. Acceptable Use</h2>
+        <p>You agree not to:</p>
+        <ul>
+          <li>use the Site or downloads for unlawful, harmful, or fraudulent purposes;</li>
+          <li>attempt to gain unauthorized access to systems, accounts, or data;</li>
+          <li>interfere with or disrupt the Site, its infrastructure, or other users;</li>
+          <li>reverse engineer, decompile, or redistribute software except as expressly permitted;</li>
+          <li>scrape, harvest, or automate access in a manner that burdens our services;</li>
+          <li>upload malware or submit false, misleading, or abusive content.</li>
+        </ul>
+      </section>
+
+      <section class="tos-section">
+        <h2>6. Software Downloads</h2>
+        <p>Software such as KS Unify is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads is prohibited unless we authorize it in writing.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>7. Intellectual Property</h2>
+        <p>The Site, KANASAKA branding, logos, text, graphics, and software are owned by KANASAKA or its licensors and protected by intellectual property laws. These Terms do not grant you any ownership rights except the limited right to use the Site and permitted downloads in accordance with these Terms.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>8. Privacy</h2>
+        <p>Our handling of personal data is described in our Privacy Policy. By using the Site, you acknowledge that we process account, security, and usage data as needed to operate the service.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>9. Disclaimers</h2>
+        <p>The Site and all software are provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>10. Limitation of Liability</h2>
+        <p>To the fullest extent permitted by law, KANASAKA and its operators will not be liable for indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, or goodwill arising from your use of the Site or downloaded software. Our total liability for any claim relating to the Site or services will not exceed the greater of &euro;100 or the amount you paid us (if any) in the twelve months before the claim.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>11. Indemnification</h2>
+        <p>You agree to indemnify and hold harmless KANASAKA from claims, damages, and expenses (including reasonable legal fees) arising from your misuse of the Site, violation of these Terms, or infringement of third-party rights.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>12. Termination</h2>
+        <p>You may stop using the Site at any time. We may suspend or terminate access if you breach these Terms or if required for legal, security, or operational reasons. Provisions that by nature should survive termination will remain in effect.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>13. Changes to Terms</h2>
+        <p>We may update these Terms from time to time. Material changes will be indicated by updating the effective date above. Continued use after changes become effective constitutes acceptance of the revised Terms.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>14. Governing Law</h2>
+        <p>These Terms are governed by the laws of Germany, excluding conflict-of-law rules. Mandatory consumer protections in your country of residence remain unaffected where applicable.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>15. Contact</h2>
+        <p>Questions about these Terms: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a></p>
+      </section>
+    </article>
+  </section>
+"""
+
+
+def terms_page() -> str:
+    return shell("Terms of Service", TERMS_BODY)
+
+
 def login_page() -> str:
     body = """
   <section class="auth-page">
@@ -612,6 +717,7 @@ def main() -> None:
     write_page("products/ks-unify", ks_unify_page())
     write_page("downloads", downloads_page())
     write_page("support/contact", contact_page())
+    write_page("legal/terms", terms_page())
     write_page("login", login_page())
     write_page("register", register_page())
     write_page("verify", verify_page())
@@ -622,7 +728,7 @@ def main() -> None:
     for rel, title in COMING_SOON_PAGES:
         write_page(rel, coming_soon(title))
 
-    print(f"Done — {9 + len(COMING_SOON_PAGES)} pages generated.")
+    print(f"Done — {10 + len(COMING_SOON_PAGES)} pages generated.")
 
 
 if __name__ == "__main__":

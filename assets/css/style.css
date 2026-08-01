@@ -1491,6 +1491,159 @@ h1 {
   }
 }
 
+/* ── Terms of Service modal ── */
+
+body.tos-open {
+  overflow: hidden;
+}
+
+.tos-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.tos-overlay.is-visible {
+  opacity: 1;
+}
+
+.tos-overlay[hidden] {
+  display: none;
+}
+
+.tos-dialog {
+  width: min(720px, 100%);
+  max-height: min(88vh, 860px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  transform: translateY(12px);
+  transition: transform 240ms ease;
+}
+
+.tos-overlay.is-visible .tos-dialog {
+  transform: translateY(0);
+}
+
+.tos-dialog-header {
+  padding: 28px 28px 0;
+}
+
+.tos-dialog-header h2 {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 4vw, 32px);
+  letter-spacing: 0.08em;
+}
+
+.tos-dialog-header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.tos-dialog-body {
+  margin: 20px 28px 0;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-base);
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.tos-dialog-footer {
+  padding: 20px 28px 28px;
+}
+
+.tos-accept-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.tos-accept-label input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.tos-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.tos-section + .tos-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tos-section h2,
+.tos-section h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.tos-section p,
+.tos-section li {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.tos-section ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.tos-section li + li {
+  margin-top: 6px;
+}
+
+.tos-section a {
+  color: var(--color-text);
+}
+
+.tos-effective {
+  margin-top: 12px !important;
+  font-size: 13px !important;
+  color: var(--color-text-subtle) !important;
+}
+
+.legal-document .legal-card {
+  display: block;
+  padding: 40px 36px;
+}
+
+.legal-document .tos-section h2 {
+  font-size: 18px;
+}
+
+.legal-document .tos-section p,
+.legal-document .tos-section li {
+  font-size: 15px;
+}
+
 /* ── Footer ── */
 
 .site-footer {
@@ -1630,5 +1783,28 @@ h1 {
   .hero {
     min-height: 60vh;
     padding: 64px 20px;
+  }
+
+  .tos-overlay {
+    padding: 16px;
+  }
+
+  .tos-dialog-header,
+  .tos-dialog-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .tos-dialog-body {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  .tos-dialog-actions {
+    flex-direction: column;
+  }
+
+  .tos-dialog-actions .button {
+    width: 100%;
   }
 }
