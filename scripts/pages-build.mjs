@@ -1,7 +1,3 @@
-import { execSync } from "node:child_process";
-
-// Cloudflare Pages runs `npm run build` when package.json exists.
-// Validate that Functions bundle (Argon2 WASM, auth routes) before deploy.
-console.log("Validating Cloudflare Pages Functions bundle...");
-execSync("npx wrangler pages functions build", { stdio: "inherit" });
+// Cloudflare Pages runs `npm run build` when a build command is configured.
+// Auth WASM is vendored under functions/vendor/, so deploy works without npm install.
 console.log("Pages build OK.");
