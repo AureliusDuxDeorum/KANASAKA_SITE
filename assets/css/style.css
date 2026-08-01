@@ -5,11 +5,11 @@
 }
 
 @font-face {
-  font-family: "Rajdhani";
+  font-family: "Tektur";
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
   font-display: swap;
-  src: url("/assets/fonts/Rajdhani-Bold.ttf") format("truetype");
+  src: url("/assets/fonts/Tektur-SemiBold.ttf") format("truetype");
 }
 
 :root,
@@ -331,7 +331,6 @@ main {
 }
 
 .logo-line,
-.logo-flow,
 .logo-signal {
   fill: none;
   stroke: currentColor;
@@ -340,21 +339,18 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-flow,
 .logo-signal {
   opacity: 0;
-}
-
-.logo-signal {
   stroke-width: 3;
+  filter: url("#logo-pulse-glow");
 }
 
 .logo-letter {
   fill: currentColor;
-  font-family: "Rajdhani", Inter, system-ui, -apple-system, sans-serif;
+  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
   font-size: 50px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
 }
 
 .logo-tag {
@@ -484,54 +480,22 @@ body.splash-complete .site-footer {
   opacity: 0.28;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-flow {
-  opacity: 0.85;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-  animation: logo-circuit-flow 3.6s linear infinite;
-  animation-delay: var(--flow-delay, 0s);
-}
-
 .kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
-  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95));
-  animation: logo-signal-travel 3s linear infinite;
-  animation-delay: var(--signal-delay, 0s);
+  filter: url("#logo-pulse-glow")
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.65))
+    drop-shadow(0 0 22px rgba(255, 255, 255, 0.35));
 }
 
 .kanasaka-logo--hero.is-ambient .logo-tag {
   opacity: 1;
 }
 
-@keyframes logo-circuit-flow {
-  from {
-    stroke-dashoffset: 0;
-  }
-
-  to {
-    stroke-dashoffset: calc(var(--line-length, 180) * -1);
-  }
-}
-
-@keyframes logo-signal-travel {
-  from {
-    stroke-dashoffset: var(--line-length, 180);
-    opacity: 0.25;
-  }
-
-  15%,
-  85% {
-    opacity: 1;
-  }
-
-  to {
-    stroke-dashoffset: calc(var(--line-length, 180) * -1);
-    opacity: 0.25;
-  }
-}
-
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-flow,
 [data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
-  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.35));
+  filter: url("#logo-pulse-glow")
+    drop-shadow(0 0 4px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -547,11 +511,8 @@ body.splash-complete .site-footer {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-flow,
   .kanasaka-logo--hero.is-ambient .logo-signal {
-    animation: none !important;
     opacity: 0;
-    stroke-dashoffset: 0;
   }
 }
 
