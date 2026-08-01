@@ -106,7 +106,7 @@ export async function onRequestPost(context) {
       return errorResponse("Enter a valid email address.");
     }
 
-    const passwordError = passwordValidationError(password);
+    const passwordError = passwordValidationError(password, { email });
     if (passwordError) {
       return errorResponse(passwordError);
     }

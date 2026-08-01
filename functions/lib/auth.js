@@ -3,8 +3,20 @@ import {
   isArgon2Hash,
   verifyPasswordArgon2,
 } from "./argon2.js";
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  loginPasswordValidationError,
+  passwordPolicyError,
+} from "./password-policy.js";
 import { getAuthSchema } from "./schema.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
+
+export {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  loginPasswordValidationError,
+} from "./password-policy.js";
 
 export const SESSION_COOKIE = "__Host-kanasaka_session";
 export const SESSION_DAYS = 30;
@@ -53,8 +65,6 @@ export const CONTACT_INFO = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const PASSWORD_MIN_LENGTH = 8;
-export const PASSWORD_MAX_LENGTH = 128;
 export const LOGIN_FAILURE_MESSAGE = "Invalid email or password.";
 export const REGISTER_SUCCESS_MESSAGE =
   "If this email can be used, check your inbox to confirm your account before signing in.";
@@ -108,18 +118,12 @@ export function validateEmail(email) {
   return typeof email === "string" && EMAIL_RE.test(email) && email.length <= 254;
 }
 
-export function passwordValidationError(password) {
-  if (typeof password !== "string" || password.length < PASSWORD_MIN_LENGTH) {
-    return "Password must be at least 8 characters.";
-  }
-  if (password.length > PASSWORD_MAX_LENGTH) {
-    return `Password must be at most ${PASSWORD_MAX_LENGTH} characters.`;
-  }
-  return null;
+export function passwordValidationError(password, context = {}) {
+  return passwordPolicyError(password, context);
 }
 
-export function validatePassword(password) {
-  return passwordValidationError(password) === null;
+export function validatePassword(password, context = {}) {
+  return passwordValidationError(password, context) === null;
 }
 
 function bytesToBase64(bytes) {

@@ -47,9 +47,19 @@ docs/CLOUDFLARE_WAF.md      WAF rule documentation
 
 4. AUTH DESIGN
 --------------
+Password policy (register, reset, change password)
+  Min 12 chars, max 128
+  Requires uppercase, lowercase, digit, special character
+  No spaces; no more than 2 identical characters in a row
+  Blocklist of common passwords (incl. kanasaka, ksunify)
+  Must not contain email local-part (before @)
+  Login does NOT re-apply policy (existing shorter passwords still work until changed)
+  Server: functions/lib/password-policy.js
+  Client: assets/js/password-policy.js (keep in sync)
+
 Registration
   POST /api/auth/register
-  Email + password (min 8 chars). Password hashed Argon2id.
+  Email + password (policy above). Password hashed Argon2id.
   Creates user (email_verified=0), email verify token, sends Resend email.
   Anti-enumeration: existing verified email → generic success; unverified → resend.
 
@@ -164,6 +174,7 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-08-01  Added full password policy (12+ chars, classes, blocklist, live UI checklist).
 2026-08-01  ARD created. Documented full auth stack, D1 schema, deploy model.
 2026-08-01  PR #18 merged: schema detection, D1 bind fixes, vendored Argon2 WASM.
 2026-08-01  Remote D1 wiped via 007_wipe_accounts.sql (3 users removed).

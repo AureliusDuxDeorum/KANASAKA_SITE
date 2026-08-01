@@ -51,6 +51,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
 </head>
@@ -343,7 +344,8 @@ def register_page() -> str:
 
         <div class="auth-field">
           <label for="register-password">Password</label>
-          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <ul id="register-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
 
         <button class="button" type="submit">Create Account</button>
@@ -401,7 +403,8 @@ def reset_password_page() -> str:
       <form id="reset-password-form" class="auth-form">
         <div class="auth-field">
           <label for="reset-password">New Password</label>
-          <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+          <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <ul id="reset-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
 
         <button class="button" type="submit">Update Password</button>
@@ -509,7 +512,8 @@ def settings_page() -> str:
 
               <div class="auth-field">
                 <label for="settings-new-password">New Password</label>
-                <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8">
+                <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128">
+                <ul id="settings-new-password-policy" class="password-policy" aria-live="polite"></ul>
               </div>
 
               <button class="button secondary" type="submit">Update Password</button>

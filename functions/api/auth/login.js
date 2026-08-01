@@ -5,6 +5,7 @@ import {
   jsonResponse,
   LOGIN_FAILURE_MESSAGE,
   normalizeEmail,
+  loginPasswordValidationError,
   passwordValidationError,
   readJson,
   sessionCookieHeader,
@@ -33,7 +34,7 @@ export async function onRequestPost(context) {
 
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
-  const passwordError = passwordValidationError(password);
+  const passwordError = loginPasswordValidationError(password);
 
   if (!validateEmail(email) || passwordError) {
     await logAuthEvent(env, "login_failed", { ip, reason: "invalid_input" });
