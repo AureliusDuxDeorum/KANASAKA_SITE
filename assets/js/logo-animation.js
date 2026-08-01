@@ -1,7 +1,7 @@
 (function () {
   var INTRO_KEY = "kanasaka-intro-seen";
   var INTRO_MS = 3400;
-  var PULSE_SEGMENT = 32;
+  var PULSE_SEGMENT = 18;
   var LOGO_FONT = '600 50px "Tektur"';
 
   var LOGO_LETTERS =
@@ -15,18 +15,22 @@
     "<title>Kanasaka</title>" +
     '<g class="logo-side logo-side-left">' +
     '<path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>' +
+    '<path class="logo-signal-halo" d="M 80 40 H 108 L 120 52 H 188"></path>' +
     '<path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>' +
     '<text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>' +
     '<path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>' +
+    '<path class="logo-signal-halo" d="M 80 70 H 108 L 120 58 H 188"></path>' +
     '<path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>' +
     '<text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>' +
     "</g>" +
     LOGO_LETTERS +
     '<g class="logo-side logo-side-right">' +
     '<path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>' +
+    '<path class="logo-signal-halo" d="M 400 40 H 372 L 360 52 H 292"></path>' +
     '<path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>' +
     '<text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>' +
     '<path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>' +
+    '<path class="logo-signal-halo" d="M 400 70 H 372 L 360 58 H 292"></path>' +
     '<path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>' +
     '<text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>' +
     "</g>" +
@@ -36,18 +40,25 @@
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  function getSignalPath(line) {
+  function getSignalElements(line) {
+    var elements = [];
     var node = line.nextElementSibling;
+
     while (node) {
-      if (node.classList && node.classList.contains("logo-signal")) {
-        return node;
+      if (
+        node.classList &&
+        (node.classList.contains("logo-signal") ||
+          node.classList.contains("logo-signal-halo"))
+      ) {
+        elements.push(node);
       }
       if (node.classList && node.classList.contains("logo-line")) {
         break;
       }
       node = node.nextElementSibling;
     }
-    return null;
+
+    return elements;
   }
 
   function whenPathsReady(root, callback, attempt) {
@@ -103,8 +114,8 @@
 
   function prepareSignalPaths(root) {
     root.querySelectorAll(".logo-line").forEach(function (line, index) {
-      var signal = getSignalPath(line);
-      if (!signal) {
+      var signals = getSignalElements(line);
+      if (!signals.length) {
         return;
       }
 
@@ -114,10 +125,16 @@
       }
 
       var gap = length + PULSE_SEGMENT;
-      signal.style.setProperty("--path-length", String(length));
-      signal.style.setProperty("--pulse-delay", String(index * 0.8) + "s");
-      signal.style.strokeDasharray = PULSE_SEGMENT + " " + gap;
-      signal.style.strokeDashoffset = String(length);
+      var dasharray = PULSE_SEGMENT + " " + gap;
+      var delay = String(index * 0.8) + "s";
+
+      signals.forEach(function (signal) {
+        signal.style.setProperty("--path-length", String(length));
+        signal.style.setProperty("--pulse-segment", String(PULSE_SEGMENT));
+        signal.style.setProperty("--pulse-delay", delay);
+        signal.style.strokeDasharray = dasharray;
+        signal.style.strokeDashoffset = String(length);
+      });
     });
   }
 

@@ -330,8 +330,7 @@ main {
   overflow: visible;
 }
 
-.logo-line,
-.logo-signal {
+.logo-line {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -339,10 +338,21 @@ main {
   stroke-linejoin: miter;
 }
 
+.logo-signal-halo,
 .logo-signal {
-  opacity: 0;
-  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
+  opacity: 0;
+}
+
+.logo-signal-halo {
+  stroke-width: 8;
+}
+
+.logo-signal {
+  stroke-width: 3;
 }
 
 .logo-letter {
@@ -432,7 +442,8 @@ body.splash-complete .site-footer {
   opacity: 0;
 }
 
-.site-splash .logo-signal {
+.site-splash .logo-signal,
+.site-splash .logo-signal-halo {
   opacity: 0;
   animation: none;
 }
@@ -485,6 +496,13 @@ body.splash-complete .site-footer {
   opacity: 0.28;
 }
 
+.kanasaka-logo--hero.is-ambient .logo-signal-halo {
+  opacity: 0.42;
+  stroke: #ffffff;
+  animation: logo-signal-travel 3s linear infinite;
+  animation-delay: var(--pulse-delay, 0s);
+}
+
 .kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
   stroke: #ffffff;
@@ -494,8 +512,13 @@ body.splash-complete .site-footer {
 
 @keyframes logo-signal-travel {
   to {
-    stroke-dashoffset: -32;
+    stroke-dashoffset: calc(-1 * var(--pulse-segment, 18));
   }
+}
+
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal-halo {
+  stroke: #111111;
+  opacity: 0.28;
 }
 
 [data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
@@ -519,7 +542,8 @@ body.splash-complete .site-footer {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-signal {
+  .kanasaka-logo--hero.is-ambient .logo-signal,
+  .kanasaka-logo--hero.is-ambient .logo-signal-halo {
     opacity: 0;
     animation: none;
   }
