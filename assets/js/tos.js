@@ -115,8 +115,18 @@
       "<span>I have read and agree to the Terms of Service</span>" +
       "</label>" +
       '<div class="tos-dialog-actions">' +
-      '<a href="/legal/terms/" class="button secondary" target="_blank" rel="noopener">View Full Terms</a>' +
+      '<div class="tos-email-panel" id="tos-email-panel" hidden>' +
+      '<label class="tos-email-label" for="tos-email-input">Email address</label>' +
+      '<div class="tos-email-row">' +
+      '<input type="email" id="tos-email-input" class="tos-email-input" placeholder="you@example.com" autocomplete="email">' +
+      '<button type="button" class="button secondary" id="tos-email-send">Send</button>' +
+      "</div>" +
+      '<p class="tos-email-status" id="tos-email-status" hidden></p>' +
+      "</div>" +
+      '<div class="tos-dialog-actions-row">' +
+      '<button type="button" class="button secondary" id="tos-receive-button">Receive Full Terms</button>' +
       '<button type="button" class="button" id="tos-accept-button" disabled>Accept &amp; Continue</button>' +
+      "</div>" +
       "</div>" +
       "</div>" +
       "</div>";
@@ -125,20 +135,76 @@
     return overlay;
   }
 
-  function showModal() {
-    if (visible || isAccepted()) {
-      return;
-    }
-
-    var overlay = document.getElementById("tos-overlay") || buildModal();
+  function bindModalActions(overlay) {
     var checkbox = overlay.querySelector("#tos-accept-checkbox");
     var acceptButton = overlay.querySelector("#tos-accept-button");
+    var receiveButton = overlay.querySelector("#tos-receive-button");
+    var emailPanel = overlay.querySelector("#tos-email-panel");
+    var emailInput = overlay.querySelector("#tos-email-input");
+    var emailSend = overlay.querySelector("#tos-email-send");
+    var emailStatus = overlay.querySelector("#tos-email-status");
 
     function syncAcceptState() {
       acceptButton.disabled = !checkbox.checked;
     }
 
+    function showEmailStatus(message, isError) {
+      emailStatus.textContent = message;
+      emailStatus.hidden = false;
+      emailStatus.classList.toggle("is-error", Boolean(isError));
+    }
+
     checkbox.addEventListener("change", syncAcceptState);
+
+    receiveButton.addEventListener("click", function () {
+      emailPanel.hidden = !emailPanel.hidden;
+      receiveButton.setAttribute(
+        "aria-expanded",
+        emailPanel.hidden ? "false" : "true"
+      );
+      if (!emailPanel.hidden) {
+        emailInput.focus();
+      }
+    });
+
+    emailSend.addEventListener("click", async function () {
+      var email = emailInput.value.trim();
+      emailStatus.hidden = true;
+
+      if (!email) {
+        showEmailStatus("Enter an email address.", true);
+        return;
+      }
+
+      emailSend.disabled = true;
+      emailSend.textContent = "Sending...";
+
+      try {
+        var response = await fetch("/api/terms/send", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email }),
+        });
+        var data = await response.json();
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not send email.");
+        }
+
+        showEmailStatus(
+          (data && data.message) ||
+            "If the address is valid, the full Terms of Service will arrive shortly.",
+          false
+        );
+        emailInput.value = "";
+      } catch (error) {
+        showEmailStatus(error.message || "Could not send email.", true);
+      } finally {
+        emailSend.disabled = false;
+        emailSend.textContent = "Send";
+      }
+    });
 
     acceptButton.addEventListener("click", function () {
       if (!checkbox.checked) {
@@ -156,6 +222,19 @@
       document.body.classList.remove("tos-open");
       visible = false;
     });
+  }
+
+  function showModal() {
+    if (visible || isAccepted()) {
+      return;
+    }
+
+    var overlay = document.getElementById("tos-overlay") || buildModal();
+
+    if (!overlay.dataset.bound) {
+      bindModalActions(overlay);
+      overlay.dataset.bound = "1";
+    }
 
     overlay.hidden = false;
     window.requestAnimationFrame(function () {

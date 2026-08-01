@@ -1583,6 +1583,68 @@ body.tos-open {
 
 .tos-dialog-actions {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tos-email-panel {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-base);
+}
+
+.tos-email-panel[hidden] {
+  display: none;
+}
+
+.tos-email-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.tos-email-row {
+  display: flex;
+  gap: 10px;
+}
+
+.tos-email-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.tos-email-input:focus {
+  outline: none;
+  border-color: var(--color-border-light);
+  box-shadow: 0 0 0 3px var(--color-glow);
+}
+
+.tos-email-status {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.tos-email-status.is-error {
+  color: #c85a5a;
+}
+
+.tos-email-status[hidden] {
+  display: none;
+}
+
+.tos-dialog-actions-row {
+  display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: flex-end;
@@ -1800,11 +1862,16 @@ body.tos-open {
     margin-right: 20px;
   }
 
-  .tos-dialog-actions {
+  .tos-dialog-actions-row {
     flex-direction: column;
   }
 
-  .tos-dialog-actions .button {
+  .tos-dialog-actions-row .button,
+  .tos-email-row .button {
     width: 100%;
+  }
+
+  .tos-email-row {
+    flex-direction: column;
   }
 }
