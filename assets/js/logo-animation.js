@@ -1,62 +1,25 @@
 (function () {
   var INTRO_KEY = "kanasaka-intro-seen";
-  var INTRO_MS = 5200;
+  var INTRO_MS = 3400;
 
   var LOGO_SVG =
-    '<svg class="kanasaka-logo-svg" viewBox="0 0 360 152" role="img" aria-label="Kanasaka">' +
+    '<svg class="kanasaka-logo-svg" viewBox="0 0 480 100" role="img" aria-label="Kanasaka">' +
     "<title>Kanasaka</title>" +
-    '<g class="logo-circuit logo-circuit-left">' +
-    '<path class="logo-branch logo-branch-outer" d="M 0 36 H 78 L 104 46 H 128"></path>' +
-    '<path class="logo-branch logo-branch-outer" d="M 0 64 H 78 L 104 54 H 128"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 78 36 L 78 18 L 48 18"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 78 64 L 78 82 L 48 82"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 0 36 L 0 20 L 28 20"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 0 64 L 0 80 L 28 80"></path>' +
-    '<path class="logo-line" d="M 0 36 H 78 L 104 46 H 128"></path>' +
-    '<path class="logo-line" d="M 0 64 H 78 L 104 54 H 128"></path>' +
-    '<path class="logo-flow" d="M 0 36 H 78 L 104 46 H 128"></path>' +
-    '<path class="logo-flow" d="M 0 64 H 78 L 104 54 H 128"></path>' +
-    '<path class="logo-flow logo-flow-branch" d="M 78 36 L 78 18 L 48 18"></path>' +
-    '<path class="logo-flow logo-flow-branch" d="M 78 64 L 78 82 L 48 82"></path>' +
-    '<path class="logo-signal" d="M 0 36 H 78 L 104 46 H 128"></path>' +
-    '<path class="logo-signal" d="M 0 64 H 78 L 104 54 H 128"></path>' +
-    '<path class="logo-signal logo-signal-branch" d="M 78 36 L 78 18 L 48 18"></path>' +
-    '<path class="logo-signal logo-signal-branch" d="M 78 64 L 78 82 L 48 82"></path>' +
+    '<g class="logo-side logo-side-left">' +
+    '<path class="logo-line" d="M 80 36 H 158 L 184 46 H 188"></path>' +
+    '<text class="logo-tag" x="76" y="40" text-anchor="end">Software</text>' +
+    '<path class="logo-line" d="M 80 64 H 158 L 184 54 H 188"></path>' +
+    '<text class="logo-tag" x="76" y="68" text-anchor="end">AI</text>' +
     "</g>" +
     '<g class="logo-letters">' +
-    '<text class="logo-letter logo-letter-k" x="180" y="42" text-anchor="middle">K</text>' +
-    '<text class="logo-letter logo-letter-s" x="180" y="78" text-anchor="middle">S</text>' +
+    '<text class="logo-letter logo-letter-k" x="240" y="42" text-anchor="middle">K</text>' +
+    '<text class="logo-letter logo-letter-s" x="240" y="78" text-anchor="middle">S</text>' +
     "</g>" +
-    '<g class="logo-circuit logo-circuit-right">' +
-    '<path class="logo-branch logo-branch-outer" d="M 360 36 H 282 L 256 46 H 232"></path>' +
-    '<path class="logo-branch logo-branch-outer" d="M 360 64 H 282 L 256 54 H 232"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 282 36 L 282 18 L 312 18"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 282 64 L 282 82 L 312 82"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 360 36 L 360 20 L 332 20"></path>' +
-    '<path class="logo-branch logo-branch-fork" d="M 360 64 L 360 80 L 332 80"></path>' +
-    '<path class="logo-line" d="M 360 36 H 282 L 256 46 H 232"></path>' +
-    '<path class="logo-line" d="M 360 64 H 282 L 256 54 H 232"></path>' +
-    '<path class="logo-flow" d="M 360 36 H 282 L 256 46 H 232"></path>' +
-    '<path class="logo-flow" d="M 360 64 H 282 L 256 54 H 232"></path>' +
-    '<path class="logo-flow logo-flow-branch" d="M 282 36 L 282 18 L 312 18"></path>' +
-    '<path class="logo-flow logo-flow-branch" d="M 282 64 L 282 82 L 312 82"></path>' +
-    '<path class="logo-signal" d="M 360 36 H 282 L 256 46 H 232"></path>' +
-    '<path class="logo-signal" d="M 360 64 H 282 L 256 54 H 232"></path>' +
-    '<path class="logo-signal logo-signal-branch" d="M 282 36 L 282 18 L 312 18"></path>' +
-    '<path class="logo-signal logo-signal-branch" d="M 282 64 L 282 82 L 312 82"></path>' +
-    "</g>" +
-    '<g class="logo-tags">' +
-    '<path class="logo-tag-line" d="M 180 88 V 104"></path>' +
-    '<path class="logo-tag-line logo-tag-bus" d="M 42 104 H 318"></path>' +
-    '<path class="logo-tag-line" d="M 42 104 V 114"></path>' +
-    '<path class="logo-tag-line" d="M 134 104 V 114"></path>' +
-    '<path class="logo-tag-line" d="M 226 104 V 114"></path>' +
-    '<path class="logo-tag-line" d="M 318 104 V 114"></path>' +
-    '<path class="logo-tag-flow" d="M 42 104 H 318"></path>' +
-    '<text class="logo-tag" x="42" y="130" text-anchor="middle">Software</text>' +
-    '<text class="logo-tag" x="134" y="130" text-anchor="middle">AI</text>' +
-    '<text class="logo-tag" x="226" y="130" text-anchor="middle">Robotics</text>' +
-    '<text class="logo-tag" x="318" y="130" text-anchor="middle">Biotech</text>' +
+    '<g class="logo-side logo-side-right">' +
+    '<path class="logo-line" d="M 400 36 H 322 L 296 46 H 292"></path>' +
+    '<text class="logo-tag" x="404" y="40" text-anchor="start">Robotics</text>' +
+    '<path class="logo-line" d="M 400 64 H 322 L 296 54 H 292"></path>' +
+    '<text class="logo-tag" x="404" y="68" text-anchor="start">Biotech</text>' +
     "</g>" +
     "</svg>";
 
@@ -65,70 +28,19 @@
   }
 
   function prepareLinePaths(root, forDraw) {
-    var lineIndex = 0;
-    var flowIndex = 0;
-    var signalIndex = 0;
-
-    root.querySelectorAll(".logo-branch").forEach(function (line, index) {
+    root.querySelectorAll(".logo-line").forEach(function (line, index) {
       var length = line.getTotalLength();
       line.style.setProperty("--line-length", String(length));
-      var isOuter = line.classList.contains("logo-branch-outer");
-      line.style.setProperty(
-        "--branch-delay",
-        String(isOuter ? index * 0.12 : 0.45 + index * 0.1) + "s"
-      );
+      line.style.setProperty("--line-delay", String(index * 0.25) + "s");
       if (forDraw) {
         line.style.strokeDasharray = String(length);
         line.style.strokeDashoffset = String(length);
       }
-    });
-
-    root.querySelectorAll(".logo-line").forEach(function (line) {
-      var length = line.getTotalLength();
-      line.style.setProperty("--line-length", String(length));
-      if (forDraw) {
-        line.style.strokeDasharray = String(length);
-        line.style.strokeDashoffset = String(length);
-        line.style.setProperty("--line-delay", String(0.95 + lineIndex * 0.1) + "s");
-        lineIndex += 1;
-      }
-    });
-
-    root.querySelectorAll(".logo-tag-line").forEach(function (line, index) {
-      var length = line.getTotalLength();
-      line.style.setProperty("--line-length", String(length));
-      if (forDraw) {
-        line.style.strokeDasharray = String(length);
-        line.style.strokeDashoffset = String(length);
-        line.style.setProperty("--tag-delay", String(1.55 + index * 0.08) + "s");
-      }
-    });
-
-    root.querySelectorAll(".logo-signal").forEach(function (line) {
-      var length = line.getTotalLength();
-      line.style.setProperty("--line-length", String(length));
-      line.style.strokeDasharray = "28 " + Math.max(length - 28, 1);
-      line.style.setProperty("--signal-delay", String(signalIndex * 0.35) + "s");
-      signalIndex += 1;
-    });
-
-    root.querySelectorAll(".logo-flow").forEach(function (line) {
-      var length = line.getTotalLength();
-      line.style.setProperty("--line-length", String(length));
-      line.style.strokeDasharray = "8 16";
-      line.style.setProperty("--flow-delay", String(flowIndex * 0.22) + "s");
-      flowIndex += 1;
-    });
-
-    root.querySelectorAll(".logo-tag-flow").forEach(function (line) {
-      var length = line.getTotalLength();
-      line.style.setProperty("--line-length", String(length));
-      line.style.strokeDasharray = "12 20";
     });
   }
 
   function revealHeroLines(heroLogo) {
-    heroLogo.querySelectorAll(".logo-line, .logo-branch, .logo-tag-line").forEach(function (line) {
+    heroLogo.querySelectorAll(".logo-line").forEach(function (line) {
       line.style.strokeDashoffset = "0";
       line.style.strokeDasharray = "none";
     });
