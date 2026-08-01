@@ -344,7 +344,7 @@ main {
 .logo-letter {
   fill: currentColor;
   font-family: Inter, system-ui, -apple-system, sans-serif;
-  font-size: 36px;
+  font-size: 52px;
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -479,14 +479,14 @@ body.splash-complete .site-footer {
 .kanasaka-logo--hero.is-ambient .logo-flow {
   opacity: 0.85;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-  animation: logo-circuit-flow 1.8s linear infinite;
+  animation: logo-circuit-flow 3.6s linear infinite;
   animation-delay: var(--flow-delay, 0s);
 }
 
 .kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
   filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95));
-  animation: logo-signal-travel 1.5s linear infinite;
+  animation: logo-signal-travel 3s linear infinite;
   animation-delay: var(--signal-delay, 0s);
 }
 
