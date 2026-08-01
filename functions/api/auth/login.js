@@ -14,6 +14,7 @@ import {
   verifyPassword,
 } from "../../lib/auth.js";
 import { createTwoFactorChallenge, maskPhone } from "../../lib/two-factor.js";
+import { smsConfigured } from "../../lib/sms.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -70,7 +71,7 @@ export async function onRequestPost(context) {
 
   await upgradePasswordHash(env, user.id, password, user.password_hash);
 
-  if (user.totp_enabled) {
+  if (user.totp_enabled && smsConfigured(env)) {
     try {
       const challenge = await createTwoFactorChallenge(env, user.id);
       await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });

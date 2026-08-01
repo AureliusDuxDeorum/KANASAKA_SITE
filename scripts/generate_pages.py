@@ -303,9 +303,10 @@ def contact_page() -> str:
 def login_page() -> str:
     body = """
   <section class="auth-page">
-    <div class="auth-card">
+    <div class="auth-card auth-card-elevated">
+      <p class="auth-eyebrow">Account</p>
       <h1>Log In</h1>
-      <p>Access downloads and contact details with your KANASAKA account.</p>
+      <p class="auth-lead">Access downloads and contact details with your KANASAKA account.</p>
 
       <form id="login-form" class="auth-form">
         <div class="auth-field">
@@ -318,19 +319,7 @@ def login_page() -> str:
           <input id="login-password" name="password" type="password" autocomplete="current-password" required>
         </div>
 
-        <button class="button" type="submit">Log In</button>
-      </form>
-
-      <form id="login-2fa-form" class="auth-form" hidden>
-        <p id="login-2fa-note" class="auth-note">Enter the 6-digit code we sent to your phone.</p>
-
-        <div class="auth-field">
-          <label for="login-2fa-code">Verification Code</label>
-          <input id="login-2fa-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        </div>
-
-        <button class="button" type="submit">Verify &amp; Sign In</button>
-        <button id="login-2fa-cancel" class="auth-link secondary" type="button">Back</button>
+        <button class="button auth-submit" type="submit">Log In</button>
       </form>
 
       <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
@@ -344,9 +333,10 @@ def login_page() -> str:
 def register_page() -> str:
     body = """
   <section class="auth-page">
-    <div class="auth-card">
+    <div class="auth-card auth-card-elevated">
+      <p class="auth-eyebrow">Account</p>
       <h1>Register</h1>
-      <p>Create a free account to download KS Unify and view contact details.</p>
+      <p class="auth-lead">Create a free account to download KS Unify and view contact details.</p>
 
       <form id="register-form" class="auth-form">
         <div class="auth-field">
@@ -360,7 +350,7 @@ def register_page() -> str:
           <ul id="register-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
 
-        <button class="button" type="submit">Create Account</button>
+        <button class="button auth-submit" type="submit">Create Account</button>
       </form>
 
       <p class="auth-switch">Already registered? <a href="/login/">Log in</a></p>
@@ -454,7 +444,7 @@ def settings_page() -> str:
         </nav>
       </div>
 
-      <div class="settings-main auth-card settings-card">
+      <div class="settings-main auth-card settings-card settings-card-elevated">
         <div id="settings-gate" class="auth-gate" hidden></div>
 
         <div id="settings-content" hidden>
@@ -462,7 +452,7 @@ def settings_page() -> str:
             <h2>Personal Information</h2>
             <p class="settings-panel-intro">Update your profile picture and display name.</p>
 
-            <div class="settings-profile">
+            <div class="settings-profile settings-profile-card">
               <div id="settings-avatar" class="settings-avatar" aria-hidden="true"></div>
               <div class="settings-profile-actions">
                 <label class="button secondary settings-upload-label" for="settings-avatar-input">
@@ -514,67 +504,25 @@ def settings_page() -> str:
             <h2>Account Management</h2>
             <p class="settings-panel-intro">Update your password or permanently delete your account.</p>
 
-            <form id="settings-password-form" class="auth-form settings-form">
+            <div class="settings-section">
               <h3 class="settings-subsection-title">Change Password</h3>
-
-              <div class="auth-field">
-                <label for="settings-current-password">Current Password</label>
-                <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
-              </div>
-
-              <div class="auth-field">
-                <label for="settings-new-password">New Password</label>
-                <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128">
-                <ul id="settings-new-password-policy" class="password-policy" aria-live="polite"></ul>
-              </div>
-
-              <button class="button secondary" type="submit">Update Password</button>
-            </form>
-
-            <div id="settings-twofa-panel" class="settings-form settings-twofa-panel">
-              <h3 class="settings-subsection-title">Two-Factor Authentication</h3>
-              <p id="settings-twofa-status" class="settings-panel-intro">Checking two-factor status...</p>
-
-              <div id="settings-twofa-disabled" hidden>
-                <form id="settings-twofa-setup-form" class="auth-form">
-                  <div class="auth-field">
-                    <label for="settings-twofa-phone">Phone Number</label>
-                    <input id="settings-twofa-phone" name="phone" type="tel" autocomplete="tel" placeholder="+49 1522 3693645">
-                  </div>
-                  <button class="button secondary" type="submit">Send Verification Code</button>
-                </form>
-
-                <div id="settings-twofa-setup-box" class="settings-twofa-box" hidden>
-                  <p id="settings-twofa-sent-to" class="settings-panel-intro"></p>
-                  <form id="settings-twofa-enable-form" class="auth-form">
-                    <div class="auth-field">
-                      <label for="settings-twofa-code">Verification Code</label>
-                      <input id="settings-twofa-code" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
-                    </div>
-                    <button class="button" type="submit">Enable 2FA</button>
-                  </form>
-                  <button id="settings-twofa-resend" class="auth-link secondary" type="button">Resend code</button>
+              <form id="settings-password-form" class="auth-form settings-form">
+                <div class="auth-field">
+                  <label for="settings-current-password">Current Password</label>
+                  <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
                 </div>
-              </div>
 
-              <div id="settings-twofa-enabled" hidden>
-                <p id="settings-twofa-phone-display" class="settings-panel-intro"></p>
-                <button id="settings-twofa-disable-send" class="button secondary" type="button">Send Verification Code</button>
-                <form id="settings-twofa-disable-form" class="auth-form">
-                  <div class="auth-field">
-                    <label for="settings-twofa-disable-password">Current Password</label>
-                    <input id="settings-twofa-disable-password" name="password" type="password" autocomplete="current-password">
-                  </div>
-                  <div class="auth-field">
-                    <label for="settings-twofa-disable-code">SMS Code</label>
-                    <input id="settings-twofa-disable-code" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
-                  </div>
-                  <button class="button secondary" type="submit">Disable 2FA</button>
-                </form>
-              </div>
+                <div class="auth-field">
+                  <label for="settings-new-password">New Password</label>
+                  <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128">
+                  <ul id="settings-new-password-policy" class="password-policy" aria-live="polite"></ul>
+                </div>
+
+                <button class="button secondary" type="submit">Update Password</button>
+              </form>
             </div>
 
-            <form id="settings-delete-form" class="auth-form settings-form settings-danger-zone">
+            <form id="settings-delete-form" class="auth-form settings-form settings-danger-zone settings-section settings-section-danger">
               <h3 class="settings-subsection-title">Delete Account</h3>
               <p class="settings-danger-copy">
                 This permanently removes your account, profile picture, and access to downloads.
