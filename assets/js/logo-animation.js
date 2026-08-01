@@ -2,7 +2,6 @@
   var INTRO_KEY = "kanasaka-intro-seen";
   var INTRO_MS = 3400;
   var PULSE_WIDTH = 28;
-  var PULSE_HEIGHT = 3;
   var PULSE_DURATION = 3000;
   var PULSE_STAGGER = 0.8;
   var LOGO_FONT = '600 50px "Tektur"';
@@ -17,17 +16,25 @@
   var LOGO_SVG =
     '<svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">' +
     "<title>Kanasaka</title>" +
+    '<defs><filter id="logo-signal-glow" x="-80%" y="-300%" width="260%" height="700%" color-interpolation-filters="sRGB">' +
+    '<feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"></feGaussianBlur>' +
+    '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
+    "</filter></defs>" +
     '<g class="logo-side logo-side-left">' +
     '<path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>' +
+    '<path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>' +
     '<text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>' +
     '<path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>' +
+    '<path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>' +
     '<text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>' +
     "</g>" +
     LOGO_LETTERS +
     '<g class="logo-side logo-side-right">' +
     '<path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>' +
+    '<path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>' +
     '<text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>' +
     '<path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>' +
+    '<path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>' +
     '<text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>' +
     "</g>" +
     "</svg>";
@@ -36,10 +43,25 @@
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  function getPulseWrap(line) {
+  function ensureSignalGlowFilter(root) {
+    var svg = root.querySelector(".kanasaka-logo-svg");
+    if (!svg || svg.querySelector("#logo-signal-glow")) {
+      return;
+    }
+
+    var defs = document.createElementNS(SVG_NS, "defs");
+    defs.innerHTML =
+      '<filter id="logo-signal-glow" x="-80%" y="-300%" width="260%" height="700%" color-interpolation-filters="sRGB">' +
+      '<feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"></feGaussianBlur>' +
+      '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
+      "</filter>";
+    svg.insertBefore(defs, svg.firstChild);
+  }
+
+  function getSignalPath(line) {
     var node = line.nextElementSibling;
     while (node) {
-      if (node.classList && node.classList.contains("logo-pulse-wrap")) {
+      if (node.classList && node.classList.contains("logo-signal")) {
         return node;
       }
       if (node.classList && node.classList.contains("logo-line")) {
@@ -50,116 +72,91 @@
     return null;
   }
 
-  function ensurePulseWraps(root) {
+  function ensureSignalPaths(root) {
+    ensureSignalGlowFilter(root);
+
     root.querySelectorAll(".logo-line").forEach(function (line) {
-      if (getPulseWrap(line)) {
+      if (getSignalPath(line)) {
         return;
       }
 
-      var wrap = document.createElementNS(SVG_NS, "g");
-      wrap.setAttribute("class", "logo-pulse-wrap");
+      var signal = document.createElementNS(SVG_NS, "path");
+      signal.setAttribute("class", "logo-signal");
+      signal.setAttribute("d", line.getAttribute("d") || "");
+      signal.setAttribute("filter", "url(#logo-signal-glow)");
 
-      var pulse = document.createElementNS(SVG_NS, "rect");
-      pulse.setAttribute("class", "logo-pulse");
-      pulse.setAttribute("width", String(PULSE_WIDTH));
-      pulse.setAttribute("height", String(PULSE_HEIGHT));
-      pulse.setAttribute("x", String(-PULSE_WIDTH / 2));
-      pulse.setAttribute("y", String(-PULSE_HEIGHT / 2));
-      pulse.setAttribute("fill", "currentColor");
-
-      wrap.appendChild(pulse);
       if (line.nextSibling) {
-        line.parentNode.insertBefore(wrap, line.nextSibling);
+        line.parentNode.insertBefore(signal, line.nextSibling);
       } else {
-        line.parentNode.appendChild(wrap);
+        line.parentNode.appendChild(signal);
       }
     });
   }
 
-  function startPulseAnimations(root) {
-    stopPulseAnimations(root);
-    ensurePulseWraps(root);
-    root.classList.add("is-pulsing");
-
-    var pulseIndex = 0;
-    root.querySelectorAll(".logo-line").forEach(function (line) {
-      var wrap = getPulseWrap(line);
-      if (!wrap) {
-        return;
-      }
-
-      animatePulse(line, wrap, pulseIndex * PULSE_STAGGER * 1000);
-      pulseIndex += 1;
-    });
-  }
-
-  function stopPulseAnimations(root) {
-    root.querySelectorAll(".logo-pulse-wrap").forEach(function (wrap) {
-      wrap.dataset.pulseActive = "0";
-      if (wrap._pulseFrameId) {
-        window.cancelAnimationFrame(wrap._pulseFrameId);
-        wrap._pulseFrameId = null;
+  function stopSignalAnimations(root) {
+    root.querySelectorAll(".logo-signal").forEach(function (line) {
+      line.dataset.pulseActive = "0";
+      if (line._pulseFrameId) {
+        window.cancelAnimationFrame(line._pulseFrameId);
+        line._pulseFrameId = null;
       }
     });
-    root.classList.remove("is-pulsing");
   }
 
-  function placePulse(wrap, line, distance) {
-    var length = line.getTotalLength();
-    if (length <= 0) {
-      return;
-    }
-
-    var clamped = Math.max(0, Math.min(distance, length));
-    var point = line.getPointAtLength(clamped);
-    var ahead = line.getPointAtLength(Math.min(clamped + 1, length));
-    var angle =
-      (Math.atan2(ahead.y - point.y, ahead.x - point.x) * 180) / Math.PI;
-
-    wrap.setAttribute(
-      "transform",
-      "translate(" + point.x + " " + point.y + ") rotate(" + angle + ")"
-    );
+  function applyDashState(line, length, offset) {
+    var dasharray = PULSE_WIDTH + " " + (length + PULSE_WIDTH);
+    line.setAttribute("stroke-dasharray", dasharray);
+    line.setAttribute("stroke-dashoffset", String(offset));
   }
 
-  function animatePulse(line, wrap, delayMs) {
-    var length = line.getTotalLength();
-    if (length <= 0) {
-      return;
-    }
-
-    wrap.dataset.pulseActive = "1";
+  function animateSignalLine(line, length, delayMs) {
+    line.dataset.pulseActive = "1";
 
     if (prefersReducedMotion()) {
-      placePulse(wrap, line, length * 0.5);
+      applyDashState(line, length, length * 0.5);
       return;
     }
 
+    var travel = length + PULSE_WIDTH;
     var startAt = performance.now() + delayMs;
 
     function frame(now) {
-      if (wrap.dataset.pulseActive !== "1") {
+      if (line.dataset.pulseActive !== "1") {
         return;
       }
 
       var elapsed = now - startAt;
       if (elapsed < 0) {
-        wrap._pulseFrameId = window.requestAnimationFrame(frame);
+        line._pulseFrameId = window.requestAnimationFrame(frame);
         return;
       }
 
       var progress = (elapsed % PULSE_DURATION) / PULSE_DURATION;
-      placePulse(wrap, line, progress * length);
-      wrap._pulseFrameId = window.requestAnimationFrame(frame);
+      applyDashState(line, length, length - progress * travel);
+      line._pulseFrameId = window.requestAnimationFrame(frame);
     }
 
-    placePulse(wrap, line, 0);
-    wrap._pulseFrameId = window.requestAnimationFrame(frame);
+    applyDashState(line, length, length);
+    line._pulseFrameId = window.requestAnimationFrame(frame);
+  }
+
+  function startSignalAnimations(root) {
+    stopSignalAnimations(root);
+    ensureSignalPaths(root);
+
+    root.querySelectorAll(".logo-signal").forEach(function (line, index) {
+      var length = line.getTotalLength();
+      if (length <= 0) {
+        return;
+      }
+
+      animateSignalLine(line, length, index * PULSE_STAGGER * 1000);
+    });
   }
 
   function whenPathsReady(root, callback, attempt) {
     var tries = attempt || 0;
-    var lines = root.querySelectorAll(".logo-line");
+    var lines = root.querySelectorAll(".logo-line, .logo-signal");
     var ready = lines.length > 0;
 
     lines.forEach(function (line) {
@@ -238,7 +235,7 @@
     document.body.appendChild(splash);
 
     prepareLinePaths(logo, true);
-    stopPulseAnimations(logo);
+    stopSignalAnimations(logo);
     return splash;
   }
 
@@ -252,7 +249,7 @@
     heroLogo.classList.add("is-ambient");
 
     whenPathsReady(heroLogo, function () {
-      startPulseAnimations(heroLogo);
+      startSignalAnimations(heroLogo);
     });
   }
 
@@ -311,7 +308,7 @@
   window.KanasakaLogoAnimation = {
     init: init,
     prepareLinePaths: prepareLinePaths,
-    startPulseAnimations: startPulseAnimations,
-    startSignalAnimations: startPulseAnimations,
+    startSignalAnimations: startSignalAnimations,
+    startPulseAnimations: startSignalAnimations,
   };
 })();
