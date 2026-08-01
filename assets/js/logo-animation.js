@@ -1,6 +1,6 @@
 (function () {
   var INTRO_KEY = "kanasaka-intro-seen";
-  var INTRO_MS = 3200;
+  var INTRO_MS = 3600;
 
   var LOGO_SVG =
     '<svg class="kanasaka-logo-svg" viewBox="0 0 360 100" role="img" aria-label="Kanasaka">' +
@@ -41,8 +41,8 @@
     root.querySelectorAll(".logo-signal").forEach(function (line, index) {
       var length = line.getTotalLength();
       line.style.setProperty("--line-length", String(length));
-      line.style.strokeDasharray = "22 " + Math.max(length - 22, 1);
-      line.style.setProperty("--signal-delay", String(index * 0.9) + "s");
+      line.style.strokeDasharray = "42 " + Math.max(length - 42, 1);
+      line.style.setProperty("--signal-delay", String(index * 0.55) + "s");
     });
   }
 
