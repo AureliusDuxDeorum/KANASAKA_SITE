@@ -92,6 +92,8 @@ def home_page() -> str:
         <g class="logo-circuit logo-circuit-left">
           <path class="logo-line" d="M 0 36 H 78 L 104 46 H 128"></path>
           <path class="logo-line" d="M 0 64 H 78 L 104 54 H 128"></path>
+          <path class="logo-flow" d="M 0 36 H 78 L 104 46 H 128"></path>
+          <path class="logo-flow" d="M 0 64 H 78 L 104 54 H 128"></path>
           <path class="logo-signal logo-signal-left-top" d="M 0 36 H 78 L 104 46 H 128"></path>
           <path class="logo-signal logo-signal-left-bottom" d="M 0 64 H 78 L 104 54 H 128"></path>
         </g>
@@ -102,13 +104,15 @@ def home_page() -> str:
         <g class="logo-circuit logo-circuit-right">
           <path class="logo-line" d="M 360 36 H 282 L 256 46 H 232"></path>
           <path class="logo-line" d="M 360 64 H 282 L 256 54 H 232"></path>
+          <path class="logo-flow" d="M 360 36 H 282 L 256 46 H 232"></path>
+          <path class="logo-flow" d="M 360 64 H 282 L 256 54 H 232"></path>
           <path class="logo-signal logo-signal-right-top" d="M 360 36 H 282 L 256 46 H 232"></path>
           <path class="logo-signal logo-signal-right-bottom" d="M 360 64 H 282 L 256 54 H 232"></path>
         </g>
       </svg>
     </div>
 
-    <h1 class="hero-title">KANASAKA</h1>
+    <h1 class="visually-hidden">KANASAKA</h1>
 
     <p class="hero-lead">Software, AI systems, and local-first infrastructure.</p>
   </section>

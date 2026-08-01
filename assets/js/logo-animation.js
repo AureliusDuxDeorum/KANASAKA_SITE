@@ -8,6 +8,8 @@
     '<g class="logo-circuit logo-circuit-left">' +
     '<path class="logo-line" d="M 0 36 H 78 L 104 46 H 128"></path>' +
     '<path class="logo-line" d="M 0 64 H 78 L 104 54 H 128"></path>' +
+    '<path class="logo-flow" d="M 0 36 H 78 L 104 46 H 128"></path>' +
+    '<path class="logo-flow" d="M 0 64 H 78 L 104 54 H 128"></path>' +
     '<path class="logo-signal logo-signal-left-top" d="M 0 36 H 78 L 104 46 H 128"></path>' +
     '<path class="logo-signal logo-signal-left-bottom" d="M 0 64 H 78 L 104 54 H 128"></path>' +
     "</g>" +
@@ -18,6 +20,8 @@
     '<g class="logo-circuit logo-circuit-right">' +
     '<path class="logo-line" d="M 360 36 H 282 L 256 46 H 232"></path>' +
     '<path class="logo-line" d="M 360 64 H 282 L 256 54 H 232"></path>' +
+    '<path class="logo-flow" d="M 360 36 H 282 L 256 46 H 232"></path>' +
+    '<path class="logo-flow" d="M 360 64 H 282 L 256 54 H 232"></path>' +
     '<path class="logo-signal logo-signal-right-top" d="M 360 36 H 282 L 256 46 H 232"></path>' +
     '<path class="logo-signal logo-signal-right-bottom" d="M 360 64 H 282 L 256 54 H 232"></path>' +
     "</g>" +
@@ -41,8 +45,15 @@
     root.querySelectorAll(".logo-signal").forEach(function (line, index) {
       var length = line.getTotalLength();
       line.style.setProperty("--line-length", String(length));
-      line.style.strokeDasharray = "42 " + Math.max(length - 42, 1);
-      line.style.setProperty("--signal-delay", String(index * 0.55) + "s");
+      line.style.strokeDasharray = "36 " + Math.max(length - 36, 1);
+      line.style.setProperty("--signal-delay", String(index * 0.45) + "s");
+    });
+
+    root.querySelectorAll(".logo-flow").forEach(function (line, index) {
+      var length = line.getTotalLength();
+      line.style.setProperty("--line-length", String(length));
+      line.style.strokeDasharray = "10 18";
+      line.style.setProperty("--flow-delay", String(index * 0.3) + "s");
     });
   }
 
