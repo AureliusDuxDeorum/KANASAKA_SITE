@@ -330,7 +330,8 @@ main {
   overflow: visible;
 }
 
-.logo-line {
+.logo-line,
+.logo-signal {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -338,19 +339,9 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-pulse-wrap {
+.logo-signal {
   opacity: 0;
-  pointer-events: none;
-}
-
-.logo-pulse {
-  fill: #ffffff;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1))
-    drop-shadow(0 0 10px rgba(255, 255, 255, 0.85))
-    drop-shadow(0 0 18px rgba(255, 255, 255, 0.45));
-}
-
-.logo-pulses {
+  stroke-width: 3;
   pointer-events: none;
 }
 
@@ -441,6 +432,11 @@ body.splash-complete .site-footer {
   opacity: 0;
 }
 
+.site-splash .logo-signal {
+  opacity: 0;
+  animation: none;
+}
+
 @keyframes logo-tag-in {
   from {
     opacity: 0;
@@ -489,14 +485,21 @@ body.splash-complete .site-footer {
   opacity: 0.28;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-pulse-wrap {
+.kanasaka-logo--hero.is-ambient .logo-signal {
   opacity: 1;
+  stroke: #ffffff;
+  animation: logo-signal-travel 3s linear infinite;
+  animation-delay: var(--pulse-delay, 0s);
 }
 
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-pulse {
-  fill: #111111;
-  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.65))
-    drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
+@keyframes logo-signal-travel {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
+  stroke: #111111;
 }
 
 .kanasaka-logo--hero.is-ambient .logo-tag {
@@ -516,8 +519,9 @@ body.splash-complete .site-footer {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-pulse-wrap {
+  .kanasaka-logo--hero.is-ambient .logo-signal {
     opacity: 0;
+    animation: none;
   }
 }
 

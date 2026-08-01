@@ -1,12 +1,8 @@
 (function () {
   var INTRO_KEY = "kanasaka-intro-seen";
   var INTRO_MS = 3400;
-  var PULSE_WIDTH = 44;
-  var PULSE_HEIGHT = 5;
-  var PULSE_DURATION = 3000;
-  var PULSE_STAGGER = 0.8;
+  var PULSE_SEGMENT = 32;
   var LOGO_FONT = '600 50px "Tektur"';
-  var SVG_NS = "http://www.w3.org/2000/svg";
 
   var LOGO_LETTERS =
     '<g class="logo-letters">' +
@@ -19,166 +15,39 @@
     "<title>Kanasaka</title>" +
     '<g class="logo-side logo-side-left">' +
     '<path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>' +
+    '<path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>' +
     '<text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>' +
     '<path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>' +
+    '<path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>' +
     '<text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>' +
     "</g>" +
     LOGO_LETTERS +
     '<g class="logo-side logo-side-right">' +
     '<path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>' +
+    '<path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>' +
     '<text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>' +
     '<path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>' +
+    '<path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>' +
     '<text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>' +
     "</g>" +
-    '<g class="logo-pulses" aria-hidden="true"></g>' +
     "</svg>";
 
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  function getPulseLayer(root) {
-    var svg = root.querySelector(".kanasaka-logo-svg");
-    if (!svg) {
-      return null;
-    }
-
-    var layer = svg.querySelector(".logo-pulses");
-    if (!layer) {
-      layer = document.createElementNS(SVG_NS, "g");
-      layer.setAttribute("class", "logo-pulses");
-      layer.setAttribute("aria-hidden", "true");
-      svg.appendChild(layer);
-    }
-
-    return layer;
-  }
-
-  function getPulseWrap(line) {
-    return line._pulseWrap || null;
-  }
-
-  function ensurePulseWraps(root) {
-    var layer = getPulseLayer(root);
-    if (!layer) {
-      return;
-    }
-
-    root.querySelectorAll(".logo-line").forEach(function (line) {
-      if (getPulseWrap(line)) {
-        return;
+  function getSignalPath(line) {
+    var node = line.nextElementSibling;
+    while (node) {
+      if (node.classList && node.classList.contains("logo-signal")) {
+        return node;
       }
-
-      var wrap = document.createElementNS(SVG_NS, "g");
-      wrap.setAttribute("class", "logo-pulse-wrap");
-
-      var pulse = document.createElementNS(SVG_NS, "rect");
-      pulse.setAttribute("class", "logo-pulse");
-      pulse.setAttribute("width", String(PULSE_WIDTH));
-      pulse.setAttribute("height", String(PULSE_HEIGHT));
-      pulse.setAttribute("x", String(-PULSE_WIDTH / 2));
-      pulse.setAttribute("y", String(-PULSE_HEIGHT / 2));
-      pulse.setAttribute("fill", "#ffffff");
-
-      wrap.appendChild(pulse);
-      layer.appendChild(wrap);
-      line._pulseWrap = wrap;
-      wrap._logoLine = line;
-    });
-  }
-
-  function showPulseWraps(root) {
-    root.querySelectorAll(".logo-pulse-wrap").forEach(function (wrap) {
-      wrap.style.opacity = "1";
-    });
-  }
-
-  function hidePulseWraps(root) {
-    root.querySelectorAll(".logo-pulse-wrap").forEach(function (wrap) {
-      wrap.style.opacity = "";
-    });
-  }
-
-  function stopPulseAnimations(root) {
-    root.querySelectorAll(".logo-pulse-wrap").forEach(function (wrap) {
-      wrap.dataset.pulseActive = "0";
-      if (wrap._pulseFrameId) {
-        window.cancelAnimationFrame(wrap._pulseFrameId);
-        wrap._pulseFrameId = null;
+      if (node.classList && node.classList.contains("logo-line")) {
+        break;
       }
-    });
-    hidePulseWraps(root);
-  }
-
-  function placePulse(wrap, line, distance) {
-    var length = line.getTotalLength();
-    if (length <= 0) {
-      return;
+      node = node.nextElementSibling;
     }
-
-    var clamped = Math.max(0, Math.min(distance, length));
-    var point = line.getPointAtLength(clamped);
-    var ahead = line.getPointAtLength(Math.min(clamped + 1, length));
-    var angle =
-      (Math.atan2(ahead.y - point.y, ahead.x - point.x) * 180) / Math.PI;
-
-    wrap.setAttribute(
-      "transform",
-      "translate(" + point.x + " " + point.y + ") rotate(" + angle + ")"
-    );
-  }
-
-  function animatePulse(line, wrap, delayMs) {
-    var length = line.getTotalLength();
-    if (length <= 0) {
-      return;
-    }
-
-    wrap.dataset.pulseActive = "1";
-    wrap.style.opacity = "1";
-
-    if (prefersReducedMotion()) {
-      placePulse(wrap, line, length * 0.5);
-      return;
-    }
-
-    var startAt = performance.now() + delayMs;
-
-    function frame(now) {
-      if (wrap.dataset.pulseActive !== "1") {
-        return;
-      }
-
-      var elapsed = now - startAt;
-      if (elapsed < 0) {
-        wrap._pulseFrameId = window.requestAnimationFrame(frame);
-        return;
-      }
-
-      var progress = (elapsed % PULSE_DURATION) / PULSE_DURATION;
-      placePulse(wrap, line, progress * length);
-      wrap._pulseFrameId = window.requestAnimationFrame(frame);
-    }
-
-    placePulse(wrap, line, 0);
-    wrap._pulseFrameId = window.requestAnimationFrame(frame);
-  }
-
-  function startPulseAnimations(root) {
-    stopPulseAnimations(root);
-    ensurePulseWraps(root);
-    showPulseWraps(root);
-
-    var pulseIndex = 0;
-    root.querySelectorAll(".logo-line").forEach(function (line) {
-      var wrap = getPulseWrap(line);
-      if (!wrap) {
-        return;
-      }
-
-      animatePulse(line, wrap, pulseIndex * PULSE_STAGGER * 1000);
-      pulseIndex += 1;
-    });
+    return null;
   }
 
   function whenPathsReady(root, callback, attempt) {
@@ -232,6 +101,26 @@
     });
   }
 
+  function prepareSignalPaths(root) {
+    root.querySelectorAll(".logo-line").forEach(function (line, index) {
+      var signal = getSignalPath(line);
+      if (!signal) {
+        return;
+      }
+
+      var length = line.getTotalLength();
+      if (length <= 0) {
+        return;
+      }
+
+      var gap = length + PULSE_SEGMENT;
+      signal.style.setProperty("--path-length", String(length));
+      signal.style.setProperty("--pulse-delay", String(index * 0.8) + "s");
+      signal.style.strokeDasharray = PULSE_SEGMENT + " " + gap;
+      signal.style.strokeDashoffset = String(length);
+    });
+  }
+
   function revealHeroLines(heroLogo) {
     heroLogo.querySelectorAll(".logo-line").forEach(function (line) {
       line.style.strokeDashoffset = "0";
@@ -262,7 +151,6 @@
     document.body.appendChild(splash);
 
     prepareLinePaths(logo, true);
-    stopPulseAnimations(logo);
     return splash;
   }
 
@@ -273,10 +161,10 @@
     }
 
     revealHeroLines(heroLogo);
-    heroLogo.classList.add("is-ambient");
 
     whenPathsReady(heroLogo, function () {
-      startPulseAnimations(heroLogo);
+      prepareSignalPaths(heroLogo);
+      heroLogo.classList.add("is-ambient");
     });
   }
 
@@ -324,6 +212,7 @@
 
     whenLogoReady(heroLogo, function () {
       prepareLinePaths(heroLogo, false);
+      prepareSignalPaths(heroLogo);
     });
   }
 
@@ -335,7 +224,6 @@
   window.KanasakaLogoAnimation = {
     init: init,
     prepareLinePaths: prepareLinePaths,
-    startPulseAnimations: startPulseAnimations,
-    startSignalAnimations: startPulseAnimations,
+    prepareSignalPaths: prepareSignalPaths,
   };
 })();
