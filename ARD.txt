@@ -166,6 +166,7 @@ Public vars (wrangler.toml)
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/006_repair_token_schema.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/007_wipe_accounts.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/008_security_hardening.sql
+  npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/010_tos_acceptance.sql
 
 007_wipe_accounts.sql — IRREVERSIBLE data wipe (users, sessions, tokens, avatars,
   auth_events, rate_limits). Schema preserved.

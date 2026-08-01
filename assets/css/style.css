@@ -1133,7 +1133,32 @@ h1 {
   color: var(--color-text-muted);
 }
 
-.auth-switch a {
+.tos-legal-links {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.tos-legal-links a {
+  color: var(--color-text);
+}
+
+.auth-legal-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.auth-legal-consent input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.auth-legal-consent a {
   color: var(--color-text);
 }
 

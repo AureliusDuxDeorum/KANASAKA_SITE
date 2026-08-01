@@ -61,10 +61,22 @@
     return data;
   }
 
-  async function register(email, password) {
+  async function register(email, password, form) {
+    const tosCheckbox = form.querySelector('[name="tosAccepted"]');
+    if (tosCheckbox && !tosCheckbox.checked) {
+      throw new Error(
+        "You must accept the Terms of Service and Privacy Policy."
+      );
+    }
+
     const { response, data } = await apiRequest("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
+        tosVersion: "1",
+      }),
     });
 
     if (!response.ok) {
@@ -200,6 +212,15 @@
         const passwordError = validateNewPassword(password, { email });
         if (passwordError) {
           showFormError(form, passwordError);
+          return;
+        }
+
+        const tosCheckbox = form.querySelector('[name="tosAccepted"]');
+        if (tosCheckbox && !tosCheckbox.checked) {
+          showFormError(
+            form,
+            "You must accept the Terms of Service and Privacy Policy."
+          );
           return;
         }
       }

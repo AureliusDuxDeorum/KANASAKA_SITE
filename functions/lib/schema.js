@@ -48,3 +48,16 @@ export async function getAuthSchema(env) {
 export function clearAuthSchemaCache() {
   schemaCache.clear();
 }
+
+export async function usersHaveTosColumns(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  try {
+    const columns = await tableColumns(env, "users");
+    return columns.includes("tos_accepted_at") && columns.includes("tos_version");
+  } catch {
+    return false;
+  }
+}
