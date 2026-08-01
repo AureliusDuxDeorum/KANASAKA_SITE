@@ -86,15 +86,31 @@ def coming_soon(title: str) -> str:
 def home_page() -> str:
     body = """
   <section class="hero">
-    <div class="kanasaka-logo">
-      <div class="logo-side"><div></div><div></div></div>
-      <div class="logo-center"><span>K</span><span>S</span></div>
-      <div class="logo-side"><div></div><div></div></div>
+    <div class="kanasaka-logo kanasaka-logo--hero">
+      <svg class="kanasaka-logo-svg" viewBox="0 0 360 100" role="img" aria-label="Kanasaka">
+        <title>Kanasaka</title>
+        <g class="logo-circuit logo-circuit-left">
+          <path class="logo-line" d="M 0 36 H 78 L 104 46 H 128"></path>
+          <path class="logo-line" d="M 0 64 H 78 L 104 54 H 128"></path>
+          <path class="logo-signal logo-signal-left-top" d="M 0 36 H 78 L 104 46 H 128"></path>
+          <path class="logo-signal logo-signal-left-bottom" d="M 0 64 H 78 L 104 54 H 128"></path>
+        </g>
+        <g class="logo-letters">
+          <text class="logo-letter logo-letter-k" x="180" y="42" text-anchor="middle">K</text>
+          <text class="logo-letter logo-letter-s" x="180" y="78" text-anchor="middle">S</text>
+        </g>
+        <g class="logo-circuit logo-circuit-right">
+          <path class="logo-line" d="M 360 36 H 282 L 256 46 H 232"></path>
+          <path class="logo-line" d="M 360 64 H 282 L 256 54 H 232"></path>
+          <path class="logo-signal logo-signal-right-top" d="M 360 36 H 282 L 256 46 H 232"></path>
+          <path class="logo-signal logo-signal-right-bottom" d="M 360 64 H 282 L 256 54 H 232"></path>
+        </g>
+      </svg>
     </div>
 
-    <h1>KANASAKA</h1>
+    <h1 class="hero-title">KANASAKA</h1>
 
-    <p>Software, AI systems, and local-first infrastructure.</p>
+    <p class="hero-lead">Software, AI systems, and local-first infrastructure.</p>
   </section>
 
   <section class="page-section">
