@@ -347,6 +347,16 @@
     syncThemePicker: syncThemePicker,
   };
 
+  function loadScript(src) {
+    return new Promise(function (resolve) {
+      var script = document.createElement("script");
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
+    });
+  }
+
   function loadLogoAnimation() {
     return new Promise(function (resolve) {
       if (window.KanasakaLogoAnimation) {
@@ -354,11 +364,18 @@
         return;
       }
 
-      var script = document.createElement("script");
-      script.src = "/assets/js/logo-animation.js?v=47";
-      script.onload = resolve;
-      script.onerror = resolve;
-      document.head.appendChild(script);
+      loadScript("/assets/js/logo-animation.js?v=48").then(resolve);
+    });
+  }
+
+  function loadTerms() {
+    return new Promise(function (resolve) {
+      if (window.KanasakaTerms) {
+        resolve();
+        return;
+      }
+
+      loadScript("/assets/js/tos.js?v=48").then(resolve);
     });
   }
 
@@ -380,6 +397,11 @@
     await loadLogoAnimation();
     if (window.KanasakaLogoAnimation) {
       window.KanasakaLogoAnimation.init();
+    }
+
+    await loadTerms();
+    if (window.KanasakaTerms) {
+      window.KanasakaTerms.init();
     }
   }
 

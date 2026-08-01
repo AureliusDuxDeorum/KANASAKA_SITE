@@ -173,6 +173,7 @@
     whenPathsReady(heroLogo, function () {
       prepareSignalPaths(heroLogo);
       heroLogo.classList.add("is-ambient");
+      window.dispatchEvent(new CustomEvent("kanasaka:hero-ready"));
     });
   }
 
