@@ -620,6 +620,8 @@
     container.textContent = profile.initials || "KS";
   }
 
+  let twoFactorListenersBound = false;
+
   function renderTwoFactorSettings(profile) {
     const status = document.getElementById("settings-twofa-status");
     const disabledBox = document.getElementById("settings-twofa-disabled");
@@ -629,7 +631,9 @@
 
     if (!status || !disabledBox || !enabledBox) return;
 
-    if (profile.twoFactorEnabled) {
+    const enabled = Boolean(profile && profile.twoFactorEnabled);
+
+    if (enabled) {
       status.textContent = "Two-factor authentication is enabled.";
       disabledBox.hidden = true;
       enabledBox.hidden = false;
@@ -644,6 +648,13 @@
   }
 
   function bindTwoFactorSettings(profile) {
+    renderTwoFactorSettings(profile);
+
+    if (twoFactorListenersBound) {
+      return;
+    }
+    twoFactorListenersBound = true;
+
     const setupButton = document.getElementById("settings-twofa-setup");
     const setupBox = document.getElementById("settings-twofa-setup-box");
     const secretBox = document.getElementById("settings-twofa-secret");
@@ -651,8 +662,6 @@
     const enableForm = document.getElementById("settings-twofa-enable-form");
     const disableForm = document.getElementById("settings-twofa-disable-form");
     const backupBox = document.getElementById("settings-twofa-backup");
-
-    renderTwoFactorSettings(profile);
 
     if (setupButton && setupBox) {
       setupButton.addEventListener("click", async function () {
@@ -790,6 +799,9 @@
     const emailInput = document.getElementById("settings-email");
 
     let profile = session;
+    const twoFactorPanel = document.getElementById("settings-twofa-panel");
+
+    bindTwoFactorSettings(session);
 
     try {
       const { response, data } = await apiRequest("/api/account/profile", {
@@ -802,17 +814,31 @@
 
       profile = Object.assign({ authenticated: true }, data);
       updateSession(profile);
+      bindTwoFactorSettings(profile);
     } catch (error) {
-      showFormError(profileForm, error.message || "Could not load settings.");
-      return;
+      const message = error.message || "Could not load settings.";
+      if (profileForm) {
+        showFormError(profileForm, message);
+      }
+      if (twoFactorPanel) {
+        showFormError(twoFactorPanel, message);
+      }
+      bindTwoFactorSettings(session);
     }
 
-    displayNameInput.value = profile.displayName || "";
-    emailInput.value = profile.email || "";
-    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
-    renderAvatarElement(avatarBox, profile);
-    avatarRemove.hidden = !profile.hasAvatar;
-    bindTwoFactorSettings(profile);
+    if (displayNameInput) {
+      displayNameInput.value = profile.displayName || "";
+    }
+    if (emailInput) {
+      emailInput.value = profile.email || "";
+      emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (avatarBox) {
+      renderAvatarElement(avatarBox, profile);
+    }
+    if (avatarRemove) {
+      avatarRemove.hidden = !profile.hasAvatar;
+    }
 
     initThemePicker();
 
