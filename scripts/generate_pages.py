@@ -91,10 +91,8 @@ def home_page() -> str:
         <title>Kanasaka</title>
         <g class="logo-side logo-side-left">
           <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
-          <path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>
           <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
           <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
-          <path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>
           <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
         </g>
         <g class="logo-letters">
@@ -103,10 +101,8 @@ def home_page() -> str:
         </g>
         <g class="logo-side logo-side-right">
           <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
-          <path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>
           <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
           <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
-          <path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>
           <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
       </svg>
