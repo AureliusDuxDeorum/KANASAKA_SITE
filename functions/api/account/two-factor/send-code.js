@@ -4,7 +4,7 @@ import {
   jsonResponse,
   readJson,
 } from "../../../lib/auth.js";
-import { beginSmsSetup } from "../../../lib/two-factor.js";
+import { resendSmsSetup, sendDisableSmsCode } from "../../../lib/two-factor.js";
 import { requireSameOrigin } from "../../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -18,26 +18,24 @@ export async function onRequestPost(context) {
     return errorResponse("Log in to manage two-factor authentication.", 401);
   }
 
-  if (user.totp_enabled) {
-    return errorResponse("Two-factor authentication is already enabled.", 409);
-  }
-
   const body = await readJson(request);
-  if (!body) {
-    return errorResponse("Invalid request body.");
-  }
-
-  const phone = String(body.phone || "");
-  if (!phone.trim()) {
-    return errorResponse("Enter your phone number.");
-  }
+  const purpose = String((body && body.purpose) || "disable");
 
   try {
-    const setup = await beginSmsSetup(env, user.id, phone);
+    if (purpose === "setup") {
+      const result = await resendSmsSetup(env, user.id);
+      return jsonResponse({
+        success: true,
+        phoneMasked: result.phoneMasked,
+        message: "We sent another code to " + result.phoneMasked + ".",
+      });
+    }
+
+    const result = await sendDisableSmsCode(env, user.id);
     return jsonResponse({
       success: true,
-      phoneMasked: setup.phoneMasked,
-      message: "We sent a 6-digit code to " + setup.phoneMasked + ".",
+      phoneMasked: result.phoneMasked,
+      message: "We sent a verification code to " + result.phoneMasked + ".",
     });
   } catch (err) {
     return errorResponse(err.message || "Could not send verification code.", 400);

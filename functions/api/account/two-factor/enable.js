@@ -4,7 +4,7 @@ import {
   jsonResponse,
   readJson,
 } from "../../../lib/auth.js";
-import { enableTotp } from "../../../lib/two-factor.js";
+import { enableSms2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -25,16 +25,16 @@ export async function onRequestPost(context) {
 
   const code = String(body.code || "");
   if (!/^\d{6}$/.test(code.replace(/\s+/g, ""))) {
-    return errorResponse("Enter the 6-digit code from your authenticator app.");
+    return errorResponse("Enter the 6-digit code from your text message.");
   }
 
   try {
-    const backupCodes = await enableTotp(env, user.id, code);
+    const result = await enableSms2fa(env, user.id, code);
     await logAuthEvent(env, "twofa_enabled", { ip: clientIp(request), userId: user.id });
     return jsonResponse({
       success: true,
-      backupCodes,
-      message: "Two-factor authentication is now enabled. Store your backup codes safely.",
+      phoneMasked: result.phoneMasked,
+      message: "Two-factor authentication is now enabled for " + result.phoneMasked + ".",
     });
   } catch (err) {
     return errorResponse(err.message || "Could not enable two-factor authentication.", 400);

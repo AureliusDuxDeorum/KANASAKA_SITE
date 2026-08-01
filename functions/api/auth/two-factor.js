@@ -28,24 +28,23 @@ export async function onRequestPost(context) {
 
   const challenge = String(body.challenge || "");
   const code = String(body.code || "");
-  const backupCode = String(body.backupCode || "");
 
   if (!challenge) {
     return errorResponse("Two-factor challenge is missing.");
   }
 
-  if (!code && !backupCode) {
-    return errorResponse("Enter your authenticator code or a backup code.");
+  if (!code) {
+    return errorResponse("Enter the 6-digit code from your text message.");
   }
 
   try {
-    const user = await verifyTwoFactorLogin(env, challenge, code, backupCode);
+    const user = await verifyTwoFactorLogin(env, challenge, code);
     await deleteAllUserSessions(env, user.user_id);
     const session = await createSession(env, user.user_id);
     await logAuthEvent(env, "login_success", {
       ip,
       userId: user.user_id,
-      method: backupCode ? "backup_code" : "totp",
+      method: "sms",
     });
 
     return jsonResponse(sessionPayload(user), 200, {
