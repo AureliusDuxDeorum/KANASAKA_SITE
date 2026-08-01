@@ -58,10 +58,8 @@ export const DOWNLOAD_META = {
 };
 
 export const CONTACT_INFO = {
-  email: "contact@kanasaka.com",
-  phone: "+49 01522 3693645",
-  phoneHref: "tel:+4915223693645",
-  hours: "Available 2:00–6:00 PM on business days only.",
+  email: "contactns@kanasaka.com",
+  note: "We typically respond within 1–2 business days.",
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

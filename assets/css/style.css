@@ -83,6 +83,24 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-glow);
+  color: var(--color-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-border-light);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+.nav-link:focus:not(:focus-visible),
+.auth-link:focus:not(:focus-visible) {
+  outline: none;
 }
 
 a {
@@ -310,6 +328,12 @@ main {
 .kanasaka-logo.small {
   transform: scale(0.72);
   margin-bottom: 12px;
+}
+
+.kanasaka-logo.small .logo-center span {
+  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .kanasaka-logo--hero,
@@ -755,6 +779,16 @@ h1 {
 .feature-grid article {
   flex-direction: column;
   gap: 12px;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.feature-grid article:hover {
+  border-color: var(--color-border-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px var(--color-glow);
 }
 
 .feature-grid h3 {
@@ -794,6 +828,9 @@ h1 {
   align-items: center;
   text-align: center;
   padding: 80px 24px;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--color-glow), transparent 70%),
+    var(--color-base);
 }
 
 .coming-soon-box {
@@ -810,9 +847,13 @@ h1 {
 }
 
 .coming-soon-box p {
-  margin: 0;
+  margin: 0 0 28px;
   color: var(--color-text-muted);
   font-size: 16px;
+}
+
+.coming-soon-back {
+  margin-top: 4px;
 }
 
 .coming-soon-label {
@@ -833,8 +874,7 @@ h1 {
 .contact-details {
   margin: 32px 0 0;
   padding: 0;
-  display: grid;
-  gap: 24px;
+  max-width: 420px;
 }
 
 .contact-item {
@@ -1494,6 +1534,14 @@ h1 {
 
 .footer-links a:hover {
   color: var(--color-text);
+}
+
+.footer-tagline {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
 }
 
 /* ── Responsive ── */

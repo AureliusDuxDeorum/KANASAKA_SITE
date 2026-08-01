@@ -309,10 +309,15 @@
       links.appendChild(a);
     });
 
+    const tagline = document.createElement("p");
+    tagline.className = "footer-tagline";
+    tagline.textContent = "Software · AI · Robotics · Biotech";
+
     const copy = document.createElement("p");
     copy.textContent = "\u00a9 2026 KANASAKA";
 
     inner.appendChild(links);
+    inner.appendChild(tagline);
     inner.appendChild(copy);
     footer.appendChild(inner);
 
@@ -350,7 +355,7 @@
       }
 
       var script = document.createElement("script");
-      script.src = "/assets/js/logo-animation.js?v=46";
+      script.src = "/assets/js/logo-animation.js?v=47";
       script.onload = resolve;
       script.onerror = resolve;
       document.head.appendChild(script);

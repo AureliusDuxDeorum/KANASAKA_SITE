@@ -50,7 +50,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=46">
+  <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="/assets/css/style.css?v=47">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -77,6 +78,7 @@ def coming_soon(title: str) -> str:
       <span class="coming-soon-label">Coming Soon</span>
       <h1>{title}</h1>
       <p>This section is under development. Check back for updates.</p>
+      <a href="/" class="button secondary coming-soon-back">Back to Home</a>
     </div>
   </section>
 """
@@ -130,6 +132,8 @@ def home_page() -> str:
     </div>
 
     <h1 class="visually-hidden">KANASAKA</h1>
+
+    <p class="hero-lead">Software · AI · Robotics · Biotech</p>
   </section>
 
   <section class="page-section">
@@ -322,7 +326,7 @@ def contact_page() -> str:
         <h2>Get in Touch</h2>
 
         <p>
-          Contact details are available to signed-in users.
+          Sign in to view our contact email for product, support, and partnership inquiries.
         </p>
 
         <div id="contact-details" class="contact-details" hidden></div>

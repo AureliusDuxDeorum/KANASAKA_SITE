@@ -363,25 +363,17 @@
 
   function renderContactDetails(container, contact) {
     container.innerHTML =
-      '<div class="contact-item">' +
+      '<dl class="contact-item">' +
       "<dt>Email</dt>" +
       '<dd><a href="mailto:' +
       contact.email +
       '">' +
       contact.email +
       "</a></dd>" +
-      "</div>" +
-      '<div class="contact-item">' +
-      "<dt>Telephone</dt>" +
-      '<dd><a href="' +
-      contact.phoneHref +
-      '">' +
-      contact.phone +
-      "</a></dd>" +
-      '<dd class="contact-note">' +
-      contact.hours +
-      "</dd>" +
-      "</div>";
+      (contact.note
+        ? '<dd class="contact-note">' + contact.note + "</dd>"
+        : "") +
+      "</dl>";
     container.hidden = false;
   }
 
