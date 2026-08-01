@@ -494,81 +494,14 @@ body.splash-complete .site-footer {
 }
 
 .kanasaka-logo--hero.is-ambient .logo-signal-wrap .logo-signal {
-  animation-duration: 3s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+  opacity: 1;
+  animation: logo-signal-travel 3s linear infinite;
   animation-delay: var(--pulse-delay, 0s);
 }
 
-.kanasaka-logo--hero.is-ambient .logo-signal-wrap .logo-signal:nth-child(1) {
-  animation-name: logo-signal-seg-1;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-signal-wrap .logo-signal:nth-child(2) {
-  animation-name: logo-signal-seg-2;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-signal-wrap .logo-signal:nth-child(3) {
-  animation-name: logo-signal-seg-3;
-}
-
-@keyframes logo-signal-seg-1 {
-  0% {
-    stroke-dashoffset: var(--path-length);
-    opacity: 1;
-  }
-
-  33.33% {
-    stroke-dashoffset: calc(-1 * var(--pulse-segment));
-    opacity: 1;
-  }
-
-  33.34%,
-  100% {
-    stroke-dashoffset: calc(-1 * var(--pulse-segment));
-    opacity: 0;
-  }
-}
-
-@keyframes logo-signal-seg-2 {
-  0%,
-  33.33% {
-    stroke-dashoffset: var(--path-length);
-    opacity: 0;
-  }
-
-  33.34% {
-    stroke-dashoffset: var(--path-length);
-    opacity: 1;
-  }
-
-  66.66% {
-    stroke-dashoffset: calc(-1 * var(--pulse-segment));
-    opacity: 1;
-  }
-
-  66.67%,
-  100% {
-    stroke-dashoffset: calc(-1 * var(--pulse-segment));
-    opacity: 0;
-  }
-}
-
-@keyframes logo-signal-seg-3 {
-  0%,
-  66.66% {
-    stroke-dashoffset: var(--path-length);
-    opacity: 0;
-  }
-
-  66.67% {
-    stroke-dashoffset: var(--path-length);
-    opacity: 1;
-  }
-
-  100% {
-    stroke-dashoffset: calc(-1 * var(--pulse-segment));
-    opacity: 1;
+@keyframes logo-signal-travel {
+  to {
+    stroke-dashoffset: -8px;
   }
 }
 

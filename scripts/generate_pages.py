@@ -50,7 +50,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/assets/css/style.css?v=45">
+  <link rel="stylesheet" href="/assets/css/style.css?v=46">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -101,16 +101,12 @@ def home_page() -> str:
         <g class="logo-side logo-side-left">
           <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
           <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 80 40 H 108"></path>
-            <path class="logo-signal" d="M 108 40 L 120 52"></path>
-            <path class="logo-signal" d="M 120 52 H 188"></path>
+            <path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>
           </g>
           <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
           <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
           <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 80 70 H 108"></path>
-            <path class="logo-signal" d="M 108 70 L 120 58"></path>
-            <path class="logo-signal" d="M 120 58 H 188"></path>
+            <path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>
           </g>
           <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
         </g>
@@ -121,16 +117,12 @@ def home_page() -> str:
         <g class="logo-side logo-side-right">
           <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
           <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 400 40 H 372"></path>
-            <path class="logo-signal" d="M 372 40 L 360 52"></path>
-            <path class="logo-signal" d="M 360 52 H 292"></path>
+            <path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>
           </g>
           <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
           <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
           <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 400 70 H 372"></path>
-            <path class="logo-signal" d="M 372 70 L 360 58"></path>
-            <path class="logo-signal" d="M 360 58 H 292"></path>
+            <path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>
           </g>
           <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
