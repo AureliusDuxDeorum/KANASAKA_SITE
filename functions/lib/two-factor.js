@@ -1,169 +1,168 @@
-import {
-  buildOtpAuthUri,
-  generateBackupCodes,
-  generateTotpSecret,
-  normalizeBackupCode,
-  verifyTotpCode,
-} from "./totp.js";
+import { maskPhone, normalizePhone } from "./phone.js";
+import { sendVerificationSms } from "./sms.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 
-const TOTP_ISSUER = "KANASAKA";
+const OTP_MINUTES = 5;
 const CHALLENGE_MINUTES = 5;
 
-async function deriveAesKey(env) {
-  const secret = env.SESSION_SECRET;
-  if (!secret) {
-    return null;
-  }
-
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: new TextEncoder().encode("kanasaka-totp-v1"),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
+function normalizeSmsCode(code) {
+  return String(code || "").replace(/\s+/g, "");
 }
 
-function bytesToBase64(bytes) {
-  let binary = "";
-  bytes.forEach(function (byte) {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
+function generateSmsCode() {
+  const value = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+  return String(value).padStart(6, "0");
 }
 
-function base64ToBytes(value) {
-  const binary = atob(value);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
+async function storeSmsOtp(env, userId, purpose, code) {
+  const codeHash = await hashSecret("sms:" + purpose + ":" + normalizeSmsCode(code), env);
+  const expiresAt = new Date(Date.now() + OTP_MINUTES * 60 * 1000).toISOString();
 
-export async function encryptTotpSecret(plainSecret, env) {
-  const key = await deriveAesKey(env);
-  if (!key) {
-    throw new Error("SESSION_SECRET is required for two-factor authentication.");
-  }
-
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    new TextEncoder().encode(String(plainSecret))
-  );
-
-  return bytesToBase64(iv) + ":" + bytesToBase64(new Uint8Array(ciphertext));
-}
-
-export async function decryptTotpSecret(stored, env) {
-  if (!stored) return null;
-
-  const key = await deriveAesKey(env);
-  if (!key) {
-    throw new Error("SESSION_SECRET is required for two-factor authentication.");
-  }
-
-  const parts = String(stored).split(":");
-  if (parts.length !== 2) {
-    return null;
-  }
-
-  const iv = base64ToBytes(parts[0]);
-  const ciphertext = base64ToBytes(parts[1]);
-  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-  return new TextDecoder().decode(plain);
-}
-
-export async function beginTotpSetup(env, userId, email) {
-  const secret = generateTotpSecret();
-  const encrypted = await encryptTotpSecret(secret, env);
-
-  await env.DB.prepare("UPDATE users SET totp_pending_secret = ? WHERE id = ?")
-    .bind(encrypted, userId)
+  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ? AND purpose = ?")
+    .bind(userId, purpose)
     .run();
 
+  await env.DB.prepare(
+    "INSERT INTO sms_otp_codes (user_id, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?)"
+  )
+    .bind(userId, purpose, codeHash, expiresAt)
+    .run();
+}
+
+async function verifySmsOtp(env, userId, purpose, code) {
+  const normalized = normalizeSmsCode(code);
+  if (!/^\d{6}$/.test(normalized)) {
+    return false;
+  }
+
+  const codeHash = await hashSecret("sms:" + purpose + ":" + normalized, env);
+  const row = await env.DB.prepare(
+    `SELECT id FROM sms_otp_codes
+     WHERE user_id = ? AND purpose = ? AND code_hash = ?
+       AND expires_at > datetime('now')`
+  )
+    .bind(userId, purpose, codeHash)
+    .first();
+
+  if (!row) {
+    return false;
+  }
+
+  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE id = ?").bind(row.id).run();
+  return true;
+}
+
+export async function beginSmsSetup(env, userId, phoneInput) {
+  const phone = normalizePhone(phoneInput);
+  if (!phone) {
+    throw new Error("Enter a valid phone number with country code (e.g. +49 1522 3693645).");
+  }
+
+  const code = generateSmsCode();
+  await env.DB.prepare("UPDATE users SET phone_pending_e164 = ? WHERE id = ?")
+    .bind(phone, userId)
+    .run();
+  await storeSmsOtp(env, userId, "setup", code);
+  await sendVerificationSms(env, phone, code);
+
   return {
-    secret,
-    otpauthUrl: buildOtpAuthUri(email, secret, TOTP_ISSUER),
+    phoneMasked: maskPhone(phone),
   };
 }
 
-export async function enableTotp(env, userId, code) {
+export async function resendSmsSetup(env, userId) {
   const row = await env.DB.prepare(
-    "SELECT totp_pending_secret, totp_enabled FROM users WHERE id = ?"
+    "SELECT phone_pending_e164 FROM users WHERE id = ? AND totp_enabled = 0"
   )
     .bind(userId)
     .first();
 
-  if (!row || !row.totp_pending_secret) {
-    throw new Error("Two-factor setup has not been started.");
+  if (!row || !row.phone_pending_e164) {
+    throw new Error("Enter your phone number and request a code first.");
+  }
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "setup", code);
+  await sendVerificationSms(env, row.phone_pending_e164, code);
+
+  return {
+    phoneMasked: maskPhone(row.phone_pending_e164),
+  };
+}
+
+export async function enableSms2fa(env, userId, code) {
+  const row = await env.DB.prepare(
+    "SELECT phone_pending_e164, totp_enabled FROM users WHERE id = ?"
+  )
+    .bind(userId)
+    .first();
+
+  if (!row || !row.phone_pending_e164) {
+    throw new Error("Request a verification code first.");
   }
 
   if (row.totp_enabled) {
     throw new Error("Two-factor authentication is already enabled.");
   }
 
-  const secret = await decryptTotpSecret(row.totp_pending_secret, env);
-  if (!secret) {
-    throw new Error("Two-factor setup is invalid. Start again.");
-  }
-
-  const valid = await verifyTotpCode(secret, code);
+  const valid = await verifySmsOtp(env, userId, "setup", code);
   if (!valid) {
-    throw new Error("Invalid authenticator code.");
+    throw new Error("Invalid or expired verification code.");
   }
-
-  const backupCodes = generateBackupCodes(8);
-  const encryptedActive = await encryptTotpSecret(secret, env);
 
   await env.DB.prepare(
     `UPDATE users
-     SET totp_secret = ?, totp_pending_secret = NULL, totp_enabled = 1,
+     SET phone_e164 = ?, phone_pending_e164 = NULL, totp_enabled = 1,
+         totp_secret = NULL, totp_pending_secret = NULL,
          totp_enabled_at = datetime('now')
      WHERE id = ?`
   )
-    .bind(encryptedActive, userId)
+    .bind(row.phone_pending_e164, userId)
     .run();
 
   await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
 
-  for (const backupCode of backupCodes) {
-    const normalized = normalizeBackupCode(backupCode);
-    const codeHash = await hashSecret("backup:" + normalized, env);
-    await env.DB.prepare(
-      "INSERT INTO twofa_backup_codes (user_id, code_hash) VALUES (?, ?)"
-    )
-      .bind(userId, codeHash)
-      .run();
-  }
-
-  return backupCodes;
+  return {
+    phoneMasked: maskPhone(row.phone_pending_e164),
+  };
 }
 
-export async function disableTotp(env, userId) {
+export async function sendDisableSmsCode(env, userId) {
+  const row = await env.DB.prepare(
+    "SELECT phone_e164 FROM users WHERE id = ? AND totp_enabled = 1"
+  )
+    .bind(userId)
+    .first();
+
+  if (!row || !row.phone_e164) {
+    throw new Error("Two-factor authentication is not enabled.");
+  }
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "disable", code);
+  await sendVerificationSms(env, row.phone_e164, code);
+
+  return {
+    phoneMasked: maskPhone(row.phone_e164),
+  };
+}
+
+export async function disableSms2fa(env, userId, code) {
+  const valid = await verifySmsOtp(env, userId, "disable", code);
+  if (!valid) {
+    throw new Error("Invalid or expired verification code.");
+  }
+
   await env.DB.prepare(
     `UPDATE users
-     SET totp_secret = NULL, totp_pending_secret = NULL, totp_enabled = 0, totp_enabled_at = NULL
+     SET phone_e164 = NULL, phone_pending_e164 = NULL, totp_enabled = 0,
+         totp_secret = NULL, totp_pending_secret = NULL, totp_enabled_at = NULL
      WHERE id = ?`
   )
     .bind(userId)
     .run();
+
+  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
   await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
   await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
 }
@@ -180,13 +179,35 @@ export async function createTwoFactorChallenge(env, userId) {
     .bind(challengeHash, userId, expiresAt)
     .run();
 
+  await sendLoginSmsCode(env, userId);
+
   return { challenge: rawToken, expiresIn: CHALLENGE_MINUTES * 60 };
+}
+
+export async function sendLoginSmsCode(env, userId) {
+  const row = await env.DB.prepare(
+    "SELECT phone_e164 FROM users WHERE id = ? AND totp_enabled = 1"
+  )
+    .bind(userId)
+    .first();
+
+  if (!row || !row.phone_e164) {
+    throw new Error("Two-factor authentication is misconfigured.");
+  }
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "login", code);
+  await sendVerificationSms(env, row.phone_e164, code);
+
+  return {
+    phoneMasked: maskPhone(row.phone_e164),
+  };
 }
 
 async function loadChallengeUser(env, rawChallenge) {
   const challengeHash = await hashSecret("2fa:" + rawChallenge, env);
   return env.DB.prepare(
-    `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.totp_secret, u.totp_enabled,
+    `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.phone_e164, u.totp_enabled,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM twofa_challenges c
@@ -200,52 +221,15 @@ async function loadChallengeUser(env, rawChallenge) {
     .first();
 }
 
-async function consumeBackupCode(env, userId, code) {
-  const normalized = normalizeBackupCode(code);
-  if (normalized.length < 8) {
-    return false;
-  }
-
-  const codeHash = await hashSecret("backup:" + normalized, env);
-  const row = await env.DB.prepare(
-    `SELECT id FROM twofa_backup_codes
-     WHERE user_id = ? AND code_hash = ? AND used_at IS NULL`
-  )
-    .bind(userId, codeHash)
-    .first();
-
-  if (!row) {
-    return false;
-  }
-
-  await env.DB.prepare(
-    "UPDATE twofa_backup_codes SET used_at = datetime('now') WHERE id = ?"
-  )
-    .bind(row.id)
-    .run();
-  return true;
-}
-
-export async function verifyTwoFactorLogin(env, rawChallenge, code, backupCode) {
+export async function verifyTwoFactorLogin(env, rawChallenge, code) {
   const row = await loadChallengeUser(env, rawChallenge);
   if (!row) {
     throw new Error("Two-factor challenge expired. Sign in again.");
   }
 
-  let verified = false;
-
-  if (backupCode) {
-    verified = await consumeBackupCode(env, row.user_id, backupCode);
-  } else {
-    const secret = await decryptTotpSecret(row.totp_secret, env);
-    if (!secret) {
-      throw new Error("Two-factor authentication is misconfigured.");
-    }
-    verified = await verifyTotpCode(secret, code);
-  }
-
+  const verified = await verifySmsOtp(env, row.user_id, "login", code);
   if (!verified) {
-    throw new Error("Invalid authenticator or backup code.");
+    throw new Error("Invalid or expired verification code.");
   }
 
   const challengeHash = await hashSecret("2fa:" + rawChallenge, env);
@@ -260,5 +244,8 @@ export function twoFactorStatusFromUser(user) {
   return {
     enabled: Boolean(user && user.totp_enabled),
     enabledAt: user && user.totp_enabled_at ? user.totp_enabled_at : null,
+    phoneMasked: user && user.phone_e164 ? maskPhone(user.phone_e164) : null,
   };
 }
+
+export { maskPhone };

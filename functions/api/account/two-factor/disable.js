@@ -6,8 +6,7 @@ import {
   readJson,
   verifyPassword,
 } from "../../../lib/auth.js";
-import { decryptTotpSecret, disableTotp } from "../../../lib/two-factor.js";
-import { verifyTotpCode } from "../../../lib/totp.js";
+import { disableSms2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -30,7 +29,7 @@ export async function onRequestPost(context) {
   const code = String(body.code || "");
 
   const row = await env.DB.prepare(
-    "SELECT password_hash, totp_secret, totp_enabled FROM users WHERE id = ?"
+    "SELECT password_hash, totp_enabled FROM users WHERE id = ?"
   )
     .bind(user.id)
     .first();
@@ -44,18 +43,16 @@ export async function onRequestPost(context) {
     return errorResponse("Current password is incorrect.", 401);
   }
 
-  const secret = await decryptTotpSecret(row.totp_secret, env);
-  const validCode = secret ? await verifyTotpCode(secret, code) : false;
-  if (!validCode) {
-    return errorResponse("Invalid authenticator code.", 401);
+  try {
+    await disableSms2fa(env, user.id, code);
+    await deleteAllUserSessions(env, user.id);
+    await logAuthEvent(env, "twofa_disabled", { ip: clientIp(request), userId: user.id });
+
+    return jsonResponse({
+      success: true,
+      message: "Two-factor authentication disabled. Sign in again on each device.",
+    });
+  } catch (err) {
+    return errorResponse(err.message || "Could not disable two-factor authentication.", 401);
   }
-
-  await disableTotp(env, user.id);
-  await deleteAllUserSessions(env, user.id);
-  await logAuthEvent(env, "twofa_disabled", { ip: clientIp(request), userId: user.id });
-
-  return jsonResponse({
-    success: true,
-    message: "Two-factor authentication disabled. Sign in again on each device.",
-  });
 }

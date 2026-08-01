@@ -65,13 +65,12 @@
     return data;
   }
 
-  async function verifyTwoFactor(challenge, code, backupCode) {
+  async function verifyTwoFactor(challenge, code) {
     const { response, data } = await apiRequest("/api/auth/two-factor", {
       method: "POST",
       body: JSON.stringify({
         challenge: challenge,
         code: code || "",
-        backupCode: backupCode || "",
       }),
     });
 
@@ -232,6 +231,12 @@
           if (twoFactorForm) {
             twoFactorForm.hidden = false;
             clearFormError(twoFactorForm);
+            const note = document.getElementById("login-2fa-note");
+            if (note) {
+              note.textContent = result.phoneMasked
+                ? "Enter the 6-digit code we sent to " + result.phoneMasked + "."
+                : "Enter the 6-digit code we sent to your phone.";
+            }
           }
           submit.disabled = false;
           submit.textContent = defaultLabel;
@@ -262,8 +267,7 @@
       try {
         await verifyTwoFactor(
           pendingChallenge,
-          twoFactorForm.querySelector('[name="code"]').value,
-          twoFactorForm.querySelector('[name="backupCode"]').value
+          twoFactorForm.querySelector('[name="code"]').value
         );
         window.location.href = getNextPath();
       } catch (error) {
@@ -627,7 +631,7 @@
     const disabledBox = document.getElementById("settings-twofa-disabled");
     const enabledBox = document.getElementById("settings-twofa-enabled");
     const setupBox = document.getElementById("settings-twofa-setup-box");
-    const backupBox = document.getElementById("settings-twofa-backup");
+    const phoneDisplay = document.getElementById("settings-twofa-phone-display");
 
     if (!status || !disabledBox || !enabledBox) return;
 
@@ -638,11 +642,15 @@
       disabledBox.hidden = true;
       enabledBox.hidden = false;
       if (setupBox) setupBox.hidden = true;
-      if (backupBox) backupBox.hidden = true;
+      if (phoneDisplay) {
+        phoneDisplay.textContent = profile.phoneMasked
+          ? "Verification codes are sent to " + profile.phoneMasked + "."
+          : "Verification codes are sent to your phone.";
+      }
       return;
     }
 
-    status.textContent = "Protect your account with an authenticator app.";
+    status.textContent = "Add your phone number. We will text you a code when you sign in.";
     disabledBox.hidden = false;
     enabledBox.hidden = true;
   }
@@ -655,23 +663,28 @@
     }
     twoFactorListenersBound = true;
 
-    const setupButton = document.getElementById("settings-twofa-setup");
+    const setupForm = document.getElementById("settings-twofa-setup-form");
     const setupBox = document.getElementById("settings-twofa-setup-box");
-    const secretBox = document.getElementById("settings-twofa-secret");
-    const link = document.getElementById("settings-twofa-link");
+    const sentTo = document.getElementById("settings-twofa-sent-to");
+    const resendButton = document.getElementById("settings-twofa-resend");
     const enableForm = document.getElementById("settings-twofa-enable-form");
     const disableForm = document.getElementById("settings-twofa-disable-form");
-    const backupBox = document.getElementById("settings-twofa-backup");
+    const disableSendButton = document.getElementById("settings-twofa-disable-send");
 
-    if (setupButton && setupBox) {
-      setupButton.addEventListener("click", async function () {
-        clearFormError(setupBox);
-        setupButton.disabled = true;
+    if (setupForm && setupBox) {
+      setupForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(setupForm);
+
+        const submit = setupForm.querySelector('[type="submit"]');
+        submit.disabled = true;
 
         try {
           const { response, data } = await apiRequest("/api/account/two-factor/setup", {
             method: "POST",
-            body: "{}",
+            body: JSON.stringify({
+              phone: setupForm.querySelector('[name="phone"]').value,
+            }),
           });
 
           if (!response.ok) {
@@ -679,15 +692,40 @@
           }
 
           setupBox.hidden = false;
-          if (secretBox) secretBox.textContent = data.secret;
-          if (link) {
-            link.href = data.otpauthUrl;
-            link.textContent = data.otpauthUrl;
+          if (sentTo) {
+            sentTo.textContent = data.message || "Verification code sent.";
+          }
+          showFormSuccess(setupForm, data.message || "Verification code sent.");
+        } catch (error) {
+          showFormError(setupForm, error.message || "Setup failed.");
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    }
+
+    if (resendButton) {
+      resendButton.addEventListener("click", async function () {
+        clearFormError(setupBox || setupForm);
+        resendButton.disabled = true;
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
+            method: "POST",
+            body: JSON.stringify({ purpose: "setup" }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Could not resend code.");
+          }
+
+          if (sentTo) {
+            sentTo.textContent = data.message || "Verification code sent.";
           }
         } catch (error) {
-          showFormError(setupBox, error.message || "Setup failed.");
+          showFormError(setupBox || setupForm, error.message || "Could not resend code.");
         } finally {
-          setupButton.disabled = false;
+          resendButton.disabled = false;
         }
       });
     }
@@ -713,17 +751,37 @@
           }
 
           profile.twoFactorEnabled = true;
+          profile.phoneMasked = data.phoneMasked || profile.phoneMasked;
           renderTwoFactorSettings(profile);
-          if (backupBox) {
-            backupBox.hidden = false;
-            backupBox.textContent =
-              "Backup codes (store safely):\n" + (data.backupCodes || []).join("\n");
-          }
           showFormSuccess(enableForm, data.message || "Two-factor enabled.");
         } catch (error) {
           showFormError(enableForm, error.message || "Enable failed.");
         } finally {
           submit.disabled = false;
+        }
+      });
+    }
+
+    if (disableSendButton) {
+      disableSendButton.addEventListener("click", async function () {
+        clearFormError(disableForm);
+        disableSendButton.disabled = true;
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
+            method: "POST",
+            body: JSON.stringify({ purpose: "disable" }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Could not send code.");
+          }
+
+          showFormSuccess(disableForm, data.message || "Verification code sent.");
+        } catch (error) {
+          showFormError(disableForm, error.message || "Could not send code.");
+        } finally {
+          disableSendButton.disabled = false;
         }
       });
     }
@@ -750,10 +808,10 @@
           }
 
           profile.twoFactorEnabled = false;
+          profile.phoneMasked = null;
           renderTwoFactorSettings(profile);
           disableForm.reset();
           if (setupBox) setupBox.hidden = true;
-          if (backupBox) backupBox.hidden = true;
           showFormSuccess(disableForm, data.message || "Two-factor disabled.");
         } catch (error) {
           showFormError(disableForm, error.message || "Disable failed.");

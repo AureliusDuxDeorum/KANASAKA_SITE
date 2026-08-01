@@ -322,16 +322,11 @@ def login_page() -> str:
       </form>
 
       <form id="login-2fa-form" class="auth-form" hidden>
-        <p class="auth-note">Enter the 6-digit code from your authenticator app.</p>
+        <p id="login-2fa-note" class="auth-note">Enter the 6-digit code we sent to your phone.</p>
 
         <div class="auth-field">
-          <label for="login-2fa-code">Authenticator Code</label>
+          <label for="login-2fa-code">Verification Code</label>
           <input id="login-2fa-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        </div>
-
-        <div class="auth-field">
-          <label for="login-backup-code">Or Backup Code</label>
-          <input id="login-backup-code" name="backupCode" type="text" autocomplete="off" placeholder="XXXX-XXXX-XX">
         </div>
 
         <button class="button" type="submit">Verify &amp; Sign In</button>
@@ -541,11 +536,16 @@ def settings_page() -> str:
               <p id="settings-twofa-status" class="settings-panel-intro">Checking two-factor status...</p>
 
               <div id="settings-twofa-disabled" hidden>
-                <button id="settings-twofa-setup" class="button secondary" type="button">Set Up Authenticator</button>
+                <form id="settings-twofa-setup-form" class="auth-form">
+                  <div class="auth-field">
+                    <label for="settings-twofa-phone">Phone Number</label>
+                    <input id="settings-twofa-phone" name="phone" type="tel" autocomplete="tel" placeholder="+49 1522 3693645">
+                  </div>
+                  <button class="button secondary" type="submit">Send Verification Code</button>
+                </form>
+
                 <div id="settings-twofa-setup-box" class="settings-twofa-box" hidden>
-                  <p class="settings-panel-intro">Add this key to Google Authenticator, 1Password, or another TOTP app.</p>
-                  <code id="settings-twofa-secret" class="settings-code"></code>
-                  <p class="settings-panel-intro"><a id="settings-twofa-link" href="#" rel="noopener">Open otpauth link</a></p>
+                  <p id="settings-twofa-sent-to" class="settings-panel-intro"></p>
                   <form id="settings-twofa-enable-form" class="auth-form">
                     <div class="auth-field">
                       <label for="settings-twofa-code">Verification Code</label>
@@ -553,25 +553,25 @@ def settings_page() -> str:
                     </div>
                     <button class="button" type="submit">Enable 2FA</button>
                   </form>
+                  <button id="settings-twofa-resend" class="auth-link secondary" type="button">Resend code</button>
                 </div>
               </div>
 
               <div id="settings-twofa-enabled" hidden>
-                <p class="settings-panel-intro">Two-factor authentication is active on this account.</p>
+                <p id="settings-twofa-phone-display" class="settings-panel-intro"></p>
+                <button id="settings-twofa-disable-send" class="button secondary" type="button">Send Verification Code</button>
                 <form id="settings-twofa-disable-form" class="auth-form">
                   <div class="auth-field">
                     <label for="settings-twofa-disable-password">Current Password</label>
                     <input id="settings-twofa-disable-password" name="password" type="password" autocomplete="current-password">
                   </div>
                   <div class="auth-field">
-                    <label for="settings-twofa-disable-code">Authenticator Code</label>
+                    <label for="settings-twofa-disable-code">SMS Code</label>
                     <input id="settings-twofa-disable-code" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
                   </div>
                   <button class="button secondary" type="submit">Disable 2FA</button>
                 </form>
               </div>
-
-              <pre id="settings-twofa-backup" class="settings-code" hidden></pre>
             </div>
 
             <form id="settings-delete-form" class="auth-form settings-form settings-danger-zone">

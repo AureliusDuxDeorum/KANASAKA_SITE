@@ -42,16 +42,11 @@
       </form>
 
       <form id="login-2fa-form" class="auth-form" hidden>
-        <p class="auth-note">Enter the 6-digit code from your authenticator app.</p>
+        <p id="login-2fa-note" class="auth-note">Enter the 6-digit code we sent to your phone.</p>
 
         <div class="auth-field">
-          <label for="login-2fa-code">Authenticator Code</label>
+          <label for="login-2fa-code">Verification Code</label>
           <input id="login-2fa-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        </div>
-
-        <div class="auth-field">
-          <label for="login-backup-code">Or Backup Code</label>
-          <input id="login-backup-code" name="backupCode" type="text" autocomplete="off" placeholder="XXXX-XXXX-XX">
         </div>
 
         <button class="button" type="submit">Verify &amp; Sign In</button>

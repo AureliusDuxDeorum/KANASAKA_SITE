@@ -51,7 +51,7 @@ export function avatarInitials(user) {
 
 export async function getUserProfile(env, userId) {
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.display_name, u.totp_enabled, u.totp_enabled_at,
+    `SELECT u.id, u.email, u.display_name, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
             ua.mime_type, ua.updated_at AS avatar_updated_at
      FROM users u
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
@@ -70,10 +70,13 @@ export async function getUserProfile(env, userId) {
     display_name: row.display_name,
     totp_enabled: row.totp_enabled,
     totp_enabled_at: row.totp_enabled_at,
+    phone_e164: row.phone_e164,
     has_avatar: Boolean(row.mime_type),
     avatar_updated_at: row.avatar_updated_at,
   };
 }
+
+import { maskPhone } from "./phone.js";
 
 export function profilePayload(user) {
   const hasAvatar = Boolean(user && user.has_avatar);
@@ -88,6 +91,7 @@ export function profilePayload(user) {
     avatarUrl: hasAvatar ? "/api/account/avatar?v=" + version : null,
     twoFactorEnabled: Boolean(user.totp_enabled),
     twoFactorEnabledAt: user.totp_enabled_at || null,
+    phoneMasked: user.phone_e164 ? maskPhone(user.phone_e164) : null,
   };
 }
 
