@@ -468,7 +468,7 @@
         '<span class="platform-label">Android</span>' +
         '<strong class="platform-title">Debug APK</strong>' +
         '<span class="platform-detail">Private alpha · sideload on Android</span>' +
-        '<span class="platform-file">app-debug.apk · ~7.7 MB</span>' +
+        '<span class="platform-file">app-debug.apk · ~8.0 MB</span>' +
         '<a class="button" href="/api/download/android">Download</a>' +
         "</article>" +
         "</div>";
