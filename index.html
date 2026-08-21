@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=51">
+  <link rel="stylesheet" href="/assets/css/style.css?v=54">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -76,29 +76,54 @@
   <section class="page-section">
     <h2>Products</h2>
 
-    <article class="product-card featured-card">
-      <div class="product-info">
-        <span class="section-kicker">Featured</span>
-        <h3>KS Unify</h3>
+    <div class="product-grid">
+      <article class="product-card featured-card">
+        <div class="product-info">
+          <span class="section-kicker">Desktop</span>
+          <h3>KS Unify</h3>
 
-        <p>
-          A local AI control layer for provider management,
-          routing, streaming, history, LAN access,
-          and API integration.
-        </p>
+          <p>
+            A local AI control layer for provider management,
+            routing, streaming, history, LAN access,
+            and API integration.
+          </p>
 
-        <div class="meta">
-          <span>Desktop App</span>
-          <span>Local API</span>
-          <span>Active Development</span>
+          <div class="meta">
+            <span>Desktop App</span>
+            <span>Local API</span>
+            <span>Active Development</span>
+          </div>
         </div>
-      </div>
 
-      <div class="actions">
-        <a href="/products/ks-unify/" class="button">Learn More</a>
-        <a href="/downloads/" class="button secondary">Downloads</a>
-      </div>
-    </article>
+        <div class="actions">
+          <a href="/products/ks-unify/" class="button">Learn More</a>
+          <a href="/downloads/#ks-unify" class="button secondary">Downloads</a>
+        </div>
+      </article>
+
+      <article class="product-card featured-card" data-visible-account-id="dev_ks" hidden>
+        <div class="product-info">
+          <span class="section-kicker">Mobile</span>
+          <h3>KS-K Mobile</h3>
+
+          <p>
+            Mobile companion for KANASAKA systems — remote monitoring,
+            quick controls, and secure sync with your KS stack.
+          </p>
+
+          <div class="meta">
+            <span>iOS</span>
+            <span>Android</span>
+            <span>Private Alpha</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="/products/ks-k-mobile/" class="button">Learn More</a>
+          <a href="/downloads/#ks-k-mobile" class="button secondary">Downloads</a>
+        </div>
+      </article>
+    </div>
   </section>
 
 </main>

@@ -617,6 +617,39 @@ h1 {
   letter-spacing: 0.04em;
 }
 
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.product-grid .product-card {
+  flex-direction: column;
+  align-items: stretch;
+  height: 100%;
+}
+
+.product-grid .actions {
+  margin-top: auto;
+}
+
+.download-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.download-platform-grid-single {
+  grid-template-columns: minmax(0, 360px);
+}
+
+.download-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
 .download-kicker,
 .section-kicker {
   display: block;

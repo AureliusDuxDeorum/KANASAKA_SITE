@@ -1,11 +1,27 @@
 (function () {
   const NAV = [
     {
+      label: "Downloads",
+      children: [
+        { label: "All Downloads", href: "/downloads/" },
+        { label: "KS Unify", href: "/downloads/#ks-unify" },
+        {
+          label: "KS-K Mobile",
+          href: "/downloads/#ks-k-mobile",
+          visibleAccountId: "dev_ks",
+        },
+      ],
+    },
+    {
       label: "Products",
       children: [
         { label: "KS Unify", href: "/products/ks-unify/" },
+        {
+          label: "KS-K Mobile",
+          href: "/products/ks-k-mobile/",
+          visibleAccountId: "dev_ks",
+        },
         { label: "Robotics", href: "/products/robotics/" },
-        { label: "Downloads", href: "/downloads/" },
       ],
     },
     {
@@ -31,7 +47,6 @@
       label: "Support",
       children: [
         { label: "Documentation", href: "/support/documentation/" },
-        { label: "Downloads", href: "/downloads/" },
         { label: "FAQ", href: "/support/faq/" },
         { label: "Contact", href: "/support/contact/" },
         { label: "System Status", href: "/support/system-status/" },
@@ -185,6 +200,18 @@
     return wrap;
   }
 
+  function canSeeNavItem(child) {
+    if (!child.visibleAccountId) {
+      return true;
+    }
+
+    return (
+      window.KanasakaAuth &&
+      window.KanasakaAuth.canSeeAccountGated &&
+      window.KanasakaAuth.canSeeAccountGated(child.visibleAccountId)
+    );
+  }
+
   function buildNav() {
     const nav = document.createElement("nav");
     nav.className = "site-nav";
@@ -211,7 +238,7 @@
       const dropdown = document.createElement("div");
       dropdown.className = "nav-dropdown";
 
-      section.children.forEach(function (child) {
+      section.children.filter(canSeeNavItem).forEach(function (child) {
         const link = document.createElement("a");
         link.href = child.href;
         link.textContent = child.label;
@@ -364,7 +391,7 @@
         return;
       }
 
-      loadScript("/assets/js/logo-animation.js?v=53").then(resolve);
+      loadScript("/assets/js/logo-animation.js?v=54").then(resolve);
     });
   }
 
@@ -375,7 +402,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=53").then(resolve);
+      loadScript("/assets/js/tos.js?v=54").then(resolve);
     });
   }
 
@@ -392,6 +419,9 @@
       window.KanasakaAuth.initAuthForms();
       window.KanasakaAuth.initProtectedPages();
       window.KanasakaAuth.initSettingsPage();
+      if (window.KanasakaAuth.applyAccountGatedVisibility) {
+        window.KanasakaAuth.applyAccountGatedVisibility(document);
+      }
     }
 
     await loadLogoAnimation();
