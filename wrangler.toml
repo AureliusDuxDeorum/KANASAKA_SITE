@@ -21,6 +21,12 @@ pages_build_output_dir = "."
 # Live Stripe:
 #   Secrets (Pages → Settings → Variables and secrets → Production):
 #     STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+# Alpaca Connect (KS Stocks OAuth):
+#   [vars] ALPACA_CLIENT_ID below
+#   Secret (Pages → Production secrets only): ALPACA_CLIENT_SECRET
+#   Redirect URIs in Alpaca dashboard (both):
+#     https://kanasaka.com/api/alpaca/oauth/callback
+#     http://127.0.0.1:8742/oauth/callback
 #   Price IDs ([vars] below — also set in Production if not deploying via wrangler.toml):
 #     STRIPE_PRICE_KS_PACKAGE_MONTHLY, STRIPE_PRICE_KS_PACKAGE_ANNUAL
 # Stripe Dashboard (Live mode):
@@ -29,6 +35,7 @@ pages_build_output_dir = "."
 #   Webhook: https://kanasaka.com/api/stripe/webhook
 #     events: checkout.session.completed, customer.subscription.created,
 #             customer.subscription.updated, customer.subscription.deleted
+# Set KS_PACKAGE_SUBSCRIPTIONS_OPEN = "true" when KS Stocks is approved for launch.
 # Developer account @ks_dev gets permanent KS Stocks access (no subscription).
 
 [[r2_buckets]]
@@ -49,3 +56,5 @@ ARGON2_MEMORY_KIB = "19456"
 ARGON2_ITERATIONS = "3"
 STRIPE_PRICE_KS_PACKAGE_MONTHLY = "price_1U6xQ53dTvPYganN71RV2vMs"
 STRIPE_PRICE_KS_PACKAGE_ANNUAL = "price_1U6xQ53dTvPYganNsiScSPC0"
+KS_PACKAGE_SUBSCRIPTIONS_OPEN = "false"
+ALPACA_CLIENT_ID = "5c5ea7fdede00990bff5a1216b052ff3"

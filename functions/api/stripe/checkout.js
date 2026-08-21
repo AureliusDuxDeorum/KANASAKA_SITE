@@ -7,6 +7,8 @@ import {
 import { getBillingUser } from "../../lib/billing.js";
 import {
   isKsStocksDeveloperAccount,
+  ksPackageSubscriptionsOpen,
+  KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE,
   ksStocksEntitlementFromUser,
 } from "../../lib/ks-stocks-access.js";
 import {
@@ -24,6 +26,10 @@ export async function onRequestPost(context) {
 
   if (!stripeConfigured(context.env)) {
     return errorResponse("Billing is not configured yet.", 503);
+  }
+
+  if (!ksPackageSubscriptionsOpen(context.env)) {
+    return errorResponse(KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE, 503);
   }
 
   const { user, sessionHeaders } = await resolveSession(

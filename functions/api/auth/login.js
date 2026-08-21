@@ -91,7 +91,7 @@ export async function onRequestPost(context) {
   const session = await createSession(env, user.id);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
 
-  return jsonResponse(sessionPayload(user), 200, {
+  return jsonResponse(sessionPayload(user, env), 200, {
     "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),
   });
 }

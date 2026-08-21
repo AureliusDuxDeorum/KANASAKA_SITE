@@ -36,7 +36,7 @@ async function verifyWithToken(env, token, ip) {
 
   return jsonResponse(
     {
-      ...sessionPayload(user),
+      ...sessionPayload(user, env),
       message: "Email verified successfully.",
     },
     200,

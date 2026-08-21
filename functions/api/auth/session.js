@@ -15,7 +15,7 @@ export async function onRequestGet(context) {
 
   return jsonResponse(
     {
-      ...sessionPayload(user),
+      ...sessionPayload(user, env),
       configured: true,
     },
     200,

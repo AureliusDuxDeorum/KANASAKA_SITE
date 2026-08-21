@@ -5,7 +5,9 @@ import {
 } from "../../lib/auth.js";
 import { getBillingUser } from "../../lib/billing.js";
 import {
+  KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE,
   KS_STOCKS_DEV_ACCOUNT_ID,
+  ksPackageSubscriptionsOpen,
   ksStocksEntitlementFromUser,
 } from "../../lib/ks-stocks-access.js";
 import { stripeConfigured } from "../../lib/stripe.js";
@@ -26,6 +28,8 @@ export async function onRequestGet(context) {
   return jsonResponse(
     {
       configured: stripeConfigured(context.env),
+      subscriptionsOpen: ksPackageSubscriptionsOpen(context.env),
+      subscriptionsPausedMessage: KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE,
       productName: "KS_Package",
       monthlyPrice: "€10",
       annualPrice: "€100",
