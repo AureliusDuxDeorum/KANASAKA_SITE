@@ -432,11 +432,11 @@
       container.innerHTML =
         '<div class="download-platform-grid download-platform-grid-single">' +
         '<article class="download-platform-card">' +
-        '<span class="platform-label">Internal</span>' +
-        '<strong class="platform-title">Early Access</strong>' +
-        '<span class="platform-detail">KS-K Mobile builds are in private development.</span>' +
-        '<span class="platform-file">Visible to @dev_ks only</span>' +
-        '<span class="button secondary download-placeholder">Builds coming soon</span>' +
+        '<span class="platform-label">Android</span>' +
+        '<strong class="platform-title">Debug APK</strong>' +
+        '<span class="platform-detail">Private alpha · sideload on Android</span>' +
+        '<span class="platform-file">app-debug.apk · ~7.6 MB</span>' +
+        '<a class="button" href="/api/download/android">Download</a>' +
         "</article>" +
         "</div>";
       container.hidden = false;

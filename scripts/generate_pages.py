@@ -374,6 +374,7 @@ def downloads_page() -> str:
         <li><strong>Windows</strong> — You may see a SmartScreen warning because the installer is not yet code-signed. Choose “More info”, then “Run anyway”.</li>
         <li><strong>macOS</strong> — This build is for Apple Silicon (M1/M2/M3). After opening the DMG, if macOS blocks the app, go to System Settings → Privacy &amp; Security → Open Anyway.</li>
         <li><strong>Linux</strong> — Install with <code>sudo dpkg -i KS.Unify_0.1.0_amd64.deb</code>. Requires WebKitGTK 4.1.</li>
+        <li><strong>Android (KS-K Mobile)</strong> — Debug APK for authorized accounts. Enable sideloading or install via ADB; Android may warn because the build is unsigned.</li>
       </ul>
     </div>
   </section>

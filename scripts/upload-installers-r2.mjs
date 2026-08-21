@@ -29,6 +29,13 @@ const uploads = [
     remote: "installers/macos/KS.Unify_0.1.0_aarch64.dmg",
     defaultLocal: "",
   },
+  {
+    platform: "android",
+    local: process.env.KS_K_MOBILE_ANDROID_APK,
+    remote: "installers/ks-k-mobile/android/app-debug.apk",
+    defaultLocal:
+      "/home/prometheus/Desktop/Projects/K_0.2/mobile/android/app/build/outputs/apk/debug/app-debug.apk",
+  },
 ];
 
 function run(command) {
