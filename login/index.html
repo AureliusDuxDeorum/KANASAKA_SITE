@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=51">
+  <link rel="stylesheet" href="/assets/css/style.css?v=52">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -25,7 +25,10 @@
 <main>
 
   <section class="auth-page">
-    <div class="auth-card auth-card-elevated">
+    <div class="auth-page-backdrop" aria-hidden="true"></div>
+    <div class="auth-card auth-card-elevated auth-card--modern">
+      <div class="auth-card-accent" aria-hidden="true"></div>
+      <div class="auth-card-body">
       <p class="auth-eyebrow">Account</p>
       <h1>Log In</h1>
       <p class="auth-lead">Access downloads and contact details with your KANASAKA account.</p>
@@ -44,8 +47,11 @@
         <button class="button auth-submit" type="submit">Log In</button>
       </form>
 
-      <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
-      <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
+      <div class="auth-footer">
+        <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
+        <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
+      </div>
+      </div>
     </div>
   </section>
 
