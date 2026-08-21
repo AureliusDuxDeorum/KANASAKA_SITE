@@ -228,7 +228,7 @@ def home_page() -> str:
         </div>
       </article>
 
-      <article class="product-card featured-card" data-visible-account-id="ks_dev" hidden>
+      <article class="product-card featured-card" data-visible-account-id="dev_ks" hidden>
         <div class="product-info">
           <span class="section-kicker">Mobile</span>
           <h3>KS-K Mobile</h3>
@@ -375,7 +375,7 @@ def downloads_page() -> str:
         <div id="download-actions-unify" class="download-actions" hidden></div>
       </article>
 
-      <article id="ks-k-mobile" class="download-card featured-download download-card-wide" data-visible-account-id="ks_dev" hidden>
+      <article id="ks-k-mobile" class="download-card featured-download download-card-wide" data-visible-account-id="dev_ks" hidden>
         <div class="download-info">
           <span class="download-kicker">KS-K Mobile</span>
 
@@ -390,7 +390,7 @@ def downloads_page() -> str:
             <span>Private Alpha</span>
             <span>iOS</span>
             <span>Android</span>
-            <span>@ks_dev access</span>
+            <span>@dev_ks access</span>
           </div>
         </div>
 
@@ -421,7 +421,7 @@ def downloads_page() -> str:
 
 def ks_k_mobile_page() -> str:
     body = """
-  <div id="ks-k-mobile-content" data-visible-account-id="ks_dev" hidden>
+  <div id="ks-k-mobile-content" data-visible-account-id="dev_ks" hidden>
   <section class="hero compact">
     <div class="kanasaka-logo small">
       <div class="logo-side"><div></div><div></div></div>

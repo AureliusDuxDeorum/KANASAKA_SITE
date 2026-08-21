@@ -609,7 +609,7 @@
     }
 
     const mobileActions = document.getElementById("download-actions-ks-k-mobile");
-    if (mobileActions && canSeeAccountGated("ks_dev")) {
+    if (mobileActions && canSeeAccountGated("dev_ks")) {
       renderDownloadActions(mobileActions, "ks-k-mobile");
     }
   }
@@ -1281,7 +1281,7 @@
 
     applyAccountGatedVisibility(document);
 
-    if (canSeeAccountGated("ks_dev")) {
+    if (canSeeAccountGated("dev_ks")) {
       gate.hidden = true;
       return;
     }

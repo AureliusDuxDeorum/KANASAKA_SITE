@@ -36,7 +36,7 @@ pages_build_output_dir = "."
 #     events: checkout.session.completed, customer.subscription.created,
 #             customer.subscription.updated, customer.subscription.deleted
 # Set KS_PACKAGE_SUBSCRIPTIONS_OPEN = "true" when KS Stocks is approved for launch.
-# Developer account @ks_dev gets permanent KS Stocks access (no subscription).
+# Developer accounts: @ks_dev → permanent KS Stocks access; @dev_ks → KS-K Mobile only.
 
 [[r2_buckets]]
 binding = "INSTALLERS"
