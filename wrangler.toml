@@ -17,7 +17,19 @@ pages_build_output_dir = "."
 #   ARGON2_ITERATIONS = 3
 # WAF audit:
 #   node scripts/check-waf-rules.mjs
-# Bind D1 in Pages → Settings → Bindings (variable name: DB)
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/014_ks_stocks_subscription.sql
+# Live Stripe:
+#   Secrets (Pages → Settings → Variables and secrets → Production):
+#     STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+#   Price IDs ([vars] below — also set in Production if not deploying via wrangler.toml):
+#     STRIPE_PRICE_KS_PACKAGE_MONTHLY, STRIPE_PRICE_KS_PACKAGE_ANNUAL
+# Stripe Dashboard (Live mode):
+#   Product: KS_Package — €10/month + €100/year recurring prices
+#   Customer Portal: enabled
+#   Webhook: https://kanasaka.com/api/stripe/webhook
+#     events: checkout.session.completed, customer.subscription.created,
+#             customer.subscription.updated, customer.subscription.deleted
+# Developer account @ks_dev gets permanent KS Stocks access (no subscription).
 
 [[r2_buckets]]
 binding = "INSTALLERS"
@@ -35,3 +47,5 @@ FROM_EMAIL = "noreply@kanasaka.com"
 FROM_NAME = "KANASAKA"
 ARGON2_MEMORY_KIB = "19456"
 ARGON2_ITERATIONS = "3"
+STRIPE_PRICE_KS_PACKAGE_MONTHLY = "price_1U6xQ53dTvPYganN71RV2vMs"
+STRIPE_PRICE_KS_PACKAGE_ANNUAL = "price_1U6xQ53dTvPYganNsiScSPC0"

@@ -9,7 +9,8 @@ import {
   loginPasswordValidationError,
   passwordPolicyError,
 } from "./password-policy.js";
-import { getAuthSchema } from "./schema.js";
+import { getAuthSchema, usersHaveKsStocksSubscriptionColumns } from "./schema.js";
+import { ksStocksEntitlementFromUser } from "./ks-stocks-access.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 
 export {
@@ -307,12 +308,18 @@ export async function deleteAllUserSessions(env, userId) {
 }
 
 async function loadSessionUser(env, tokenHash, schema) {
+  const hasKsStocksColumns = await usersHaveKsStocksSubscriptionColumns(env);
+  const subscriptionSelect = hasKsStocksColumns
+    ? ", u.ks_stocks_subscription_status, u.ks_stocks_subscription_ends_at, u.stripe_customer_id"
+    : "";
+
   if (schema.sessionsHashed) {
     return env.DB.prepare(
       `SELECT s.token_hash, s.last_rotated_at,
               u.id, u.email, u.email_verified, u.display_name, u.account_id, u.role, u.totp_enabled,
               ua.updated_at AS avatar_updated_at,
               CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+              ${subscriptionSelect}
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        LEFT JOIN user_avatars ua ON ua.user_id = u.id
@@ -328,6 +335,7 @@ async function loadSessionUser(env, tokenHash, schema) {
             u.id, u.email, u.email_verified, u.display_name, u.account_id, u.role, u.totp_enabled,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+            ${subscriptionSelect}
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
@@ -592,6 +600,7 @@ export function sessionPayload(user) {
     avatarUrl: hasAvatar ? "/api/account/avatar?v=" + version : null,
     initials: initialsFromUser(user),
     twoFactorEnabled: Boolean(user && user.totp_enabled),
+    ...ksStocksEntitlementFromUser(user),
   };
 }
 

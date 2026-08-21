@@ -78,8 +78,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=63">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=63">
+  <link rel="stylesheet" href="/assets/css/style.css?v=64">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=64">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -204,7 +204,30 @@ def home_page() -> str:
         </div>
       </article>
 
-      <article class="product-card featured-card" data-visible-account-id="dev_ks" hidden>
+      <article class="product-card featured-card">
+        <div class="product-info">
+          <span class="section-kicker">Desktop</span>
+          <h3>KS Stocks</h3>
+
+          <p>
+            Market analytics and portfolio tooling for KANASAKA accounts.
+            Subscribe with KS_Package for full access.
+          </p>
+
+          <div class="meta">
+            <span>Desktop App</span>
+            <span>€10 / month</span>
+            <span>€100 / year</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="/products/ks-stocks/" class="button">Learn More</a>
+          <a href="/account/settings/?section=billing" class="button secondary">Subscribe</a>
+        </div>
+      </article>
+
+      <article class="product-card featured-card" data-visible-account-id="ks_dev" hidden>
         <div class="product-info">
           <span class="section-kicker">Mobile</span>
           <h3>KS-K Mobile</h3>
@@ -351,7 +374,7 @@ def downloads_page() -> str:
         <div id="download-actions-unify" class="download-actions" hidden></div>
       </article>
 
-      <article id="ks-k-mobile" class="download-card featured-download download-card-wide" data-visible-account-id="dev_ks" hidden>
+      <article id="ks-k-mobile" class="download-card featured-download download-card-wide" data-visible-account-id="ks_dev" hidden>
         <div class="download-info">
           <span class="download-kicker">KS-K Mobile</span>
 
@@ -366,7 +389,7 @@ def downloads_page() -> str:
             <span>Private Alpha</span>
             <span>iOS</span>
             <span>Android</span>
-            <span>@dev_ks access</span>
+            <span>@ks_dev access</span>
           </div>
         </div>
 
@@ -397,7 +420,7 @@ def downloads_page() -> str:
 
 def ks_k_mobile_page() -> str:
     body = """
-  <div id="ks-k-mobile-content" data-visible-account-id="dev_ks" hidden>
+  <div id="ks-k-mobile-content" data-visible-account-id="ks_dev" hidden>
   <section class="hero compact">
     <div class="kanasaka-logo small">
       <div class="logo-side"><div></div><div></div></div>
@@ -1018,9 +1041,64 @@ def settings_page() -> str:
 
           <section id="settings-panel-billing" class="settings-panel" hidden>
             <h2>Billing</h2>
-            <div class="settings-coming-soon">
-              <span class="coming-soon-label">Coming Soon</span>
-              <p>Subscription and billing management will appear here.</p>
+
+            <p id="billing-status-message" class="billing-status-message" hidden></p>
+
+            <div id="billing-unconfigured" class="settings-billing-callout" hidden>
+              <p>Live billing is not configured yet. Check back soon.</p>
+            </div>
+
+            <div id="billing-developer" class="settings-billing-callout settings-billing-developer" hidden>
+              <span class="billing-badge billing-badge-active">Developer</span>
+              <p>Your @ks_dev account includes permanent KS Stocks access.</p>
+            </div>
+
+            <div id="billing-active" class="settings-billing-card" hidden>
+              <div class="settings-billing-header">
+                <div>
+                  <span class="section-kicker">Subscription</span>
+                  <h3 class="settings-subsection-title">KS_Package</h3>
+                </div>
+                <span id="billing-status-badge" class="billing-badge">Active</span>
+              </div>
+
+              <p id="billing-active-copy" class="settings-billing-copy">
+                Your account is entitled to KS Stocks while this subscription stays active.
+              </p>
+              <p id="billing-renews" class="settings-billing-meta" hidden></p>
+
+              <div class="settings-billing-actions">
+                <button id="billing-portal-button" class="button secondary" type="button">
+                  Manage billing
+                </button>
+                <a href="/products/ks-stocks/" class="button">KS Stocks</a>
+              </div>
+            </div>
+
+            <div id="billing-subscribe" class="settings-billing-card" hidden>
+              <div class="settings-billing-header">
+                <div>
+                  <span class="section-kicker">Subscription</span>
+                  <h3 class="settings-subsection-title">KS_Package</h3>
+                </div>
+              </div>
+
+              <p class="settings-billing-copy">
+                Unlock KS Stocks on your KANASAKA account. Billing is tied to your account ID.
+              </p>
+
+              <div class="billing-plan-grid">
+                <article class="billing-plan-card">
+                  <h4>Monthly</h4>
+                  <p class="billing-plan-price">€10<span>/month</span></p>
+                  <button class="button" type="button" data-billing-plan="monthly">Subscribe monthly</button>
+                </article>
+                <article class="billing-plan-card billing-plan-card-featured">
+                  <h4>Annual</h4>
+                  <p class="billing-plan-price">€100<span>/year</span></p>
+                  <button class="button" type="button" data-billing-plan="annual">Subscribe annually</button>
+                </article>
+              </div>
             </div>
           </section>
         </div>
@@ -1030,6 +1108,70 @@ def settings_page() -> str:
 {auth_page_close()}
 """
     return shell("Account Settings", body)
+
+
+def ks_stocks_page() -> str:
+    body = """
+  <section class="hero compact">
+    <div class="kanasaka-logo small">
+      <div class="logo-side"><div></div><div></div></div>
+      <div class="logo-center"><span>K</span><span>S</span></div>
+      <div class="logo-side"><div></div><div></div></div>
+    </div>
+
+    <h1>KS Stocks</h1>
+
+    <p>
+      Desktop market analytics and portfolio tooling for KANASAKA accounts.
+      Access is granted while your KS_Package subscription is active.
+    </p>
+  </section>
+
+  <section class="page-section">
+    <article class="content-card featured-card">
+      <div class="product-info">
+        <span class="section-kicker">Desktop Application</span>
+        <h2>KS_Package</h2>
+
+        <p>
+          Subscribe once per KANASAKA account ID. While your subscription is active
+          or trialing, KS Stocks unlocks on every device where you sign in.
+        </p>
+
+        <div class="meta">
+          <span>€10 / month</span>
+          <span>€100 / year</span>
+          <span>Account-based access</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="/account/settings/?section=billing" class="button">Subscribe</a>
+        <a href="/downloads/" class="button secondary">Downloads</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="page-section">
+    <h2>Included</h2>
+
+    <div class="feature-grid">
+      <article>
+        <h3>Live entitlement</h3>
+        <p>Your KANASAKA session reflects subscription status in real time.</p>
+      </article>
+      <article>
+        <h3>Account ID keyed</h3>
+        <p>Access follows your account ID, not a single machine license.</p>
+      </article>
+      <article>
+        <h3>Self-serve billing</h3>
+        <p>Upgrade, cancel, or update payment details from Account Settings.</p>
+      </article>
+    </div>
+  </section>
+"""
+    return shell("KS Stocks", body)
 
 
 def write_page(rel_path: str, content: str) -> None:
@@ -1046,6 +1188,7 @@ def main() -> None:
     print("Generating pages...")
     write_page("index.html", home_page())
     write_page("products/ks-unify", ks_unify_page())
+    write_page("products/ks-stocks", ks_stocks_page())
     write_page("products/ks-k-mobile", ks_k_mobile_page())
     write_page("downloads", downloads_page())
     write_page("support/contact", contact_page())

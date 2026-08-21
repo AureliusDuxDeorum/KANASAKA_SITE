@@ -562,7 +562,7 @@
     }
 
     const mobileActions = document.getElementById("download-actions-ks-k-mobile");
-    if (mobileActions && canSeeAccountGated("dev_ks")) {
+    if (mobileActions && canSeeAccountGated("ks_dev")) {
       renderDownloadActions(mobileActions, "ks-k-mobile");
     }
   }
@@ -939,6 +939,176 @@
         submit.disabled = false;
       }
     });
+
+    initBillingPanel();
+  }
+
+  function formatBillingDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  function setBillingMessage(message, isError) {
+    const node = document.getElementById("billing-status-message");
+    if (!node) return;
+    if (!message) {
+      node.hidden = true;
+      node.textContent = "";
+      node.classList.remove("is-error");
+      return;
+    }
+    node.hidden = false;
+    node.textContent = message;
+    node.classList.toggle("is-error", Boolean(isError));
+  }
+
+  async function startBillingCheckout(plan, button) {
+    if (button) button.disabled = true;
+    setBillingMessage("");
+
+    try {
+      const { response, data } = await apiRequest("/api/stripe/checkout", {
+        method: "POST",
+        body: JSON.stringify({ plan: plan }),
+      });
+
+      if (!response.ok) {
+        throw new Error((data && data.error) || "Could not start checkout.");
+      }
+
+      if (data && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      throw new Error("Could not start checkout.");
+    } catch (error) {
+      setBillingMessage(error.message || "Could not start checkout.", true);
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function openBillingPortal(button) {
+    if (button) button.disabled = true;
+    setBillingMessage("");
+
+    try {
+      const { response, data } = await apiRequest("/api/stripe/portal", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error((data && data.error) || "Could not open billing portal.");
+      }
+
+      if (data && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      throw new Error("Could not open billing portal.");
+    } catch (error) {
+      setBillingMessage(error.message || "Could not open billing portal.", true);
+      if (button) button.disabled = false;
+    }
+  }
+
+  function renderBillingPanel(data) {
+    const unconfigured = document.getElementById("billing-unconfigured");
+    const developer = document.getElementById("billing-developer");
+    const active = document.getElementById("billing-active");
+    const subscribe = document.getElementById("billing-subscribe");
+    const badge = document.getElementById("billing-status-badge");
+    const renews = document.getElementById("billing-renews");
+    const portalButton = document.getElementById("billing-portal-button");
+
+    [unconfigured, developer, active, subscribe].forEach(function (node) {
+      if (node) node.hidden = true;
+    });
+
+    if (!data || !data.configured) {
+      if (unconfigured) unconfigured.hidden = false;
+      return;
+    }
+
+    if (data.ksStocksAccessReason === "developer") {
+      if (developer) developer.hidden = false;
+      return;
+    }
+
+    if (data.ksStocksEntitled) {
+      if (active) active.hidden = false;
+      if (badge) {
+        badge.textContent =
+          data.subscriptionStatus === "trialing" ? "Trialing" : "Active";
+        badge.classList.add("billing-badge-active");
+      }
+      if (renews) {
+        const renewDate = formatBillingDate(data.subscriptionEndsAt);
+        if (renewDate) {
+          renews.hidden = false;
+          renews.textContent = "Current period ends " + renewDate + ".";
+        } else {
+          renews.hidden = true;
+          renews.textContent = "";
+        }
+      }
+      if (portalButton) {
+        portalButton.hidden = !data.stripeCustomerId;
+      }
+      return;
+    }
+
+    if (subscribe) subscribe.hidden = false;
+  }
+
+  async function initBillingPanel() {
+    const panel = document.getElementById("settings-panel-billing");
+    if (!panel) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const billingResult = params.get("billing");
+    if (billingResult === "success") {
+      setBillingMessage("Subscription updated. KS Stocks access should be active shortly.");
+    } else if (billingResult === "cancel") {
+      setBillingMessage("Checkout was canceled.", true);
+    }
+
+    document.querySelectorAll("[data-billing-plan]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        startBillingCheckout(button.getAttribute("data-billing-plan"), button);
+      });
+    });
+
+    const portalButton = document.getElementById("billing-portal-button");
+    if (portalButton) {
+      portalButton.addEventListener("click", function () {
+        openBillingPortal(portalButton);
+      });
+    }
+
+    try {
+      const { response, data } = await apiRequest("/api/billing/status", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error((data && data.error) || "Could not load billing.");
+      }
+
+      renderBillingPanel(data);
+      if (data && typeof data.ksStocksEntitled === "boolean") {
+        updateSession(Object.assign({}, getSession(), data));
+      }
+    } catch (error) {
+      setBillingMessage(error.message || "Could not load billing.", true);
+    }
   }
 
   function initSettingsNavigation() {
@@ -955,6 +1125,11 @@
     const panel = params.get("section");
     if (panel) {
       showSettingsPanel(panel);
+      return;
+    }
+
+    if (window.location.hash === "#billing") {
+      showSettingsPanel("billing");
     }
   }
 
@@ -1045,7 +1220,7 @@
 
     applyAccountGatedVisibility(document);
 
-    if (canSeeAccountGated("dev_ks")) {
+    if (canSeeAccountGated("ks_dev")) {
       gate.hidden = true;
       return;
     }

@@ -8,7 +8,7 @@
         {
           label: "KS-K Mobile",
           href: "/downloads/#ks-k-mobile",
-          visibleAccountId: "dev_ks",
+          visibleAccountId: "ks_dev",
         },
       ],
     },
@@ -19,7 +19,7 @@
         {
           label: "KS-K Mobile",
           href: "/products/ks-k-mobile/",
-          visibleAccountId: "dev_ks",
+          visibleAccountId: "ks_dev",
         },
         { label: "Robotics", href: "/products/robotics/" },
       ],
@@ -391,7 +391,7 @@
         return;
       }
 
-      loadScript("/assets/js/logo-animation.js?v=63").then(resolve);
+      loadScript("/assets/js/logo-animation.js?v=64").then(resolve);
     });
   }
 
@@ -402,7 +402,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=63").then(resolve);
+      loadScript("/assets/js/tos.js?v=64").then(resolve);
     });
   }
 
