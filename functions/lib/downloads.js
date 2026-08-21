@@ -1,4 +1,5 @@
 import { generateRawToken, hashSecret } from "./tokens.js";
+import { ksStocksEntitlementFromUser } from "./ks-stocks-access.js";
 
 export const INSTALLER_OBJECTS = {
   windows: {
@@ -41,14 +42,31 @@ export function installerConfig(platform) {
 }
 
 export function canAccessInstaller(user, config) {
-  if (!config || !config.requiredAccountId) {
-    return true;
+  return !downloadAccessDenialReason(user, config);
+}
+
+export function downloadAccessDenialReason(user, config) {
+  if (!user) {
+    return "Authentication required.";
   }
 
-  return (
-    String(user.account_id || "").toLowerCase() ===
+  const entitlement = ksStocksEntitlementFromUser(user);
+  if (!entitlement.ksStocksEntitled) {
+    return "KS_Package subscription required.";
+  }
+
+  if (!config || !config.requiredAccountId) {
+    return null;
+  }
+
+  if (
+    String(user.account_id || "").toLowerCase() !==
     String(config.requiredAccountId).toLowerCase()
-  );
+  ) {
+    return "Access denied.";
+  }
+
+  return null;
 }
 
 export async function createSignedDownloadToken(env, userId, platform, ttlSeconds = DEFAULT_TTL_SECONDS) {

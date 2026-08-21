@@ -411,6 +411,32 @@
       "</div></div>";
   }
 
+  function renderPaywallGate(gateId, message) {
+    const gate = document.getElementById(gateId);
+    if (!gate) return;
+
+    gate.hidden = false;
+    gate.innerHTML =
+      '<div class="auth-gate-box">' +
+      '<span class="coming-soon-label">KS_Package Required</span>' +
+      "<h2>Subscribe to download</h2>" +
+      "<p>" + message + "</p>" +
+      '<div class="auth-gate-actions">' +
+      '<a class="button" href="/account/settings/?section=billing">Subscribe</a>' +
+      '<a class="button secondary" href="/products/ks-stocks/">Learn more</a>' +
+      "</div></div>";
+  }
+
+  function hasDownloadAccess(session) {
+    return Boolean(session && session.authenticated && session.ksStocksEntitled);
+  }
+
+  function hideDownloadActions() {
+    document.querySelectorAll(".download-actions").forEach(function (el) {
+      el.hidden = true;
+    });
+  }
+
   function renderContactDetails(container, contact) {
     container.innerHTML =
       '<dl class="contact-item">' +
@@ -546,11 +572,18 @@
     if (!session.authenticated) {
       renderAuthGate(
         "auth-gate-downloads",
-        "Downloads require a free KANASAKA account."
+        "Downloads require a KANASAKA account."
       );
-      document.querySelectorAll(".download-actions").forEach(function (el) {
-        el.hidden = true;
-      });
+      hideDownloadActions();
+      return;
+    }
+
+    if (!hasDownloadAccess(session)) {
+      renderPaywallGate(
+        "auth-gate-downloads",
+        "Product downloads are included with KS_Package (€10/month or €100/year). Subscribe to unlock KS Unify and other builds."
+      );
+      hideDownloadActions();
       return;
     }
 
