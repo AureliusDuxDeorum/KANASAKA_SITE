@@ -1810,6 +1810,26 @@ h1 {
   color: var(--color-text-muted);
 }
 
+.product-requirements-card {
+  padding: 28px 32px;
+}
+
+.product-requirements-list {
+  margin: 18px 0;
+  padding-left: 1.2rem;
+  color: var(--color-text-muted);
+}
+
+.product-requirements-list li + li {
+  margin-top: 10px;
+}
+
+.product-disclaimer {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
 .billing-status-message.is-error {
   border-color: rgba(180, 70, 70, 0.45);
   color: #f0b0b0;
