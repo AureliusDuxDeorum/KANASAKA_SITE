@@ -78,8 +78,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=58">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=58">
+  <link rel="stylesheet" href="/assets/css/style.css?v=59">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=59">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -138,12 +138,12 @@ def home_page() -> str:
           <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
             <path class="logo-emission logo-emission--lt" d="M 188 52 H 120 L 108 40 H 80"></path>
           </g>
-          <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
+          <text class="logo-tag logo-tag--lt" x="76" y="44" text-anchor="end">Software</text>
           <path class="logo-line logo-line--lb" d="M 80 70 H 108 L 120 58 H 188"></path>
           <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
             <path class="logo-emission logo-emission--lb" d="M 188 58 H 120 L 108 70 H 80"></path>
           </g>
-          <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
+          <text class="logo-tag logo-tag--lb" x="76" y="74" text-anchor="end">AI</text>
         </g>
         <circle class="logo-core-glow" cx="240" cy="55" r="36" fill="url(#logo-core-radial)"></circle>
         <g class="logo-letters">
@@ -155,12 +155,12 @@ def home_page() -> str:
           <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
             <path class="logo-emission logo-emission--rt" d="M 292 52 H 360 L 372 40 H 400"></path>
           </g>
-          <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
+          <text class="logo-tag logo-tag--rt" x="404" y="44" text-anchor="start">Robotics</text>
           <path class="logo-line logo-line--rb" d="M 400 70 H 372 L 360 58 H 292"></path>
           <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
             <path class="logo-emission logo-emission--rb" d="M 292 58 H 360 L 372 70 H 400"></path>
           </g>
-          <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
+          <text class="logo-tag logo-tag--rb" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
       </svg>
     </div>
