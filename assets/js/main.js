@@ -391,7 +391,7 @@
         return;
       }
 
-      loadScript("/assets/js/logo-animation.js?v=54").then(resolve);
+      loadScript("/assets/js/logo-animation.js?v=55").then(resolve);
     });
   }
 
@@ -402,7 +402,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=54").then(resolve);
+      loadScript("/assets/js/tos.js?v=55").then(resolve);
     });
   }
 
@@ -414,6 +414,10 @@
     }
 
     mountLayout();
+
+    window.requestAnimationFrame(function () {
+      document.body.classList.add("is-site-ready");
+    });
 
     if (window.KanasakaAuth) {
       window.KanasakaAuth.initAuthForms();
