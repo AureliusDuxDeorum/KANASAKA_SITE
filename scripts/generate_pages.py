@@ -211,7 +211,7 @@ def home_page() -> str:
 
           <p>
             Market analytics and portfolio tooling for KANASAKA accounts.
-            Subscribe with KS_Package for full access.
+            KS Package subscriptions opening soon. Full access via KS_Package when KS Stocks launches.
           </p>
 
           <div class="meta">
@@ -223,7 +223,7 @@ def home_page() -> str:
 
         <div class="actions">
           <a href="/products/ks-stocks/" class="button">Learn More</a>
-          <a href="/account/settings/?section=billing" class="button secondary">Subscribe</a>
+          <a href="/products/ks-stocks/" class="button secondary">Coming Soon</a>
         </div>
       </article>
 
@@ -1062,6 +1062,13 @@ def settings_page() -> str:
               <p>Live billing is not configured yet. Check back soon.</p>
             </div>
 
+            <div id="billing-paused" class="settings-billing-callout" hidden>
+              <span class="coming-soon-label">Coming Soon</span>
+              <p data-billing-paused-copy>
+                KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.
+              </p>
+            </div>
+
             <div id="billing-developer" class="settings-billing-callout settings-billing-developer" hidden>
               <span class="billing-badge billing-badge-active">Developer</span>
               <p>Your @ks_dev account includes permanent KS Stocks access.</p>
@@ -1137,7 +1144,7 @@ def ks_stocks_page() -> str:
 
     <p>
       Desktop market analytics and portfolio tooling for KANASAKA accounts.
-      Access is granted while your KS_Package subscription is active.
+      KS_Package subscriptions are opening soon while KS Stocks completes approval.
     </p>
   </section>
 
@@ -1160,7 +1167,7 @@ def ks_stocks_page() -> str:
       </div>
 
       <div class="actions">
-        <a href="/account/settings/?section=billing" class="button">Subscribe</a>
+        <a href="/products/ks-stocks/" class="button">Coming Soon</a>
         <a href="/downloads/" class="button secondary">Downloads</a>
       </div>
     </article>

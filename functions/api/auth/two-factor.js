@@ -47,7 +47,7 @@ export async function onRequestPost(context) {
       method: "sms",
     });
 
-    return jsonResponse(sessionPayload(user), 200, {
+    return jsonResponse(sessionPayload(user, env), 200, {
       "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),
     });
   } catch (err) {

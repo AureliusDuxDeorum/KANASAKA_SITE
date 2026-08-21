@@ -10,7 +10,7 @@ import {
   passwordPolicyError,
 } from "./password-policy.js";
 import { getAuthSchema, usersHaveKsStocksSubscriptionColumns } from "./schema.js";
-import { ksStocksEntitlementFromUser } from "./ks-stocks-access.js";
+import { ksStocksEntitlementFromUser, ksPackageSubscriptionsOpen, KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE } from "./ks-stocks-access.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 
 export {
@@ -582,12 +582,12 @@ export async function insertUser(env, email, passwordHash, tosVersion, accountId
   return Math.trunc(Number(row.id));
 }
 
-export function sessionPayload(user) {
+export function sessionPayload(user, env) {
   const hasAvatar = Boolean(user && (user.has_avatar === 1 || user.has_avatar === true));
   const version =
     user && user.avatar_updated_at ? encodeURIComponent(user.avatar_updated_at) : "";
 
-  return {
+  const payload = {
     authenticated: true,
     email: user.email,
     accountId: user.account_id || null,
@@ -602,6 +602,13 @@ export function sessionPayload(user) {
     twoFactorEnabled: Boolean(user && user.totp_enabled),
     ...ksStocksEntitlementFromUser(user),
   };
+
+  if (env) {
+    payload.subscriptionsOpen = ksPackageSubscriptionsOpen(env);
+    payload.subscriptionsPausedMessage = KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE;
+  }
+
+  return payload;
 }
 
 function initialsFromUser(user) {

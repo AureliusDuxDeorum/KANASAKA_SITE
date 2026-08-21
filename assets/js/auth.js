@@ -411,19 +411,26 @@
       "</div></div>";
   }
 
-  function renderPaywallGate(gateId, message) {
+  function renderPaywallGate(gateId, message, subscriptionsOpen) {
     const gate = document.getElementById(gateId);
     if (!gate) return;
+
+    const open = subscriptionsOpen === true;
+    const label = open ? "KS_Package Required" : "Coming Soon";
+    const title = open ? "Subscribe to download" : "Subscriptions paused";
+    const actions = open
+      ? '<a class="button" href="/account/settings/?section=billing">Subscribe</a>' +
+        '<a class="button secondary" href="/products/ks-stocks/">Learn more</a>'
+      : '<a class="button secondary" href="/products/ks-stocks/">KS Stocks</a>';
 
     gate.hidden = false;
     gate.innerHTML =
       '<div class="auth-gate-box">' +
-      '<span class="coming-soon-label">KS_Package Required</span>' +
-      "<h2>Subscribe to download</h2>" +
+      '<span class="coming-soon-label">' + label + "</span>" +
+      "<h2>" + title + "</h2>" +
       "<p>" + message + "</p>" +
       '<div class="auth-gate-actions">' +
-      '<a class="button" href="/account/settings/?section=billing">Subscribe</a>' +
-      '<a class="button secondary" href="/products/ks-stocks/">Learn more</a>' +
+      actions +
       "</div></div>";
   }
 
@@ -579,9 +586,16 @@
     }
 
     if (!hasDownloadAccess(session)) {
+      const pausedMessage =
+        session.subscriptionsPausedMessage ||
+        "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.";
+      const paywallMessage = session.subscriptionsOpen === true
+        ? "Product downloads are included with KS_Package (€10/month or €100/year). Subscribe to unlock KS Unify and other builds."
+        : pausedMessage;
       renderPaywallGate(
         "auth-gate-downloads",
-        "Product downloads are included with KS_Package (€10/month or €100/year). Subscribe to unlock KS Unify and other builds."
+        paywallMessage,
+        session.subscriptionsOpen === true
       );
       hideDownloadActions();
       return;
@@ -1054,6 +1068,7 @@
 
   function renderBillingPanel(data) {
     const unconfigured = document.getElementById("billing-unconfigured");
+    const paused = document.getElementById("billing-paused");
     const developer = document.getElementById("billing-developer");
     const active = document.getElementById("billing-active");
     const subscribe = document.getElementById("billing-subscribe");
@@ -1061,7 +1076,7 @@
     const renews = document.getElementById("billing-renews");
     const portalButton = document.getElementById("billing-portal-button");
 
-    [unconfigured, developer, active, subscribe].forEach(function (node) {
+    [unconfigured, paused, developer, active, subscribe].forEach(function (node) {
       if (node) node.hidden = true;
     });
 
@@ -1094,6 +1109,19 @@
       }
       if (portalButton) {
         portalButton.hidden = !data.stripeCustomerId;
+      }
+      return;
+    }
+
+    if (data.subscriptionsOpen === false) {
+      if (paused) {
+        paused.hidden = false;
+        const copy = paused.querySelector("[data-billing-paused-copy]");
+        if (copy) {
+          copy.textContent =
+            data.subscriptionsPausedMessage ||
+            "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.";
+        }
       }
       return;
     }
