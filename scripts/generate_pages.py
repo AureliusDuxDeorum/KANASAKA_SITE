@@ -78,8 +78,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=61">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=61">
+  <link rel="stylesheet" href="/assets/css/style.css?v=62">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=62">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -119,6 +119,30 @@ def home_page() -> str:
     <div class="kanasaka-logo kanasaka-logo--hero">
       <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
         <title>Kanasaka</title>
+        <defs>
+          <linearGradient id="logo-shimmer-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="55" x2="480" y2="55">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0"></stop>
+            <stop offset="40%" stop-color="#ffffff" stop-opacity="0"></stop>
+            <stop offset="50%" stop-color="#ffffff" stop-opacity="0.7"></stop>
+            <stop offset="60%" stop-color="#ffffff" stop-opacity="0"></stop>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
+          </linearGradient>
+          <mask id="logo-ink-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="480" height="110">
+            <rect x="0" y="0" width="480" height="110" fill="black"></rect>
+            <g stroke="white" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter" fill="none">
+              <path d="M 80 40 H 108 L 120 52 H 188"></path>
+              <path d="M 80 70 H 108 L 120 58 H 188"></path>
+              <path d="M 400 40 H 372 L 360 52 H 292"></path>
+              <path d="M 400 70 H 372 L 360 58 H 292"></path>
+            </g>
+            <text x="76" y="44" text-anchor="end" fill="white" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600">Software</text>
+            <text x="76" y="74" text-anchor="end" fill="white" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600">AI</text>
+            <text x="240" y="46" text-anchor="middle" fill="white" font-family="Tektur, sans-serif" font-size="50" font-weight="600">K</text>
+            <text x="240" y="100" text-anchor="middle" fill="white" font-family="Tektur, sans-serif" font-size="50" font-weight="600">S</text>
+            <text x="404" y="44" text-anchor="start" fill="white" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600">Robotics</text>
+            <text x="404" y="74" text-anchor="start" fill="white" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600">Biotech</text>
+          </mask>
+        </defs>
         <g class="logo-side logo-side-left">
           <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
           <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
@@ -134,6 +158,9 @@ def home_page() -> str:
           <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
           <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
           <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
+        </g>
+        <g class="logo-shimmer-layer" mask="url(#logo-ink-mask)" aria-hidden="true">
+          <rect class="logo-shimmer-sweep" x="-220" y="0" width="920" height="110" fill="url(#logo-shimmer-gradient)"></rect>
         </g>
       </svg>
     </div>
