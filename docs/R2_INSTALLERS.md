@@ -17,7 +17,7 @@ npx wrangler r2 bucket create kanasaka-installers
 node scripts/upload-installers-r2.mjs
 ```
 
-Set `KS_UNIFY_WINDOWS_INSTALLER`, `KS_UNIFY_LINUX_INSTALLER`, or `KS_UNIFY_MACOS_INSTALLER` if files live elsewhere.
+Set `KS_UNIFY_WINDOWS_INSTALLER`, `KS_UNIFY_LINUX_INSTALLER`, `KS_UNIFY_MACOS_INSTALLER`, or `KS_K_MOBILE_ANDROID_APK` if files live elsewhere.
 
 3. Bind R2 in **Cloudflare Pages → kanasaka-site → Settings → Bindings**:
 
@@ -41,3 +41,4 @@ Set `KS_UNIFY_WINDOWS_INSTALLER`, `KS_UNIFY_LINUX_INSTALLER`, or `KS_UNIFY_MACOS
 | windows | `installers/windows/KS.Unify_0.1.0_x64-setup.exe` |
 | linux | `installers/linux/KS.Unify_0.1.0_amd64.deb` |
 | macos | `installers/macos/KS.Unify_0.1.0_aarch64.dmg` |
+| android (KS-K Mobile, `@dev_ks` only) | `installers/ks-k-mobile/android/app-debug.apk` |

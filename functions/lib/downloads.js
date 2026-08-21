@@ -16,6 +16,12 @@ export const INSTALLER_OBJECTS = {
     filename: "KS.Unify_0.1.0_aarch64.dmg",
     contentType: "application/x-apple-diskimage",
   },
+  android: {
+    key: "installers/ks-k-mobile/android/app-debug.apk",
+    filename: "app-debug.apk",
+    contentType: "application/vnd.android.package-archive",
+    requiredAccountId: "dev_ks",
+  },
 };
 
 const DEFAULT_TTL_SECONDS = 300;
@@ -32,6 +38,17 @@ function base64UrlDecode(value) {
 
 export function installerConfig(platform) {
   return INSTALLER_OBJECTS[String(platform || "").toLowerCase()] || null;
+}
+
+export function canAccessInstaller(user, config) {
+  if (!config || !config.requiredAccountId) {
+    return true;
+  }
+
+  return (
+    String(user.account_id || "").toLowerCase() ===
+    String(config.requiredAccountId).toLowerCase()
+  );
 }
 
 export async function createSignedDownloadToken(env, userId, platform, ttlSeconds = DEFAULT_TTL_SECONDS) {

@@ -1,4 +1,5 @@
 import {
+  canAccessInstaller,
   createSignedDownloadToken,
   installerConfig,
   installersConfigured,
@@ -23,6 +24,10 @@ export async function onRequestGet(context) {
   const config = installerConfig(platform);
   if (!config) {
     return errorResponse("Unknown platform.", 404);
+  }
+
+  if (!canAccessInstaller(user, config)) {
+    return errorResponse("Access denied.", 403);
   }
 
   if (!installersConfigured(env)) {
