@@ -590,8 +590,8 @@
         session.subscriptionsPausedMessage ||
         "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.";
       const paywallMessage = session.subscriptionsOpen === true
-        ? "Product downloads are included with KS_Package (€10/month or €100/year). Subscribe to unlock KS Unify and other builds."
-        : pausedMessage;
+        ? "Product downloads are included with KS_Package (€10/month or €100/year). Subscribe to unlock KS Unify and other builds. KS Stocks also requires your own Alpaca and Ollama accounts."
+        : pausedMessage + " KS Stocks requires separate Alpaca and Ollama accounts when it launches.";
       renderPaywallGate(
         "auth-gate-downloads",
         paywallMessage,

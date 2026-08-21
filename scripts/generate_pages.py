@@ -216,6 +216,7 @@ def home_page() -> str:
 
           <div class="meta">
             <span>Desktop App</span>
+            <span>Requires Alpaca + Ollama</span>
             <span>€10 / month</span>
             <span>€100 / year</span>
           </div>
@@ -577,6 +578,7 @@ TERMS_BODY = """
       <section class="tos-section">
         <h2>7. Software Access and Downloads</h2>
         <p>Access to product downloads and entitled desktop software requires a valid KS_Package subscription or authorized complimentary access, except where a product page explicitly states different requirements. Software such as KS Unify and KS Stocks is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>
+        <p><strong>KS Stocks third-party accounts.</strong> KS Stocks does not include Alpaca or Ollama accounts. You must create and maintain your own Alpaca brokerage account and Ollama access (cloud API key or local instance) to use core app features. You are responsible for those third-party accounts, their fees, and compliance with their terms.</p>
       </section>
 
       <section class="tos-section">
@@ -591,7 +593,7 @@ TERMS_BODY = """
 
       <section class="tos-section">
         <h2>10. Disclaimers</h2>
-        <p>The Site, subscriptions, and all software are provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation. KS Stocks and related market or portfolio features are provided for informational and tooling purposes only. They do not constitute investment, tax, or legal advice, and they are not a regulated financial service. You are solely responsible for your financial decisions.</p>
+        <p>The Site, subscriptions, and all software are provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation. KS Stocks and related market or portfolio features are provided for informational and tooling purposes only. They do not constitute investment, tax, or legal advice, and they are not a regulated financial service. You are solely responsible for your financial decisions. KS Stocks relies on third-party services including Alpaca and Ollama; we do not operate those services and are not responsible for their availability, accuracy, or policies.</p>
       </section>
 
       <section class="tos-section">
@@ -1067,6 +1069,9 @@ def settings_page() -> str:
               <p data-billing-paused-copy>
                 KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.
               </p>
+              <p class="settings-billing-meta">
+                KS Stocks requires separate Alpaca and Ollama accounts that you create and manage.
+              </p>
             </div>
 
             <div id="billing-developer" class="settings-billing-callout settings-billing-developer" hidden>
@@ -1106,6 +1111,7 @@ def settings_page() -> str:
 
               <p class="settings-billing-copy">
                 Unlock KS Stocks on your KANASAKA account. Billing is tied to your account ID.
+                KS Stocks also requires your own Alpaca and Ollama accounts.
               </p>
 
               <div class="billing-plan-grid">
@@ -1190,6 +1196,27 @@ def ks_stocks_page() -> str:
         <p>Upgrade, cancel, or update payment details from Account Settings.</p>
       </article>
     </div>
+  </section>
+
+  <section class="page-section">
+    <article class="content-card product-requirements-card">
+      <span class="section-kicker">Requirements</span>
+      <h2>Bring your own Alpaca and Ollama accounts</h2>
+
+      <p>
+        KS Stocks is a desktop app that connects to services you set up separately.
+        KANASAKA does not include Alpaca or Ollama access with KS_Package.
+      </p>
+
+      <ul class="product-requirements-list">
+        <li><strong>Alpaca</strong> — brokerage account and API credentials from <a href="https://alpaca.markets/" target="_blank" rel="noopener">alpaca.markets</a> for market data, portfolio, and trading features.</li>
+        <li><strong>Ollama</strong> — cloud API key or a local Ollama instance for AI analysis features.</li>
+      </ul>
+
+      <p class="product-disclaimer">
+        You are responsible for creating, maintaining, paying for, and complying with the terms of those third-party accounts.
+      </p>
+    </article>
   </section>
 """
     return shell("KS Stocks", body)

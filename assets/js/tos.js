@@ -48,6 +48,7 @@
     '<section class="tos-section">' +
     "<h3>7. Software Access and Downloads</h3>" +
     "<p>Access to product downloads and entitled desktop software requires a valid KS_Package subscription or authorized complimentary access, except where a product page explicitly states different requirements. Software such as KS Unify and KS Stocks is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
+    "<p><strong>KS Stocks third-party accounts.</strong> KS Stocks does not include Alpaca or Ollama accounts. You must create and maintain your own Alpaca brokerage account and Ollama access (cloud API key or local instance) to use core app features. You are responsible for those third-party accounts, their fees, and compliance with their terms.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>8. Intellectual Property</h3>" +
@@ -59,7 +60,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>10. Disclaimers</h3>" +
-    "<p>The Site, subscriptions, and all software are provided \"as is\" and \"as available\" without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation. KS Stocks and related market or portfolio features are provided for informational and tooling purposes only. They do not constitute investment, tax, or legal advice, and they are not a regulated financial service. You are solely responsible for your financial decisions.</p>" +
+    "<p>The Site, subscriptions, and all software are provided \"as is\" and \"as available\" without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation. KS Stocks and related market or portfolio features are provided for informational and tooling purposes only. They do not constitute investment, tax, or legal advice, and they are not a regulated financial service. You are solely responsible for your financial decisions. KS Stocks relies on third-party services including Alpaca and Ollama; we do not operate those services and are not responsible for their availability, accuracy, or policies.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>11. Limitation of Liability</h3>" +
