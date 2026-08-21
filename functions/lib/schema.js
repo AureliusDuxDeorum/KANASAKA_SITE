@@ -74,3 +74,16 @@ export async function usersHaveAccountIdColumn(env) {
     return false;
   }
 }
+
+export async function usersHaveAccountIdChangedAtColumn(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  try {
+    const columns = await tableColumns(env, "users");
+    return columns.includes("account_id_changed_at");
+  } catch {
+    return false;
+  }
+}

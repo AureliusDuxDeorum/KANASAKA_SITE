@@ -1,6 +1,10 @@
 export const AVATAR_MAX_BYTES = 512 * 1024;
 export const DISPLAY_NAME_MAX = 40;
 
+import { getAccountIdChangeStatus } from "./account-id.js";
+import { maskPhone } from "./phone.js";
+import { normalizeRole } from "./roles.js";
+
 export const AVATAR_MIME_TYPES = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -50,8 +54,14 @@ export function avatarInitials(user) {
 }
 
 export async function getUserProfile(env, userId) {
+  const hasChangedAt = await import("./schema.js").then(function (mod) {
+    return mod.usersHaveAccountIdChangedAtColumn(env);
+  });
+
+  const changedAtSelect = hasChangedAt ? "u.account_id_changed_at," : "";
+
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.display_name, u.account_id, u.role, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
+    `SELECT u.id, u.email, u.display_name, u.account_id, ${changedAtSelect} u.role, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
             ua.mime_type, ua.updated_at AS avatar_updated_at
      FROM users u
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
@@ -69,6 +79,7 @@ export async function getUserProfile(env, userId) {
     email: row.email,
     display_name: row.display_name,
     account_id: row.account_id,
+    account_id_changed_at: hasChangedAt ? row.account_id_changed_at : null,
     role: row.role,
     totp_enabled: row.totp_enabled,
     totp_enabled_at: row.totp_enabled_at,
@@ -78,16 +89,20 @@ export async function getUserProfile(env, userId) {
   };
 }
 
-import { maskPhone } from "./phone.js";
-import { normalizeRole } from "./roles.js";
-
 export function profilePayload(user) {
   const hasAvatar = Boolean(user && user.has_avatar);
   const version = user && user.avatar_updated_at ? encodeURIComponent(user.avatar_updated_at) : "";
+  const changeStatus = getAccountIdChangeStatus(
+    user.account_id_changed_at,
+    user.account_id
+  );
 
   return {
     email: user.email,
     accountId: user.account_id || null,
+    accountIdChangedAt: user.account_id_changed_at || null,
+    accountIdChangeAllowed: changeStatus.allowed,
+    accountIdNextChangeAt: changeStatus.nextChangeAt,
     role: normalizeRole(user.role),
     displayName: user.display_name || null,
     displayLabel: displayLabel(user),

@@ -1,5 +1,6 @@
 export const ACCOUNT_ID_MIN = 3;
 export const ACCOUNT_ID_MAX = 32;
+export const ACCOUNT_ID_CHANGE_COOLDOWN_MS = 180 * 24 * 60 * 60 * 1000;
 
 const RESERVED_ACCOUNT_IDS = {
   admin: true,
@@ -79,4 +80,46 @@ export async function isAccountIdAvailable(env, accountId, excludeUserId) {
     available: !row,
     accountId: validated.value,
   };
+}
+
+function parseSqliteDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = String(value).trim().replace(" ", "T");
+  const parsed = new Date(/Z$/i.test(normalized) ? normalized : normalized + "Z");
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function formatAccountIdChangeDate(isoValue) {
+  const parsed = parseSqliteDate(isoValue);
+  if (!parsed) {
+    return null;
+  }
+
+  return parsed.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+export function getAccountIdChangeStatus(changedAt, accountId) {
+  if (!accountId) {
+    return { allowed: true, nextChangeAt: null };
+  }
+
+  const changed = parseSqliteDate(changedAt);
+  if (!changed) {
+    return { allowed: true, nextChangeAt: null };
+  }
+
+  const nextChange = new Date(changed.getTime() + ACCOUNT_ID_CHANGE_COOLDOWN_MS);
+  if (Date.now() >= nextChange.getTime()) {
+    return { allowed: true, nextChangeAt: null };
+  }
+
+  return { allowed: false, nextChangeAt: nextChange.toISOString() };
 }
