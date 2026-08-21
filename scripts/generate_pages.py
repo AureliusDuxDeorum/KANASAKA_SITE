@@ -78,8 +78,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=55">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=55">
+  <link rel="stylesheet" href="/assets/css/style.css?v=56">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=56">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -120,8 +120,8 @@ def home_page() -> str:
       <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
         <title>Kanasaka</title>
         <defs>
-          <filter id="logo-signal-glow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="blur"></feGaussianBlur>
+          <filter id="logo-signal-glow" x="-140%" y="-140%" width="380%" height="380%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="blur"></feGaussianBlur>
             <feMerge>
               <feMergeNode in="blur"></feMergeNode>
               <feMergeNode in="SourceGraphic"></feMergeNode>

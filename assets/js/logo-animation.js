@@ -1,7 +1,6 @@
 (function () {
-  var INTRO_KEY = "kanasaka-intro-seen";
-  var INTRO_MS = 3400;
-  var PULSE_SEGMENT = 8;
+  var HERO_ENTRANCE_MS = 1650;
+  var PULSE_SEGMENT = 10;
   var LOGO_FONT = '600 50px "Tektur"';
 
   var LOGO_LETTERS =
@@ -13,8 +12,8 @@
   var LOGO_SVG =
     '<svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">' +
     "<title>Kanasaka</title>" +
-    '<defs><filter id="logo-signal-glow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">' +
-    '<feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"></feGaussianBlur>' +
+    '<defs><filter id="logo-signal-glow" x="-140%" y="-140%" width="380%" height="380%" color-interpolation-filters="sRGB">' +
+    '<feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="blur"></feGaussianBlur>' +
     '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
     "</filter></defs>" +
     '<g class="logo-side logo-side-left">' +
@@ -98,9 +97,9 @@
       if (forDraw) {
         line.style.strokeDasharray = String(length);
         line.style.strokeDashoffset = String(length);
-        line.style.setProperty("--line-delay", String(0.1 + index * 0.14) + "s");
+        line.style.setProperty("--line-delay", String(0.08 + index * 0.11) + "s");
       } else {
-        line.style.setProperty("--line-delay", String(index * 0.25) + "s");
+        line.style.setProperty("--line-delay", String(index * 0.18) + "s");
       }
     });
   }
@@ -123,7 +122,9 @@
       }
 
       var gap = length + PULSE_SEGMENT;
-      wrap.style.setProperty("--pulse-delay", String(lineIndex * 0.8) + "s");
+      wrap.style.setProperty("--pulse-delay", String(lineIndex * 1.05) + "s");
+      signal.style.setProperty("--signal-start", String(length));
+      signal.style.setProperty("--signal-end", String(-length));
       signal.style.strokeDasharray = PULSE_SEGMENT + " " + gap;
       signal.style.strokeDashoffset = String(length);
     });
@@ -139,78 +140,38 @@
     });
   }
 
-  function buildSplash() {
-    var splash = document.createElement("div");
-    splash.id = "site-splash";
-    splash.className = "site-splash";
-    splash.setAttribute("aria-hidden", "true");
-
-    var inner = document.createElement("div");
-    inner.className = "site-splash-inner";
-
-    var logo = document.createElement("div");
-    logo.className = "kanasaka-logo kanasaka-logo--splash";
-
-    var heroLogo = document.querySelector(".kanasaka-logo--hero");
-    logo.innerHTML = heroLogo ? heroLogo.innerHTML : LOGO_SVG;
-
-    inner.appendChild(logo);
-    splash.appendChild(inner);
-    document.body.appendChild(splash);
-
-    prepareLinePaths(logo, true);
-    return splash;
-  }
-
   function activateHeroAmbient() {
     var heroLogo = document.querySelector(".kanasaka-logo--hero");
     if (!heroLogo) {
-      return;
-    }
-
-    revealHeroLines(heroLogo);
-
-    whenPathsReady(heroLogo, function () {
-      prepareSignalPaths(heroLogo);
-      heroLogo.classList.add("is-ambient");
-      window.dispatchEvent(new CustomEvent("kanasaka:hero-ready"));
-    });
-  }
-
-  function finishIntro(splash) {
-    document.body.classList.remove("splash-active");
-    document.body.classList.add("splash-complete");
-
-    splash.classList.add("is-exiting");
-
-    window.setTimeout(function () {
-      splash.remove();
-      sessionStorage.setItem(INTRO_KEY, "1");
-
-      var heroLogo = document.querySelector(".kanasaka-logo--hero");
-      if (heroLogo) {
-        activateHeroAmbient();
-      }
-    }, 650);
-  }
-
-  function runIntro() {
-    if (prefersReducedMotion() || sessionStorage.getItem(INTRO_KEY) === "1") {
-      activateHeroAmbient();
       document.body.classList.add("splash-complete");
+      window.dispatchEvent(new CustomEvent("kanasaka:hero-ready"));
       return;
     }
 
-    var splash = buildSplash();
-    document.body.classList.add("splash-active");
+    whenLogoReady(heroLogo, function () {
+      if (prefersReducedMotion()) {
+        revealHeroLines(heroLogo);
+        prepareSignalPaths(heroLogo);
+        heroLogo.classList.add("is-ambient");
+        document.body.classList.add("splash-complete");
+        window.dispatchEvent(new CustomEvent("kanasaka:hero-ready"));
+        return;
+      }
 
-    window.requestAnimationFrame(function () {
-      splash.classList.add("is-playing");
+      prepareLinePaths(heroLogo, true);
+      heroLogo.classList.add("is-playing");
+
+      window.requestAnimationFrame(function () {
+        window.setTimeout(function () {
+          revealHeroLines(heroLogo);
+          prepareSignalPaths(heroLogo);
+          heroLogo.classList.remove("is-playing");
+          heroLogo.classList.add("is-ambient");
+          document.body.classList.add("splash-complete");
+          window.dispatchEvent(new CustomEvent("kanasaka:hero-ready"));
+        }, HERO_ENTRANCE_MS);
+      });
     });
-
-    window.setTimeout(function () {
-      finishIntro(splash);
-    }, INTRO_MS);
   }
 
   function initHeroLogo() {
@@ -221,13 +182,12 @@
 
     whenLogoReady(heroLogo, function () {
       prepareLinePaths(heroLogo, false);
-      prepareSignalPaths(heroLogo);
     });
   }
 
   function init() {
     initHeroLogo();
-    runIntro();
+    activateHeroAmbient();
   }
 
   window.KanasakaLogoAnimation = {
