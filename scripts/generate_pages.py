@@ -32,6 +32,36 @@ COMING_SOON_PAGES = [
 ]
 
 
+def auth_page_open(settings: bool = False) -> str:
+    page_class = "auth-page settings-page" if settings else "auth-page"
+    return f"""
+  <section class="{page_class}">
+    <div class="auth-page-backdrop" aria-hidden="true"></div>
+"""
+
+
+def auth_page_close() -> str:
+    return """
+  </section>
+"""
+
+
+def auth_card_open(elevated: bool = True) -> str:
+    classes = "auth-card auth-card--modern"
+    if elevated:
+        classes += " auth-card-elevated"
+    return f"""    <div class="{classes}">
+      <div class="auth-card-accent" aria-hidden="true"></div>
+      <div class="auth-card-body">
+"""
+
+
+def auth_card_close() -> str:
+    return """      </div>
+    </div>
+"""
+
+
 def shell(title: str, body: str) -> str:
     return f"""<!doctype html>
 <html lang="en">
@@ -48,7 +78,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=51">
+  <link rel="stylesheet" href="/assets/css/style.css?v=52">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -595,9 +625,8 @@ def impressum_page() -> str:
 
 
 def login_page() -> str:
-    body = """
-  <section class="auth-page">
-    <div class="auth-card auth-card-elevated">
+    body = f"""{auth_page_open()}
+{auth_card_open()}
       <p class="auth-eyebrow">Account</p>
       <h1>Log In</h1>
       <p class="auth-lead">Access downloads and contact details with your KANASAKA account.</p>
@@ -616,18 +645,19 @@ def login_page() -> str:
         <button class="button auth-submit" type="submit">Log In</button>
       </form>
 
-      <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
-      <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
-    </div>
-  </section>
+      <div class="auth-footer">
+        <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
+        <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
+      </div>
+{auth_card_close()}
+{auth_page_close()}
 """
     return shell("Log In", body)
 
 
 def register_page() -> str:
-    body = """
-  <section class="auth-page">
-    <div class="auth-card auth-card-elevated">
+    body = f"""{auth_page_open()}
+{auth_card_open()}
       <p class="auth-eyebrow">Account</p>
       <h1>Register</h1>
       <p class="auth-lead">Create a free account to download KS Unify and view contact details.</p>
@@ -659,31 +689,33 @@ def register_page() -> str:
         <button class="button auth-submit" type="submit">Create Account</button>
       </form>
 
-      <p class="auth-switch">Already registered? <a href="/login/">Log in</a></p>
-    </div>
-  </section>
+      <div class="auth-footer">
+        <p class="auth-switch">Already registered? <a href="/login/">Log in</a></p>
+      </div>
+{auth_card_close()}
+{auth_page_close()}
 """
     return shell("Register", body)
 
 
 def verify_page() -> str:
-    body = """
-  <section class="auth-page">
-    <div class="auth-card">
+    body = f"""{auth_page_open()}
+{auth_card_open(elevated=False)}
+      <p class="auth-eyebrow">Account</p>
       <h1>Verify Email</h1>
-      <p id="verify-status">Preparing verification...</p>
-    </div>
-  </section>
+      <p id="verify-status" class="auth-lead">Preparing verification...</p>
+{auth_card_close()}
+{auth_page_close()}
 """
     return shell("Verify Email", body)
 
 
 def forgot_password_page() -> str:
-    body = """
-  <section class="auth-page">
-    <div class="auth-card">
+    body = f"""{auth_page_open()}
+{auth_card_open(elevated=False)}
+      <p class="auth-eyebrow">Account</p>
       <h1>Forgot Password</h1>
-      <p>Enter your email address and we will send you a reset link.</p>
+      <p class="auth-lead">Enter your email address and we will send you a reset link.</p>
 
       <form id="forgot-password-form" class="auth-form">
         <div class="auth-field">
@@ -691,22 +723,24 @@ def forgot_password_page() -> str:
           <input id="forgot-email" name="email" type="email" autocomplete="email" required>
         </div>
 
-        <button class="button" type="submit">Send Reset Link</button>
+        <button class="button auth-submit" type="submit">Send Reset Link</button>
       </form>
 
-      <p class="auth-switch"><a href="/login/">Back to log in</a></p>
-    </div>
-  </section>
+      <div class="auth-footer">
+        <p class="auth-switch"><a href="/login/">Back to log in</a></p>
+      </div>
+{auth_card_close()}
+{auth_page_close()}
 """
     return shell("Forgot Password", body)
 
 
 def reset_password_page() -> str:
-    body = """
-  <section class="auth-page">
-    <div class="auth-card">
+    body = f"""{auth_page_open()}
+{auth_card_open(elevated=False)}
+      <p class="auth-eyebrow">Account</p>
       <h1>Reset Password</h1>
-      <p>Choose a new password for your KANASAKA account.</p>
+      <p class="auth-lead">Choose a new password for your KANASAKA account.</p>
 
       <form id="reset-password-form" class="auth-form">
         <div class="auth-field">
@@ -715,45 +749,49 @@ def reset_password_page() -> str:
           <ul id="reset-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
 
-        <button class="button" type="submit">Update Password</button>
+        <button class="button auth-submit" type="submit">Update Password</button>
       </form>
 
-      <p class="auth-switch"><a href="/login/">Back to log in</a></p>
-    </div>
-  </section>
+      <div class="auth-footer">
+        <p class="auth-switch"><a href="/login/">Back to log in</a></p>
+      </div>
+{auth_card_close()}
+{auth_page_close()}
 """
     return shell("Reset Password", body)
 
 
 def settings_page() -> str:
-    body = """
-  <section class="auth-page settings-page">
+    body = f"""{auth_page_open(settings=True)}
     <div class="settings-layout">
-      <div class="settings-sidebar">
+      <aside class="settings-sidebar settings-sidebar-card">
         <div class="settings-sidebar-head">
-          <h1>Account Settings</h1>
+          <p class="auth-eyebrow">Account</p>
+          <h1>Settings</h1>
           <p>Manage your profile, appearance, and account.</p>
         </div>
         <nav id="settings-nav" class="settings-nav" aria-label="Account settings sections">
           <button type="button" class="settings-nav-item is-active" data-settings-panel="personal">
-            Personal Information
+            <span class="settings-nav-label">Personal Information</span>
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="customization">
-            Customization
+            <span class="settings-nav-label">Customization</span>
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="account">
-            Account Management
+            <span class="settings-nav-label">Account Management</span>
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="billing">
-            Billing
+            <span class="settings-nav-label">Billing</span>
           </button>
         </nav>
-      </div>
+      </aside>
 
-      <div class="settings-main auth-card settings-card settings-card-elevated">
+      <div class="settings-main auth-card settings-card settings-card-elevated auth-card--modern">
+        <div class="auth-card-accent" aria-hidden="true"></div>
+        <div class="auth-card-body settings-card-body">
         <div id="settings-gate" class="auth-gate" hidden></div>
 
-        <div id="settings-content" hidden>
+        <div id="settings-content" class="settings-panels-wrap" hidden>
           <section id="settings-panel-personal" class="settings-panel is-active">
             <h2>Personal Information</h2>
             <p class="settings-panel-intro">Update your profile picture and display name.</p>
@@ -862,9 +900,10 @@ def settings_page() -> str:
             </div>
           </section>
         </div>
+        </div>
       </div>
     </div>
-  </section>
+{auth_page_close()}
 """
     return shell("Account Settings", body)
 

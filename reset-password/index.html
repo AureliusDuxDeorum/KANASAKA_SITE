@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=51">
+  <link rel="stylesheet" href="/assets/css/style.css?v=52">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -25,9 +25,13 @@
 <main>
 
   <section class="auth-page">
-    <div class="auth-card">
+    <div class="auth-page-backdrop" aria-hidden="true"></div>
+    <div class="auth-card auth-card--modern">
+      <div class="auth-card-accent" aria-hidden="true"></div>
+      <div class="auth-card-body">
+      <p class="auth-eyebrow">Account</p>
       <h1>Reset Password</h1>
-      <p>Choose a new password for your KANASAKA account.</p>
+      <p class="auth-lead">Choose a new password for your KANASAKA account.</p>
 
       <form id="reset-password-form" class="auth-form">
         <div class="auth-field">
@@ -36,10 +40,13 @@
           <ul id="reset-password-policy" class="password-policy" aria-live="polite"></ul>
         </div>
 
-        <button class="button" type="submit">Update Password</button>
+        <button class="button auth-submit" type="submit">Update Password</button>
       </form>
 
-      <p class="auth-switch"><a href="/login/">Back to log in</a></p>
+      <div class="auth-footer">
+        <p class="auth-switch"><a href="/login/">Back to log in</a></p>
+      </div>
+      </div>
     </div>
   </section>
 

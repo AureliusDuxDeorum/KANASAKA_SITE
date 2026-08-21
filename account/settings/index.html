@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=51">
+  <link rel="stylesheet" href="/assets/css/style.css?v=52">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -25,32 +25,36 @@
 <main>
 
   <section class="auth-page settings-page">
+    <div class="auth-page-backdrop" aria-hidden="true"></div>
     <div class="settings-layout">
-      <div class="settings-sidebar">
+      <aside class="settings-sidebar settings-sidebar-card">
         <div class="settings-sidebar-head">
-          <h1>Account Settings</h1>
+          <p class="auth-eyebrow">Account</p>
+          <h1>Settings</h1>
           <p>Manage your profile, appearance, and account.</p>
         </div>
         <nav id="settings-nav" class="settings-nav" aria-label="Account settings sections">
           <button type="button" class="settings-nav-item is-active" data-settings-panel="personal">
-            Personal Information
+            <span class="settings-nav-label">Personal Information</span>
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="customization">
-            Customization
+            <span class="settings-nav-label">Customization</span>
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="account">
-            Account Management
+            <span class="settings-nav-label">Account Management</span>
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="billing">
-            Billing
+            <span class="settings-nav-label">Billing</span>
           </button>
         </nav>
-      </div>
+      </aside>
 
-      <div class="settings-main auth-card settings-card settings-card-elevated">
+      <div class="settings-main auth-card settings-card settings-card-elevated auth-card--modern">
+        <div class="auth-card-accent" aria-hidden="true"></div>
+        <div class="auth-card-body settings-card-body">
         <div id="settings-gate" class="auth-gate" hidden></div>
 
-        <div id="settings-content" hidden>
+        <div id="settings-content" class="settings-panels-wrap" hidden>
           <section id="settings-panel-personal" class="settings-panel is-active">
             <h2>Personal Information</h2>
             <p class="settings-panel-intro">Update your profile picture and display name.</p>
@@ -158,6 +162,7 @@
               <p>Subscription and billing management will appear here.</p>
             </div>
           </section>
+        </div>
         </div>
       </div>
     </div>

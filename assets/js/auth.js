@@ -824,19 +824,68 @@
     }
   }
 
+  let settingsPanelTimer = null;
+
   function showSettingsPanel(panelId) {
     const nav = document.getElementById("settings-nav");
     if (!nav) return;
+
+    const targetId = "settings-panel-" + panelId;
+    const current = document.querySelector(".settings-panel.is-active");
+    const next = document.getElementById(targetId);
+
+    if (current && current.id === targetId) {
+      return;
+    }
 
     nav.querySelectorAll("[data-settings-panel]").forEach(function (button) {
       const active = button.getAttribute("data-settings-panel") === panelId;
       button.classList.toggle("is-active", active);
     });
 
-    document.querySelectorAll(".settings-panel").forEach(function (panel) {
-      const active = panel.id === "settings-panel-" + panelId;
-      panel.hidden = !active;
-      panel.classList.toggle("is-active", active);
+    if (settingsPanelTimer) {
+      window.clearTimeout(settingsPanelTimer);
+      settingsPanelTimer = null;
+    }
+
+    function revealPanel(panel) {
+      panel.hidden = false;
+      panel.classList.add("is-entering");
+      window.requestAnimationFrame(function () {
+        panel.classList.add("is-active");
+        panel.classList.remove("is-entering");
+      });
+    }
+
+    if (!current || !next) {
+      document.querySelectorAll(".settings-panel").forEach(function (panel) {
+        const active = panel.id === targetId;
+        panel.hidden = !active;
+        panel.classList.toggle("is-active", active);
+        panel.classList.remove("is-leaving", "is-entering");
+      });
+      return;
+    }
+
+    current.classList.add("is-leaving");
+    current.classList.remove("is-active");
+
+    settingsPanelTimer = window.setTimeout(function () {
+      current.hidden = true;
+      current.classList.remove("is-leaving");
+      revealPanel(next);
+      settingsPanelTimer = null;
+    }, 280);
+  }
+
+  function initAuthPageMotion() {
+    const page = document.querySelector(".auth-page");
+    if (!page) {
+      return;
+    }
+
+    window.requestAnimationFrame(function () {
+      page.classList.add("is-ready");
     });
   }
 
@@ -932,6 +981,7 @@
     bindResetPasswordForm();
     initPasswordPolicyFields();
     initRegisterAccountIdCheck();
+    initAuthPageMotion();
   }
 
   window.KanasakaAuth = {
