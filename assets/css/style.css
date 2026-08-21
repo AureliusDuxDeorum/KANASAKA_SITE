@@ -367,13 +367,11 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-signal-wrap,
-.logo-emission-wrap {
+.logo-signal-wrap {
   pointer-events: none;
 }
 
-.logo-signal,
-.logo-emission {
+.logo-signal {
   fill: none;
   stroke: rgba(255, 255, 255, 0.92);
   stroke-width: 2.5;
@@ -383,11 +381,26 @@ main {
   opacity: 0;
 }
 
-.logo-core-glow {
+.logo-core-glow,
+.logo-light-wave,
+.logo-shimmer-band {
   opacity: 0;
   pointer-events: none;
+}
+
+.logo-core-glow,
+.logo-light-wave {
   transform-box: fill-box;
   transform-origin: center;
+}
+
+.logo-light-field {
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.kanasaka-logo--hero.is-ambient .kanasaka-logo-svg {
+  isolation: isolate;
 }
 
 .logo-letter {
@@ -419,194 +432,231 @@ main {
 
 .kanasaka-logo--hero.is-ambient {
   --emission-cycle: 6.5s;
+  --emission-ease: cubic-bezier(0.42, 0, 0.18, 1);
 }
 
 .kanasaka-logo--hero .logo-line {
   opacity: 0.42;
+  transition: opacity 400ms var(--emission-ease, ease);
 }
 
 .kanasaka-logo--hero.is-ambient .logo-core-glow {
-  animation: logo-core-glow var(--emission-cycle) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: logo-core-glow var(--emission-cycle) var(--emission-ease) infinite;
 }
 
 .kanasaka-logo--hero.is-ambient .logo-letters {
-  animation: logo-letters-glow var(--emission-cycle) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: logo-letters-glow var(--emission-cycle) var(--emission-ease) infinite;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-line--lt,
-.kanasaka-logo--hero.is-ambient .logo-line--rt {
-  animation: logo-line-emission var(--emission-cycle) cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  animation-delay: 0.12s;
+.kanasaka-logo--hero.is-ambient .logo-light-wave {
+  animation: logo-light-wave var(--emission-cycle) var(--emission-ease) infinite;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-line--lb,
-.kanasaka-logo--hero.is-ambient .logo-line--rb {
-  animation: logo-line-emission var(--emission-cycle) cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  animation-delay: 0.24s;
+.kanasaka-logo--hero.is-ambient .logo-shimmer-band {
+  animation: logo-shimmer-band var(--emission-cycle) var(--emission-ease) infinite;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-emission {
-  animation: logo-emission-travel var(--emission-cycle) cubic-bezier(0.35, 0, 0.2, 1) infinite;
+.kanasaka-logo--hero.is-ambient .logo-line {
+  animation: logo-line-illuminate var(--emission-cycle) var(--emission-ease) infinite;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-emission--lt,
-.kanasaka-logo--hero.is-ambient .logo-emission--rt {
-  animation-delay: 0.12s;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-emission--lb,
-.kanasaka-logo--hero.is-ambient .logo-emission--rb {
-  animation-delay: 0.24s;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-tag--lt,
-.kanasaka-logo--hero.is-ambient .logo-tag--rt {
-  animation: logo-tag-emission var(--emission-cycle) cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  animation-delay: 0.12s;
-}
-
-.kanasaka-logo--hero.is-ambient .logo-tag--lb,
-.kanasaka-logo--hero.is-ambient .logo-tag--rb {
-  animation: logo-tag-emission var(--emission-cycle) cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  animation-delay: 0.24s;
+.kanasaka-logo--hero.is-ambient .logo-tag {
+  animation: logo-tag-illuminate var(--emission-cycle) var(--emission-ease) infinite;
 }
 
 @keyframes logo-core-glow {
   0%,
-  50%,
+  48%,
   100% {
     opacity: 0;
-    transform: scale(0.86);
+    transform: scale(0.82);
   }
 
-  58% {
-    opacity: 0.18;
-    transform: scale(0.92);
+  56% {
+    opacity: 0.22;
+    transform: scale(0.9);
   }
 
-  66% {
-    opacity: 0.45;
+  64% {
+    opacity: 0.52;
     transform: scale(0.98);
   }
 
-  74% {
-    opacity: 0.72;
-    transform: scale(1);
+  72% {
+    opacity: 0.68;
+    transform: scale(1.04);
   }
 
-  82% {
-    opacity: 0.28;
+  80% {
+    opacity: 0.24;
     transform: scale(1.1);
   }
 
-  90% {
+  88% {
     opacity: 0;
-    transform: scale(1.18);
+    transform: scale(1.16);
   }
 }
 
 @keyframes logo-letters-glow {
   0%,
-  50%,
+  48%,
   100% {
     filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
   }
 
-  60% {
-    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.18));
+  58% {
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.22));
   }
 
-  70% {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35));
+  66% {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.38));
   }
 
-  76% {
+  74% {
     filter:
-      drop-shadow(0 0 12px rgba(255, 255, 255, 0.55))
-      drop-shadow(0 0 28px rgba(255, 255, 255, 0.14));
+      drop-shadow(0 0 14px rgba(255, 255, 255, 0.52))
+      drop-shadow(0 0 32px rgba(255, 255, 255, 0.14));
   }
 
-  86% {
-    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.1));
+  84% {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
   }
 }
 
-@keyframes logo-line-emission {
+@keyframes logo-light-wave {
   0%,
-  58%,
+  50%,
+  100% {
+    opacity: 0;
+    transform: scale(0.04);
+  }
+
+  58% {
+    opacity: 0;
+    transform: scale(0.06);
+  }
+
+  66% {
+    opacity: 0.38;
+    transform: scale(0.22);
+  }
+
+  74% {
+    opacity: 0.62;
+    transform: scale(0.48);
+  }
+
+  82% {
+    opacity: 0.48;
+    transform: scale(0.78);
+  }
+
+  90% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+
+  96% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes logo-shimmer-band {
+  0%,
+  52%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0.04);
+  }
+
+  64% {
+    opacity: 0;
+    transform: scaleX(0.08);
+  }
+
+  72% {
+    opacity: 0.28;
+    transform: scaleX(0.35);
+  }
+
+  80% {
+    opacity: 0.42;
+    transform: scaleX(0.72);
+  }
+
+  88% {
+    opacity: 0.22;
+    transform: scaleX(1);
+  }
+
+  94% {
+    opacity: 0;
+    transform: scaleX(1.06);
+  }
+}
+
+.logo-shimmer-band {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes logo-line-illuminate {
+  0%,
+  54%,
   100% {
     opacity: 0.42;
   }
 
-  68% {
+  66% {
     opacity: 0.48;
   }
 
-  78% {
-    opacity: 0.62;
+  74% {
+    opacity: 0.58;
   }
 
-  86% {
-    opacity: 0.74;
+  82% {
+    opacity: 0.72;
   }
 
-  94% {
+  90% {
+    opacity: 0.5;
+  }
+
+  96% {
     opacity: 0.42;
   }
 }
 
-@keyframes logo-tag-emission {
+@keyframes logo-tag-illuminate {
   0%,
-  78%,
+  72%,
   100% {
     opacity: 0.72;
     fill: var(--color-text-muted);
   }
 
-  86% {
-    opacity: 0.92;
-    fill: rgba(255, 255, 255, 0.88);
+  80% {
+    opacity: 0.88;
+    fill: rgba(255, 255, 255, 0.82);
   }
 
-  92% {
+  86% {
     opacity: 1;
     fill: #ffffff;
   }
 
-  96% {
+  92% {
     opacity: 0.78;
     fill: var(--color-text-muted);
   }
 }
 
-@keyframes logo-emission-travel {
-  0%,
-  56%,
-  100% {
-    stroke-dashoffset: var(--emission-length, 100);
-    opacity: 0;
-  }
-
-  62% {
-    opacity: 0;
-  }
-
-  68% {
-    opacity: 0.85;
-  }
-
-  88% {
-    stroke-dashoffset: 0;
-    opacity: 0.22;
-  }
-
-  94% {
-    opacity: 0;
-  }
-}
-
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-emission {
-  stroke: rgba(17, 17, 17, 0.82);
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-light-field {
+  mix-blend-mode: multiply;
+  opacity: 0.85;
 }
 
 [data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-letters {
@@ -614,54 +664,54 @@ main {
 }
 
 [data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-tag {
-  animation-name: logo-tag-emission-light;
+  animation-name: logo-tag-illuminate-light;
 }
 
 @keyframes logo-letters-glow-light {
   0%,
-  50%,
+  48%,
   100% {
     filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
   }
 
-  60% {
-    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.08));
+  58% {
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.1));
   }
 
-  70% {
-    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.12));
+  66% {
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.14));
   }
 
-  76% {
+  74% {
     filter:
-      drop-shadow(0 0 10px rgba(0, 0, 0, 0.2))
-      drop-shadow(0 0 22px rgba(0, 0, 0, 0.07));
+      drop-shadow(0 0 12px rgba(0, 0, 0, 0.22))
+      drop-shadow(0 0 26px rgba(0, 0, 0, 0.08));
   }
 
-  86% {
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.05));
+  84% {
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.06));
   }
 }
 
-@keyframes logo-tag-emission-light {
+@keyframes logo-tag-illuminate-light {
   0%,
-  78%,
+  72%,
   100% {
     opacity: 0.72;
     fill: var(--color-text-muted);
   }
 
-  86% {
-    opacity: 0.92;
-    fill: rgba(17, 17, 17, 0.85);
+  80% {
+    opacity: 0.9;
+    fill: rgba(17, 17, 17, 0.82);
   }
 
-  92% {
+  86% {
     opacity: 1;
     fill: #111111;
   }
 
-  96% {
+  92% {
     opacity: 0.78;
     fill: var(--color-text-muted);
   }
@@ -671,20 +721,24 @@ main {
   .kanasaka-logo--hero.is-ambient .logo-core-glow,
   .kanasaka-logo--hero.is-ambient .logo-letters,
   .kanasaka-logo--hero.is-ambient .logo-line,
-  .kanasaka-logo--hero.is-ambient .logo-emission,
+  .kanasaka-logo--hero.is-ambient .logo-light-wave,
+  .kanasaka-logo--hero.is-ambient .logo-shimmer-band,
   .kanasaka-logo--hero.is-ambient .logo-tag {
     animation: none !important;
     filter: none !important;
     opacity: 1;
     fill: var(--color-text-muted);
+    transform: none;
+  }
+
+  .kanasaka-logo--hero.is-ambient .logo-core-glow,
+  .kanasaka-logo--hero.is-ambient .logo-light-wave,
+  .kanasaka-logo--hero.is-ambient .logo-shimmer-band {
+    opacity: 0;
   }
 
   .kanasaka-logo--hero.is-ambient .logo-line {
     opacity: 1;
-  }
-
-  .kanasaka-logo--hero.is-ambient .logo-emission {
-    opacity: 0;
   }
 }
 
