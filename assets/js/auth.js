@@ -47,6 +47,26 @@
     return sessionCache || { authenticated: false };
   }
 
+  function canSeeAccountGated(requiredAccountId) {
+    if (!requiredAccountId) {
+      return true;
+    }
+
+    const session = getSession();
+    return (
+      session.authenticated &&
+      String(session.accountId || "").toLowerCase() ===
+        String(requiredAccountId).toLowerCase()
+    );
+  }
+
+  function applyAccountGatedVisibility(root) {
+    const scope = root || document;
+    scope.querySelectorAll("[data-visible-account-id]").forEach(function (el) {
+      el.hidden = !canSeeAccountGated(el.getAttribute("data-visible-account-id"));
+    });
+  }
+
   async function login(email, password) {
     const { response, data } = await apiRequest("/api/auth/login", {
       method: "POST",
@@ -407,7 +427,22 @@
     container.hidden = false;
   }
 
-  function renderDownloadActions(container) {
+  function renderDownloadActions(container, productId) {
+    if (productId === "ks-k-mobile") {
+      container.innerHTML =
+        '<div class="download-platform-grid download-platform-grid-single">' +
+        '<article class="download-platform-card">' +
+        '<span class="platform-label">Internal</span>' +
+        '<strong class="platform-title">Early Access</strong>' +
+        '<span class="platform-detail">KS-K Mobile builds are in private development.</span>' +
+        '<span class="platform-file">Visible to @dev_ks only</span>' +
+        '<span class="button secondary download-placeholder">Builds coming soon</span>' +
+        "</article>" +
+        "</div>";
+      container.hidden = false;
+      return;
+    }
+
     const platforms = [
       {
         id: "windows",
@@ -503,8 +538,9 @@
 
   async function initDownloadsPage() {
     const gate = document.getElementById("auth-gate-downloads");
-    const actions = document.getElementById("download-actions");
-    if (!gate || !actions) return;
+    if (!gate) return;
+
+    applyAccountGatedVisibility(document);
 
     const session = getSession();
     if (!session.authenticated) {
@@ -512,12 +548,23 @@
         "auth-gate-downloads",
         "Downloads require a free KANASAKA account."
       );
-      actions.hidden = true;
+      document.querySelectorAll(".download-actions").forEach(function (el) {
+        el.hidden = true;
+      });
       return;
     }
 
     gate.hidden = true;
-    renderDownloadActions(actions);
+
+    const unifyActions = document.getElementById("download-actions-unify");
+    if (unifyActions) {
+      renderDownloadActions(unifyActions, "ks-unify");
+    }
+
+    const mobileActions = document.getElementById("download-actions-ks-k-mobile");
+    if (mobileActions && canSeeAccountGated("dev_ks")) {
+      renderDownloadActions(mobileActions, "ks-k-mobile");
+    }
   }
 
   function updateSession(data) {
@@ -989,8 +1036,32 @@
     });
   }
 
+  async function initKskMobilePage() {
+    const content = document.getElementById("ks-k-mobile-content");
+    const gate = document.getElementById("ks-k-mobile-gate");
+    if (!content || !gate) {
+      return;
+    }
+
+    applyAccountGatedVisibility(document);
+
+    if (canSeeAccountGated("dev_ks")) {
+      gate.hidden = true;
+      return;
+    }
+
+    content.hidden = true;
+    gate.hidden = false;
+  }
+
   function initProtectedPages() {
+    applyAccountGatedVisibility(document);
+
     const path = window.location.pathname;
+
+    if (path.indexOf("/products/ks-k-mobile") === 0) {
+      initKskMobilePage();
+    }
 
     if (path.indexOf("/support/contact") === 0) {
       initContactPage();
@@ -1074,6 +1145,8 @@
   window.KanasakaAuth = {
     initSession: initSession,
     getSession: getSession,
+    canSeeAccountGated: canSeeAccountGated,
+    applyAccountGatedVisibility: applyAccountGatedVisibility,
     updateSession: updateSession,
     login: login,
     register: register,

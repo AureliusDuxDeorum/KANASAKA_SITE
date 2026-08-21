@@ -78,7 +78,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=53">
+  <link rel="stylesheet" href="/assets/css/style.css?v=54">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -166,29 +166,54 @@ def home_page() -> str:
   <section class="page-section">
     <h2>Products</h2>
 
-    <article class="product-card featured-card">
-      <div class="product-info">
-        <span class="section-kicker">Featured</span>
-        <h3>KS Unify</h3>
+    <div class="product-grid">
+      <article class="product-card featured-card">
+        <div class="product-info">
+          <span class="section-kicker">Desktop</span>
+          <h3>KS Unify</h3>
 
-        <p>
-          A local AI control layer for provider management,
-          routing, streaming, history, LAN access,
-          and API integration.
-        </p>
+          <p>
+            A local AI control layer for provider management,
+            routing, streaming, history, LAN access,
+            and API integration.
+          </p>
 
-        <div class="meta">
-          <span>Desktop App</span>
-          <span>Local API</span>
-          <span>Active Development</span>
+          <div class="meta">
+            <span>Desktop App</span>
+            <span>Local API</span>
+            <span>Active Development</span>
+          </div>
         </div>
-      </div>
 
-      <div class="actions">
-        <a href="/products/ks-unify/" class="button">Learn More</a>
-        <a href="/downloads/" class="button secondary">Downloads</a>
-      </div>
-    </article>
+        <div class="actions">
+          <a href="/products/ks-unify/" class="button">Learn More</a>
+          <a href="/downloads/#ks-unify" class="button secondary">Downloads</a>
+        </div>
+      </article>
+
+      <article class="product-card featured-card" data-visible-account-id="dev_ks" hidden>
+        <div class="product-info">
+          <span class="section-kicker">Mobile</span>
+          <h3>KS-K Mobile</h3>
+
+          <p>
+            Mobile companion for KANASAKA systems — remote monitoring,
+            quick controls, and secure sync with your KS stack.
+          </p>
+
+          <div class="meta">
+            <span>iOS</span>
+            <span>Android</span>
+            <span>Private Alpha</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="/products/ks-k-mobile/" class="button">Learn More</a>
+          <a href="/downloads/#ks-k-mobile" class="button secondary">Downloads</a>
+        </div>
+      </article>
+    </div>
   </section>
 """
     return shell("Home", body).replace("<title>Home | KANASAKA</title>", "<title>KANASAKA</title>")
@@ -289,28 +314,52 @@ def downloads_page() -> str:
   </section>
 
   <section class="page-section">
-    <article class="download-card featured-download download-card-wide">
-      <div class="download-info">
-        <span class="download-kicker">KS Unify</span>
+    <div class="download-stack">
+      <article id="ks-unify" class="download-card featured-download download-card-wide">
+        <div class="download-info">
+          <span class="download-kicker">KS Unify</span>
 
-        <h2>Unified AI Control Layer</h2>
+          <h2>Unified AI Control Layer</h2>
 
-        <p>
-          Desktop application for managing AI providers, routing,
-          streaming responses, API access, LAN support, and local history.
-        </p>
+          <p>
+            Desktop application for managing AI providers, routing,
+            streaming responses, API access, LAN support, and local history.
+          </p>
 
-        <div class="meta">
-          <span>Version 0.1.0</span>
-          <span>Windows</span>
-          <span>macOS</span>
-          <span>Linux</span>
-          <span>Active Development</span>
+          <div class="meta">
+            <span>Version 0.1.0</span>
+            <span>Windows</span>
+            <span>macOS</span>
+            <span>Linux</span>
+            <span>Active Development</span>
+          </div>
         </div>
-      </div>
 
-      <div id="download-actions" class="download-actions" hidden></div>
-    </article>
+        <div id="download-actions-unify" class="download-actions" hidden></div>
+      </article>
+
+      <article id="ks-k-mobile" class="download-card featured-download download-card-wide" data-visible-account-id="dev_ks" hidden>
+        <div class="download-info">
+          <span class="download-kicker">KS-K Mobile</span>
+
+          <h2>Mobile Companion</h2>
+
+          <p>
+            Private alpha builds for the KS-K Mobile app — remote monitoring,
+            quick controls, and secure sync with your KANASAKA stack.
+          </p>
+
+          <div class="meta">
+            <span>Private Alpha</span>
+            <span>iOS</span>
+            <span>Android</span>
+            <span>@dev_ks access</span>
+          </div>
+        </div>
+
+        <div id="download-actions-ks-k-mobile" class="download-actions" hidden></div>
+      </article>
+    </div>
 
     <div id="auth-gate-downloads" class="auth-gate" hidden></div>
 
@@ -330,6 +379,66 @@ def downloads_page() -> str:
   </section>
 """
     return shell("Downloads", body)
+
+
+def ks_k_mobile_page() -> str:
+    body = """
+  <div id="ks-k-mobile-content" data-visible-account-id="dev_ks" hidden>
+  <section class="hero compact">
+    <div class="kanasaka-logo small">
+      <div class="logo-side"><div></div><div></div></div>
+      <div class="logo-center"><span>K</span><span>S</span></div>
+      <div class="logo-side"><div></div><div></div></div>
+    </div>
+
+    <h1>KS-K Mobile</h1>
+
+    <p>
+      Mobile companion for KANASAKA systems — remote monitoring,
+      quick controls, and secure sync with your KS stack.
+    </p>
+  </section>
+
+  <section class="page-section">
+    <article class="content-card featured-card">
+      <div class="product-info">
+        <span class="section-kicker">Mobile Application</span>
+        <h2>KS-K Mobile</h2>
+
+        <p>
+          KS-K Mobile extends your KANASAKA workspace to iOS and Android with
+          secure session sync, lightweight controls, and private alpha builds
+          for internal testing.
+        </p>
+
+        <div class="meta">
+          <span>Private Alpha</span>
+          <span>iOS</span>
+          <span>Android</span>
+          <span>Internal Testing</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="/downloads/#ks-k-mobile" class="button">Downloads</a>
+        <a href="/support/contact/" class="button secondary">Contact</a>
+      </div>
+    </article>
+  </section>
+  </div>
+
+  <section id="ks-k-mobile-gate" class="page-section" hidden>
+    <div class="auth-gate-box">
+      <h2>Restricted Product</h2>
+      <p>KS-K Mobile is only visible to authorized internal accounts.</p>
+      <div class="auth-gate-actions">
+        <a href="/" class="button secondary">Back to Home</a>
+        <a href="/login/" class="button">Log In</a>
+      </div>
+    </div>
+  </section>
+"""
+    return shell("KS-K Mobile", body)
 
 
 def contact_page() -> str:
@@ -923,6 +1032,7 @@ def main() -> None:
     print("Generating pages...")
     write_page("index.html", home_page())
     write_page("products/ks-unify", ks_unify_page())
+    write_page("products/ks-k-mobile", ks_k_mobile_page())
     write_page("downloads", downloads_page())
     write_page("support/contact", contact_page())
     write_page("legal/terms", terms_page())

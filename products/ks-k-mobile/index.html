@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact | KANASAKA</title>
+  <title>KS-K Mobile | KANASAKA</title>
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -24,6 +24,7 @@
 
 <main>
 
+  <div id="ks-k-mobile-content" data-visible-account-id="dev_ks" hidden>
   <section class="hero compact">
     <div class="kanasaka-logo small">
       <div class="logo-side"><div></div><div></div></div>
@@ -31,26 +32,51 @@
       <div class="logo-side"><div></div><div></div></div>
     </div>
 
-    <h1>Contact</h1>
+    <h1>KS-K Mobile</h1>
 
-    <p>Reach the KANASAKA team for product, support, and partnership inquiries.</p>
+    <p>
+      Mobile companion for KANASAKA systems — remote monitoring,
+      quick controls, and secure sync with your KS stack.
+    </p>
   </section>
 
   <section class="page-section">
     <article class="content-card featured-card">
       <div class="product-info">
-        <span class="section-kicker">Support</span>
-        <h2>Get in Touch</h2>
+        <span class="section-kicker">Mobile Application</span>
+        <h2>KS-K Mobile</h2>
 
         <p>
-          Sign in to view our contact email for product, support, and partnership inquiries.
+          KS-K Mobile extends your KANASAKA workspace to iOS and Android with
+          secure session sync, lightweight controls, and private alpha builds
+          for internal testing.
         </p>
 
-        <div id="contact-details" class="contact-details" hidden></div>
+        <div class="meta">
+          <span>Private Alpha</span>
+          <span>iOS</span>
+          <span>Android</span>
+          <span>Internal Testing</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="/downloads/#ks-k-mobile" class="button">Downloads</a>
+        <a href="/support/contact/" class="button secondary">Contact</a>
       </div>
     </article>
+  </section>
+  </div>
 
-    <div id="auth-gate-contact" class="auth-gate" hidden></div>
+  <section id="ks-k-mobile-gate" class="page-section" hidden>
+    <div class="auth-gate-box">
+      <h2>Restricted Product</h2>
+      <p>KS-K Mobile is only visible to authorized internal accounts.</p>
+      <div class="auth-gate-actions">
+        <a href="/" class="button secondary">Back to Home</a>
+        <a href="/login/" class="button">Log In</a>
+      </div>
+    </div>
   </section>
 
 </main>
