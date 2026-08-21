@@ -78,8 +78,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=57">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=57">
+  <link rel="stylesheet" href="/assets/css/style.css?v=58">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=58">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -120,8 +120,13 @@ def home_page() -> str:
       <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
         <title>Kanasaka</title>
         <defs>
-          <filter id="logo-signal-glow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"></feGaussianBlur>
+          <radialGradient id="logo-core-radial" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(255, 255, 255, 0.55)"></stop>
+            <stop offset="55%" stop-color="rgba(255, 255, 255, 0.12)"></stop>
+            <stop offset="100%" stop-color="rgba(255, 255, 255, 0)"></stop>
+          </radialGradient>
+          <filter id="logo-emission-glow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="blur"></feGaussianBlur>
             <feMerge>
               <feMergeNode in="blur"></feMergeNode>
               <feMergeNode in="SourceGraphic"></feMergeNode>
@@ -129,30 +134,31 @@ def home_page() -> str:
           </filter>
         </defs>
         <g class="logo-side logo-side-left">
-          <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
-          <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 80 40 H 108 L 120 52 H 188"></path>
+          <path class="logo-line logo-line--lt" d="M 80 40 H 108 L 120 52 H 188"></path>
+          <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
+            <path class="logo-emission logo-emission--lt" d="M 188 52 H 120 L 108 40 H 80"></path>
           </g>
           <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
-          <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
-          <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 80 70 H 108 L 120 58 H 188"></path>
+          <path class="logo-line logo-line--lb" d="M 80 70 H 108 L 120 58 H 188"></path>
+          <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
+            <path class="logo-emission logo-emission--lb" d="M 188 58 H 120 L 108 70 H 80"></path>
           </g>
           <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
         </g>
+        <circle class="logo-core-glow" cx="240" cy="55" r="36" fill="url(#logo-core-radial)"></circle>
         <g class="logo-letters">
           <text class="logo-letter logo-letter-k" x="240" y="46" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">K</text>
           <text class="logo-letter logo-letter-s" x="240" y="100" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">S</text>
         </g>
         <g class="logo-side logo-side-right">
-          <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
-          <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 400 40 H 372 L 360 52 H 292"></path>
+          <path class="logo-line logo-line--rt" d="M 400 40 H 372 L 360 52 H 292"></path>
+          <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
+            <path class="logo-emission logo-emission--rt" d="M 292 52 H 360 L 372 40 H 400"></path>
           </g>
           <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
-          <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
-          <g class="logo-signal-wrap" filter="url(#logo-signal-glow)">
-            <path class="logo-signal" d="M 400 70 H 372 L 360 58 H 292"></path>
+          <path class="logo-line logo-line--rb" d="M 400 70 H 372 L 360 58 H 292"></path>
+          <g class="logo-emission-wrap" filter="url(#logo-emission-glow)">
+            <path class="logo-emission logo-emission--rb" d="M 292 58 H 360 L 372 70 H 400"></path>
           </g>
           <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
