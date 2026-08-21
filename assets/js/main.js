@@ -8,7 +8,7 @@
         {
           label: "KS-K Mobile",
           href: "/downloads/#ks-k-mobile",
-          visibleAccountId: "ks_dev",
+          visibleAccountId: "dev_ks",
         },
       ],
     },
@@ -19,7 +19,7 @@
         {
           label: "KS-K Mobile",
           href: "/products/ks-k-mobile/",
-          visibleAccountId: "ks_dev",
+          visibleAccountId: "dev_ks",
         },
         { label: "Robotics", href: "/products/robotics/" },
       ],

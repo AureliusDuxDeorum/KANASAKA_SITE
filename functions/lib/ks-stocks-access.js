@@ -8,12 +8,13 @@
  * - sessionPayload() exposes ksStocksEntitled to the desktop app via /api/auth/session
  *
  * Rules:
- * - account_id "ks_dev" or "dev_ks" → permanent access (no subscription)
+ * - account_id "ks_dev" → permanent KS Stocks access (no subscription)
  * - everyone else → ksStocksEntitled when subscription status is active or trialing
+ *
+ * KS-K Mobile uses a separate developer account: "dev_ks" (see downloads.js).
  */
 
-export const KS_STOCKS_DEV_ACCOUNT_IDS = ["ks_dev", "dev_ks"];
-export const KS_STOCKS_DEV_ACCOUNT_ID = KS_STOCKS_DEV_ACCOUNT_IDS[0];
+export const KS_STOCKS_DEV_ACCOUNT_ID = "ks_dev";
 export const KS_STOCKS_SUBSCRIBE_URL = "https://kanasaka.com/products/ks-stocks/";
 export const KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE =
   "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval. Existing subscribers keep access; new sign-ups will open soon.";
@@ -33,8 +34,7 @@ export function normalizeAccountId(value) {
 }
 
 export function isKsStocksDeveloperAccount(accountId) {
-  const normalized = normalizeAccountId(accountId);
-  return KS_STOCKS_DEV_ACCOUNT_IDS.includes(normalized);
+  return normalizeAccountId(accountId) === KS_STOCKS_DEV_ACCOUNT_ID;
 }
 
 export function ksStocksEntitlementFromUser(user) {
