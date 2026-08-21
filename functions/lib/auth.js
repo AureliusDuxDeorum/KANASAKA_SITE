@@ -310,7 +310,7 @@ async function loadSessionUser(env, tokenHash, schema) {
   if (schema.sessionsHashed) {
     return env.DB.prepare(
       `SELECT s.token_hash, s.last_rotated_at,
-              u.id, u.email, u.email_verified, u.display_name, u.totp_enabled,
+              u.id, u.email, u.email_verified, u.display_name, u.account_id, u.role, u.totp_enabled,
               ua.updated_at AS avatar_updated_at,
               CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
        FROM sessions s
@@ -325,7 +325,7 @@ async function loadSessionUser(env, tokenHash, schema) {
 
   return env.DB.prepare(
     `SELECT s.id AS token_hash, s.created_at AS last_rotated_at,
-            u.id, u.email, u.email_verified, u.display_name, u.totp_enabled,
+            u.id, u.email, u.email_verified, u.display_name, u.account_id, u.role, u.totp_enabled,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM sessions s
@@ -499,12 +499,27 @@ export function errorMessage(err) {
   return parts.join(" | ") || "Unknown error";
 }
 
-export async function insertUser(env, email, passwordHash, tosVersion) {
-  const { usersHaveTosColumns } = await import("./schema.js");
+export async function insertUser(env, email, passwordHash, tosVersion, accountId) {
+  const { usersHaveTosColumns, usersHaveAccountIdColumn } = await import("./schema.js");
   const hasTos = await usersHaveTosColumns(env);
+  const hasAccountId = await usersHaveAccountIdColumn(env);
 
   let result;
-  if (hasTos && tosVersion) {
+  if (hasAccountId && accountId) {
+    if (hasTos && tosVersion) {
+      result = await env.DB.prepare(
+        "INSERT INTO users (email, password_hash, email_verified, tos_accepted_at, tos_version, account_id, role) VALUES (?, ?, 0, datetime('now'), ?, ?, 'user')"
+      )
+        .bind(String(email), String(passwordHash), String(tosVersion), String(accountId))
+        .run();
+    } else {
+      result = await env.DB.prepare(
+        "INSERT INTO users (email, password_hash, email_verified, account_id, role) VALUES (?, ?, 0, ?, 'user')"
+      )
+        .bind(String(email), String(passwordHash), String(accountId))
+        .run();
+    }
+  } else if (hasTos && tosVersion) {
     result = await env.DB.prepare(
       "INSERT INTO users (email, password_hash, email_verified, tos_accepted_at, tos_version) VALUES (?, ?, 0, datetime('now'), ?)"
     )
@@ -543,6 +558,8 @@ export function sessionPayload(user) {
   return {
     authenticated: true,
     email: user.email,
+    accountId: user.account_id || null,
+    role: user.role || "user",
     displayName: user.display_name || null,
     displayLabel:
       user.display_name ||

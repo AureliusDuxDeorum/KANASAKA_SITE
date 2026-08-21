@@ -61,3 +61,16 @@ export async function usersHaveTosColumns(env) {
     return false;
   }
 }
+
+export async function usersHaveAccountIdColumn(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  try {
+    const columns = await tableColumns(env, "users");
+    return columns.includes("account_id") && columns.includes("role");
+  } catch {
+    return false;
+  }
+}

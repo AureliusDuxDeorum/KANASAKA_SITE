@@ -1054,6 +1054,37 @@ h1 {
   box-shadow: 0 0 0 3px var(--color-glow);
 }
 
+.auth-field-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-subtle);
+}
+
+.auth-field-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.auth-field-status.is-error {
+  color: #c85a5a;
+}
+
+.auth-field-status.is-ok {
+  color: var(--color-text);
+}
+
+.auth-field-status[hidden] {
+  display: none;
+}
+
+.auth-field input:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
 .password-policy {
   list-style: none;
   margin: 10px 0 0;
