@@ -66,9 +66,17 @@ Password policy (register, reset, change password)
 
 Registration
   POST /api/auth/register
-  Email + password (policy above). Password hashed Argon2id.
+  Email + password + accountId (unique, permanent) + ToS acceptance.
+  Password hashed Argon2id.
   Creates user (email_verified=0), email verify token, sends Resend email.
   Anti-enumeration: existing verified email → generic success; unverified → resend.
+
+Account ID & roles
+  account_id: 3–32 chars, lowercase [a-z0-9_-], unique, immutable after set.
+  role: user | beta | admin (default user). Assign via D1 or:
+  POST /api/admin/account-role  Authorization: Bearer ADMIN_SECRET
+  Body: { "accountId": "example", "role": "admin" }
+  GET /api/account/id-available?accountId=example — availability check (public)
 
 Email verification
   POST /api/auth/verify — consumes one-time token from email link
@@ -109,8 +117,11 @@ Security
 users
   id INTEGER PK, email TEXT UNIQUE NOCASE, password_hash TEXT,
   email_verified INTEGER, created_at TEXT, display_name TEXT,
+  account_id TEXT UNIQUE NOCASE, role TEXT DEFAULT 'user',
+  tos_accepted_at TEXT, tos_version TEXT,
   totp_secret TEXT, totp_pending_secret TEXT,
-  totp_enabled INTEGER DEFAULT 0, totp_enabled_at TEXT
+  totp_enabled INTEGER DEFAULT 0, totp_enabled_at TEXT,
+  phone_e164 TEXT, phone_pending_e164 TEXT
 
 sessions
   id INTEGER PK, token_hash TEXT UNIQUE, user_id INTEGER FK,
@@ -167,6 +178,7 @@ Public vars (wrangler.toml)
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/007_wipe_accounts.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/008_security_hardening.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/010_tos_acceptance.sql
+  npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/011_account_id.sql
 
 007_wipe_accounts.sql — IRREVERSIBLE data wipe (users, sessions, tokens, avatars,
   auth_events, rate_limits). Schema preserved.

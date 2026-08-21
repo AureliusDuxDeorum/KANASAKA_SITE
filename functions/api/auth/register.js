@@ -14,7 +14,11 @@ import {
 } from "../../lib/auth.js";
 import { sendVerificationEmail } from "../../lib/email.js";
 import { CURRENT_TOS_VERSION } from "../../lib/terms.js";
-import { usersHaveTosColumns } from "../../lib/schema.js";
+import { usersHaveTosColumns, usersHaveAccountIdColumn } from "../../lib/schema.js";
+import {
+  isAccountIdAvailable,
+  validateAccountId,
+} from "../../lib/account-id.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 function registerFailure(err) {
@@ -56,6 +60,15 @@ function registerFailure(err) {
 
   if (message.includes("D1_ERROR")) {
     return errorResponse(message.replace(/^D1_ERROR:\s*/, "").slice(0, 180), 500);
+  }
+
+  if (
+    message.includes("SQLITE_CONSTRAINT") ||
+    message.includes("UNIQUE constraint failed")
+  ) {
+    if (message.toLowerCase().includes("account_id")) {
+      return errorResponse("That account ID is already taken.");
+    }
   }
 
   if (
@@ -125,6 +138,27 @@ export async function onRequestPost(context) {
       }
     }
 
+    const hasAccountId = await usersHaveAccountIdColumn(env);
+    const accountIdInput = String(body.accountId || "");
+    let accountId = null;
+
+    if (hasAccountId) {
+      const validatedAccountId = validateAccountId(accountIdInput);
+      if (!validatedAccountId.ok) {
+        return errorResponse(validatedAccountId.error);
+      }
+
+      const availability = await isAccountIdAvailable(
+        env,
+        validatedAccountId.value
+      );
+      if (!availability.available) {
+        return errorResponse("That account ID is already taken.");
+      }
+
+      accountId = availability.accountId;
+    }
+
     const existing = await env.DB.prepare(
       "SELECT id, email_verified FROM users WHERE email = ? COLLATE NOCASE"
     )
@@ -150,7 +184,8 @@ export async function onRequestPost(context) {
       env,
       email,
       passwordHash,
-      hasTos ? CURRENT_TOS_VERSION : null
+      hasTos ? CURRENT_TOS_VERSION : null,
+      accountId
     );
     const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
     const emailResult = await sendVerificationEmail(env, email, token);

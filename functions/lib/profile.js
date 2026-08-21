@@ -51,7 +51,7 @@ export function avatarInitials(user) {
 
 export async function getUserProfile(env, userId) {
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.display_name, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
+    `SELECT u.id, u.email, u.display_name, u.account_id, u.role, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
             ua.mime_type, ua.updated_at AS avatar_updated_at
      FROM users u
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
@@ -68,6 +68,8 @@ export async function getUserProfile(env, userId) {
     id: row.id,
     email: row.email,
     display_name: row.display_name,
+    account_id: row.account_id,
+    role: row.role,
     totp_enabled: row.totp_enabled,
     totp_enabled_at: row.totp_enabled_at,
     phone_e164: row.phone_e164,
@@ -77,6 +79,7 @@ export async function getUserProfile(env, userId) {
 }
 
 import { maskPhone } from "./phone.js";
+import { normalizeRole } from "./roles.js";
 
 export function profilePayload(user) {
   const hasAvatar = Boolean(user && user.has_avatar);
@@ -84,6 +87,8 @@ export function profilePayload(user) {
 
   return {
     email: user.email,
+    accountId: user.account_id || null,
+    role: normalizeRole(user.role),
     displayName: user.display_name || null,
     displayLabel: displayLabel(user),
     initials: avatarInitials(user),

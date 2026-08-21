@@ -63,10 +63,17 @@
 
   async function register(email, password, form) {
     const tosCheckbox = form.querySelector('[name="tosAccepted"]');
+    const accountIdField = form.querySelector('[name="accountId"]');
+    const accountId = accountIdField ? accountIdField.value.trim() : "";
+
     if (tosCheckbox && !tosCheckbox.checked) {
       throw new Error(
         "You must accept the Terms of Service and Privacy Policy."
       );
+    }
+
+    if (accountIdField && !accountId) {
+      throw new Error("Enter an account ID.");
     }
 
     const { response, data } = await apiRequest("/api/auth/register", {
@@ -74,6 +81,7 @@
       body: JSON.stringify({
         email,
         password,
+        accountId: accountId,
         tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
         tosVersion: "1",
       }),
@@ -221,6 +229,12 @@
             form,
             "You must accept the Terms of Service and Privacy Policy."
           );
+          return;
+        }
+
+        const accountIdField = form.querySelector('[name="accountId"]');
+        if (accountIdField && !accountIdField.value.trim()) {
+          showFormError(form, "Enter an account ID.");
           return;
         }
       }
@@ -563,6 +577,8 @@
     const passwordForm = document.getElementById("settings-password-form");
     const deleteForm = document.getElementById("settings-delete-form");
     const displayNameInput = document.getElementById("settings-display-name");
+    const accountIdInput = document.getElementById("settings-account-id");
+    const accountIdHint = document.getElementById("settings-account-id-hint");
     const emailInput = document.getElementById("settings-email");
 
     let profile = session;
@@ -586,6 +602,21 @@
 
     if (displayNameInput) {
       displayNameInput.value = profile.displayName || "";
+    }
+    if (accountIdInput) {
+      accountIdInput.value = profile.accountId || "";
+      if (profile.accountId) {
+        accountIdInput.disabled = true;
+        if (accountIdHint) {
+          accountIdHint.textContent =
+            "Account ID @" +
+            profile.accountId +
+            " is permanent and used for permissions.";
+        }
+      } else if (accountIdHint) {
+        accountIdHint.textContent =
+          "Choose a unique ID now. It cannot be changed later.";
+      }
     }
     if (emailInput) {
       emailInput.value = profile.email || "";
@@ -677,6 +708,7 @@
           method: "PATCH",
           body: JSON.stringify({
             displayName: displayNameInput.value.trim(),
+            accountId: accountIdInput ? accountIdInput.value.trim() : undefined,
           }),
         });
 
@@ -687,6 +719,16 @@
         profile = Object.assign({ authenticated: true }, data);
         updateSession(profile);
         displayNameInput.value = profile.displayName || "";
+        if (accountIdInput && profile.accountId) {
+          accountIdInput.value = profile.accountId;
+          accountIdInput.disabled = true;
+          if (accountIdHint) {
+            accountIdHint.textContent =
+              "Account ID @" +
+              profile.accountId +
+              " is permanent and used for permissions.";
+          }
+        }
         showFormSuccess(profileForm, data.message || "Profile updated.");
       } catch (error) {
         showFormError(profileForm, error.message || "Save failed.");
@@ -827,6 +869,53 @@
     }
   }
 
+  function initRegisterAccountIdCheck() {
+    const input = document.getElementById("register-account-id");
+    const status = document.getElementById("register-account-id-status");
+    if (!input || !status) return;
+
+    var timer = null;
+
+    function setStatus(message, isError) {
+      status.textContent = message;
+      status.hidden = !message;
+      status.classList.toggle("is-error", Boolean(isError));
+      status.classList.toggle("is-ok", Boolean(message) && !isError);
+    }
+
+    input.addEventListener("input", function () {
+      window.clearTimeout(timer);
+      const value = input.value.trim().toLowerCase();
+      if (!value) {
+        setStatus("", false);
+        return;
+      }
+
+      timer = window.setTimeout(async function () {
+        try {
+          const { response, data } = await apiRequest(
+            "/api/account/id-available?accountId=" + encodeURIComponent(value),
+            { method: "GET" }
+          );
+          if (!response.ok) {
+            setStatus((data && data.error) || "Could not check ID.", true);
+            return;
+          }
+          if (data.available) {
+            setStatus("@" + data.accountId + " is available.", false);
+          } else {
+            setStatus(
+              (data && data.error) || "That account ID is already taken.",
+              true
+            );
+          }
+        } catch {
+          setStatus("Could not check ID.", true);
+        }
+      }, 350);
+    });
+  }
+
   function initAuthForms() {
     bindEmailPasswordForm("login-form", login);
     bindEmailPasswordForm("register-form", register, {
@@ -842,6 +931,7 @@
     bindForgotPasswordForm();
     bindResetPasswordForm();
     initPasswordPolicyFields();
+    initRegisterAccountIdCheck();
   }
 
   window.KanasakaAuth = {

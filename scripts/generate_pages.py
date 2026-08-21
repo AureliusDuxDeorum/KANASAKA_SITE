@@ -48,7 +48,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=50">
+  <link rel="stylesheet" href="/assets/css/style.css?v=51">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -634,6 +634,13 @@ def register_page() -> str:
 
       <form id="register-form" class="auth-form">
         <div class="auth-field">
+          <label for="register-account-id">Account ID</label>
+          <input id="register-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
+          <p class="auth-field-hint">Unique and permanent. Use lowercase letters, numbers, underscores, or hyphens. Display names stay separate.</p>
+          <p id="register-account-id-status" class="auth-field-status" hidden></p>
+        </div>
+
+        <div class="auth-field">
           <label for="register-email">Email</label>
           <input id="register-email" name="email" type="email" autocomplete="email" required>
         </div>
@@ -765,6 +772,12 @@ def settings_page() -> str:
             </div>
 
             <form id="settings-profile-form" class="auth-form settings-form">
+              <div class="auth-field">
+                <label for="settings-account-id">Account ID</label>
+                <input id="settings-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
+                <p id="settings-account-id-hint" class="auth-field-hint">Your permanent unique ID for permissions and account lookup.</p>
+              </div>
+
               <div class="auth-field">
                 <label for="settings-display-name">Display Name</label>
                 <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">

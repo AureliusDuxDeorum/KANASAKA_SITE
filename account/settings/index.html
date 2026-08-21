@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=50">
+  <link rel="stylesheet" href="/assets/css/style.css?v=51">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -69,6 +69,12 @@
             </div>
 
             <form id="settings-profile-form" class="auth-form settings-form">
+              <div class="auth-field">
+                <label for="settings-account-id">Account ID</label>
+                <input id="settings-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
+                <p id="settings-account-id-hint" class="auth-field-hint">Your permanent unique ID for permissions and account lookup.</p>
+              </div>
+
               <div class="auth-field">
                 <label for="settings-display-name">Display Name</label>
                 <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
