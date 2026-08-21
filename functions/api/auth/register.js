@@ -143,20 +143,22 @@ export async function onRequestPost(context) {
     let accountId = null;
 
     if (hasAccountId) {
-      const validatedAccountId = validateAccountId(accountIdInput);
-      if (!validatedAccountId.ok) {
-        return errorResponse(validatedAccountId.error);
-      }
+      if (accountIdInput) {
+        const validatedAccountId = validateAccountId(accountIdInput);
+        if (!validatedAccountId.ok) {
+          return errorResponse(validatedAccountId.error);
+        }
 
-      const availability = await isAccountIdAvailable(
-        env,
-        validatedAccountId.value
-      );
-      if (!availability.available) {
-        return errorResponse("That account ID is already taken.");
-      }
+        const availability = await isAccountIdAvailable(
+          env,
+          validatedAccountId.value
+        );
+        if (!availability.available) {
+          return errorResponse("That account ID is already taken.");
+        }
 
-      accountId = availability.accountId;
+        accountId = availability.accountId;
+      }
     }
 
     const existing = await env.DB.prepare(

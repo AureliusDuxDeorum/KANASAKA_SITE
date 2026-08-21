@@ -78,7 +78,7 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=52">
+  <link rel="stylesheet" href="/assets/css/style.css?v=53">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -629,7 +629,7 @@ def login_page() -> str:
 {auth_card_open()}
       <p class="auth-eyebrow">Account</p>
       <h1>Log In</h1>
-      <p class="auth-lead">Access downloads and contact details with your KANASAKA account.</p>
+      <p class="auth-lead">Sign in with your email and password. Account ID is not required here.</p>
 
       <form id="login-form" class="auth-form">
         <div class="auth-field">
@@ -665,8 +665,8 @@ def register_page() -> str:
       <form id="register-form" class="auth-form">
         <div class="auth-field">
           <label for="register-account-id">Account ID</label>
-          <input id="register-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
-          <p class="auth-field-hint">Unique and permanent. Use lowercase letters, numbers, underscores, or hyphens. Display names stay separate.</p>
+          <input id="register-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
+          <p class="auth-field-hint">Optional now — set or change anytime in Account Settings (once every 6 months after first set).</p>
           <p id="register-account-id-status" class="auth-field-status" hidden></p>
         </div>
 
@@ -813,7 +813,8 @@ def settings_page() -> str:
               <div class="auth-field">
                 <label for="settings-account-id">Account ID</label>
                 <input id="settings-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
-                <p id="settings-account-id-hint" class="auth-field-hint">Your permanent unique ID for permissions and account lookup.</p>
+                <p id="settings-account-id-hint" class="auth-field-hint">Choose a unique ID for permissions and lookup. You can change it once every 6 months after it is set.</p>
+                <p id="settings-account-id-status" class="auth-field-status" hidden></p>
               </div>
 
               <div class="auth-field">

@@ -72,19 +72,20 @@
       );
     }
 
-    if (accountIdField && !accountId) {
-      throw new Error("Enter an account ID.");
+    const payload = {
+      email,
+      password,
+      tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
+      tosVersion: "1",
+    };
+
+    if (accountId) {
+      payload.accountId = accountId;
     }
 
     const { response, data } = await apiRequest("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-        accountId: accountId,
-        tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
-        tosVersion: "1",
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -229,12 +230,6 @@
             form,
             "You must accept the Terms of Service and Privacy Policy."
           );
-          return;
-        }
-
-        const accountIdField = form.querySelector('[name="accountId"]');
-        if (accountIdField && !accountIdField.value.trim()) {
-          showFormError(form, "Enter an account ID.");
           return;
         }
       }
@@ -545,6 +540,113 @@
     container.textContent = profile.initials || "KS";
   }
 
+  function formatAccountIdNextChange(isoValue) {
+    if (!isoValue) {
+      return "";
+    }
+
+    return new Date(isoValue).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  function applyAccountIdFieldState(profile, accountIdInput, accountIdHint) {
+    if (!accountIdInput) {
+      return;
+    }
+
+    accountIdInput.value = profile.accountId || "";
+
+    if (!profile.accountId) {
+      accountIdInput.disabled = false;
+      if (accountIdHint) {
+        accountIdHint.textContent =
+          "Choose a unique ID for permissions and lookup. You can change it once every 6 months after it is set.";
+      }
+      return;
+    }
+
+    if (profile.accountIdChangeAllowed) {
+      accountIdInput.disabled = false;
+      if (accountIdHint) {
+        accountIdHint.textContent =
+          "Your ID is @" +
+          profile.accountId +
+          ". You may change it now (once every 6 months).";
+      }
+      return;
+    }
+
+    accountIdInput.disabled = true;
+    if (accountIdHint) {
+      const nextChange = formatAccountIdNextChange(profile.accountIdNextChangeAt);
+      accountIdHint.textContent =
+        "Account ID @" +
+        profile.accountId +
+        (nextChange
+          ? " is locked until " + nextChange + "."
+          : " can only be changed every 6 months.");
+    }
+  }
+
+  function initSettingsAccountIdCheck(input, status, currentAccountId) {
+    if (!input || !status) {
+      return;
+    }
+
+    var timer = null;
+
+    function setStatus(message, isError) {
+      status.textContent = message;
+      status.hidden = !message;
+      status.classList.toggle("is-error", Boolean(isError));
+      status.classList.toggle("is-ok", Boolean(message) && !isError);
+    }
+
+    input.addEventListener("input", function () {
+      if (input.disabled) {
+        return;
+      }
+
+      window.clearTimeout(timer);
+      const value = input.value.trim().toLowerCase();
+      if (!value) {
+        setStatus("", false);
+        return;
+      }
+
+      if (currentAccountId && value === String(currentAccountId).toLowerCase()) {
+        setStatus("This is your current account ID.", false);
+        return;
+      }
+
+      timer = window.setTimeout(async function () {
+        try {
+          const { response, data } = await apiRequest(
+            "/api/account/id-available?accountId=" + encodeURIComponent(value),
+            { method: "GET" }
+          );
+          if (!response.ok) {
+            setStatus((data && data.error) || "Could not check ID.", true);
+            return;
+          }
+          if (data.available) {
+            setStatus("@" + data.accountId + " is available.", false);
+          } else {
+            setStatus(
+              (data && data.error) || "That account ID is already taken.",
+              true
+            );
+          }
+        } catch {
+          setStatus("Could not check ID.", true);
+        }
+      }, 350);
+    });
+  }
+
   async function initSettingsPage() {
     const gate = document.getElementById("settings-gate");
     const content = document.getElementById("settings-content");
@@ -579,6 +681,7 @@
     const displayNameInput = document.getElementById("settings-display-name");
     const accountIdInput = document.getElementById("settings-account-id");
     const accountIdHint = document.getElementById("settings-account-id-hint");
+    const accountIdStatus = document.getElementById("settings-account-id-status");
     const emailInput = document.getElementById("settings-email");
 
     let profile = session;
@@ -604,19 +707,12 @@
       displayNameInput.value = profile.displayName || "";
     }
     if (accountIdInput) {
-      accountIdInput.value = profile.accountId || "";
-      if (profile.accountId) {
-        accountIdInput.disabled = true;
-        if (accountIdHint) {
-          accountIdHint.textContent =
-            "Account ID @" +
-            profile.accountId +
-            " is permanent and used for permissions.";
-        }
-      } else if (accountIdHint) {
-        accountIdHint.textContent =
-          "Choose a unique ID now. It cannot be changed later.";
-      }
+      applyAccountIdFieldState(profile, accountIdInput, accountIdHint);
+      initSettingsAccountIdCheck(
+        accountIdInput,
+        accountIdStatus,
+        profile.accountId
+      );
     }
     if (emailInput) {
       emailInput.value = profile.email || "";
@@ -719,16 +815,7 @@
         profile = Object.assign({ authenticated: true }, data);
         updateSession(profile);
         displayNameInput.value = profile.displayName || "";
-        if (accountIdInput && profile.accountId) {
-          accountIdInput.value = profile.accountId;
-          accountIdInput.disabled = true;
-          if (accountIdHint) {
-            accountIdHint.textContent =
-              "Account ID @" +
-              profile.accountId +
-              " is permanent and used for permissions.";
-          }
-        }
+        applyAccountIdFieldState(profile, accountIdInput, accountIdHint);
         showFormSuccess(profileForm, data.message || "Profile updated.");
       } catch (error) {
         showFormError(profileForm, error.message || "Save failed.");

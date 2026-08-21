@@ -507,17 +507,41 @@ export async function insertUser(env, email, passwordHash, tosVersion, accountId
   let result;
   if (hasAccountId && accountId) {
     if (hasTos && tosVersion) {
-      result = await env.DB.prepare(
-        "INSERT INTO users (email, password_hash, email_verified, tos_accepted_at, tos_version, account_id, role) VALUES (?, ?, 0, datetime('now'), ?, ?, 'user')"
-      )
-        .bind(String(email), String(passwordHash), String(tosVersion), String(accountId))
-        .run();
+      const hasChangedAt = await import("./schema.js").then(function (mod) {
+        return mod.usersHaveAccountIdChangedAtColumn(env);
+      });
+
+      if (hasChangedAt) {
+        result = await env.DB.prepare(
+          "INSERT INTO users (email, password_hash, email_verified, tos_accepted_at, tos_version, account_id, account_id_changed_at, role) VALUES (?, ?, 0, datetime('now'), ?, ?, datetime('now'), 'user')"
+        )
+          .bind(String(email), String(passwordHash), String(tosVersion), String(accountId))
+          .run();
+      } else {
+        result = await env.DB.prepare(
+          "INSERT INTO users (email, password_hash, email_verified, tos_accepted_at, tos_version, account_id, role) VALUES (?, ?, 0, datetime('now'), ?, ?, 'user')"
+        )
+          .bind(String(email), String(passwordHash), String(tosVersion), String(accountId))
+          .run();
+      }
     } else {
-      result = await env.DB.prepare(
-        "INSERT INTO users (email, password_hash, email_verified, account_id, role) VALUES (?, ?, 0, ?, 'user')"
-      )
-        .bind(String(email), String(passwordHash), String(accountId))
-        .run();
+      const hasChangedAt = await import("./schema.js").then(function (mod) {
+        return mod.usersHaveAccountIdChangedAtColumn(env);
+      });
+
+      if (hasChangedAt) {
+        result = await env.DB.prepare(
+          "INSERT INTO users (email, password_hash, email_verified, account_id, account_id_changed_at, role) VALUES (?, ?, 0, ?, datetime('now'), 'user')"
+        )
+          .bind(String(email), String(passwordHash), String(accountId))
+          .run();
+      } else {
+        result = await env.DB.prepare(
+          "INSERT INTO users (email, password_hash, email_verified, account_id, role) VALUES (?, ?, 0, ?, 'user')"
+        )
+          .bind(String(email), String(passwordHash), String(accountId))
+          .run();
+      }
     }
   } else if (hasTos && tosVersion) {
     result = await env.DB.prepare(
