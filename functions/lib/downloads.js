@@ -20,7 +20,7 @@ export const INSTALLER_OBJECTS = {
     key: "installers/ks-k-mobile/android/app-debug.apk",
     filename: "app-debug.apk",
     contentType: "application/vnd.android.package-archive",
-    requiredAccountId: "dev_ks",
+    requiredAccountId: "ks_dev",
   },
 };
 

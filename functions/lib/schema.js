@@ -87,3 +87,19 @@ export async function usersHaveAccountIdChangedAtColumn(env) {
     return false;
   }
 }
+
+export async function usersHaveKsStocksSubscriptionColumns(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  try {
+    const columns = await tableColumns(env, "users");
+    return (
+      columns.includes("ks_stocks_subscription_status") &&
+      columns.includes("ks_stocks_subscription_ends_at")
+    );
+  } catch {
+    return false;
+  }
+}

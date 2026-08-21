@@ -1720,6 +1720,101 @@ h1 {
   color: var(--color-text-muted);
 }
 
+.billing-status-message {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-base);
+  color: var(--color-text);
+}
+
+.settings-billing-callout,
+.settings-billing-card {
+  padding: 28px 32px;
+  border: 1px solid var(--color-border);
+  background: var(--color-base);
+}
+
+.settings-billing-card + .settings-billing-card,
+.settings-billing-callout + .settings-billing-card {
+  margin-top: 18px;
+}
+
+.settings-billing-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-billing-copy {
+  margin: 0 0 18px;
+  color: var(--color-text-muted);
+}
+
+.settings-billing-meta {
+  margin: 0 0 18px;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.settings-billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.billing-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.billing-badge-active {
+  border-color: rgba(80, 180, 120, 0.45);
+  color: #8fd4a8;
+}
+
+.billing-plan-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.billing-plan-card {
+  padding: 22px 20px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.billing-plan-card-featured {
+  border-color: rgba(120, 160, 255, 0.35);
+}
+
+.billing-plan-card h4 {
+  margin: 0 0 10px;
+}
+
+.billing-plan-price {
+  margin: 0 0 18px;
+  font-size: 1.8rem;
+}
+
+.billing-plan-price span {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.billing-status-message.is-error {
+  border-color: rgba(180, 70, 70, 0.45);
+  color: #f0b0b0;
+}
+
 .theme-picker {
   display: grid;
   gap: 14px;
