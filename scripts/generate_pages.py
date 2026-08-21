@@ -346,7 +346,7 @@ def downloads_page() -> str:
 
     <h1>Downloads</h1>
 
-    <p>Sign in to download the latest KANASAKA product builds.</p>
+    <p>KS_Package subscribers can download the latest KANASAKA product builds.</p>
   </section>
 
   <section class="page-section">

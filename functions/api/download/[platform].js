@@ -1,6 +1,7 @@
 import {
   canAccessInstaller,
   createSignedDownloadToken,
+  downloadAccessDenialReason,
   installerConfig,
   installersConfigured,
   signedDownloadUrl,
@@ -27,7 +28,7 @@ export async function onRequestGet(context) {
   }
 
   if (!canAccessInstaller(user, config)) {
-    return errorResponse("Access denied.", 403);
+    return errorResponse(downloadAccessDenialReason(user, config) || "Access denied.", 403);
   }
 
   if (!installersConfigured(env)) {
