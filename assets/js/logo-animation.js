@@ -1,32 +1,17 @@
 (function () {
-  var PULSE_SEGMENT = 5;
   var LOGO_FONT = '600 50px "Tektur"';
 
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  function getSignalWrap(line) {
-    var node = line.nextElementSibling;
-    while (node) {
-      if (node.classList && node.classList.contains("logo-signal-wrap")) {
-        return node;
-      }
-      if (node.classList && node.classList.contains("logo-line")) {
-        break;
-      }
-      node = node.nextElementSibling;
-    }
-    return null;
-  }
-
   function whenPathsReady(root, callback, attempt) {
     var tries = attempt || 0;
-    var lines = root.querySelectorAll(".logo-line");
-    var ready = lines.length > 0;
+    var paths = root.querySelectorAll(".logo-emission, .logo-line");
+    var ready = paths.length > 0;
 
-    lines.forEach(function (line) {
-      if (line.getTotalLength() <= 0) {
+    paths.forEach(function (path) {
+      if (path.getTotalLength() <= 0) {
         ready = false;
       }
     });
@@ -57,29 +42,16 @@
     });
   }
 
-  function prepareSignalPaths(root) {
-    root.querySelectorAll(".logo-line").forEach(function (line, lineIndex) {
-      var wrap = getSignalWrap(line);
-      if (!wrap) {
-        return;
-      }
-
-      var signal = wrap.querySelector(".logo-signal");
-      if (!signal) {
-        return;
-      }
-
-      var length = signal.getTotalLength();
+  function prepareEmissionPaths(root) {
+    root.querySelectorAll(".logo-emission").forEach(function (path) {
+      var length = path.getTotalLength();
       if (length <= 0) {
         return;
       }
 
-      var gap = length + PULSE_SEGMENT;
-      wrap.style.setProperty("--pulse-delay", String(lineIndex * 1.75) + "s");
-      signal.style.setProperty("--signal-start", String(length));
-      signal.style.setProperty("--signal-end", String(-length));
-      signal.style.strokeDasharray = PULSE_SEGMENT + " " + gap;
-      signal.style.strokeDashoffset = String(length);
+      path.style.setProperty("--emission-length", String(length));
+      path.style.strokeDasharray = String(length);
+      path.style.strokeDashoffset = String(length);
     });
   }
 
@@ -92,7 +64,7 @@
 
     whenLogoReady(heroLogo, function () {
       if (!prefersReducedMotion()) {
-        prepareSignalPaths(heroLogo);
+        prepareEmissionPaths(heroLogo);
         heroLogo.classList.add("is-ambient");
       }
 
@@ -106,6 +78,6 @@
 
   window.KanasakaLogoAnimation = {
     init: init,
-    prepareSignalPaths: prepareSignalPaths,
+    prepareEmissionPaths: prepareEmissionPaths,
   };
 })();

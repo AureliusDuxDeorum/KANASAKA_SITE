@@ -367,18 +367,27 @@ main {
   stroke-linejoin: miter;
 }
 
-.logo-signal-wrap {
+.logo-signal-wrap,
+.logo-emission-wrap {
   pointer-events: none;
 }
 
-.logo-signal {
+.logo-signal,
+.logo-emission {
   fill: none;
   stroke: rgba(255, 255, 255, 0.92);
-  stroke-width: 2;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
   opacity: 0;
+}
+
+.logo-core-glow {
+  opacity: 0;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .logo-letter {
@@ -406,86 +415,172 @@ main {
   transform-origin: center;
 }
 
-/* ── Home hero ambient loop ── */
+/* ── Home hero core emission ── */
 
 .kanasaka-logo--hero .logo-line {
   opacity: 0.42;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-line {
-  opacity: 0.42;
+.kanasaka-logo--hero.is-ambient .logo-core-glow {
+  animation: logo-core-glow 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .kanasaka-logo--hero.is-ambient .logo-letters {
-  animation: logo-core-breathe 5s ease-in-out infinite;
+  animation: logo-letters-glow 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-signal-wrap .logo-signal {
-  opacity: 1;
-  animation: logo-signal-sweep 7s cubic-bezier(0.45, 0.05, 0.25, 1) infinite;
-  animation-delay: var(--pulse-delay, 0s);
+.kanasaka-logo--hero.is-ambient .logo-line--lt,
+.kanasaka-logo--hero.is-ambient .logo-line--rt {
+  animation: logo-line-emission 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0.08s;
 }
 
-@keyframes logo-core-breathe {
+.kanasaka-logo--hero.is-ambient .logo-line--lb,
+.kanasaka-logo--hero.is-ambient .logo-line--rb {
+  animation: logo-line-emission 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0.16s;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-emission {
+  animation: logo-emission-travel 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-emission--lt,
+.kanasaka-logo--hero.is-ambient .logo-emission--rt {
+  animation-delay: 0.08s;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-emission--lb,
+.kanasaka-logo--hero.is-ambient .logo-emission--rb {
+  animation-delay: 0.16s;
+}
+
+@keyframes logo-core-glow {
   0%,
+  68%,
   100% {
-    opacity: 1;
+    opacity: 0;
+    transform: scale(0.88);
   }
 
-  50% {
-    opacity: 0.94;
+  74% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  84% {
+    opacity: 0.18;
+    transform: scale(1.18);
+  }
+
+  92% {
+    opacity: 0;
+    transform: scale(1.24);
   }
 }
 
-@keyframes logo-signal-sweep {
-  0% {
-    stroke-dashoffset: var(--signal-start, 100);
-    opacity: 0;
+@keyframes logo-letters-glow {
+  0%,
+  68%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
   }
 
-  6% {
-    opacity: 0.55;
-  }
-
-  14% {
-    opacity: 1;
+  74% {
+    filter:
+      drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))
+      drop-shadow(0 0 22px rgba(255, 255, 255, 0.16));
   }
 
   86% {
-    opacity: 1;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.12));
+  }
+}
+
+@keyframes logo-line-emission {
+  0%,
+  70%,
+  100% {
+    opacity: 0.42;
+  }
+
+  78% {
+    opacity: 0.5;
+  }
+
+  86% {
+    opacity: 0.72;
   }
 
   94% {
-    opacity: 0.45;
+    opacity: 0.42;
+  }
+}
+
+@keyframes logo-emission-travel {
+  0%,
+  72%,
+  100% {
+    stroke-dashoffset: var(--emission-length, 100);
+    opacity: 0;
   }
 
-  100% {
-    stroke-dashoffset: var(--signal-end, -100);
+  76% {
+    opacity: 0.9;
+  }
+
+  88% {
+    stroke-dashoffset: 0;
+    opacity: 0.25;
+  }
+
+  92% {
     opacity: 0;
   }
 }
 
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-signal {
-  stroke: rgba(17, 17, 17, 0.88);
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-emission {
+  stroke: rgba(17, 17, 17, 0.82);
 }
 
-.kanasaka-logo--hero.is-ambient .logo-tag {
-  opacity: 0.72;
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-letters {
+  animation-name: logo-letters-glow-light;
+}
+
+@keyframes logo-letters-glow-light {
+  0%,
+  68%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+
+  74% {
+    filter:
+      drop-shadow(0 0 8px rgba(0, 0, 0, 0.18))
+      drop-shadow(0 0 20px rgba(0, 0, 0, 0.08));
+  }
+
+  86% {
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.06));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .kanasaka-logo--hero.is-ambient .logo-core-glow,
+  .kanasaka-logo--hero.is-ambient .logo-letters,
+  .kanasaka-logo--hero.is-ambient .logo-line,
+  .kanasaka-logo--hero.is-ambient .logo-emission {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1;
+  }
+
   .kanasaka-logo--hero.is-ambient .logo-line {
     opacity: 1;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-letters {
-    animation: none;
-  }
-
-  .kanasaka-logo--hero.is-ambient .logo-signal-wrap,
-  .kanasaka-logo--hero.is-ambient .logo-signal {
+  .kanasaka-logo--hero.is-ambient .logo-emission {
     opacity: 0;
-    animation: none !important;
   }
 }
 
