@@ -78,8 +78,8 @@ def shell(title: str, body: str) -> str:
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=60">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=60">
+  <link rel="stylesheet" href="/assets/css/style.css?v=61">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=61">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -119,53 +119,21 @@ def home_page() -> str:
     <div class="kanasaka-logo kanasaka-logo--hero">
       <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
         <title>Kanasaka</title>
-        <defs>
-          <radialGradient id="logo-core-radial" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="rgba(255, 255, 255, 0.65)"></stop>
-            <stop offset="45%" stop-color="rgba(255, 255, 255, 0.14)"></stop>
-            <stop offset="100%" stop-color="rgba(255, 255, 255, 0)"></stop>
-          </radialGradient>
-          <radialGradient id="logo-wave-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="rgba(255, 255, 255, 0.9)"></stop>
-            <stop offset="22%" stop-color="rgba(255, 255, 255, 0.42)"></stop>
-            <stop offset="48%" stop-color="rgba(255, 255, 255, 0.1)"></stop>
-            <stop offset="100%" stop-color="rgba(255, 255, 255, 0)"></stop>
-          </radialGradient>
-          <linearGradient id="logo-shimmer-gradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="rgba(255, 255, 255, 0)"></stop>
-            <stop offset="42%" stop-color="rgba(255, 255, 255, 0)"></stop>
-            <stop offset="50%" stop-color="rgba(255, 255, 255, 0.55)"></stop>
-            <stop offset="58%" stop-color="rgba(255, 255, 255, 0)"></stop>
-            <stop offset="100%" stop-color="rgba(255, 255, 255, 0)"></stop>
-          </linearGradient>
-          <filter id="logo-wave-blur" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"></feGaussianBlur>
-            <feMerge>
-              <feMergeNode in="blur"></feMergeNode>
-              <feMergeNode in="SourceGraphic"></feMergeNode>
-            </feMerge>
-          </filter>
-        </defs>
         <g class="logo-side logo-side-left">
-          <path class="logo-line logo-line--lt" d="M 80 40 H 108 L 120 52 H 188"></path>
-          <text class="logo-tag logo-tag--lt" x="76" y="44" text-anchor="end">Software</text>
-          <path class="logo-line logo-line--lb" d="M 80 70 H 108 L 120 58 H 188"></path>
-          <text class="logo-tag logo-tag--lb" x="76" y="74" text-anchor="end">AI</text>
+          <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
+          <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
+          <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
+          <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
         </g>
-        <circle class="logo-core-glow" cx="240" cy="55" r="32" fill="url(#logo-core-radial)"></circle>
         <g class="logo-letters">
           <text class="logo-letter logo-letter-k" x="240" y="46" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">K</text>
           <text class="logo-letter logo-letter-s" x="240" y="100" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">S</text>
         </g>
         <g class="logo-side logo-side-right">
-          <path class="logo-line logo-line--rt" d="M 400 40 H 372 L 360 52 H 292"></path>
-          <text class="logo-tag logo-tag--rt" x="404" y="44" text-anchor="start">Robotics</text>
-          <path class="logo-line logo-line--rb" d="M 400 70 H 372 L 360 58 H 292"></path>
-          <text class="logo-tag logo-tag--rb" x="404" y="74" text-anchor="start">Biotech</text>
-        </g>
-        <g class="logo-light-field" filter="url(#logo-wave-blur)">
-          <circle class="logo-light-wave" cx="240" cy="55" r="168" fill="url(#logo-wave-gradient)"></circle>
-          <rect class="logo-shimmer-band" x="0" y="42" width="480" height="26" fill="url(#logo-shimmer-gradient)"></rect>
+          <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
+          <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
+          <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
+          <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
         </g>
       </svg>
     </div>

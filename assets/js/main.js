@@ -391,7 +391,7 @@
         return;
       }
 
-      loadScript("/assets/js/logo-animation.js?v=60").then(resolve);
+      loadScript("/assets/js/logo-animation.js?v=61").then(resolve);
     });
   }
 
@@ -402,7 +402,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=60").then(resolve);
+      loadScript("/assets/js/tos.js?v=61").then(resolve);
     });
   }
 
