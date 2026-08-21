@@ -346,12 +346,9 @@ main {
 }
 
 .kanasaka-logo--hero {
-  position: relative;
   gap: 0;
   width: min(2280px, 98vw, calc(80vh * 4.36));
   margin-bottom: 0;
-  overflow: hidden;
-  isolation: isolate;
 }
 
 .kanasaka-logo-svg {
@@ -415,54 +412,43 @@ main {
   opacity: 0.45;
 }
 
-.kanasaka-logo--hero.is-ambient::after {
-  content: "";
-  position: absolute;
-  inset: -8% -60%;
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    transparent 36%,
-    rgba(255, 255, 255, 0.03) 42%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0.03) 58%,
-    transparent 64%,
-    transparent 100%
-  );
-  animation: logo-glass-shimmer 8s linear infinite;
+.logo-shimmer-layer {
+  opacity: 0;
   pointer-events: none;
-  mix-blend-mode: screen;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-shimmer-layer {
+  opacity: 1;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-shimmer-sweep {
+  animation: logo-glass-shimmer 8s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
   will-change: transform;
 }
 
 @keyframes logo-glass-shimmer {
   0% {
-    transform: translateX(-35%);
+    transform: translateX(-260px);
   }
 
   100% {
-    transform: translateX(35%);
+    transform: translateX(260px);
   }
 }
 
-[data-theme="light"] .kanasaka-logo--hero.is-ambient::after {
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    transparent 36%,
-    rgba(255, 255, 255, 0.35) 42%,
-    rgba(255, 255, 255, 0.75) 50%,
-    rgba(255, 255, 255, 0.35) 58%,
-    transparent 64%,
-    transparent 100%
-  );
-  mix-blend-mode: soft-light;
+[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-shimmer-layer {
+  opacity: 0.55;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .kanasaka-logo--hero.is-ambient::after {
+  .kanasaka-logo--hero.is-ambient .logo-shimmer-layer {
+    opacity: 0 !important;
+  }
+
+  .kanasaka-logo--hero.is-ambient .logo-shimmer-sweep {
     animation: none !important;
-    opacity: 0;
   }
 
   .kanasaka-logo--hero .logo-line {
