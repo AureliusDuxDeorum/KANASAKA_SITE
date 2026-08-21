@@ -408,50 +408,53 @@ main {
 
 /* ── Home hero glass shimmer ── */
 
-.kanasaka-logo--hero .logo-line {
+.kanasaka-logo--hero .logo-base .logo-line {
   opacity: 0.45;
 }
 
-.logo-shimmer-layer {
+.logo-shimmer-highlight {
   opacity: 0;
   pointer-events: none;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-shimmer-layer {
+.kanasaka-logo--hero.is-ambient .logo-shimmer-highlight {
   opacity: 1;
 }
 
-.kanasaka-logo--hero.is-ambient .logo-shimmer-sweep {
+.kanasaka-logo--hero.is-ambient .logo-shimmer-highlight .logo-line {
+  opacity: 1;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-shimmer-highlight .logo-tag {
+  opacity: 1;
+  fill: #ffffff;
+}
+
+.kanasaka-logo--hero.is-ambient .logo-shimmer-band {
   animation: logo-glass-shimmer 8s linear infinite;
-  transform-box: fill-box;
-  transform-origin: center;
   will-change: transform;
 }
 
 @keyframes logo-glass-shimmer {
   0% {
-    transform: translateX(-260px);
+    transform: translateX(-140px);
   }
 
   100% {
-    transform: translateX(260px);
+    transform: translateX(620px);
   }
-}
-
-[data-theme="light"] .kanasaka-logo--hero.is-ambient .logo-shimmer-layer {
-  opacity: 0.55;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .kanasaka-logo--hero.is-ambient .logo-shimmer-layer {
+  .kanasaka-logo--hero.is-ambient .logo-shimmer-highlight {
     opacity: 0 !important;
   }
 
-  .kanasaka-logo--hero.is-ambient .logo-shimmer-sweep {
+  .kanasaka-logo--hero.is-ambient .logo-shimmer-band {
     animation: none !important;
   }
 
-  .kanasaka-logo--hero .logo-line {
+  .kanasaka-logo--hero .logo-base .logo-line {
     opacity: 1;
   }
 }
