@@ -96,7 +96,7 @@
       email,
       password,
       tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
-      tosVersion: "1",
+      tosVersion: "2",
     };
 
     if (accountId) {
