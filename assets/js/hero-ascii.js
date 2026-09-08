@@ -157,11 +157,13 @@
       const fieldW = mw - fieldStartPx;
       const fieldCenterX = fieldStartPx + fieldW / 2;
       // sized/positioned with margin so ascenders/descenders never clip
-      // against the field bounds, K stacked above S like the wordmark.
-      const letterSize = mh * 0.34;
+      // against the field bounds, K stacked above S like the wordmark,
+      // shifted up slightly off dead-center for a less static composition.
+      const letterSize = mh * 0.46;
+      const yOffset = -mh * 0.05;
       mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
-      mctx.fillText("K", fieldCenterX, mh * 0.43);
-      mctx.fillText("S", fieldCenterX, mh * 0.79);
+      mctx.fillText("K", fieldCenterX, mh * 0.43 + yOffset);
+      mctx.fillText("S", fieldCenterX, mh * 0.85 + yOffset);
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -226,11 +228,6 @@
         const runs = [];
 
         for (let x = 0; x < cols; x++) {
-          if (x < startCol) {
-            runChar += " ";
-            continue;
-          }
-
           const dx = x - mx;
           const dy = (y - my) * (cellW / cellH);
           const distToMouse = Math.sqrt(dx * dx + dy * dy);
@@ -275,8 +272,8 @@
               // letters get a distinctly brighter, near-white band so the
               // mark reads clearly against the dimmer ambient noise floor
               const opacity = isLetter
-                ? (0.6 + frac * 0.4).toFixed(2)
-                : (0.32 + frac * 0.6).toFixed(2);
+                ? (0.68 + frac * 0.32).toFixed(2)
+                : (0.45 + frac * 0.55).toFixed(2);
               const color = isLetter ? "var(--color-text)" : "inherit";
               return (
                 '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"
