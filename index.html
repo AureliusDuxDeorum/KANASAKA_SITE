@@ -13,8 +13,32 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=64">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=64">
+  <link rel="stylesheet" href="/assets/css/style.css?v=65">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=65">
+  <style>
+    /* Hero glass hub: WebGL wall/glass sits behind the K/S mark, positioned to
+       align with the wire endpoints in the SVG (viewBox x 188-292 of 480).
+       Hidden until hero-glass.js confirms WebGL works, so a failed/blocked
+       init leaves the flat letters visible instead of an empty gap. */
+    .glass-hub {
+      position: absolute;
+      left: 39.1667%;
+      width: 21.6667%;
+      top: -6%;
+      height: 112%;
+      z-index: 2;
+      border-radius: 6px;
+      overflow: hidden;
+      display: none;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    }
+    .glass-hub.is-ready { display: block; }
+    .glass-hub canvas { display: block; width: 100%; height: 100%; }
+    .kanasaka-logo--hero.has-glass-hub .logo-letter-k,
+    .kanasaka-logo--hero.has-glass-hub .logo-letter-s {
+      opacity: 0;
+    }
+  </style>
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -79,6 +103,10 @@
           </g>
         </g>
       </svg>
+
+      <div class="glass-hub">
+        <canvas id="hero-glass-canvas"></canvas>
+      </div>
     </div>
 
     <h1 class="visually-hidden">KANASAKA</h1>

@@ -391,7 +391,7 @@
         return;
       }
 
-      loadScript("/assets/js/logo-animation.js?v=64").then(resolve);
+      loadScript("/assets/js/logo-animation.js?v=65").then(resolve);
     });
   }
 
@@ -402,7 +402,23 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=64").then(resolve);
+      loadScript("/assets/js/tos.js?v=65").then(resolve);
+    });
+  }
+
+  function loadHeroGlass() {
+    return new Promise(function (resolve) {
+      if (!document.getElementById("hero-glass-canvas")) {
+        resolve();
+        return;
+      }
+
+      if (window.KanasakaHeroGlass) {
+        resolve();
+        return;
+      }
+
+      loadScript("/assets/js/hero-glass.js?v=65").then(resolve);
     });
   }
 
@@ -431,6 +447,11 @@
     await loadLogoAnimation();
     if (window.KanasakaLogoAnimation) {
       window.KanasakaLogoAnimation.init();
+    }
+
+    await loadHeroGlass();
+    if (window.KanasakaHeroGlass) {
+      window.KanasakaHeroGlass.init();
     }
 
     await loadTerms();

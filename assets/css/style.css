@@ -346,6 +346,7 @@ main {
 }
 
 .kanasaka-logo--hero {
+  position: relative;
   gap: 0;
   width: min(2280px, 98vw, calc(80vh * 4.36));
   margin-bottom: 0;
