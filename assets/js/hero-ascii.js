@@ -158,11 +158,11 @@
       // sized/positioned with margin so ascenders/descenders never clip
       // against the field bounds, K stacked above S like the wordmark,
       // shifted off dead-center on the x-axis for a less static composition.
-      const fieldCenterX = fieldStartPx + fieldW / 2 - fieldW * 0.06;
-      const letterSize = mh * 0.575;
+      const fieldCenterX = fieldStartPx + fieldW / 2 - fieldW * 0.15;
+      const letterSize = mh * 0.44;
       mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
-      mctx.fillText("K", fieldCenterX, mh * 0.47);
-      mctx.fillText("S", fieldCenterX, mh * 0.89);
+      mctx.fillText("K", fieldCenterX, mh * 0.36);
+      mctx.fillText("S", fieldCenterX, mh * 0.81);
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -272,7 +272,7 @@
               // mark reads clearly against the dimmer ambient noise floor
               const opacity = isLetter
                 ? (0.68 + frac * 0.32).toFixed(2)
-                : (0.45 + frac * 0.55).toFixed(2);
+                : (0.34 + frac * 0.42).toFixed(2);
               const color = isLetter ? "var(--color-text)" : "inherit";
               return (
                 '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"

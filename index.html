@@ -41,6 +41,14 @@
       font-size: 13px;
       line-height: 23px;
     }
+    .ha-cols::before {
+      content: "";
+      position: absolute;
+      inset: -24px -56px -24px -24px;
+      background: linear-gradient(to right, var(--color-base) 68%, transparent 100%);
+      z-index: -1;
+      pointer-events: none;
+    }
     .ha-col {
       padding-right: 26px;
       border-right: 1px solid var(--color-border);
