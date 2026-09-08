@@ -22,13 +22,11 @@
       position: relative;
       min-height: 78vh;
       display: flex;
-      align-items: stretch;
+      align-items: flex-start;
       padding: 40px clamp(20px, 4vw, 64px);
       background: var(--color-base);
       overflow: hidden;
       font-family: ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace;
-      font-size: 13px;
-      line-height: 18px;
     }
     .hero-ascii * { box-sizing: border-box; }
 
@@ -36,12 +34,15 @@
       position: relative;
       z-index: 2;
       display: flex;
-      gap: 18px;
+      align-items: flex-start;
+      gap: 26px;
       flex-shrink: 0;
       padding-top: 4px;
+      font-size: 13px;
+      line-height: 23px;
     }
     .ha-col {
-      padding-right: 18px;
+      padding-right: 26px;
       border-right: 1px solid var(--color-border);
       white-space: pre;
     }
@@ -57,7 +58,14 @@
       z-index: 1;
       pointer-events: none;
     }
-    #ha-field { white-space: pre; color: #3a3a3a; margin: 0; user-select: none; }
+    #ha-field {
+      white-space: pre;
+      color: #3a3a3a;
+      margin: 0;
+      user-select: none;
+      font-size: 7px;
+      line-height: 8px;
+    }
 
     .ha-tagline {
       position: absolute;

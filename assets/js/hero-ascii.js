@@ -1,8 +1,6 @@
 (function () {
   const RAMP = " .:-=+*#%@";
-  const CELL_W = 7.8;
-  const CELL_H = 18;
-  const MASK_SCALE = 4;
+  const MASK_SCALE = 6;
 
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -86,13 +84,29 @@
       const div = document.createElement("div");
       div.className = "ha-col";
       const rows = [];
-      if (col.head) rows.push('<span class="ha-head">' + col.head + "</span>");
+      if (col.head) {
+        rows.push('<span class="ha-head">' + col.head + "</span>");
+        rows.push("");
+      }
       col.lines.forEach(function (l) {
         rows.push('<span class="' + l.cls + '">' + l.t + "</span>");
       });
       div.innerHTML = rows.join("\n");
       colsEl.appendChild(div);
     });
+  }
+
+  function measureCell(el) {
+    const probe = document.createElement("span");
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.whiteSpace = "pre";
+    probe.textContent = "0000000000";
+    el.appendChild(probe);
+    const w = probe.getBoundingClientRect().width / 10;
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+    el.removeChild(probe);
+    return { w: w, h: lineHeight };
   }
 
   function init() {
@@ -122,6 +136,8 @@
     let contentColsWidth = 0;
     let startCol = 0;
     let letterMask = null;
+    let cellW = 5;
+    let cellH = 8;
 
     function buildLetterMask() {
       if (!cols || !rows) return;
@@ -135,15 +151,17 @@
       mctx.fillRect(0, 0, mw, mh);
       mctx.fillStyle = "#fff";
       mctx.textAlign = "center";
-      mctx.textBaseline = "middle";
+      mctx.textBaseline = "alphabetic";
 
       const fieldStartPx = startCol * MASK_SCALE;
       const fieldW = mw - fieldStartPx;
       const fieldCenterX = fieldStartPx + fieldW / 2;
-      const letterSize = mh * 0.58;
+      // sized/positioned with margin so ascenders/descenders never clip
+      // against the field bounds, K stacked above S like the wordmark.
+      const letterSize = mh * 0.34;
       mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
-      mctx.fillText("K", fieldCenterX - letterSize * 0.4, mh * 0.32);
-      mctx.fillText("S", fieldCenterX + letterSize * 0.4, mh * 0.7);
+      mctx.fillText("K", fieldCenterX, mh * 0.43);
+      mctx.fillText("S", fieldCenterX, mh * 0.79);
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -164,12 +182,16 @@
     }
 
     function measure() {
+      const cell = measureCell(fieldEl);
+      cellW = cell.w || cellW;
+      cellH = cell.h || cellH;
+
       const wrapRect = fieldWrap.getBoundingClientRect();
       const colsRect = colsEl.getBoundingClientRect();
       contentColsWidth = colsRect.width + 24;
-      cols = Math.floor(wrapRect.width / CELL_W);
-      rows = Math.floor(wrapRect.height / CELL_H);
-      startCol = Math.ceil(contentColsWidth / CELL_W) + 2;
+      cols = Math.floor(wrapRect.width / cellW);
+      rows = Math.floor(wrapRect.height / cellH);
+      startCol = Math.ceil(contentColsWidth / cellW) + 2;
       buildLetterMask();
     }
 
@@ -200,7 +222,7 @@
 
       for (let y = 0; y < rows; y++) {
         let runChar = "";
-        let runTier = -1;
+        let runKey = null;
         const runs = [];
 
         for (let x = 0; x < cols; x++) {
@@ -210,7 +232,7 @@
           }
 
           const dx = x - mx;
-          const dy = (y - my) * (CELL_W / CELL_H);
+          const dy = (y - my) * (cellW / cellH);
           const distToMouse = Math.sqrt(dx * dx + dy * dy);
           const ripple = reduced
             ? 0
@@ -219,34 +241,43 @@
           const nx = x * 0.09 + (reduced ? 0 : t * 0.06);
           const ny = y * 0.16 - (reduced ? 0 : t * 0.04);
           let v = fbm(nx, ny) + ripple;
+          v = Math.max(0, Math.min(1, v));
 
           const m = letterMask ? letterMask[y * cols + x] : 0;
-          if (m > 0.05) {
-            v = Math.max(v, m * (0.72 + fbm(nx * 1.7 + 9.0, ny * 1.7 + 4.0) * 0.35));
-          }
+          const isLetter = m > 0.1;
 
-          v = Math.max(0, Math.min(1, v));
           const tier = Math.floor(v * (RAMP.length - 1));
           const ch = RAMP[tier];
+          const key = tier + (isLetter ? 100 : 0);
 
-          if (tier !== runTier) {
-            if (runChar) runs.push([runTier, runChar]);
+          if (key !== runKey) {
+            if (runChar) runs.push([runKey, runChar]);
             runChar = ch;
-            runTier = tier;
+            runKey = key;
           } else {
             runChar += ch;
           }
         }
-        if (runChar) runs.push([runTier, runChar]);
+        if (runChar) runs.push([runKey, runChar]);
 
         lines.push(
           runs
             .map(function (pair) {
-              const tier = pair[0];
+              const key = pair[0];
               const chars = pair[1];
-              if (tier < 0) return chars;
-              const opacity = (0.12 + (tier / (RAMP.length - 1)) * 0.75).toFixed(2);
-              return '<span style="opacity:' + opacity + '">' + chars + "</span>";
+              if (key === null) return chars;
+              const isLetter = key >= 100;
+              const tier = isLetter ? key - 100 : key;
+              const frac = tier / (RAMP.length - 1);
+              // letters get a distinctly brighter, near-white band so the
+              // mark reads clearly against the dimmer ambient noise floor
+              const opacity = isLetter
+                ? (0.55 + frac * 0.45).toFixed(2)
+                : (0.08 + frac * 0.32).toFixed(2);
+              const color = isLetter ? "var(--color-text)" : "inherit";
+              return (
+                '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"
+              );
             })
             .join("")
         );
