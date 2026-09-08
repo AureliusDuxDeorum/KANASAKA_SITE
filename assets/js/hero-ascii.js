@@ -21,7 +21,7 @@
   }
   function fbm(x, y) {
     let v = 0, a = 0.5, xx = x, yy = y;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       v += a * noise(xx, yy);
       xx *= 2.02;
       yy *= 2.02;
@@ -155,15 +155,14 @@
 
       const fieldStartPx = startCol * MASK_SCALE;
       const fieldW = mw - fieldStartPx;
-      const fieldCenterX = fieldStartPx + fieldW / 2;
       // sized/positioned with margin so ascenders/descenders never clip
       // against the field bounds, K stacked above S like the wordmark,
-      // shifted up slightly off dead-center for a less static composition.
-      const letterSize = mh * 0.46;
-      const yOffset = -mh * 0.05;
+      // shifted off dead-center on the x-axis for a less static composition.
+      const fieldCenterX = fieldStartPx + fieldW / 2 - fieldW * 0.06;
+      const letterSize = mh * 0.575;
       mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
-      mctx.fillText("K", fieldCenterX, mh * 0.43 + yOffset);
-      mctx.fillText("S", fieldCenterX, mh * 0.85 + yOffset);
+      mctx.fillText("K", fieldCenterX, mh * 0.47);
+      mctx.fillText("S", fieldCenterX, mh * 0.89);
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -286,9 +285,13 @@
       fieldEl.innerHTML = lines.join("\n");
     }
 
+    let frameCount = 0;
     function frame(now) {
       if (!running) return;
-      render(now);
+      // render at ~30fps instead of every rAF tick — the noise drift is
+      // slow enough that this reads as smooth while halving the CPU cost
+      frameCount++;
+      if (frameCount % 2 === 0) render(now);
       rafId = window.requestAnimationFrame(frame);
     }
 
