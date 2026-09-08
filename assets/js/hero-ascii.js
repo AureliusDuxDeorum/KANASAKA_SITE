@@ -241,10 +241,13 @@
           const nx = x * 0.09 + (reduced ? 0 : t * 0.06);
           const ny = y * 0.16 - (reduced ? 0 : t * 0.04);
           let v = fbm(nx, ny) + ripple;
-          v = Math.max(0, Math.min(1, v));
 
           const m = letterMask ? letterMask[y * cols + x] : 0;
           const isLetter = m > 0.1;
+          if (isLetter) {
+            v = Math.max(v, m * (0.7 + fbm(nx * 1.7 + 9.0, ny * 1.7 + 4.0) * 0.35));
+          }
+          v = Math.max(0, Math.min(1, v));
 
           const tier = Math.floor(v * (RAMP.length - 1));
           const ch = RAMP[tier];
@@ -272,8 +275,8 @@
               // letters get a distinctly brighter, near-white band so the
               // mark reads clearly against the dimmer ambient noise floor
               const opacity = isLetter
-                ? (0.55 + frac * 0.45).toFixed(2)
-                : (0.08 + frac * 0.32).toFixed(2);
+                ? (0.6 + frac * 0.4).toFixed(2)
+                : (0.14 + frac * 0.62).toFixed(2);
               const color = isLetter ? "var(--color-text)" : "inherit";
               return (
                 '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"
