@@ -276,7 +276,7 @@
               // mark reads clearly against the dimmer ambient noise floor
               const opacity = isLetter
                 ? (0.6 + frac * 0.4).toFixed(2)
-                : (0.14 + frac * 0.62).toFixed(2);
+                : (0.32 + frac * 0.6).toFixed(2);
               const color = isLetter ? "var(--color-text)" : "inherit";
               return (
                 '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"
