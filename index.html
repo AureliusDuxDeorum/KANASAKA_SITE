@@ -16,27 +16,58 @@
   <link rel="stylesheet" href="/assets/css/style.css?v=65">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=65">
   <style>
-    /* Hero glass hub: WebGL wall/glass sits behind the K/S mark, positioned to
-       align with the wire endpoints in the SVG (viewBox x 188-292 of 480).
-       Hidden until hero-glass.js confirms WebGL works, so a failed/blocked
-       init leaves the flat letters visible instead of an empty gap. */
-    .glass-hub {
-      position: absolute;
-      left: 39.1667%;
-      width: 21.6667%;
-      top: -6%;
-      height: 112%;
-      z-index: 2;
-      border-radius: 6px;
+    /* Home hero: generative ASCII field (hero-ascii.js) replacing the flat
+       K/S wordmark. Scoped to this page only — header/nav/footer untouched. */
+    .hero-ascii {
+      position: relative;
+      min-height: 78vh;
+      display: flex;
+      align-items: stretch;
+      padding: 40px clamp(20px, 4vw, 64px);
+      background: var(--color-base);
       overflow: hidden;
-      display: none;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+      font-family: ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace;
+      font-size: 13px;
+      line-height: 18px;
     }
-    .glass-hub.is-ready { display: block; }
-    .glass-hub canvas { display: block; width: 100%; height: 100%; }
-    .kanasaka-logo--hero.has-glass-hub .logo-letter-k,
-    .kanasaka-logo--hero.has-glass-hub .logo-letter-s {
-      opacity: 0;
+    .hero-ascii * { box-sizing: border-box; }
+
+    .ha-cols {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 18px;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+    .ha-col {
+      padding-right: 18px;
+      border-right: 1px solid var(--color-border);
+      white-space: pre;
+    }
+    .ha-col:last-child { border-right: none; padding-right: 0; }
+    .ha-col .ha-head { color: var(--color-text-muted); letter-spacing: 0.02em; }
+    .ha-col .ha-item { color: #6b6b6b; }
+    .ha-col .ha-brand { color: var(--color-text); font-family: "Tektur", monospace; letter-spacing: 0.04em; }
+    .ha-col .ha-brand-sub { color: #444444; }
+
+    .ha-field-wrap {
+      position: absolute;
+      inset: 40px clamp(20px, 4vw, 64px);
+      z-index: 1;
+      pointer-events: none;
+    }
+    #ha-field { white-space: pre; color: #3a3a3a; margin: 0; user-select: none; }
+
+    .ha-tagline {
+      position: absolute;
+      bottom: 40px;
+      left: clamp(20px, 4vw, 64px);
+      z-index: 3;
+      color: #555555;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 11px;
     }
   </style>
   <script defer src="/assets/js/password-policy.js"></script>
@@ -49,69 +80,11 @@
 
 <main>
 
-  <section class="hero">
-    <div class="kanasaka-logo kanasaka-logo--hero">
-      <svg class="kanasaka-logo-svg" viewBox="0 0 480 110" role="img" aria-label="Kanasaka">
-        <title>Kanasaka</title>
-        <defs>
-          <linearGradient id="logo-band-gradient" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0"></stop>
-            <stop offset="30%" stop-color="#ffffff" stop-opacity="0.35"></stop>
-            <stop offset="50%" stop-color="#ffffff" stop-opacity="1"></stop>
-            <stop offset="70%" stop-color="#ffffff" stop-opacity="0.35"></stop>
-            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
-          </linearGradient>
-          <mask id="logo-band-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="480" height="110">
-            <rect x="0" y="0" width="480" height="110" fill="black"></rect>
-            <rect class="logo-shimmer-band" x="-140" y="0" width="220" height="110" fill="url(#logo-band-gradient)"></rect>
-          </mask>
-        </defs>
-        <g class="logo-base">
-          <g class="logo-side logo-side-left">
-            <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
-            <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
-            <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
-            <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
-          </g>
-          <g class="logo-letters">
-            <text class="logo-letter logo-letter-k" x="240" y="46" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">K</text>
-            <text class="logo-letter logo-letter-s" x="240" y="100" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">S</text>
-          </g>
-          <g class="logo-side logo-side-right">
-            <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
-            <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
-            <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
-            <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
-          </g>
-        </g>
-        <g class="logo-shimmer-highlight" mask="url(#logo-band-mask)" aria-hidden="true">
-          <g class="logo-side logo-side-left">
-            <path class="logo-line" d="M 80 40 H 108 L 120 52 H 188"></path>
-            <text class="logo-tag" x="76" y="44" text-anchor="end">Software</text>
-            <path class="logo-line" d="M 80 70 H 108 L 120 58 H 188"></path>
-            <text class="logo-tag" x="76" y="74" text-anchor="end">AI</text>
-          </g>
-          <g class="logo-letters">
-            <text class="logo-letter logo-letter-k" x="240" y="46" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">K</text>
-            <text class="logo-letter logo-letter-s" x="240" y="100" text-anchor="middle" font-family="Tektur, sans-serif" font-size="50" font-weight="600">S</text>
-          </g>
-          <g class="logo-side logo-side-right">
-            <path class="logo-line" d="M 400 40 H 372 L 360 52 H 292"></path>
-            <text class="logo-tag" x="404" y="44" text-anchor="start">Robotics</text>
-            <path class="logo-line" d="M 400 70 H 372 L 360 58 H 292"></path>
-            <text class="logo-tag" x="404" y="74" text-anchor="start">Biotech</text>
-          </g>
-        </g>
-      </svg>
-
-      <div class="glass-hub">
-        <canvas id="hero-glass-canvas"></canvas>
-      </div>
-    </div>
-
+  <section class="hero-ascii" id="hero-ascii">
     <h1 class="visually-hidden">KANASAKA</h1>
-
-    <p class="hero-lead">Software · AI · Robotics · Biotech</p>
+    <div class="ha-cols" id="ha-cols"></div>
+    <div class="ha-field-wrap"><pre id="ha-field"></pre></div>
+    <div class="ha-tagline">kanasaka.com &middot; software &middot; ai &middot; robotics &middot; biotech</div>
   </section>
 
   <section class="page-section">

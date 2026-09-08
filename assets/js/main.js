@@ -406,19 +406,19 @@
     });
   }
 
-  function loadHeroGlass() {
+  function loadHeroAscii() {
     return new Promise(function (resolve) {
-      if (!document.getElementById("hero-glass-canvas")) {
+      if (!document.getElementById("hero-ascii")) {
         resolve();
         return;
       }
 
-      if (window.KanasakaHeroGlass) {
+      if (window.KanasakaHeroAscii) {
         resolve();
         return;
       }
 
-      loadScript("/assets/js/hero-glass.js?v=65").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=65").then(resolve);
     });
   }
 
@@ -449,9 +449,9 @@
       window.KanasakaLogoAnimation.init();
     }
 
-    await loadHeroGlass();
-    if (window.KanasakaHeroGlass) {
-      window.KanasakaHeroGlass.init();
+    await loadHeroAscii();
+    if (window.KanasakaHeroAscii) {
+      window.KanasakaHeroAscii.init();
     }
 
     await loadTerms();
