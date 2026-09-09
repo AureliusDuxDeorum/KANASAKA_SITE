@@ -166,12 +166,11 @@
       mctx.textAlign = "center";
       mctx.textBaseline = "alphabetic";
 
-      const fieldStartPx = startCol * MASK_SCALE;
-      const fieldW = mw - fieldStartPx;
-      // sized/positioned with margin so ascenders/descenders never clip
-      // against the field bounds, K stacked above S like the wordmark,
-      // shifted off dead-center on the x-axis for a less static composition.
-      const fieldCenterX = fieldStartPx + fieldW / 2 - fieldW * 0.15;
+      // centered on the window's true horizontal midpoint (not the field
+      // area to the right of the nav columns) -- sized/positioned with
+      // margin so ascenders/descenders never clip against the field
+      // bounds, K stacked above S like the wordmark.
+      const fieldCenterX = mw / 2;
       const letterSize = mh * 0.44;
       mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
       // character cells are much taller than wide (cellH >> cellW), so a
