@@ -153,9 +153,9 @@
     let contentColsWidth = 0;
     let startCol = 0;
     let letterMask = null;
-    let letterCenterCol = 0;
-    let letterCenterRow = 0;
-    let letterClearRadius = 0;
+    let letterDistField = null;
+    let letterHaloInner = 0;
+    let letterHaloOuter = 0;
     let cellW = 5;
     let cellH = 8;
 
@@ -193,12 +193,12 @@
       mctx.fillText("S", 0, mh * 0.78);
       mctx.restore();
 
-      letterCenterCol = fieldCenterX / MASK_SCALE;
-      letterCenterRow = ((0.39 + 0.78) / 2) * rows;
-      letterClearRadius = rows * 0.14;
+      letterHaloInner = Math.max(1.2, rows * 0.035);
+      letterHaloOuter = Math.max(3, rows * 0.1);
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
+      const letterCells = [];
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           let sum = 0;
@@ -209,10 +209,42 @@
               sum += data[(py * mw + px) * 4] / 255;
             }
           }
-          mask[y * cols + x] = sum / (MASK_SCALE * MASK_SCALE);
+          const v = sum / (MASK_SCALE * MASK_SCALE);
+          mask[y * cols + x] = v;
+          if (v > 0.15) letterCells.push(x, y);
         }
       }
       letterMask = mask;
+
+      // distance-to-nearest-letter-pixel field, so the void traces the
+      // actual K/S contours instead of radiating from a single point
+      // between them. Brute-force but cheap enough since it only runs on
+      // resize/font-load, not per animation frame; subsample the letter
+      // cells themselves to keep the O(cells * letterCells) cost sane.
+      const step = Math.max(1, Math.floor(letterCells.length / 2 / 400));
+      const sampled = [];
+      for (let i = 0; i < letterCells.length; i += 2 * step) {
+        sampled.push(letterCells[i], letterCells[i + 1]);
+      }
+      const distField = new Float32Array(cols * rows);
+      const aspect = cellH / cellW;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (mask[y * cols + x] > 0.15) {
+            distField[y * cols + x] = 0;
+            continue;
+          }
+          let minD = Infinity;
+          for (let i = 0; i < sampled.length; i += 2) {
+            const ddx = x - sampled[i];
+            const ddy = (y - sampled[i + 1]) * aspect;
+            const d = ddx * ddx + ddy * ddy;
+            if (d < minD) minD = d;
+          }
+          distField[y * cols + x] = Math.sqrt(minD);
+        }
+      }
+      letterDistField = distField;
     }
 
     function measure() {
@@ -273,9 +305,6 @@
 
           const m = letterMask ? letterMask[y * cols + x] : 0;
           const isLetter = m > 0.1;
-          const ldx = x - letterCenterCol;
-          const ldy = (y - letterCenterRow) * (cellH / cellW);
-          const distToLetters = Math.sqrt(ldx * ldx + ldy * ldy);
 
           if (isLetter) {
             // the letters run their own local shimmer -- a slow, broad
@@ -283,7 +312,7 @@
             // -- instead of inheriting the ambient field's drift. Kept
             // deliberately gentle: a quiet ambient quality, not a sweep.
             const shimmerT = reduced ? 0 : t * 0.5;
-            const shimmer = Math.sin(ldx * 0.1 + ldy * 0.16 - shimmerT) * 0.5 + 0.5;
+            const shimmer = Math.sin(x * 0.1 + y * 0.16 - shimmerT) * 0.5 + 0.5;
             const base = m * (0.82 + shimmer * 0.13);
             // the K/S also react to the cursor much faster and more sharply
             // than the ambient field -- tight falloff so it's felt right
@@ -293,11 +322,12 @@
               ? 0
               : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - t * 9) * 0.5;
             v = Math.max(v, base + hoverReact);
-          } else if (letterMask) {
-            // carve a little negative space around the mark -- pure
-            // suppression, no added light -- so it emerges from a small
-            // clearing instead of noise running right up to its edges.
-            v *= smoothstep(letterClearRadius, letterClearRadius * 1.35, distToLetters);
+          } else if (letterDistField) {
+            // carve negative space that traces the actual K/S contours --
+            // pure suppression, no added light -- instead of radiating from
+            // a single point between the two letters.
+            const distToLetters = letterDistField[y * cols + x];
+            v *= smoothstep(letterHaloInner, letterHaloOuter, distToLetters);
           }
           v = Math.max(0, Math.min(1, v));
 
