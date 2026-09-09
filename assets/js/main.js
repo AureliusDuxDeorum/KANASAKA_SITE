@@ -171,17 +171,7 @@
       profileLink.appendChild(avatar);
       profileLink.appendChild(name);
 
-      const logoutBtn = document.createElement("button");
-      logoutBtn.type = "button";
-      logoutBtn.className = "auth-link";
-      logoutBtn.textContent = "Log Out";
-      logoutBtn.addEventListener("click", async function () {
-        await window.KanasakaAuth.logout();
-        window.location.href = "/";
-      });
-
       wrap.appendChild(profileLink);
-      wrap.appendChild(logoutBtn);
       return wrap;
     }
 

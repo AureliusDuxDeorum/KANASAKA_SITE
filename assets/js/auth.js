@@ -987,6 +987,15 @@
       }
     });
 
+    const logoutButton = document.getElementById("settings-logout-button");
+    if (logoutButton) {
+      logoutButton.addEventListener("click", async function () {
+        logoutButton.disabled = true;
+        await logout();
+        window.location.href = "/";
+      });
+    }
+
     initBillingPanel();
   }
 
