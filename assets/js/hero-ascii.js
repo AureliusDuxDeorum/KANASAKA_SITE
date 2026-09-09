@@ -261,7 +261,7 @@
 
         for (let x = 0; x < cols; x++) {
           const dx = x - mx;
-          const dy = (y - my) * (cellW / cellH);
+          const dy = (y - my) * (cellH / cellW);
           const distToMouse = Math.sqrt(dx * dx + dy * dy);
           const ripple = reduced
             ? 0
@@ -274,7 +274,7 @@
           const m = letterMask ? letterMask[y * cols + x] : 0;
           const isLetter = m > 0.1;
           const ldx = x - letterCenterCol;
-          const ldy = (y - letterCenterRow) * (cellW / cellH);
+          const ldy = (y - letterCenterRow) * (cellH / cellW);
           const distToLetters = Math.sqrt(ldx * ldx + ldy * ldy);
 
           if (isLetter) {
