@@ -195,7 +195,7 @@
 
       letterCenterCol = fieldCenterX / MASK_SCALE;
       letterCenterRow = ((0.39 + 0.78) / 2) * rows;
-      letterClearRadius = rows * 0.32;
+      letterClearRadius = rows * 0.14;
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -273,24 +273,31 @@
 
           const m = letterMask ? letterMask[y * cols + x] : 0;
           const isLetter = m > 0.1;
+          const ldx = x - letterCenterCol;
+          const ldy = (y - letterCenterRow) * (cellW / cellH);
+          const distToLetters = Math.sqrt(ldx * ldx + ldy * ldy);
+
           if (isLetter) {
-            const base = m * (0.7 + fbm(nx * 1.7 + 9.0, ny * 1.7 + 4.0) * 0.35);
-            // the K/S react to the cursor much faster and more sharply than
-            // the ambient field -- tight falloff so it's felt right where
-            // you're hovering, quick oscillation so it visibly flickers
-            // between characters instead of just gently drifting.
+            // the letters run their own local shimmer -- a diagonal sweep
+            // across the mark's own coordinates on its own clock -- instead
+            // of inheriting the ambient field's slow global drift, so they
+            // read as a distinct, self-contained animation.
+            const shimmerT = reduced ? 0 : t * 1.6;
+            const shimmer = Math.sin(ldx * 0.22 + ldy * 0.35 - shimmerT) * 0.5 + 0.5;
+            const base = m * (0.72 + shimmer * 0.28);
+            // the K/S also react to the cursor much faster and more sharply
+            // than the ambient field -- tight falloff so it's felt right
+            // where you're hovering, quick oscillation so it visibly
+            // flickers between characters instead of just gently drifting.
             const hoverReact = reduced
               ? 0
               : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - t * 9) * 0.5;
             v = Math.max(v, base + hoverReact);
           } else if (letterMask) {
-            // carve genuine negative space around the mark -- pure
-            // suppression, no added light -- so it emerges from a clearing
-            // instead of competing with noise right up to its edges.
-            const ldx = x - letterCenterCol;
-            const ldy = (y - letterCenterRow) * (cellW / cellH);
-            const distToLetters = Math.sqrt(ldx * ldx + ldy * ldy);
-            v *= smoothstep(letterClearRadius, letterClearRadius * 2.1, distToLetters);
+            // carve a little negative space around the mark -- pure
+            // suppression, no added light -- so it emerges from a small
+            // clearing instead of noise running right up to its edges.
+            v *= smoothstep(letterClearRadius, letterClearRadius * 1.35, distToLetters);
           }
           v = Math.max(0, Math.min(1, v));
 
