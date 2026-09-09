@@ -19,6 +19,10 @@
     const uy = yf * yf * (3 - 2 * yf);
     return a + (b - a) * ux + (c - a) * uy * (1 - ux) + (d - b) * ux * uy;
   }
+  function smoothstep(e0, e1, x) {
+    const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+    return t * t * (3 - 2 * t);
+  }
   function fbm(x, y) {
     let v = 0, a = 0.5, xx = x, yy = y;
     for (let i = 0; i < 3; i++) {
@@ -149,6 +153,9 @@
     let contentColsWidth = 0;
     let startCol = 0;
     let letterMask = null;
+    let letterCenterCol = 0;
+    let letterCenterRow = 0;
+    let letterClearRadius = 0;
     let cellW = 5;
     let cellH = 8;
 
@@ -182,9 +189,13 @@
       mctx.save();
       mctx.translate(fieldCenterX, 0);
       mctx.scale(aspectFix, 1);
-      mctx.fillText("K", 0, mh * 0.36);
-      mctx.fillText("S", 0, mh * 0.81);
+      mctx.fillText("K", 0, mh * 0.39);
+      mctx.fillText("S", 0, mh * 0.78);
       mctx.restore();
+
+      letterCenterCol = fieldCenterX / MASK_SCALE;
+      letterCenterRow = ((0.39 + 0.78) / 2) * rows;
+      letterClearRadius = rows * 0.32;
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -272,6 +283,14 @@
               ? 0
               : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - t * 9) * 0.5;
             v = Math.max(v, base + hoverReact);
+          } else if (letterMask) {
+            // carve genuine negative space around the mark -- pure
+            // suppression, no added light -- so it emerges from a clearing
+            // instead of competing with noise right up to its edges.
+            const ldx = x - letterCenterCol;
+            const ldy = (y - letterCenterRow) * (cellW / cellH);
+            const distToLetters = Math.sqrt(ldx * ldx + ldy * ldy);
+            v *= smoothstep(letterClearRadius, letterClearRadius * 2.1, distToLetters);
           }
           v = Math.max(0, Math.min(1, v));
 
