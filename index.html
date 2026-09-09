@@ -82,6 +82,11 @@
       inset: 40px clamp(20px, 4vw, 64px);
       z-index: 1;
       pointer-events: none;
+      /* transitional void at the window edges instead of anything tied to
+         the letters -- the field simply dissolves before it reaches the
+         edge of the viewport. */
+      -webkit-mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
+      mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
     }
     #ha-field {
       white-space: pre;

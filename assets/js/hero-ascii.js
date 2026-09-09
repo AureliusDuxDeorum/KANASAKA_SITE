@@ -19,10 +19,6 @@
     const uy = yf * yf * (3 - 2 * yf);
     return a + (b - a) * ux + (c - a) * uy * (1 - ux) + (d - b) * ux * uy;
   }
-  function smoothstep(e0, e1, x) {
-    const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
-    return t * t * (3 - 2 * t);
-  }
   function fbm(x, y) {
     let v = 0, a = 0.5, xx = x, yy = y;
     for (let i = 0; i < 3; i++) {
@@ -153,9 +149,6 @@
     let contentColsWidth = 0;
     let startCol = 0;
     let letterMask = null;
-    let letterDistField = null;
-    let letterHaloInner = 0;
-    let letterHaloOuter = 0;
     let cellW = 5;
     let cellH = 8;
 
@@ -193,12 +186,8 @@
       mctx.fillText("S", 0, mh * 0.78);
       mctx.restore();
 
-      letterHaloInner = Math.max(1.2, rows * 0.035);
-      letterHaloOuter = Math.max(3, rows * 0.1);
-
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
-      const letterCells = [];
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           let sum = 0;
@@ -209,42 +198,10 @@
               sum += data[(py * mw + px) * 4] / 255;
             }
           }
-          const v = sum / (MASK_SCALE * MASK_SCALE);
-          mask[y * cols + x] = v;
-          if (v > 0.15) letterCells.push(x, y);
+          mask[y * cols + x] = sum / (MASK_SCALE * MASK_SCALE);
         }
       }
       letterMask = mask;
-
-      // distance-to-nearest-letter-pixel field, so the void traces the
-      // actual K/S contours instead of radiating from a single point
-      // between them. Brute-force but cheap enough since it only runs on
-      // resize/font-load, not per animation frame; subsample the letter
-      // cells themselves to keep the O(cells * letterCells) cost sane.
-      const step = Math.max(1, Math.floor(letterCells.length / 2 / 400));
-      const sampled = [];
-      for (let i = 0; i < letterCells.length; i += 2 * step) {
-        sampled.push(letterCells[i], letterCells[i + 1]);
-      }
-      const distField = new Float32Array(cols * rows);
-      const aspect = cellH / cellW;
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          if (mask[y * cols + x] > 0.15) {
-            distField[y * cols + x] = 0;
-            continue;
-          }
-          let minD = Infinity;
-          for (let i = 0; i < sampled.length; i += 2) {
-            const ddx = x - sampled[i];
-            const ddy = (y - sampled[i + 1]) * aspect;
-            const d = ddx * ddx + ddy * ddy;
-            if (d < minD) minD = d;
-          }
-          distField[y * cols + x] = Math.sqrt(minD);
-        }
-      }
-      letterDistField = distField;
     }
 
     function measure() {
@@ -322,12 +279,6 @@
               ? 0
               : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - t * 9) * 0.5;
             v = Math.max(v, base + hoverReact);
-          } else if (letterDistField) {
-            // carve negative space that traces the actual K/S contours --
-            // pure suppression, no added light -- instead of radiating from
-            // a single point between the two letters.
-            const distToLetters = letterDistField[y * cols + x];
-            v *= smoothstep(letterHaloInner, letterHaloOuter, distToLetters);
           }
           v = Math.max(0, Math.min(1, v));
 
