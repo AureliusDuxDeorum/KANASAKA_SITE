@@ -161,8 +161,17 @@
       const fieldCenterX = fieldStartPx + fieldW / 2 - fieldW * 0.15;
       const letterSize = mh * 0.44;
       mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
-      mctx.fillText("K", fieldCenterX, mh * 0.36);
-      mctx.fillText("S", fieldCenterX, mh * 0.81);
+      // character cells are much taller than wide (cellH >> cellW), so a
+      // glyph drawn "normally" here reads as squeezed on the x-axis once
+      // it's re-flattened into that grid — pre-stretch it horizontally to
+      // compensate.
+      const aspectFix = cellH / cellW;
+      mctx.save();
+      mctx.translate(fieldCenterX, 0);
+      mctx.scale(aspectFix, 1);
+      mctx.fillText("K", 0, mh * 0.36);
+      mctx.fillText("S", 0, mh * 0.81);
+      mctx.restore();
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
       const mask = new Float32Array(cols * rows);
@@ -232,10 +241,10 @@
           const distToMouse = Math.sqrt(dx * dx + dy * dy);
           const ripple = reduced
             ? 0
-            : Math.exp(-distToMouse * 0.06) * Math.sin(distToMouse * 0.35 - t * 2.2) * 0.35;
+            : Math.exp(-distToMouse * 0.06) * Math.sin(distToMouse * 0.22 - t * 0.9) * 0.28;
 
-          const nx = x * 0.09 + (reduced ? 0 : t * 0.06);
-          const ny = y * 0.16 - (reduced ? 0 : t * 0.04);
+          const nx = x * 0.09 + (reduced ? 0 : t * 0.025);
+          const ny = y * 0.16 - (reduced ? 0 : t * 0.016);
           let v = fbm(nx, ny) + ripple;
 
           const m = letterMask ? letterMask[y * cols + x] : 0;
@@ -245,7 +254,10 @@
           }
           v = Math.max(0, Math.min(1, v));
 
-          const tier = Math.floor(v * (RAMP.length - 1));
+          // ambient cells stay within a narrow mid-density band so the field
+          // reads as an even, subtle texture instead of high-contrast
+          // speckling; letters alone get to use the full ramp.
+          const tier = isLetter ? Math.floor(v * (RAMP.length - 1)) : 1 + Math.floor(v * 4);
           const ch = RAMP[tier];
           const key = tier + (isLetter ? 100 : 0);
 
@@ -267,12 +279,12 @@
               if (key === null) return chars;
               const isLetter = key >= 100;
               const tier = isLetter ? key - 100 : key;
-              const frac = tier / (RAMP.length - 1);
+              const frac = isLetter ? tier / (RAMP.length - 1) : (tier - 1) / 3;
               // letters get a distinctly brighter, near-white band so the
               // mark reads clearly against the dimmer ambient noise floor
               const opacity = isLetter
                 ? (0.68 + frac * 0.32).toFixed(2)
-                : (0.34 + frac * 0.42).toFixed(2);
+                : (0.36 + frac * 0.3).toFixed(2);
               const color = isLetter ? "var(--color-text)" : "inherit";
               return (
                 '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"

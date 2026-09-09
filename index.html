@@ -29,6 +29,15 @@
       font-family: ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace;
     }
     .hero-ascii * { box-sizing: border-box; }
+    .hero-ascii::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 22vh;
+      background: linear-gradient(to bottom, transparent, var(--color-base));
+      z-index: 3;
+      pointer-events: none;
+    }
 
     .ha-cols {
       position: relative;
@@ -79,7 +88,7 @@
       position: absolute;
       bottom: 40px;
       left: clamp(20px, 4vw, 64px);
-      z-index: 3;
+      z-index: 4;
       color: #555555;
       letter-spacing: 0.14em;
       text-transform: uppercase;
