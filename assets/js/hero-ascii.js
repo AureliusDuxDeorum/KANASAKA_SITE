@@ -278,13 +278,13 @@
           const distToLetters = Math.sqrt(ldx * ldx + ldy * ldy);
 
           if (isLetter) {
-            // the letters run their own local shimmer -- a diagonal sweep
-            // across the mark's own coordinates on its own clock -- instead
-            // of inheriting the ambient field's slow global drift, so they
-            // read as a distinct, self-contained animation.
-            const shimmerT = reduced ? 0 : t * 1.6;
-            const shimmer = Math.sin(ldx * 0.22 + ldy * 0.35 - shimmerT) * 0.5 + 0.5;
-            const base = m * (0.72 + shimmer * 0.28);
+            // the letters run their own local shimmer -- a slow, broad
+            // breathing across the mark's own coordinates on its own clock
+            // -- instead of inheriting the ambient field's drift. Kept
+            // deliberately gentle: a quiet ambient quality, not a sweep.
+            const shimmerT = reduced ? 0 : t * 0.5;
+            const shimmer = Math.sin(ldx * 0.1 + ldy * 0.16 - shimmerT) * 0.5 + 0.5;
+            const base = m * (0.82 + shimmer * 0.13);
             // the K/S also react to the cursor much faster and more sharply
             // than the ambient field -- tight falloff so it's felt right
             // where you're hovering, quick oscillation so it visibly
