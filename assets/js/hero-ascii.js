@@ -43,41 +43,49 @@
     {
       head: "Products",
       lines: [
-        { t: "KS Unify", cls: "ha-item" },
-        { t: "KS Stocks", cls: "ha-item" },
-        { t: "KS-K Mobile", cls: "ha-item" },
-        { t: "Robotics", cls: "ha-item" },
+        { t: "KS Unify", cls: "ha-item", href: "/products/ks-unify/" },
+        { t: "KS Stocks", cls: "ha-item", href: "/products/ks-stocks/" },
+        { t: "KS-K Mobile", cls: "ha-item", href: "/products/ks-k-mobile/", gated: "dev_ks" },
+        { t: "Robotics", cls: "ha-item", href: "/products/robotics/" },
       ],
     },
     {
       head: "Research",
       lines: [
-        { t: "AI", cls: "ha-item" },
-        { t: "Robotics", cls: "ha-item" },
-        { t: "Publications", cls: "ha-item" },
-        { t: "Future work", cls: "ha-item" },
+        { t: "AI", cls: "ha-item", href: "/research/artificial-intelligence/" },
+        { t: "Robotics", cls: "ha-item", href: "/research/robotics/" },
+        { t: "Publications", cls: "ha-item", href: "/research/publications/" },
+        { t: "Future work", cls: "ha-item", href: "/research/future-projects/" },
       ],
     },
     {
       head: "Company",
       lines: [
-        { t: "About", cls: "ha-item" },
-        { t: "Vision", cls: "ha-item" },
-        { t: "Leadership", cls: "ha-item" },
-        { t: "News", cls: "ha-item" },
-        { t: "Careers", cls: "ha-item" },
+        { t: "About", cls: "ha-item", href: "/company/about/" },
+        { t: "Vision", cls: "ha-item", href: "/company/vision/" },
+        { t: "Leadership", cls: "ha-item", href: "/company/leadership/" },
+        { t: "News", cls: "ha-item", href: "/company/news/" },
+        { t: "Careers", cls: "ha-item", href: "/company/careers/" },
       ],
     },
     {
       head: "Developers",
       lines: [
-        { t: "API", cls: "ha-item" },
-        { t: "SDK", cls: "ha-item" },
-        { t: "GitHub", cls: "ha-item" },
-        { t: "Docs", cls: "ha-item" },
+        { t: "API", cls: "ha-item", href: "/developers/api/" },
+        { t: "SDK", cls: "ha-item", href: "/developers/sdk/" },
+        { t: "GitHub", cls: "ha-item", href: "/developers/github/" },
+        { t: "Docs", cls: "ha-item", href: "/developers/documentation/" },
       ],
     },
   ];
+
+  function canSeeGated(id) {
+    return (
+      window.KanasakaAuth &&
+      window.KanasakaAuth.canSeeAccountGated &&
+      window.KanasakaAuth.canSeeAccountGated(id)
+    );
+  }
 
   function buildColumns(colsEl) {
     COLUMNS.forEach(function (col) {
@@ -89,7 +97,12 @@
         rows.push("");
       }
       col.lines.forEach(function (l) {
-        rows.push('<span class="' + l.cls + '">' + l.t + "</span>");
+        if (l.gated && !canSeeGated(l.gated)) return;
+        if (l.href) {
+          rows.push('<a class="' + l.cls + '" href="' + l.href + '">' + l.t + "</a>");
+        } else {
+          rows.push('<span class="' + l.cls + '">' + l.t + "</span>");
+        }
       });
       div.innerHTML = rows.join("\n");
       colsEl.appendChild(div);
@@ -250,7 +263,15 @@
           const m = letterMask ? letterMask[y * cols + x] : 0;
           const isLetter = m > 0.1;
           if (isLetter) {
-            v = Math.max(v, m * (0.7 + fbm(nx * 1.7 + 9.0, ny * 1.7 + 4.0) * 0.35));
+            const base = m * (0.7 + fbm(nx * 1.7 + 9.0, ny * 1.7 + 4.0) * 0.35);
+            // the K/S react to the cursor much faster and more sharply than
+            // the ambient field -- tight falloff so it's felt right where
+            // you're hovering, quick oscillation so it visibly flickers
+            // between characters instead of just gently drifting.
+            const hoverReact = reduced
+              ? 0
+              : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - t * 9) * 0.5;
+            v = Math.max(v, base + hoverReact);
           }
           v = Math.max(0, Math.min(1, v));
 

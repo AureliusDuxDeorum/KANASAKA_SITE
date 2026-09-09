@@ -65,7 +65,15 @@
     }
     .ha-col:last-child { border-right: none; padding-right: 0; }
     .ha-col .ha-head { color: var(--color-text-muted); letter-spacing: 0.02em; }
-    .ha-col .ha-item { color: #6b6b6b; }
+    .ha-col a.ha-item {
+      color: #6b6b6b;
+      text-decoration: none;
+      transition: color 120ms ease;
+    }
+    .ha-col a.ha-item:hover,
+    .ha-col a.ha-item:focus-visible {
+      color: var(--color-text);
+    }
     .ha-col .ha-brand { color: var(--color-text); font-family: "Tektur", monospace; letter-spacing: 0.04em; }
     .ha-col .ha-brand-sub { color: #444444; }
 
