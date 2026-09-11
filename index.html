@@ -77,6 +77,18 @@
     .ha-col .ha-brand { color: #6e6e6e; font-family: "Tektur", monospace; letter-spacing: 0.04em; }
     .ha-col .ha-brand-sub { color: #3a3a3a; }
 
+    /* the column sitemap doesn't shrink/wrap and eats too much width on
+       narrow screens, pushing the K/S mark (centered on the true window
+       midpoint) to land underneath it. It's also not very usable at 13px
+       monospace on a phone regardless -- simplest fix is to drop it and
+       let the mark have the full width to itself. */
+    @media (max-width: 760px) {
+      .ha-cols,
+      .ha-cols::before {
+        display: none;
+      }
+    }
+
     .ha-field-wrap {
       position: absolute;
       inset: 40px clamp(20px, 4vw, 64px);
