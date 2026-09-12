@@ -1436,7 +1436,7 @@ h1 {
 }
 
 .settings-layout:has(.settings-sidebar[hidden]) {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .settings-sidebar-card {
@@ -1984,7 +1984,13 @@ h1 {
   }
 
   .settings-layout {
-    grid-template-columns: 1fr;
+    /* minmax(0, ...) not plain 1fr -- a bare 1fr track can't shrink below
+       its content's min-content width, and the settings-nav pill row
+       (4 non-wrapping buttons) is wider than most phones. Without the
+       0 floor here, that row's own overflow-x:auto never gets to kick
+       in because the grid track just grows to fit it instead, blowing
+       out the whole page width. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
 
