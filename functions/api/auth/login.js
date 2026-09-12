@@ -15,7 +15,16 @@ import {
 } from "../../lib/auth.js";
 import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-factor.js";
 import { smsConfigured } from "../../lib/sms.js";
+import { sendLoginNotificationEmail } from "../../lib/email.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+
+async function notifyLogin(env, email, details) {
+  try {
+    await sendLoginNotificationEmail(env, email, details);
+  } catch (err) {
+    console.error("Login notification email failed:", err);
+  }
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -62,11 +71,17 @@ export async function onRequestPost(context) {
   const valid = await verifyPassword(password, user.password_hash, env);
   if (!valid) {
     await logAuthEvent(env, "login_failed", { ip, reason: "bad_password" });
+    await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", ip });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
   if (!user.email_verified) {
     await logAuthEvent(env, "login_failed", { ip, reason: "unverified" });
+    await notifyLogin(env, user.email, {
+      success: false,
+      reason: "The correct password was entered, but this account's email is not verified yet.",
+      ip,
+    });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
@@ -77,12 +92,28 @@ export async function onRequestPost(context) {
 
     if (method === "sms" && !smsConfigured(env)) {
       await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "sms_unconfigured" });
+      await notifyLogin(env, user.email, {
+        success: false,
+        reason: "The correct password was entered, but the two-factor code could not be sent (misconfigured).",
+        ip,
+      });
       return errorResponse("Two-factor authentication is misconfigured. Contact support.", 503);
     }
 
     try {
       const challenge = await createTwoFactorChallenge(env, user.id, remember);
       await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
+      if (method === "sms") {
+        // Email-method 2FA already emails the code itself, which doubles as
+        // the login notification -- a separate one here would just be a
+        // second email for the same event. SMS goes to a different channel,
+        // so it still needs its own.
+        await notifyLogin(env, user.email, {
+          success: true,
+          reason: "The correct password was entered. A two-factor verification code was requested to finish signing in.",
+          ip,
+        });
+      }
       return jsonResponse({
         twoFactorRequired: true,
         challenge: challenge.challenge,
@@ -93,6 +124,11 @@ export async function onRequestPost(context) {
       });
     } catch (err) {
       await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "send_failed" });
+      await notifyLogin(env, user.email, {
+        success: false,
+        reason: "The correct password was entered, but the two-factor code could not be sent.",
+        ip,
+      });
       return errorResponse(err.message || "Could not send verification code.", 503);
     }
   }
@@ -100,6 +136,7 @@ export async function onRequestPost(context) {
   await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id, remember);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
+  await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", ip });
 
   return jsonResponse(sessionPayload(user, env), 200, {
     "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),

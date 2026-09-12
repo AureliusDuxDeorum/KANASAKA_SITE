@@ -8,7 +8,16 @@ import {
   sessionPayload,
 } from "../../lib/auth.js";
 import { verifyTwoFactorLogin } from "../../lib/two-factor.js";
+import { sendLoginNotificationEmail } from "../../lib/email.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+
+async function notifyLogin(env, email, details) {
+  try {
+    await sendLoginNotificationEmail(env, email, details);
+  } catch (err) {
+    console.error("Login notification email failed:", err);
+  }
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -47,12 +56,24 @@ export async function onRequestPost(context) {
       userId: user.user_id,
       method: "sms",
     });
+    await notifyLogin(env, user.email, {
+      success: true,
+      reason: "Two-factor verification code was correct. Signed in successfully.",
+      ip,
+    });
 
     return jsonResponse(sessionPayload(user, env), 200, {
       "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),
     });
   } catch (err) {
-    await logAuthEvent(env, "login_2fa_failed", { ip });
+    await logAuthEvent(env, "login_2fa_failed", { ip, userId: err.userId });
+    if (err.userEmail) {
+      await notifyLogin(env, err.userEmail, {
+        success: false,
+        reason: "The two-factor verification code entered was incorrect.",
+        ip,
+      });
+    }
     return errorResponse(err.message || "Two-factor verification failed.", 401);
   }
 }

@@ -119,6 +119,22 @@ Login / session ("stay logged in")
   deliberate scope cut since that's an already-authenticated settings action,
   not a login.
 
+Login notifications
+  Every login.js branch that resolves a real user account emails that
+  account (sendLoginNotificationEmail, functions/lib/email.js) with the
+  outcome — wrong password, unverified account, 2FA requested/misconfigured,
+  or full success — plus IP and timestamp. functions/api/auth/two-factor.js
+  does the same for the code-entry step itself (correct or incorrect code).
+  Skipped only when no real account was identified (unknown email / invalid
+  input) — there's no valid destination to notify. When 2FA method is email,
+  the "requested" notification at the password step is skipped since the
+  code email itself already serves that purpose (SMS still gets its own,
+  since it's a different channel). Best-effort: a Resend failure here is
+  caught and logged, never blocks the login/2FA response itself. No
+  throttling — a password-guessing burst against a known email will produce
+  one notification email per attempt, by design (the whole point is visibility
+  into repeated attempts).
+
 Two-factor authentication (email code)
   Optional per account. `users.totp_enabled` is the generic "2FA on" flag;
   method is inferred, not a separate column: phone_e164 set → sms, else → email.
@@ -285,6 +301,13 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-12  Auth: every login attempt against a real account now emails that
+            account's address with the outcome (wrong password, unverified,
+            2FA requested/misconfigured, success, or 2FA code right/wrong) --
+            functions/lib/email.js sendLoginNotificationEmail, wired into
+            login.js and the two-factor.js completion endpoint. No throttling
+            by design; skipped for unknown emails since there's no account to
+            notify.
 2026-09-12  UI: all 6-digit code inputs (verify, reset-password, login 2FA,
             settings 2FA setup/disable) now render as 6 auto-advancing boxes
             (initOtpGroup in auth.js) instead of one text field. Dropped the

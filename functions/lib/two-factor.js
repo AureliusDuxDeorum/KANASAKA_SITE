@@ -385,7 +385,10 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
 
   const verified = await verifySmsOtp(env, row.user_id, "login", code);
   if (!verified) {
-    throw new Error("Invalid or expired verification code.");
+    const err = new Error("Invalid or expired verification code.");
+    err.userEmail = row.email;
+    err.userId = row.user_id;
+    throw err;
   }
 
   const challengeHash = await hashSecret("2fa:" + rawChallenge, env);

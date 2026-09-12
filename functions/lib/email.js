@@ -206,6 +206,23 @@ export async function sendPasswordResetCodeEmail(env, email, code) {
   });
 }
 
+export async function sendLoginNotificationEmail(env, email, { success, reason, ip }) {
+  const when = new Date().toUTCString();
+  const html = `
+    <p>${success ? "A sign-in to your KANASAKA account just succeeded." : "A sign-in attempt on your KANASAKA account was blocked."}</p>
+    <p><strong>Result:</strong> ${reason}</p>
+    <p><strong>IP address:</strong> ${ip || "unknown"}</p>
+    <p><strong>Time:</strong> ${when}</p>
+    <p>If this wasn't you, change your password right away and consider enabling two-factor authentication in Account Settings.</p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: success ? "New sign-in to your KANASAKA account" : "Sign-in attempt on your KANASAKA account",
+    html,
+  });
+}
+
 const TWO_FACTOR_EMAIL_COPY = {
   setup: {
     subject: "Enable two-factor authentication",
