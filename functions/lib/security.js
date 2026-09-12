@@ -1,4 +1,5 @@
 import { errorResponse, jsonResponse } from "./auth.js";
+import { sendLoginNotificationEmail } from "./email.js";
 
 export function clientIp(request) {
   const cfIp = request.headers.get("CF-Connecting-IP");
@@ -81,6 +82,32 @@ export async function tooManyRecentFailures(env, eventType, email, options = {})
     return Boolean(row && Number(row.c) >= maxFailures);
   } catch {
     return false;
+  }
+}
+
+// Login notifications always go out for a successful sign-in (rare, and the
+// most important one to never miss), but failure/blocked notifications are
+// throttled to at most one per account per window -- otherwise a password-
+// guessing burst against a known email floods that person's inbox with one
+// email per attempt instead of one alert that it's happening.
+const LOGIN_NOTIFICATION_THROTTLE_MINUTES = 10;
+
+export async function notifyLogin(env, email, details) {
+  if (!details.success) {
+    const alreadyNotified = await tooManyRecentFailures(
+      env,
+      "login_notification_sent",
+      email,
+      { max: 1, windowMinutes: LOGIN_NOTIFICATION_THROTTLE_MINUTES }
+    );
+    if (alreadyNotified) return;
+  }
+
+  try {
+    await sendLoginNotificationEmail(env, email, details);
+    await logAuthEvent(env, "login_notification_sent", { email });
+  } catch (err) {
+    console.error("Login notification email failed:", err);
   }
 }
 

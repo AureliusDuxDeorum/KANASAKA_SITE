@@ -15,16 +15,7 @@ import {
 } from "../../lib/auth.js";
 import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-factor.js";
 import { smsConfigured } from "../../lib/sms.js";
-import { sendLoginNotificationEmail } from "../../lib/email.js";
-import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
-
-async function notifyLogin(env, email, details) {
-  try {
-    await sendLoginNotificationEmail(env, email, details);
-  } catch (err) {
-    console.error("Login notification email failed:", err);
-  }
-}
+import { clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
