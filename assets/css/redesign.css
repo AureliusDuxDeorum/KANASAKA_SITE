@@ -353,6 +353,38 @@ h1 {
   );
 }
 
+/* ── Static ASCII side decoration ──
+   A fixed, non-animated echo of the home hero's generative field, used as
+   quiet margin decoration on content pages. Precomputed text, no JS -- it
+   never changes. Sits in the page's outer margin, so it only shows up once
+   there's actually room for it. */
+.page-decoration {
+  position: absolute;
+  top: 64px;
+  right: -132px;
+  width: 104px;
+  white-space: pre;
+  font-family: ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  line-height: 11px;
+  color: var(--color-border-light);
+  opacity: 0.4;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.page-decoration.page-decoration-left {
+  right: auto;
+  left: -132px;
+}
+
+@media (max-width: 1400px) {
+  .page-decoration {
+    display: none;
+  }
+}
+
 .product-card,
 .download-card,
 .content-card,
