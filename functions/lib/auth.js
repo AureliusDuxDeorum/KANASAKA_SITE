@@ -11,7 +11,7 @@ import {
 } from "./password-policy.js";
 import { getAuthSchema, usersHaveKsStocksSubscriptionColumns } from "./schema.js";
 import { ksStocksEntitlementFromUser, ksPackageSubscriptionsOpen, KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE } from "./ks-stocks-access.js";
-import { generateRawToken, hashSecret } from "./tokens.js";
+import { generateNumericCode, generateRawToken, hashSecret } from "./tokens.js";
 
 export {
   PASSWORD_MAX_LENGTH,
@@ -22,7 +22,12 @@ export {
 export const SESSION_COOKIE = "__Host-kanasaka_session";
 export const SESSION_DAYS = 30;
 export const SESSION_ROTATE_HOURS = 24;
-export const VERIFY_TOKEN_HOURS = 24;
+// A "stay logged in" session gets the full SESSION_DAYS persistent cookie.
+// One that isn't remembered gets a true browser-session cookie (no Max-Age,
+// discarded on browser close); this is only a server-side safety cap on the
+// underlying row in case that cookie somehow outlives the browser session.
+export const SHORT_SESSION_HOURS = 24;
+export const VERIFY_CODE_MINUTES = 15;
 export const RESET_TOKEN_HOURS = 1;
 
 export const DOWNLOAD_URLS = {
@@ -102,7 +107,14 @@ export function parseCookies(request) {
 }
 
 export function sessionCookieHeader(token, maxAgeSeconds) {
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAgeSeconds}`;
+  const base = `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict`;
+  // maxAgeSeconds is null for a "don't stay logged in" session -- omitting
+  // Max-Age/Expires makes this a true browser-session cookie that the
+  // browser discards on close, instead of persisting for SESSION_DAYS.
+  if (maxAgeSeconds === null || maxAgeSeconds === undefined) {
+    return base;
+  }
+  return `${base}; Max-Age=${maxAgeSeconds}`;
 }
 
 export function clearSessionCookieHeader() {
@@ -261,21 +273,33 @@ export function sessionRotateMs(env) {
   return hours * 60 * 60 * 1000;
 }
 
-export async function createSession(env, userId) {
+export async function createSession(env, userId, remember = true) {
   const uid = Math.trunc(Number(userId));
   const schema = await getAuthSchema(env);
   const rawToken = generateRawToken(32);
   const tokenHash = await hashSecret(rawToken, env);
-  const maxAge = sessionMaxAge(env);
-  const expiresAt = new Date(Date.now() + maxAge * 1000).toISOString();
+  const persistentMaxAge = sessionMaxAge(env);
+  const shortMaxAge = SHORT_SESSION_HOURS * 60 * 60;
+  const dbMaxAge = remember ? persistentMaxAge : shortMaxAge;
+  const expiresAt = new Date(Date.now() + dbMaxAge * 1000).toISOString();
+  const rememberValue = remember ? 1 : 0;
 
   if (schema.sessionsHashed) {
-    await env.DB.prepare(
-      `INSERT INTO sessions (token_hash, user_id, expires_at, last_rotated_at)
-       VALUES (?, ?, ?, datetime('now'))`
-    )
-      .bind(String(tokenHash), uid, String(expiresAt))
-      .run();
+    if (schema.sessionsRememberable) {
+      await env.DB.prepare(
+        `INSERT INTO sessions (token_hash, user_id, expires_at, last_rotated_at, remember)
+         VALUES (?, ?, ?, datetime('now'), ?)`
+      )
+        .bind(String(tokenHash), uid, String(expiresAt), rememberValue)
+        .run();
+    } else {
+      await env.DB.prepare(
+        `INSERT INTO sessions (token_hash, user_id, expires_at, last_rotated_at)
+         VALUES (?, ?, ?, datetime('now'))`
+      )
+        .bind(String(tokenHash), uid, String(expiresAt))
+        .run();
+    }
   } else {
     await env.DB.prepare(
       "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)"
@@ -284,7 +308,10 @@ export async function createSession(env, userId) {
       .run();
   }
 
-  return { token: rawToken, maxAge };
+  // maxAge is what goes into the cookie: null means "no Max-Age", i.e. a
+  // real browser-session cookie for a non-remembered login. dbMaxAge above
+  // (always a real number) is just the server-side row's own expiry cap.
+  return { token: rawToken, maxAge: remember ? persistentMaxAge : null, remember };
 }
 
 export async function deleteSession(env, rawToken) {
@@ -348,8 +375,20 @@ async function loadSessionUser(env, tokenHash, schema) {
 
 export async function rotateSession(env, userId, currentTokenHash) {
   const schema = await getAuthSchema(env);
+  let remember = true;
 
   if (schema.sessionsHashed) {
+    if (schema.sessionsRememberable) {
+      const row = await env.DB.prepare(
+        "SELECT remember FROM sessions WHERE token_hash = ?"
+      )
+        .bind(String(currentTokenHash))
+        .first();
+      if (row && row.remember != null) {
+        remember = Boolean(row.remember);
+      }
+    }
+
     await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?")
       .bind(String(currentTokenHash))
       .run();
@@ -359,7 +398,7 @@ export async function rotateSession(env, userId, currentTokenHash) {
       .run();
   }
 
-  return createSession(env, userId);
+  return createSession(env, userId, remember);
 }
 
 export async function resolveSession(request, env) {
@@ -400,14 +439,14 @@ export async function getSessionUser(request, env) {
   return user;
 }
 
-export async function createEmailToken(env, userId, type, hours) {
+export async function createEmailToken(env, userId, type, hours, rawValue) {
   const uid = Math.trunc(Number(userId));
   if (!Number.isFinite(uid) || uid <= 0) {
     throw new Error("Invalid user id for email token.");
   }
 
   const schema = await getAuthSchema(env);
-  const rawToken = generateRawToken(32);
+  const rawToken = rawValue || generateRawToken(32);
   const tokenHash = await hashSecret(rawToken, env);
   const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
@@ -430,6 +469,17 @@ export async function createEmailToken(env, userId, type, hours) {
   }
 
   return rawToken;
+}
+
+// Registration verification uses a short numeric code instead of a link --
+// easier to type on a phone, and reusing createEmailToken/consumeEmailToken
+// means the hashing/expiry/one-shot-consumption logic is identical to the
+// token-link flow (password reset), just with a 6-digit value in place of a
+// 32-byte token and a much shorter expiry given the far lower entropy.
+export async function createVerificationCode(env, userId) {
+  const code = generateNumericCode(6);
+  await createEmailToken(env, userId, "verify", VERIFY_CODE_MINUTES / 60, code);
+  return code;
 }
 
 export async function consumeEmailToken(env, rawToken, type) {

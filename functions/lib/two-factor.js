@@ -1,6 +1,7 @@
 import { maskPhone, normalizePhone } from "./phone.js";
 import { sendVerificationSms } from "./sms.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
+import { twofaChallengesHaveRememberColumn } from "./schema.js";
 
 const OTP_MINUTES = 5;
 const CHALLENGE_MINUTES = 5;
@@ -167,17 +168,26 @@ export async function disableSms2fa(env, userId, code) {
   await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
 }
 
-export async function createTwoFactorChallenge(env, userId) {
+export async function createTwoFactorChallenge(env, userId, remember = true) {
   const rawToken = generateRawToken(32);
   const challengeHash = await hashSecret("2fa:" + rawToken, env);
   const expiresAt = new Date(Date.now() + CHALLENGE_MINUTES * 60 * 1000).toISOString();
 
   await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare(
-    "INSERT INTO twofa_challenges (challenge_hash, user_id, expires_at) VALUES (?, ?, ?)"
-  )
-    .bind(challengeHash, userId, expiresAt)
-    .run();
+
+  if (await twofaChallengesHaveRememberColumn(env)) {
+    await env.DB.prepare(
+      "INSERT INTO twofa_challenges (challenge_hash, user_id, expires_at, remember) VALUES (?, ?, ?, ?)"
+    )
+      .bind(challengeHash, userId, expiresAt, remember ? 1 : 0)
+      .run();
+  } else {
+    await env.DB.prepare(
+      "INSERT INTO twofa_challenges (challenge_hash, user_id, expires_at) VALUES (?, ?, ?)"
+    )
+      .bind(challengeHash, userId, expiresAt)
+      .run();
+  }
 
   await sendLoginSmsCode(env, userId);
 
@@ -206,10 +216,14 @@ export async function sendLoginSmsCode(env, userId) {
 
 async function loadChallengeUser(env, rawChallenge) {
   const challengeHash = await hashSecret("2fa:" + rawChallenge, env);
-  return env.DB.prepare(
+  const rememberSelect = (await twofaChallengesHaveRememberColumn(env))
+    ? ", c.remember"
+    : "";
+  const row = await env.DB.prepare(
     `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.phone_e164, u.totp_enabled,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+            ${rememberSelect}
      FROM twofa_challenges c
      JOIN users u ON u.id = c.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
@@ -219,6 +233,14 @@ async function loadChallengeUser(env, rawChallenge) {
   )
     .bind(challengeHash)
     .first();
+
+  if (row && row.remember == null) {
+    row.remember = true;
+  } else if (row) {
+    row.remember = Boolean(row.remember);
+  }
+
+  return row;
 }
 
 export async function verifyTwoFactorLogin(env, rawChallenge, code) {

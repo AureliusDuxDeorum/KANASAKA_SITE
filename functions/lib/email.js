@@ -174,19 +174,18 @@ export async function getEmailStatus(env) {
   return status;
 }
 
-export async function sendVerificationEmail(env, email, token) {
-  const url = `${siteUrl(env)}/verify/?token=${encodeURIComponent(token)}`;
+export async function sendVerificationCodeEmail(env, email, code) {
   const html = `
     <p>Welcome to KANASAKA.</p>
-    <p>Confirm your email address to activate your account:</p>
-    <p><a href="${url}">${url}</a></p>
-    <p>This link expires in 24 hours.</p>
+    <p>Your verification code is:</p>
+    <p style="font-size:28px;font-weight:700;letter-spacing:0.35em;margin:16px 0;">${code}</p>
+    <p>Enter this code on the verification page to activate your account. It expires in 15 minutes.</p>
     <p>If you did not create an account, you can ignore this email.</p>
   `;
 
   return sendEmail(env, {
     to: email,
-    subject: "Confirm your KANASAKA account",
+    subject: "Your KANASAKA verification code",
     html,
   });
 }

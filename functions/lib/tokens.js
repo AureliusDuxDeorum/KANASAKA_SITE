@@ -16,6 +16,12 @@ export function generateRawToken(byteLength = 32) {
   return base64UrlEncode(crypto.getRandomValues(new Uint8Array(byteLength)));
 }
 
+export function generateNumericCode(digits = 6) {
+  const max = 10 ** digits;
+  const value = crypto.getRandomValues(new Uint32Array(1))[0] % max;
+  return String(value).padStart(digits, "0");
+}
+
 async function importHmacKey(env) {
   const secret = env.SESSION_SECRET;
   if (!secret) {

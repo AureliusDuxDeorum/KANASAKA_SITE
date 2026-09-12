@@ -3,17 +3,44 @@ import {
   createSession,
   errorResponse,
   jsonResponse,
+  normalizeEmail,
   readJson,
   sessionCookieHeader,
   sessionPayload,
+  validateEmail,
 } from "../../lib/auth.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
-async function verifyWithToken(env, token, ip) {
-  const record = await consumeEmailToken(env, token, "verify");
-  if (!record) {
-    await logAuthEvent(env, "verify_failed", { ip, reason: "invalid_token" });
-    return errorResponse("Verification link is invalid or has expired.", 400);
+const CODE_RE = /^[0-9]{6}$/;
+// Codes have far less entropy than the old 32-byte link token (1 in a
+// million vs. effectively unguessable), so unlike the old flow this one
+// needs a basic brute-force throttle. Best-effort: reuses the existing
+// auth_events log rather than a new table/column, and never blocks a
+// legitimate attempt if the check itself fails for any reason.
+const MAX_RECENT_FAILURES = 8;
+const FAILURE_WINDOW_MINUTES = 15;
+
+async function tooManyRecentFailures(env, email) {
+  try {
+    const row = await env.DB.prepare(
+      `SELECT COUNT(*) AS c FROM auth_events
+       WHERE event_type = 'verify_failed'
+         AND json_extract(meta, '$.email') = ?
+         AND created_at > datetime('now', ?)`
+    )
+      .bind(email, `-${FAILURE_WINDOW_MINUTES} minutes`)
+      .first();
+    return Boolean(row && Number(row.c) >= MAX_RECENT_FAILURES);
+  } catch {
+    return false;
+  }
+}
+
+async function verifyWithCode(env, email, code, ip) {
+  const record = await consumeEmailToken(env, code, "verify");
+  if (!record || String(record.email || "").toLowerCase() !== email) {
+    await logAuthEvent(env, "verify_failed", { ip, email });
+    return errorResponse("That code is invalid or has expired.", 400);
   }
 
   await env.DB.prepare("UPDATE users SET email_verified = 1 WHERE id = ?")
@@ -62,17 +89,24 @@ export async function onRequestPost(context) {
     return errorResponse("Invalid request body.");
   }
 
-  const token = String(body.token || "").trim();
-  if (!token) {
-    return errorResponse("Verification token is required.", 400);
+  const email = normalizeEmail(body.email);
+  const code = String(body.code || "").trim();
+
+  if (!validateEmail(email) || !CODE_RE.test(code)) {
+    return errorResponse("Enter the 6-digit code sent to your email.", 400);
   }
 
-  return verifyWithToken(env, token, ip);
+  if (await tooManyRecentFailures(env, email)) {
+    await logAuthEvent(env, "verify_failed", { ip, email, reason: "rate_limited" });
+    return errorResponse("Too many attempts. Request a new code and try again.", 429);
+  }
+
+  return verifyWithCode(env, email, code, ip);
 }
 
 export async function onRequestGet(context) {
   return errorResponse(
-    "Open the verification link from your email in a browser.",
+    "Enter your verification code on the /verify/ page.",
     405
   );
 }

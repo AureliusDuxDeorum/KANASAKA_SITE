@@ -32,6 +32,7 @@ export async function getAuthSchema(env) {
       emailTokensHashed: emailColumns.includes("token_hash"),
       sessionsHashed: sessionColumns.includes("token_hash"),
       sessionsRotatable: sessionColumns.includes("last_rotated_at"),
+      sessionsRememberable: sessionColumns.includes("remember"),
     };
     schemaCache.set(cacheKey, schema);
     return schema;
@@ -41,6 +42,7 @@ export async function getAuthSchema(env) {
       emailTokensHashed: true,
       sessionsHashed: true,
       sessionsRotatable: true,
+      sessionsRememberable: false,
     };
   }
 }
@@ -83,6 +85,19 @@ export async function usersHaveAccountIdChangedAtColumn(env) {
   try {
     const columns = await tableColumns(env, "users");
     return columns.includes("account_id_changed_at");
+  } catch {
+    return false;
+  }
+}
+
+export async function twofaChallengesHaveRememberColumn(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  try {
+    const columns = await tableColumns(env, "twofa_challenges");
+    return columns.includes("remember");
   } catch {
     return false;
   }

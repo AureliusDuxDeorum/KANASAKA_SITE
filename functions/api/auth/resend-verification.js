@@ -1,13 +1,12 @@
 import {
-  createEmailToken,
+  createVerificationCode,
   errorResponse,
   jsonResponse,
   normalizeEmail,
   readJson,
   validateEmail,
-  VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
-import { sendVerificationEmail } from "../../lib/email.js";
+import { sendVerificationCodeEmail } from "../../lib/email.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -28,7 +27,7 @@ export async function onRequestPost(context) {
 
   const email = normalizeEmail(body.email);
   const genericMessage =
-    "If an account exists for that email, a verification link has been sent.";
+    "If an account exists for that email, a verification code has been sent.";
 
   if (!validateEmail(email)) {
     return jsonResponse({ success: true, message: genericMessage });
@@ -44,8 +43,8 @@ export async function onRequestPost(context) {
     return jsonResponse({ success: true, message: genericMessage });
   }
 
-  const token = await createEmailToken(env, user.id, "verify", VERIFY_TOKEN_HOURS);
-  await sendVerificationEmail(env, email, token);
+  const code = await createVerificationCode(env, user.id);
+  await sendVerificationCodeEmail(env, email, code);
   await logAuthEvent(env, "verification_resent", { ip, userId: user.id });
 
   return jsonResponse({ success: true, message: genericMessage });

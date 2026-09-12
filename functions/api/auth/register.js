@@ -1,5 +1,5 @@
 import {
-  createEmailToken,
+  createVerificationCode,
   errorMessage,
   errorResponse,
   hashPassword,
@@ -10,9 +10,8 @@ import {
   REGISTER_SUCCESS_MESSAGE,
   validateEmail,
   passwordValidationError,
-  VERIFY_TOKEN_HOURS,
 } from "../../lib/auth.js";
-import { sendVerificationEmail } from "../../lib/email.js";
+import { sendVerificationCodeEmail } from "../../lib/email.js";
 import { CURRENT_TOS_VERSION } from "../../lib/terms.js";
 import { usersHaveTosColumns, usersHaveAccountIdColumn } from "../../lib/schema.js";
 import {
@@ -46,7 +45,7 @@ function registerFailure(err) {
 
   if (message.includes("Invalid user id for email token")) {
     return errorResponse(
-      "Registration failed while creating your verification link. Please try again.",
+      "Registration failed while creating your verification code. Please try again.",
       500
     );
   }
@@ -169,13 +168,8 @@ export async function onRequestPost(context) {
 
     if (existing) {
       if (!existing.email_verified) {
-        const token = await createEmailToken(
-          env,
-          existing.id,
-          "verify",
-          VERIFY_TOKEN_HOURS
-        );
-        await sendVerificationEmail(env, email, token);
+        const code = await createVerificationCode(env, existing.id);
+        await sendVerificationCodeEmail(env, email, code);
       }
       await logAuthEvent(env, "register_existing", { ip });
       return registerSuccessResponse(200);
@@ -189,8 +183,8 @@ export async function onRequestPost(context) {
       hasTos ? CURRENT_TOS_VERSION : null,
       accountId
     );
-    const token = await createEmailToken(env, userId, "verify", VERIFY_TOKEN_HOURS);
-    const emailResult = await sendVerificationEmail(env, email, token);
+    const code = await createVerificationCode(env, userId);
+    const emailResult = await sendVerificationCodeEmail(env, email, code);
 
     if (!emailResult.ok) {
       try {

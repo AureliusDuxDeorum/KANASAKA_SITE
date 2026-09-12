@@ -13,8 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=69">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=69">
+  <link rel="stylesheet" href="/assets/css/style.css?v=70">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=70">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -34,7 +34,25 @@
 
       <p class="auth-eyebrow">Account</p>
       <h1>Verify Email</h1>
-      <p id="verify-status" class="auth-lead">Preparing verification...</p>
+      <p class="auth-lead">Enter the 6-digit code we emailed you to finish setting up your account.</p>
+
+      <form id="verify-form" class="auth-form">
+        <div class="auth-field">
+          <label for="verify-email">Email</label>
+          <input id="verify-email" name="email" type="email" autocomplete="email" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="verify-code">Verification code</label>
+          <input id="verify-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+        </div>
+
+        <button class="button auth-submit" type="submit">Verify</button>
+      </form>
+
+      <div class="auth-footer">
+        <p class="auth-switch">Didn't get a code? <button id="verify-resend" class="link-button" type="button">Resend code</button></p>
+      </div>
       </div>
     </div>
 

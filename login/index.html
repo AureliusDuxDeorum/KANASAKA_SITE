@@ -13,8 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=69">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=69">
+  <link rel="stylesheet" href="/assets/css/style.css?v=70">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=70">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -46,6 +46,11 @@
           <label for="login-password">Password</label>
           <input id="login-password" name="password" type="password" autocomplete="current-password" required>
         </div>
+
+        <label class="auth-legal-consent">
+          <input id="login-remember" name="remember" type="checkbox" value="1" checked>
+          <span>Stay logged in on this device.</span>
+        </label>
 
         <button class="button auth-submit" type="submit">Log In</button>
       </form>

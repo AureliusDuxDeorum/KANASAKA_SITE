@@ -35,6 +35,7 @@ export async function onRequestPost(context) {
 
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
+  const remember = body.remember === true || body.remember === "true";
   const passwordError = loginPasswordValidationError(password);
 
   if (!validateEmail(email) || passwordError) {
@@ -73,7 +74,7 @@ export async function onRequestPost(context) {
 
   if (user.totp_enabled && smsConfigured(env)) {
     try {
-      const challenge = await createTwoFactorChallenge(env, user.id);
+      const challenge = await createTwoFactorChallenge(env, user.id, remember);
       await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
       return jsonResponse({
         twoFactorRequired: true,
@@ -88,7 +89,7 @@ export async function onRequestPost(context) {
   }
 
   await deleteAllUserSessions(env, user.id);
-  const session = await createSession(env, user.id);
+  const session = await createSession(env, user.id, remember);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
 
   return jsonResponse(sessionPayload(user, env), 200, {

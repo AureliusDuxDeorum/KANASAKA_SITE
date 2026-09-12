@@ -40,7 +40,8 @@ export async function onRequestPost(context) {
   try {
     const user = await verifyTwoFactorLogin(env, challenge, code);
     await deleteAllUserSessions(env, user.user_id);
-    const session = await createSession(env, user.user_id);
+    const remember = user.remember !== false;
+    const session = await createSession(env, user.user_id, remember);
     await logAuthEvent(env, "login_success", {
       ip,
       userId: user.user_id,

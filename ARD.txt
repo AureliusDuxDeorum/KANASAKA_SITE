@@ -79,16 +79,45 @@ Account ID & roles
   GET /api/account/id-available?accountId=example — availability check (public)
 
 Email verification
-  POST /api/auth/verify — consumes one-time token from email link
-  GET verify page on site loads token from URL query
+  6-digit numeric code, not a link. POST /api/auth/register and
+  POST /api/auth/resend-verification both call createVerificationCode() (auth.js),
+  which generates the code (tokens.js generateNumericCode) and stores it via the
+  existing generic createEmailToken()/consumeEmailToken() hash-match machinery
+  (type='verify', 15 min expiry — VERIFY_CODE_MINUTES). No schema change needed
+  for this part; email_tokens is already a generic hashed-value table.
+  POST /api/auth/verify — body { email, code }. Also re-checks the token's
+  stored email against the submitted email (defense in depth) and applies a
+  best-effort brute-force throttle: >=8 verify_failed auth_events for that email
+  in the last 15 min → 429. Throttle read failures fail open (never blocks a
+  legitimate attempt).
+  Known limitation: two different users could theoretically collide on the same
+  6-digit code within its validity window, causing a UNIQUE constraint failure
+  on the second INSERT (surfaces as a registration/resend error) — accepted as
+  low-probability at current scale, not fully mitigated.
+  UI: /verify/ is a real form (email + code inputs, resend button), not an
+  auto-submitting link handler. Register redirects to /verify/?email=... on
+  success instead of showing an inline "check your email" message.
 
-Login / session
-  POST /api/auth/login — cookie __Host-kanasaka_session (HttpOnly, SameSite=Strict)
-  If totp_enabled: returns { twoFactorRequired, challenge, expiresIn } (no cookie yet)
+Login / session ("stay logged in")
+  POST /api/auth/login — body may include remember: boolean (checkbox on the
+  login form, default checked). cookie __Host-kanasaka_session (HttpOnly,
+  SameSite=Strict). remember=true sets Max-Age for a persistent cookie;
+  remember=false omits Max-Age entirely for a true browser-session cookie that
+  the browser discards on close. The chosen value is stored on the session row
+  (sessions.remember, migration 015) so it survives automatic session rotation
+  (SESSION_ROTATE_HOURS); without that column, rotateSession() falls back to
+  always remembering (safe default, not a security gap) until 015 is applied.
+  If totp_enabled: returns { twoFactorRequired, challenge, expiresIn } (no cookie yet);
+  remember is threaded through the 2FA challenge too (twofa_challenges.remember,
+  also migration 015) so it's honored after the code step completes.
   POST /api/auth/two-factor — completes login with TOTP or backup code
   Session token: 32-byte random, only HMAC digest stored in D1 (needs SESSION_SECRET)
   Session rotation: every SESSION_ROTATE_HOURS (default 24h) via resolveSession()
   GET /api/auth/session — current user payload
+  Note: /api/account/password's post-password-change session refresh does not
+  thread the prior remember choice through (defaults to remember=true) — a
+  deliberate scope cut since that's an already-authenticated settings action,
+  not a login.
 
 Two-factor authentication (TOTP)
   Optional per account; RFC 6238 via functions/lib/totp.js
@@ -125,7 +154,8 @@ users
 
 sessions
   id INTEGER PK, token_hash TEXT UNIQUE, user_id INTEGER FK,
-  expires_at TEXT, created_at TEXT, last_rotated_at TEXT
+  expires_at TEXT, created_at TEXT, last_rotated_at TEXT,
+  remember INTEGER (migration 015, not yet applied remotely as of this writing)
 
 email_tokens
   id INTEGER PK, token_hash TEXT UNIQUE, user_id INTEGER FK,
@@ -142,7 +172,8 @@ twofa_backup_codes
 
 twofa_challenges
   id INTEGER PK, challenge_hash TEXT UNIQUE, user_id INTEGER FK,
-  expires_at TEXT, created_at TEXT
+  expires_at TEXT, created_at TEXT,
+  remember INTEGER (migration 015, not yet applied remotely as of this writing)
 
 rate_limits
   key TEXT PK, count INTEGER, window_start TEXT
@@ -179,12 +210,19 @@ Public vars (wrangler.toml)
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/008_security_hardening.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/010_tos_acceptance.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/011_account_id.sql
+  npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/015_session_remember.sql
 
 007_wipe_accounts.sql — IRREVERSIBLE data wipe (users, sessions, tokens, avatars,
   auth_events, rate_limits). Schema preserved.
 
 008_security_hardening.sql — TOTP columns on users, twofa_backup_codes,
   twofa_challenges tables.
+
+015_session_remember.sql — NOT YET RUN ON REMOTE D1. Adds sessions.remember and
+  twofa_challenges.remember (INTEGER, default 1). Required for "stay logged in"
+  to survive session rotation past SESSION_ROTATE_HOURS; login itself already
+  honors the checkbox correctly before this is applied (schema.js detects the
+  missing column and falls back to always-remember on rotation).
 
 
 8. DEPLOY / BUILD
@@ -224,6 +262,10 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-12  Auth: added "stay logged in" (session.remember, migration 015) and
+            replaced link-based email verification with a 6-digit code
+            (createVerificationCode, rewritten /verify/ page + verify.js).
+            Includes a best-effort brute-force throttle on the new code.
 2026-09-12  Password policy relaxed: min length 12->15, dropped the no-spaces
             rule (passphrases now allowed). Max stays 128 (was briefly
             considered lowering to 64, kept at 128 per user decision).

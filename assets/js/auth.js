@@ -67,10 +67,13 @@
     });
   }
 
-  async function login(email, password) {
+  async function login(email, password, form) {
+    const rememberField = form ? form.querySelector('[name="remember"]') : null;
+    const remember = rememberField ? rememberField.checked : true;
+
     const { response, data } = await apiRequest("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     });
 
     if (!response.ok) {
@@ -353,41 +356,78 @@
     });
   }
 
-  async function initVerifyPage() {
-    const box = document.getElementById("verify-status");
-    if (!box) return;
+  function initVerifyPage() {
+    const form = document.getElementById("verify-form");
+    if (!form) return;
+
+    const emailField = form.querySelector('[name="email"]');
+    const codeField = form.querySelector('[name="code"]');
+    const resendBtn = document.getElementById("verify-resend");
 
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-
-    if (!token) {
-      box.textContent = "Verification link is invalid or missing.";
-      return;
+    const prefillEmail = params.get("email");
+    if (prefillEmail && emailField) {
+      emailField.value = prefillEmail;
     }
 
-    box.textContent = "Verifying your email address...";
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(form);
+      clearFormSuccess(form);
 
-    try {
-      const response = await fetch("/api/auth/verify", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token }),
-      });
-      const data = await response.json();
+      const email = emailField.value.trim();
+      const code = codeField.value.trim();
+      const submit = form.querySelector('[type="submit"]');
+      const defaultLabel = submit.textContent;
+      submit.disabled = true;
+      submit.textContent = "Verifying...";
 
-      if (!response.ok) {
-        box.textContent = (data && data.error) || "Verification failed.";
-        return;
+      try {
+        const { response, data } = await apiRequest("/api/auth/verify", {
+          method: "POST",
+          body: JSON.stringify({ email, code }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Verification failed.");
+        }
+
+        sessionCache = data;
+        showFormSuccess(form, "Email verified. Redirecting...");
+        window.setTimeout(function () {
+          window.location.href = getNextPath() === "/" ? "/downloads/" : getNextPath();
+        }, 1200);
+      } catch (error) {
+        showFormError(form, error.message || "Verification failed.");
+        submit.disabled = false;
+        submit.textContent = defaultLabel;
       }
+    });
 
-      sessionCache = data;
-      box.textContent = "Email verified. Redirecting...";
-      window.setTimeout(function () {
-        window.location.href = getNextPath() === "/" ? "/downloads/" : getNextPath();
-      }, 1500);
-    } catch {
-      box.textContent = "Verification failed. Try again later.";
+    if (resendBtn) {
+      resendBtn.addEventListener("click", async function () {
+        clearFormError(form);
+        clearFormSuccess(form);
+
+        const email = emailField.value.trim();
+        if (!email) {
+          showFormError(form, "Enter your email first.");
+          return;
+        }
+
+        resendBtn.disabled = true;
+        try {
+          const { data } = await apiRequest("/api/auth/resend-verification", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+          });
+          showFormSuccess(form, (data && data.message) || "If an account exists for that email, a verification code has been sent.");
+        } catch {
+          showFormError(form, "Could not resend code. Try again later.");
+        } finally {
+          resendBtn.disabled = false;
+        }
+      });
     }
   }
 
@@ -1372,12 +1412,8 @@
     bindEmailPasswordForm("login-form", login);
     bindEmailPasswordForm("register-form", register, {
       onSuccess: function (result, form) {
-        showFormSuccess(
-          form,
-          result.message ||
-            "Check your email to confirm your account before signing in."
-        );
-        form.querySelector('[name="password"]').value = "";
+        const email = form.querySelector('[name="email"]').value.trim();
+        window.location.href = "/verify/?email=" + encodeURIComponent(email);
       },
     });
     bindForgotPasswordForm();
