@@ -190,18 +190,53 @@ export async function sendVerificationCodeEmail(env, email, code) {
   });
 }
 
-export async function sendPasswordResetEmail(env, email, token) {
-  const url = `${siteUrl(env)}/reset-password/?token=${encodeURIComponent(token)}`;
+export async function sendPasswordResetCodeEmail(env, email, code) {
   const html = `
     <p>We received a request to reset your KANASAKA account password.</p>
-    <p><a href="${url}">${url}</a></p>
-    <p>This link expires in 1 hour.</p>
+    <p>Your password reset code is:</p>
+    <p style="font-size:28px;font-weight:700;letter-spacing:0.35em;margin:16px 0;">${code}</p>
+    <p>Enter this code on the reset password page. It expires in 15 minutes.</p>
     <p>If you did not request a reset, you can ignore this email.</p>
   `;
 
   return sendEmail(env, {
     to: email,
-    subject: "Reset your KANASAKA password",
+    subject: "Your KANASAKA password reset code",
+    html,
+  });
+}
+
+const TWO_FACTOR_EMAIL_COPY = {
+  setup: {
+    subject: "Enable two-factor authentication",
+    intro: "Use this code to turn on two-factor authentication for your KANASAKA account:",
+  },
+  disable: {
+    subject: "Disable two-factor authentication",
+    intro: "Use this code to turn off two-factor authentication for your KANASAKA account:",
+  },
+  login: {
+    subject: "Your KANASAKA sign-in code",
+    intro: "Use this code to finish signing in to your KANASAKA account:",
+  },
+};
+
+export async function sendTwoFactorCodeEmail(env, email, code, context) {
+  const copy = TWO_FACTOR_EMAIL_COPY[context] || {
+    subject: "Your KANASAKA verification code",
+    intro: "Your verification code is:",
+  };
+
+  const html = `
+    <p>${copy.intro}</p>
+    <p style="font-size:28px;font-weight:700;letter-spacing:0.35em;margin:16px 0;">${code}</p>
+    <p>This code expires in 5 minutes.</p>
+    <p>If you did not request this, you can ignore this email and your account will remain unchanged.</p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: copy.subject,
     html,
   });
 }

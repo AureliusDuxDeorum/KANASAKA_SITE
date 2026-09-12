@@ -4,10 +4,19 @@ import {
   errorResponse,
   hashPassword,
   jsonResponse,
+  normalizeEmail,
   passwordValidationError,
   readJson,
+  validateEmail,
 } from "../../lib/auth.js";
-import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import {
+  clientIp,
+  logAuthEvent,
+  requireSameOrigin,
+  tooManyRecentFailures,
+} from "../../lib/security.js";
+
+const CODE_RE = /^[0-9]{6}$/;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -25,11 +34,12 @@ export async function onRequestPost(context) {
     return errorResponse("Invalid request body.");
   }
 
-  const token = String(body.token || "").trim();
+  const email = normalizeEmail(body.email);
+  const code = String(body.code || "").trim();
   const password = String(body.password || "");
 
-  if (!token) {
-    return errorResponse("Reset token is required.", 400);
+  if (!validateEmail(email) || !CODE_RE.test(code)) {
+    return errorResponse("Enter the 6-digit code sent to your email.", 400);
   }
 
   const passwordError = passwordValidationError(password);
@@ -37,10 +47,15 @@ export async function onRequestPost(context) {
     return errorResponse(passwordError);
   }
 
-  const record = await consumeEmailToken(env, token, "reset");
-  if (!record) {
-    await logAuthEvent(env, "password_reset_failed", { ip, reason: "invalid_token" });
-    return errorResponse("Reset link is invalid or has expired.", 400);
+  if (await tooManyRecentFailures(env, "password_reset_failed", email)) {
+    await logAuthEvent(env, "password_reset_failed", { ip, email, reason: "rate_limited" });
+    return errorResponse("Too many attempts. Request a new code and try again.", 429);
+  }
+
+  const record = await consumeEmailToken(env, code, "reset");
+  if (!record || String(record.email || "").toLowerCase() !== email) {
+    await logAuthEvent(env, "password_reset_failed", { ip, email, reason: "invalid_code" });
+    return errorResponse("That code is invalid or has expired.", 400);
   }
 
   const passwordHash = await hashPassword(password, env);

@@ -1,13 +1,12 @@
 import {
-  createEmailToken,
+  createPasswordResetCode,
   errorResponse,
   jsonResponse,
   normalizeEmail,
   readJson,
-  RESET_TOKEN_HOURS,
   validateEmail,
 } from "../../lib/auth.js";
-import { sendPasswordResetEmail } from "../../lib/email.js";
+import { sendPasswordResetCodeEmail } from "../../lib/email.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -28,7 +27,7 @@ export async function onRequestPost(context) {
 
   const email = normalizeEmail(body.email);
   const genericMessage =
-    "If an account exists for that email, a password reset link has been sent.";
+    "If an account exists for that email, a password reset code has been sent.";
 
   if (!validateEmail(email)) {
     return jsonResponse({ success: true, message: genericMessage });
@@ -44,8 +43,8 @@ export async function onRequestPost(context) {
     return jsonResponse({ success: true, message: genericMessage });
   }
 
-  const token = await createEmailToken(env, user.id, "reset", RESET_TOKEN_HOURS);
-  await sendPasswordResetEmail(env, email, token);
+  const code = await createPasswordResetCode(env, user.id);
+  await sendPasswordResetCodeEmail(env, email, code);
   await logAuthEvent(env, "password_reset_requested", { ip, userId: user.id });
 
   return jsonResponse({ success: true, message: genericMessage });

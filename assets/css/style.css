@@ -1713,6 +1713,18 @@ h1 {
   transform: none;
 }
 
+.settings-2fa-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 4px;
+}
+
+#settings-2fa-off .button,
+#settings-2fa-on .button {
+  margin-top: 4px;
+}
+
 .settings-danger-zone {
   margin-top: 0;
   padding-top: 0;

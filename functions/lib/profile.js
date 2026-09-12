@@ -3,6 +3,7 @@ export const DISPLAY_NAME_MAX = 40;
 
 import { getAccountIdChangeStatus } from "./account-id.js";
 import { maskPhone } from "./phone.js";
+import { maskEmail } from "./two-factor.js";
 import { normalizeRole } from "./roles.js";
 
 export const AVATAR_MIME_TYPES = {
@@ -111,7 +112,10 @@ export function profilePayload(user) {
     avatarUrl: hasAvatar ? "/api/account/avatar?v=" + version : null,
     twoFactorEnabled: Boolean(user.totp_enabled),
     twoFactorEnabledAt: user.totp_enabled_at || null,
+    twoFactorMethod: user.totp_enabled ? (user.phone_e164 ? "sms" : "email") : null,
     phoneMasked: user.phone_e164 ? maskPhone(user.phone_e164) : null,
+    emailMasked:
+      user.totp_enabled && !user.phone_e164 ? maskEmail(user.email) : null,
   };
 }
 

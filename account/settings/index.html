@@ -13,8 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=70">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=70">
+  <link rel="stylesheet" href="/assets/css/style.css?v=71">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=71">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -136,6 +136,47 @@
 
                 <button class="button secondary" type="submit">Update Password</button>
               </form>
+            </div>
+
+            <div class="settings-section" id="settings-2fa-section">
+              <h3 class="settings-subsection-title">Two-Factor Authentication</h3>
+              <p id="settings-2fa-status" class="settings-panel-intro">Checking status...</p>
+
+              <div id="settings-2fa-off" hidden>
+                <p class="settings-panel-intro">Add a 6-digit email code as a second step when you log in.</p>
+                <button id="settings-2fa-setup-start" class="button secondary" type="button">Set Up via Email</button>
+
+                <form id="settings-2fa-setup-form" class="auth-form settings-form" hidden>
+                  <div class="auth-field">
+                    <label for="settings-2fa-setup-code">Verification code</label>
+                    <input id="settings-2fa-setup-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                  </div>
+                  <div class="settings-2fa-actions">
+                    <button class="button secondary" type="submit">Enable</button>
+                    <button id="settings-2fa-setup-resend" class="link-button" type="button">Resend code</button>
+                  </div>
+                </form>
+              </div>
+
+              <div id="settings-2fa-on" hidden>
+                <p class="settings-panel-intro">Two-factor authentication is on. Codes are sent to your account email.</p>
+                <button id="settings-2fa-disable-start" class="button secondary" type="button">Disable</button>
+
+                <form id="settings-2fa-disable-form" class="auth-form settings-form" hidden>
+                  <div class="auth-field">
+                    <label for="settings-2fa-disable-password">Current Password</label>
+                    <input id="settings-2fa-disable-password" name="password" type="password" autocomplete="current-password">
+                  </div>
+                  <div class="auth-field">
+                    <label for="settings-2fa-disable-code">Verification code</label>
+                    <input id="settings-2fa-disable-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                  </div>
+                  <div class="settings-2fa-actions">
+                    <button class="button settings-delete-button" type="submit">Disable Two-Factor</button>
+                    <button id="settings-2fa-disable-resend" class="link-button" type="button">Resend code</button>
+                  </div>
+                </form>
+              </div>
             </div>
 
             <form id="settings-delete-form" class="auth-form settings-form settings-section settings-section-danger">

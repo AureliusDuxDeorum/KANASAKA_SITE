@@ -299,11 +299,9 @@
           throw new Error((data && data.error) || "Request failed.");
         }
 
-        showFormSuccess(form, data.message);
-        form.querySelector('[name="email"]').value = "";
+        window.location.href = "/reset-password/?email=" + encodeURIComponent(email);
       } catch (error) {
         showFormError(form, error.message || "Request failed.");
-      } finally {
         submit.disabled = false;
       }
     });
@@ -313,19 +311,23 @@
     const form = document.getElementById("reset-password-form");
     if (!form) return;
 
+    const emailField = form.querySelector('[name="email"]');
+    const resendBtn = document.getElementById("reset-resend");
+
+    const params = new URLSearchParams(window.location.search);
+    const prefillEmail = params.get("email");
+    if (prefillEmail && emailField) {
+      emailField.value = prefillEmail;
+    }
+
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
       clearFormError(form);
 
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
+      const email = emailField.value.trim();
+      const code = form.querySelector('[name="code"]').value.trim();
       const password = form.querySelector('[name="password"]').value;
       const submit = form.querySelector('[type="submit"]');
-
-      if (!token) {
-        showFormError(form, "Reset link is invalid or missing.");
-        return;
-      }
 
       const passwordError = validateNewPassword(password);
       if (passwordError) {
@@ -338,7 +340,7 @@
       try {
         const { response, data } = await apiRequest("/api/auth/reset-password", {
           method: "POST",
-          body: JSON.stringify({ token, password }),
+          body: JSON.stringify({ email, code, password }),
         });
 
         if (!response.ok) {
@@ -354,6 +356,32 @@
         submit.disabled = false;
       }
     });
+
+    if (resendBtn) {
+      resendBtn.addEventListener("click", async function () {
+        clearFormError(form);
+        clearFormSuccess(form);
+
+        const email = emailField.value.trim();
+        if (!email) {
+          showFormError(form, "Enter your email first.");
+          return;
+        }
+
+        resendBtn.disabled = true;
+        try {
+          const { data } = await apiRequest("/api/auth/forgot-password", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+          });
+          showFormSuccess(form, (data && data.message) || "If an account exists for that email, a password reset code has been sent.");
+        } catch {
+          showFormError(form, "Could not resend code. Try again later.");
+        } finally {
+          resendBtn.disabled = false;
+        }
+      });
+    }
   }
 
   function initVerifyPage() {
@@ -781,6 +809,173 @@
     });
   }
 
+  function initTwoFactorSettings(profile) {
+    const statusEl = document.getElementById("settings-2fa-status");
+    const offBox = document.getElementById("settings-2fa-off");
+    const onBox = document.getElementById("settings-2fa-on");
+    if (!statusEl || !offBox || !onBox) return;
+
+    const setupStartBtn = document.getElementById("settings-2fa-setup-start");
+    const setupForm = document.getElementById("settings-2fa-setup-form");
+    const setupResendBtn = document.getElementById("settings-2fa-setup-resend");
+    const disableStartBtn = document.getElementById("settings-2fa-disable-start");
+    const disableForm = document.getElementById("settings-2fa-disable-form");
+    const disableResendBtn = document.getElementById("settings-2fa-disable-resend");
+
+    function render(message) {
+      setupForm.hidden = true;
+      disableForm.hidden = true;
+
+      if (profile.twoFactorEnabled) {
+        statusEl.textContent =
+          message ||
+          ("Enabled." + (profile.emailMasked ? " Codes are sent to " + profile.emailMasked + "." : ""));
+        offBox.hidden = true;
+        onBox.hidden = false;
+      } else {
+        statusEl.textContent = message || "Currently off.";
+        offBox.hidden = false;
+        onBox.hidden = true;
+      }
+    }
+
+    render();
+
+    setupStartBtn.addEventListener("click", async function () {
+      setupStartBtn.disabled = true;
+      try {
+        const { response, data } = await apiRequest("/api/account/two-factor/email-setup", {
+          method: "POST",
+        });
+        setupForm.hidden = false;
+        if (!response.ok) {
+          showFormError(setupForm, (data && data.error) || "Could not send code.");
+        } else {
+          showFormSuccess(setupForm, data.message || "Code sent.");
+        }
+      } finally {
+        setupStartBtn.disabled = false;
+      }
+    });
+
+    setupResendBtn.addEventListener("click", async function () {
+      clearFormError(setupForm);
+      clearFormSuccess(setupForm);
+      setupResendBtn.disabled = true;
+      try {
+        const { response, data } = await apiRequest("/api/account/two-factor/email-setup", {
+          method: "POST",
+        });
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not resend code.");
+        }
+        showFormSuccess(setupForm, data.message || "Code sent.");
+      } catch (error) {
+        showFormError(setupForm, error.message || "Could not resend code.");
+      } finally {
+        setupResendBtn.disabled = false;
+      }
+    });
+
+    setupForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(setupForm);
+      clearFormSuccess(setupForm);
+
+      const code = setupForm.querySelector('[name="code"]').value.trim();
+      const submit = setupForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/account/two-factor/email-enable", {
+          method: "POST",
+          body: JSON.stringify({ code }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not enable two-factor authentication.");
+        }
+
+        profile.twoFactorEnabled = true;
+        profile.emailMasked = data.emailMasked || profile.emailMasked;
+        updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
+        render(data.message);
+      } catch (error) {
+        showFormError(setupForm, error.message || "Could not enable two-factor authentication.");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    disableStartBtn.addEventListener("click", async function () {
+      disableStartBtn.disabled = true;
+      try {
+        const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
+          method: "POST",
+          body: JSON.stringify({ purpose: "disable" }),
+        });
+        disableForm.hidden = false;
+        if (!response.ok) {
+          showFormError(disableForm, (data && data.error) || "Could not send code.");
+        } else {
+          showFormSuccess(disableForm, data.message || "Code sent.");
+        }
+      } finally {
+        disableStartBtn.disabled = false;
+      }
+    });
+
+    disableResendBtn.addEventListener("click", async function () {
+      clearFormError(disableForm);
+      clearFormSuccess(disableForm);
+      disableResendBtn.disabled = true;
+      try {
+        const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
+          method: "POST",
+          body: JSON.stringify({ purpose: "disable" }),
+        });
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not resend code.");
+        }
+        showFormSuccess(disableForm, data.message || "Code sent.");
+      } catch (error) {
+        showFormError(disableForm, error.message || "Could not resend code.");
+      } finally {
+        disableResendBtn.disabled = false;
+      }
+    });
+
+    disableForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(disableForm);
+      clearFormSuccess(disableForm);
+
+      const password = disableForm.querySelector('[name="password"]').value;
+      const code = disableForm.querySelector('[name="code"]').value.trim();
+      const submit = disableForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/account/two-factor/disable", {
+          method: "POST",
+          body: JSON.stringify({ password, code }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not disable two-factor authentication.");
+        }
+
+        showFormSuccess(disableForm, (data.message || "Two-factor authentication disabled.") + " Redirecting to log in...");
+        window.setTimeout(function () {
+          window.location.href = "/login/";
+        }, 1800);
+      } catch (error) {
+        showFormError(disableForm, error.message || "Could not disable two-factor authentication.");
+        submit.disabled = false;
+      }
+    });
+  }
+
   async function initSettingsPage() {
     const gate = document.getElementById("settings-gate");
     const content = document.getElementById("settings-content");
@@ -997,6 +1192,8 @@
         submit.disabled = false;
       }
     });
+
+    initTwoFactorSettings(profile);
 
     deleteForm.addEventListener("submit", async function (event) {
       event.preventDefault();
@@ -1408,8 +1605,72 @@
     });
   }
 
+  function showTwoFactorChallenge(result, loginForm) {
+    const challengeForm = document.getElementById("login-2fa-form");
+    if (!challengeForm) {
+      window.location.reload();
+      return;
+    }
+
+    loginForm.hidden = true;
+    challengeForm.hidden = false;
+    challengeForm.dataset.challenge = result.challenge || "";
+
+    const lead = document.getElementById("login-2fa-lead");
+    if (lead) {
+      const destination = result.emailMasked || result.phoneMasked;
+      lead.textContent = destination
+        ? "Enter the 6-digit code we sent to " + destination + "."
+        : "Enter the 6-digit code we sent you.";
+    }
+
+    const codeField = challengeForm.querySelector('[name="code"]');
+    if (codeField) codeField.focus();
+  }
+
+  function bindTwoFactorChallengeForm() {
+    const form = document.getElementById("login-2fa-form");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(form);
+
+      const code = form.querySelector('[name="code"]').value.trim();
+      const challenge = form.dataset.challenge || "";
+      const submit = form.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/auth/two-factor", {
+          method: "POST",
+          body: JSON.stringify({ challenge, code }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Verification failed.");
+        }
+
+        sessionCache = data;
+        window.location.href = getNextPath();
+      } catch (error) {
+        showFormError(form, error.message || "Verification failed.");
+        submit.disabled = false;
+      }
+    });
+  }
+
   function initAuthForms() {
-    bindEmailPasswordForm("login-form", login);
+    bindEmailPasswordForm("login-form", login, {
+      onSuccess: function (result, form) {
+        if (result && result.twoFactorRequired) {
+          showTwoFactorChallenge(result, form);
+          return;
+        }
+        window.location.href = getNextPath();
+      },
+    });
+    bindTwoFactorChallengeForm();
     bindEmailPasswordForm("register-form", register, {
       onSuccess: function (result, form) {
         const email = form.querySelector('[name="email"]').value.trim();

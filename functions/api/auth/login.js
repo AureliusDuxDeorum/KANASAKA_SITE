@@ -13,7 +13,7 @@ import {
   validateEmail,
   verifyPassword,
 } from "../../lib/auth.js";
-import { createTwoFactorChallenge, maskPhone } from "../../lib/two-factor.js";
+import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-factor.js";
 import { smsConfigured } from "../../lib/sms.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
@@ -72,7 +72,14 @@ export async function onRequestPost(context) {
 
   await upgradePasswordHash(env, user.id, password, user.password_hash);
 
-  if (user.totp_enabled && smsConfigured(env)) {
+  if (user.totp_enabled) {
+    const method = user.phone_e164 ? "sms" : "email";
+
+    if (method === "sms" && !smsConfigured(env)) {
+      await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "sms_unconfigured" });
+      return errorResponse("Two-factor authentication is misconfigured. Contact support.", 503);
+    }
+
     try {
       const challenge = await createTwoFactorChallenge(env, user.id, remember);
       await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
@@ -80,10 +87,12 @@ export async function onRequestPost(context) {
         twoFactorRequired: true,
         challenge: challenge.challenge,
         expiresIn: challenge.expiresIn,
-        phoneMasked: user.phone_e164 ? maskPhone(user.phone_e164) : null,
+        method: challenge.method,
+        phoneMasked: method === "sms" ? maskPhone(user.phone_e164) : null,
+        emailMasked: method === "email" ? maskEmail(user.email) : null,
       });
     } catch (err) {
-      await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "sms_send" });
+      await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "send_failed" });
       return errorResponse(err.message || "Could not send verification code.", 503);
     }
   }

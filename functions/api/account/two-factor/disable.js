@@ -6,7 +6,7 @@ import {
   readJson,
   verifyPassword,
 } from "../../../lib/auth.js";
-import { disableSms2fa } from "../../../lib/two-factor.js";
+import { disableEmail2fa, disableSms2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -29,7 +29,7 @@ export async function onRequestPost(context) {
   const code = String(body.code || "");
 
   const row = await env.DB.prepare(
-    "SELECT password_hash, totp_enabled FROM users WHERE id = ?"
+    "SELECT password_hash, totp_enabled, phone_e164 FROM users WHERE id = ?"
   )
     .bind(user.id)
     .first();
@@ -44,7 +44,11 @@ export async function onRequestPost(context) {
   }
 
   try {
-    await disableSms2fa(env, user.id, code);
+    if (row.phone_e164) {
+      await disableSms2fa(env, user.id, code);
+    } else {
+      await disableEmail2fa(env, user.id, code);
+    }
     await deleteAllUserSessions(env, user.id);
     await logAuthEvent(env, "twofa_disabled", { ip: clientIp(request), userId: user.id });
 

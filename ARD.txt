@@ -119,18 +119,40 @@ Login / session ("stay logged in")
   deliberate scope cut since that's an already-authenticated settings action,
   not a login.
 
-Two-factor authentication (TOTP)
-  Optional per account; RFC 6238 via functions/lib/totp.js
-  Secrets encrypted at rest (AES-GCM, key derived from SESSION_SECRET)
-  POST /api/account/two-factor/setup — pending secret + otpauth URL
-  POST /api/account/two-factor/enable — confirm code, returns backup codes
-  POST /api/account/two-factor/disable — password + TOTP required; clears sessions
-  Backup codes: one-time, stored hashed in twofa_backup_codes
-  UI: login 2FA step + Account Settings → Two-Factor Authentication panel
+Two-factor authentication (email code)
+  Optional per account. `users.totp_enabled` is the generic "2FA on" flag;
+  method is inferred, not a separate column: phone_e164 set → sms, else → email.
+  UI (Account Settings → Account Management → Two-Factor Authentication) only
+  offers Email — it's the one method that works without paid Twilio setup.
+  POST /api/account/two-factor/email-setup — send a 6-digit code to account email
+  POST /api/account/two-factor/email-enable — confirm code, enables 2FA
+  POST /api/account/two-factor/disable — password + code; branches on phone_e164
+    to call disableSms2fa or disableEmail2fa (functions/lib/two-factor.js)
+  POST /api/account/two-factor/send-code {purpose:"disable"} — resend disable code
+  Login: login.js branches the same way; if method is sms and Twilio isn't
+    configured, login is now refused with a 503 rather than silently skipping
+    the 2FA step (a real gap in the code found and fixed while building this —
+    previously `user.totp_enabled && smsConfigured(env)` would bypass 2FA
+    entirely whenever SMS wasn't configured).
+  Login UI: /login/ shows a code-entry step (#login-2fa-form) when the server
+    returns twoFactorRequired; no resend button on this step (re-submitting the
+    login form issues a fresh challenge + code instead).
+  functions/api/account/two-factor/setup.js, enable.js — legacy SMS-only setup
+    endpoints (phone number entry). Backend only, no frontend ever built, and
+    smsConfigured(env) requires TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM_NUMBER which
+    aren't set — effectively dead code, left in place, not wired to any UI.
+  functions/lib/totp.js (RFC 6238) and twofa_backup_codes are unused/dead —
+    no code path issues real TOTP secrets or backup codes despite the naming.
 
-Password reset
-  POST /api/auth/forgot-password → email with reset link
-  POST /api/auth/reset-password → new password, invalidates all sessions
+Password reset (6-digit email code, same pattern as email verification)
+  POST /api/auth/forgot-password → generic success + createPasswordResetCode()
+    (type='reset' in email_tokens, RESET_CODE_MINUTES=15), emails the code
+  POST /api/auth/reset-password — body {email, code, password}; re-checks the
+    token's stored email against the submitted email, brute-force throttle via
+    security.js tooManyRecentFailures() (shared with /api/auth/verify), then
+    updates password and invalidates all sessions
+  UI: /forgot-password/ redirects to /reset-password/?email=... on submit;
+    /reset-password/ has email + code + new-password fields and a resend link
 
 Account
   /api/account/profile, /password, /avatar, /delete
@@ -262,6 +284,14 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-12  Auth: password reset switched from a link to a 6-digit email code
+            (same pattern as verification), with its own brute-force throttle
+            (functions/lib/security.js tooManyRecentFailures, shared with
+            /api/auth/verify). Built a full email-based 2FA option end-to-end
+            (Account Settings panel + login challenge step) since the existing
+            SMS/TOTP 2FA backend had no frontend at all and needs unconfigured
+            Twilio credentials. Fixed a real bug found along the way: login
+            used to silently skip 2FA entirely if SMS wasn't configured.
 2026-09-12  Auth: added "stay logged in" (session.remember, migration 015) and
             replaced link-based email verification with a 6-digit code
             (createVerificationCode, rewritten /verify/ page + verify.js).

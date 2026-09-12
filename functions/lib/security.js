@@ -61,6 +61,29 @@ export async function logAuthEvent(env, eventType, meta = {}) {
   }
 }
 
+// Best-effort brute-force throttle for low-entropy codes (email verification,
+// password reset). Reuses the existing auth_events log rather than a new
+// table/column. Fails open -- a throttle-check error never blocks a
+// legitimate attempt, it just skips the rate limit for that request.
+export async function tooManyRecentFailures(env, eventType, email, options = {}) {
+  const maxFailures = options.max || 8;
+  const windowMinutes = options.windowMinutes || 15;
+
+  try {
+    const row = await env.DB.prepare(
+      `SELECT COUNT(*) AS c FROM auth_events
+       WHERE event_type = ?
+         AND json_extract(meta, '$.email') = ?
+         AND created_at > datetime('now', ?)`
+    )
+      .bind(eventType, email, `-${windowMinutes} minutes`)
+      .first();
+    return Boolean(row && Number(row.c) >= maxFailures);
+  } catch {
+    return false;
+  }
+}
+
 export function requireAdmin(request, env) {
   const secret = env.ADMIN_SECRET;
   if (!secret) {

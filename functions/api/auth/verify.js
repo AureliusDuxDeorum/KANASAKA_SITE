@@ -9,32 +9,14 @@ import {
   sessionPayload,
   validateEmail,
 } from "../../lib/auth.js";
-import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import {
+  clientIp,
+  logAuthEvent,
+  requireSameOrigin,
+  tooManyRecentFailures,
+} from "../../lib/security.js";
 
 const CODE_RE = /^[0-9]{6}$/;
-// Codes have far less entropy than the old 32-byte link token (1 in a
-// million vs. effectively unguessable), so unlike the old flow this one
-// needs a basic brute-force throttle. Best-effort: reuses the existing
-// auth_events log rather than a new table/column, and never blocks a
-// legitimate attempt if the check itself fails for any reason.
-const MAX_RECENT_FAILURES = 8;
-const FAILURE_WINDOW_MINUTES = 15;
-
-async function tooManyRecentFailures(env, email) {
-  try {
-    const row = await env.DB.prepare(
-      `SELECT COUNT(*) AS c FROM auth_events
-       WHERE event_type = 'verify_failed'
-         AND json_extract(meta, '$.email') = ?
-         AND created_at > datetime('now', ?)`
-    )
-      .bind(email, `-${FAILURE_WINDOW_MINUTES} minutes`)
-      .first();
-    return Boolean(row && Number(row.c) >= MAX_RECENT_FAILURES);
-  } catch {
-    return false;
-  }
-}
 
 async function verifyWithCode(env, email, code, ip) {
   const record = await consumeEmailToken(env, code, "verify");
@@ -96,7 +78,7 @@ export async function onRequestPost(context) {
     return errorResponse("Enter the 6-digit code sent to your email.", 400);
   }
 
-  if (await tooManyRecentFailures(env, email)) {
+  if (await tooManyRecentFailures(env, "verify_failed", email)) {
     await logAuthEvent(env, "verify_failed", { ip, email, reason: "rate_limited" });
     return errorResponse("Too many attempts. Request a new code and try again.", 429);
   }

@@ -1,7 +1,15 @@
 import { maskPhone, normalizePhone } from "./phone.js";
 import { sendVerificationSms } from "./sms.js";
+import { sendTwoFactorCodeEmail } from "./email.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 import { twofaChallengesHaveRememberColumn } from "./schema.js";
+
+function maskEmail(email) {
+  const [local, domain] = String(email || "").split("@");
+  if (!local || !domain) return email || "";
+  const visible = local.slice(0, 1);
+  return `${visible}${"*".repeat(Math.max(local.length - 1, 3))}@${domain}`;
+}
 
 const OTP_MINUTES = 5;
 const CHALLENGE_MINUTES = 5;
@@ -168,6 +176,123 @@ export async function disableSms2fa(env, userId, code) {
   await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
 }
 
+export async function beginEmailSetup(env, userId) {
+  const row = await env.DB.prepare("SELECT email, totp_enabled FROM users WHERE id = ?")
+    .bind(userId)
+    .first();
+
+  if (!row) {
+    throw new Error("Account not found.");
+  }
+
+  if (row.totp_enabled) {
+    throw new Error("Two-factor authentication is already enabled.");
+  }
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "email_setup", code);
+  await sendTwoFactorCodeEmail(env, row.email, code, "setup");
+
+  return {
+    emailMasked: maskEmail(row.email),
+  };
+}
+
+export async function enableEmail2fa(env, userId, code) {
+  const row = await env.DB.prepare("SELECT email, totp_enabled FROM users WHERE id = ?")
+    .bind(userId)
+    .first();
+
+  if (!row) {
+    throw new Error("Account not found.");
+  }
+
+  if (row.totp_enabled) {
+    throw new Error("Two-factor authentication is already enabled.");
+  }
+
+  const valid = await verifySmsOtp(env, userId, "email_setup", code);
+  if (!valid) {
+    throw new Error("Invalid or expired verification code.");
+  }
+
+  await env.DB.prepare(
+    `UPDATE users
+     SET totp_enabled = 1, totp_enabled_at = datetime('now')
+     WHERE id = ?`
+  )
+    .bind(userId)
+    .run();
+
+  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
+
+  return {
+    emailMasked: maskEmail(row.email),
+  };
+}
+
+export async function sendDisableEmailCode(env, userId) {
+  const row = await env.DB.prepare(
+    "SELECT email FROM users WHERE id = ? AND totp_enabled = 1 AND phone_e164 IS NULL"
+  )
+    .bind(userId)
+    .first();
+
+  if (!row) {
+    throw new Error("Two-factor authentication is not enabled.");
+  }
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "disable", code);
+  await sendTwoFactorCodeEmail(env, row.email, code, "disable");
+
+  return {
+    emailMasked: maskEmail(row.email),
+  };
+}
+
+export async function disableEmail2fa(env, userId, code) {
+  const valid = await verifySmsOtp(env, userId, "disable", code);
+  if (!valid) {
+    throw new Error("Invalid or expired verification code.");
+  }
+
+  await env.DB.prepare(
+    `UPDATE users SET totp_enabled = 0, totp_enabled_at = NULL WHERE id = ?`
+  )
+    .bind(userId)
+    .run();
+
+  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
+  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
+  await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
+}
+
+export async function sendLoginEmailCode(env, userId) {
+  const row = await env.DB.prepare(
+    "SELECT email FROM users WHERE id = ? AND totp_enabled = 1 AND phone_e164 IS NULL"
+  )
+    .bind(userId)
+    .first();
+
+  if (!row) {
+    throw new Error("Two-factor authentication is misconfigured.");
+  }
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "login", code);
+  await sendTwoFactorCodeEmail(env, row.email, code, "login");
+
+  return {
+    emailMasked: maskEmail(row.email),
+  };
+}
+
+export function twoFactorMethodFromUser(user) {
+  if (!user || !user.totp_enabled) return null;
+  return user.phone_e164 ? "sms" : "email";
+}
+
 export async function createTwoFactorChallenge(env, userId, remember = true) {
   const rawToken = generateRawToken(32);
   const challengeHash = await hashSecret("2fa:" + rawToken, env);
@@ -189,9 +314,18 @@ export async function createTwoFactorChallenge(env, userId, remember = true) {
       .run();
   }
 
-  await sendLoginSmsCode(env, userId);
+  const user = await env.DB.prepare("SELECT phone_e164 FROM users WHERE id = ?")
+    .bind(userId)
+    .first();
+  const method = user && user.phone_e164 ? "sms" : "email";
 
-  return { challenge: rawToken, expiresIn: CHALLENGE_MINUTES * 60 };
+  if (method === "sms") {
+    await sendLoginSmsCode(env, userId);
+  } else {
+    await sendLoginEmailCode(env, userId);
+  }
+
+  return { challenge: rawToken, expiresIn: CHALLENGE_MINUTES * 60, method };
 }
 
 export async function sendLoginSmsCode(env, userId) {
@@ -263,11 +397,15 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
 }
 
 export function twoFactorStatusFromUser(user) {
+  const enabled = Boolean(user && user.totp_enabled);
+  const method = enabled ? (user.phone_e164 ? "sms" : "email") : null;
   return {
-    enabled: Boolean(user && user.totp_enabled),
+    enabled,
+    method,
     enabledAt: user && user.totp_enabled_at ? user.totp_enabled_at : null,
     phoneMasked: user && user.phone_e164 ? maskPhone(user.phone_e164) : null,
+    emailMasked: enabled && method === "email" ? maskEmail(user.email) : null,
   };
 }
 
-export { maskPhone };
+export { maskPhone, maskEmail };

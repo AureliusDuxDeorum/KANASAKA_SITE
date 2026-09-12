@@ -13,8 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=70">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=70">
+  <link rel="stylesheet" href="/assets/css/style.css?v=71">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=71">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -53,6 +53,15 @@
         </label>
 
         <button class="button auth-submit" type="submit">Log In</button>
+      </form>
+
+      <form id="login-2fa-form" class="auth-form" hidden>
+        <p id="login-2fa-lead" class="auth-lead">Enter the 6-digit code we sent you.</p>
+        <div class="auth-field">
+          <label for="login-2fa-code">Verification code</label>
+          <input id="login-2fa-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+        </div>
+        <button class="button auth-submit" type="submit">Verify</button>
       </form>
 
       <div class="auth-footer">

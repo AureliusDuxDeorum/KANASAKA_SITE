@@ -28,7 +28,7 @@ export const SESSION_ROTATE_HOURS = 24;
 // underlying row in case that cookie somehow outlives the browser session.
 export const SHORT_SESSION_HOURS = 24;
 export const VERIFY_CODE_MINUTES = 15;
-export const RESET_TOKEN_HOURS = 1;
+export const RESET_CODE_MINUTES = 15;
 
 export const DOWNLOAD_URLS = {
   windows:
@@ -479,6 +479,12 @@ export async function createEmailToken(env, userId, type, hours, rawValue) {
 export async function createVerificationCode(env, userId) {
   const code = generateNumericCode(6);
   await createEmailToken(env, userId, "verify", VERIFY_CODE_MINUTES / 60, code);
+  return code;
+}
+
+export async function createPasswordResetCode(env, userId) {
+  const code = generateNumericCode(6);
+  await createEmailToken(env, userId, "reset", RESET_CODE_MINUTES / 60, code);
   return code;
 }
 

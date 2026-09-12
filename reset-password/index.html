@@ -13,8 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=70">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=70">
+  <link rel="stylesheet" href="/assets/css/style.css?v=71">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=71">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -34,9 +34,19 @@
 
       <p class="auth-eyebrow">Account</p>
       <h1>Reset Password</h1>
-      <p class="auth-lead">Choose a new password for your KANASAKA account.</p>
+      <p class="auth-lead">Enter the 6-digit code we emailed you and choose a new password.</p>
 
       <form id="reset-password-form" class="auth-form">
+        <div class="auth-field">
+          <label for="reset-email">Email</label>
+          <input id="reset-email" name="email" type="email" autocomplete="email" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="reset-code">Verification code</label>
+          <input id="reset-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+        </div>
+
         <div class="auth-field">
           <label for="reset-password">New Password</label>
           <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
@@ -47,6 +57,7 @@
       </form>
 
       <div class="auth-footer">
+        <p class="auth-switch"><button id="reset-resend" class="link-button" type="button">Resend code</button></p>
         <p class="auth-switch"><a href="/login/">Back to log in</a></p>
       </div>
       </div>

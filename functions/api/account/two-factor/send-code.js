@@ -4,7 +4,11 @@ import {
   jsonResponse,
   readJson,
 } from "../../../lib/auth.js";
-import { resendSmsSetup, sendDisableSmsCode } from "../../../lib/two-factor.js";
+import {
+  resendSmsSetup,
+  sendDisableEmailCode,
+  sendDisableSmsCode,
+} from "../../../lib/two-factor.js";
 import { requireSameOrigin } from "../../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -31,11 +35,24 @@ export async function onRequestPost(context) {
       });
     }
 
-    const result = await sendDisableSmsCode(env, user.id);
+    const row = await env.DB.prepare("SELECT phone_e164 FROM users WHERE id = ?")
+      .bind(user.id)
+      .first();
+
+    if (row && row.phone_e164) {
+      const result = await sendDisableSmsCode(env, user.id);
+      return jsonResponse({
+        success: true,
+        phoneMasked: result.phoneMasked,
+        message: "We sent a verification code to " + result.phoneMasked + ".",
+      });
+    }
+
+    const result = await sendDisableEmailCode(env, user.id);
     return jsonResponse({
       success: true,
-      phoneMasked: result.phoneMasked,
-      message: "We sent a verification code to " + result.phoneMasked + ".",
+      emailMasked: result.emailMasked,
+      message: "We sent a verification code to " + result.emailMasked + ".",
     });
   } catch (err) {
     return errorResponse(err.message || "Could not send verification code.", 400);
