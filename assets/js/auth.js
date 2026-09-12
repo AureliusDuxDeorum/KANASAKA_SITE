@@ -1,6 +1,71 @@
 (function () {
   let sessionCache = null;
 
+  function initOtpGroup(groupEl, hiddenInput, length) {
+    if (!groupEl || !hiddenInput) return;
+
+    const digits = length || 6;
+    groupEl.innerHTML = "";
+    const boxes = [];
+
+    for (let i = 0; i < digits; i += 1) {
+      const box = document.createElement("input");
+      box.type = "text";
+      box.inputMode = "numeric";
+      box.autocomplete = i === 0 ? "one-time-code" : "off";
+      box.maxLength = 1;
+      box.className = "otp-box";
+      box.setAttribute("aria-label", "Digit " + (i + 1));
+      groupEl.appendChild(box);
+      boxes.push(box);
+    }
+
+    function sync() {
+      hiddenInput.value = boxes.map(function (b) { return b.value; }).join("");
+    }
+
+    boxes.forEach(function (box, index) {
+      box.addEventListener("input", function () {
+        box.value = box.value.replace(/[^0-9]/g, "").slice(-1);
+        if (box.value && index < boxes.length - 1) {
+          boxes[index + 1].focus();
+        }
+        sync();
+      });
+
+      box.addEventListener("keydown", function (event) {
+        if (event.key === "Backspace" && !box.value && index > 0) {
+          boxes[index - 1].focus();
+        } else if (event.key === "ArrowLeft" && index > 0) {
+          boxes[index - 1].focus();
+        } else if (event.key === "ArrowRight" && index < boxes.length - 1) {
+          boxes[index + 1].focus();
+        }
+      });
+
+      box.addEventListener("paste", function (event) {
+        const clipboard = event.clipboardData || window.clipboardData;
+        const text = clipboard.getData("text").replace(/[^0-9]/g, "");
+        if (!text) return;
+        event.preventDefault();
+        boxes.forEach(function (b, i) {
+          b.value = text[i] || "";
+        });
+        const nextEmpty = boxes.findIndex(function (b) { return !b.value; });
+        (nextEmpty === -1 ? boxes[boxes.length - 1] : boxes[nextEmpty]).focus();
+        sync();
+      });
+    });
+
+    return {
+      clear: function () {
+        boxes.forEach(function (b) { b.value = ""; });
+        hiddenInput.value = "";
+        boxes[0].focus();
+      },
+    };
+  }
+
   function getNextPath() {
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
@@ -314,6 +379,8 @@
     const emailField = form.querySelector('[name="email"]');
     const resendBtn = document.getElementById("reset-resend");
 
+    initOtpGroup(document.getElementById("reset-code-boxes"), form.querySelector('[name="code"]'));
+
     const params = new URLSearchParams(window.location.search);
     const prefillEmail = params.get("email");
     if (prefillEmail && emailField) {
@@ -391,6 +458,8 @@
     const emailField = form.querySelector('[name="email"]');
     const codeField = form.querySelector('[name="code"]');
     const resendBtn = document.getElementById("verify-resend");
+
+    initOtpGroup(document.getElementById("verify-code-boxes"), codeField);
 
     const params = new URLSearchParams(window.location.search);
     const prefillEmail = params.get("email");
@@ -822,22 +891,23 @@
     const disableForm = document.getElementById("settings-2fa-disable-form");
     const disableResendBtn = document.getElementById("settings-2fa-disable-resend");
 
-    function render(message) {
+    function render() {
       setupForm.hidden = true;
       disableForm.hidden = true;
 
       if (profile.twoFactorEnabled) {
-        statusEl.textContent =
-          message ||
-          ("Enabled." + (profile.emailMasked ? " Codes are sent to " + profile.emailMasked + "." : ""));
+        statusEl.textContent = "Enabled.";
         offBox.hidden = true;
         onBox.hidden = false;
       } else {
-        statusEl.textContent = message || "Currently off.";
+        statusEl.textContent = "Currently off.";
         offBox.hidden = false;
         onBox.hidden = true;
       }
     }
+
+    initOtpGroup(document.getElementById("settings-2fa-setup-code-boxes"), setupForm.querySelector('[name="code"]'));
+    initOtpGroup(document.getElementById("settings-2fa-disable-code-boxes"), disableForm.querySelector('[name="code"]'));
 
     render();
 
@@ -899,7 +969,7 @@
         profile.twoFactorEnabled = true;
         profile.emailMasked = data.emailMasked || profile.emailMasked;
         updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
-        render(data.message);
+        render();
       } catch (error) {
         showFormError(setupForm, error.message || "Could not enable two-factor authentication.");
       } finally {
@@ -950,7 +1020,6 @@
       clearFormError(disableForm);
       clearFormSuccess(disableForm);
 
-      const password = disableForm.querySelector('[name="password"]').value;
       const code = disableForm.querySelector('[name="code"]').value.trim();
       const submit = disableForm.querySelector('[type="submit"]');
       submit.disabled = true;
@@ -958,7 +1027,7 @@
       try {
         const { response, data } = await apiRequest("/api/account/two-factor/disable", {
           method: "POST",
-          body: JSON.stringify({ password, code }),
+          body: JSON.stringify({ code }),
         });
 
         if (!response.ok) {
@@ -1624,13 +1693,15 @@
         : "Enter the 6-digit code we sent you.";
     }
 
-    const codeField = challengeForm.querySelector('[name="code"]');
-    if (codeField) codeField.focus();
+    const firstBox = document.querySelector("#login-2fa-code-boxes .otp-box");
+    if (firstBox) firstBox.focus();
   }
 
   function bindTwoFactorChallengeForm() {
     const form = document.getElementById("login-2fa-form");
     if (!form) return;
+
+    initOtpGroup(document.getElementById("login-2fa-code-boxes"), form.querySelector('[name="code"]'));
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();

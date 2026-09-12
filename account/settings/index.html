@@ -13,8 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=71">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=71">
+  <link rel="stylesheet" href="/assets/css/style.css?v=72">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=72">
   <script defer src="/assets/js/password-policy.js"></script>
   <script defer src="/assets/js/auth.js"></script>
   <script defer src="/assets/js/main.js"></script>
@@ -148,8 +148,9 @@
 
                 <form id="settings-2fa-setup-form" class="auth-form settings-form" hidden>
                   <div class="auth-field">
-                    <label for="settings-2fa-setup-code">Verification code</label>
-                    <input id="settings-2fa-setup-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                    <label id="settings-2fa-setup-code-label">Verification code</label>
+                    <div class="otp-boxes" id="settings-2fa-setup-code-boxes" role="group" aria-labelledby="settings-2fa-setup-code-label"></div>
+                    <input type="hidden" id="settings-2fa-setup-code" name="code">
                   </div>
                   <div class="settings-2fa-actions">
                     <button class="button secondary" type="submit">Enable</button>
@@ -164,12 +165,9 @@
 
                 <form id="settings-2fa-disable-form" class="auth-form settings-form" hidden>
                   <div class="auth-field">
-                    <label for="settings-2fa-disable-password">Current Password</label>
-                    <input id="settings-2fa-disable-password" name="password" type="password" autocomplete="current-password">
-                  </div>
-                  <div class="auth-field">
-                    <label for="settings-2fa-disable-code">Verification code</label>
-                    <input id="settings-2fa-disable-code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                    <label id="settings-2fa-disable-code-label">Verification code</label>
+                    <div class="otp-boxes" id="settings-2fa-disable-code-boxes" role="group" aria-labelledby="settings-2fa-disable-code-label"></div>
+                    <input type="hidden" id="settings-2fa-disable-code" name="code">
                   </div>
                   <div class="settings-2fa-actions">
                     <button class="button settings-delete-button" type="submit">Disable Two-Factor</button>

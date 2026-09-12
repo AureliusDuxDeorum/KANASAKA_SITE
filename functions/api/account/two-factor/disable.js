@@ -4,7 +4,6 @@ import {
   getSessionUser,
   jsonResponse,
   readJson,
-  verifyPassword,
 } from "../../../lib/auth.js";
 import { disableEmail2fa, disableSms2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
@@ -25,22 +24,16 @@ export async function onRequestPost(context) {
     return errorResponse("Invalid request body.");
   }
 
-  const password = String(body.password || "");
   const code = String(body.code || "");
 
   const row = await env.DB.prepare(
-    "SELECT password_hash, totp_enabled, phone_e164 FROM users WHERE id = ?"
+    "SELECT totp_enabled, phone_e164 FROM users WHERE id = ?"
   )
     .bind(user.id)
     .first();
 
   if (!row || !row.totp_enabled) {
     return errorResponse("Two-factor authentication is not enabled.", 400);
-  }
-
-  const validPassword = await verifyPassword(password, row.password_hash, env);
-  if (!validPassword) {
-    return errorResponse("Current password is incorrect.", 401);
   }
 
   try {

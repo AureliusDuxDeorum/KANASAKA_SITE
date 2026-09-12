@@ -126,8 +126,9 @@ Two-factor authentication (email code)
   offers Email — it's the one method that works without paid Twilio setup.
   POST /api/account/two-factor/email-setup — send a 6-digit code to account email
   POST /api/account/two-factor/email-enable — confirm code, enables 2FA
-  POST /api/account/two-factor/disable — password + code; branches on phone_e164
-    to call disableSms2fa or disableEmail2fa (functions/lib/two-factor.js)
+  POST /api/account/two-factor/disable — code only (no password re-entry;
+    the emailed code is the only factor required to turn it off); branches
+    on phone_e164 to call disableSms2fa or disableEmail2fa (two-factor.js)
   POST /api/account/two-factor/send-code {purpose:"disable"} — resend disable code
   Login: login.js branches the same way; if method is sms and Twilio isn't
     configured, login is now refused with a 503 rather than silently skipping
@@ -284,6 +285,12 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-12  UI: all 6-digit code inputs (verify, reset-password, login 2FA,
+            settings 2FA setup/disable) now render as 6 auto-advancing boxes
+            (initOtpGroup in auth.js) instead of one text field. Dropped the
+            redundant current-password field from the 2FA disable form (the
+            emailed code alone is now sufficient to disable) and removed the
+            duplicate "enabled"/"is on" status text shown after enabling.
 2026-09-12  Auth: password reset switched from a link to a 6-digit email code
             (same pattern as verification), with its own brute-force throttle
             (functions/lib/security.js tooManyRecentFailures, shared with
