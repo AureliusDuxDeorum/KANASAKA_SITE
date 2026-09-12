@@ -2,14 +2,13 @@
   "use strict";
 
   // Keep in sync with functions/lib/password-policy.js
-  var PASSWORD_MIN_LENGTH = 12;
+  var PASSWORD_MIN_LENGTH = 15;
   var PASSWORD_MAX_LENGTH = 128;
 
   var LOWER_RE = /[a-z]/;
   var UPPER_RE = /[A-Z]/;
   var DIGIT_RE = /[0-9]/;
   var SPECIAL_RE = /[!-\/:-@[-`{-~]/;
-  var WHITESPACE_RE = /\s/;
 
   var COMMON_PASSWORDS = {
     password: true,
@@ -84,7 +83,6 @@
       { id: "lower", label: "One lowercase letter (a-z)" },
       { id: "digit", label: "One number (0-9)" },
       { id: "special", label: "One special character (!@#$...)" },
-      { id: "noSpace", label: "No spaces" },
       { id: "noRepeat", label: "No more than 2 identical characters in a row" },
       { id: "notCommon", label: "Not a commonly used password" },
       { id: "notEmail", label: "Must not contain your email username" },
@@ -103,7 +101,6 @@
       lower: LOWER_RE.test(value),
       digit: DIGIT_RE.test(value),
       special: SPECIAL_RE.test(value),
-      noSpace: value.length > 0 && !WHITESPACE_RE.test(value),
       noRepeat: value.length > 0 && !hasTripleRepeat(value),
       notCommon: value.length > 0 && !COMMON_PASSWORDS[lowered],
       notEmail: !emailPart || emailPart.length < 3 || lowered.indexOf(emailPart) === -1,
@@ -135,9 +132,6 @@
     }
     if (!checks.special) {
       return "Password must include at least one special character.";
-    }
-    if (!checks.noSpace) {
-      return "Password must not contain spaces.";
     }
     if (!checks.noRepeat) {
       return "Password must not repeat the same character more than twice in a row.";

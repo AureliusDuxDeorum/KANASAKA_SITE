@@ -1,11 +1,10 @@
-export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MIN_LENGTH = 15;
 export const PASSWORD_MAX_LENGTH = 128;
 
 const LOWER_RE = /[a-z]/;
 const UPPER_RE = /[A-Z]/;
 const DIGIT_RE = /[0-9]/;
 const SPECIAL_RE = /[!-\/:-@[-`{-~]/;
-const WHITESPACE_RE = /\s/;
 
 const COMMON_PASSWORDS = new Set([
   "password",
@@ -62,7 +61,6 @@ export function passwordPolicyRules() {
     { id: "lower", label: "One lowercase letter (a-z)" },
     { id: "digit", label: "One number (0-9)" },
     { id: "special", label: "One special character (!@#$...)" },
-    { id: "noSpace", label: "No spaces" },
     { id: "noRepeat", label: "No more than 2 identical characters in a row" },
     { id: "notCommon", label: "Not a commonly used password" },
     { id: "notEmail", label: "Must not contain your email username" },
@@ -98,7 +96,6 @@ export function evaluatePasswordPolicy(password, context = {}) {
     lower: LOWER_RE.test(value),
     digit: DIGIT_RE.test(value),
     special: SPECIAL_RE.test(value),
-    noSpace: value.length > 0 && !WHITESPACE_RE.test(value),
     noRepeat: value.length > 0 && !hasTripleRepeat(value),
     notCommon: value.length > 0 && !COMMON_PASSWORDS.has(lowered),
     notEmail:
@@ -131,9 +128,6 @@ export function passwordPolicyError(password, context = {}) {
   }
   if (!checks.special) {
     return "Password must include at least one special character.";
-  }
-  if (!checks.noSpace) {
-    return "Password must not contain spaces.";
   }
   if (!checks.noRepeat) {
     return "Password must not repeat the same character more than twice in a row.";
