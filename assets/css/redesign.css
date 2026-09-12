@@ -237,12 +237,18 @@ body.is-site-ready main > section:not(:first-child):nth-child(4) {
     background var(--duration-fast) var(--ease-smooth);
 }
 
-/* Login/Register: quiet at rest like a nav-link, glass fill on hover,
-   instead of a permanently filled/bordered box. */
+/* Login/Register: identical -- quiet at rest like a nav-link, glass fill
+   on hover, instead of a permanently filled/bordered box. Explicitly
+   override .secondary's own color/whitespace here too, otherwise the two
+   buttons render at different text color and "Log In" (having a space)
+   wraps to two lines while "Register" doesn't, making them look mismatched
+   even with the same background. */
 .auth-link,
 .auth-link.secondary {
   background: transparent;
   border-color: var(--glass-border);
+  color: var(--color-text);
+  white-space: nowrap;
 }
 
 .auth-link:hover {
@@ -254,9 +260,11 @@ body.is-site-ready main > section:not(:first-child):nth-child(4) {
 
 /* Profile chip (logged-in header): match the same glass language --
    this never got the redesign pass, so it still looked like a squared,
-   flatly-bordered leftover from the old header. */
+   flatly-bordered leftover from the old header. Square, not a pill, to
+   match the site's sharp-cornered look everywhere else (nav-link,
+   auth-link, .button all have zero border-radius). */
 .header-user {
-  border-radius: 999px;
+  border-radius: 0;
   padding: 4px 14px 4px 4px;
   border: 1px solid transparent;
   transition:
@@ -273,7 +281,7 @@ body.is-site-ready main > section:not(:first-child):nth-child(4) {
 }
 
 .header-avatar {
-  border-radius: 50%;
+  border-radius: 0;
   border-color: var(--glass-border-bright);
   background: var(--glass-bg-elevated);
 }
