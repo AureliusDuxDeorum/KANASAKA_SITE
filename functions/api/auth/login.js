@@ -15,7 +15,7 @@ import {
 } from "../../lib/auth.js";
 import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-factor.js";
 import { smsConfigured } from "../../lib/sms.js";
-import { clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
+import { approxLocation, clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -28,6 +28,7 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
+  const location = approxLocation(request);
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -62,7 +63,7 @@ export async function onRequestPost(context) {
   const valid = await verifyPassword(password, user.password_hash, env);
   if (!valid) {
     await logAuthEvent(env, "login_failed", { ip, reason: "bad_password" });
-    await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", ip });
+    await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", location });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
@@ -71,7 +72,7 @@ export async function onRequestPost(context) {
     await notifyLogin(env, user.email, {
       success: false,
       reason: "The correct password was entered, but this account's email is not verified yet.",
-      ip,
+      location,
     });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
@@ -86,7 +87,7 @@ export async function onRequestPost(context) {
       await notifyLogin(env, user.email, {
         success: false,
         reason: "The correct password was entered, but the two-factor code could not be sent (misconfigured).",
-        ip,
+        location,
       });
       return errorResponse("Two-factor authentication is misconfigured. Contact support.", 503);
     }
@@ -102,7 +103,7 @@ export async function onRequestPost(context) {
         await notifyLogin(env, user.email, {
           success: true,
           reason: "The correct password was entered. A two-factor verification code was requested to finish signing in.",
-          ip,
+          location,
         });
       }
       return jsonResponse({
@@ -118,7 +119,7 @@ export async function onRequestPost(context) {
       await notifyLogin(env, user.email, {
         success: false,
         reason: "The correct password was entered, but the two-factor code could not be sent.",
-        ip,
+        location,
       });
       return errorResponse(err.message || "Could not send verification code.", 503);
     }
@@ -127,7 +128,7 @@ export async function onRequestPost(context) {
   await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id, remember);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
-  await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", ip });
+  await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", location });
 
   return jsonResponse(sessionPayload(user, env), 200, {
     "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),

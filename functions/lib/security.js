@@ -13,6 +13,17 @@ export function clientIp(request) {
   return "unknown";
 }
 
+// Cloudflare attaches geolocation to every request (request.cf) derived from
+// the edge that received it -- no external geo-IP lookup, no extra latency.
+// city/region granularity only; the raw IP itself is never put in an email.
+export function approxLocation(request) {
+  const cf = request.cf;
+  if (!cf) return "an unknown location";
+
+  const parts = [cf.city, cf.region, cf.country].filter(Boolean);
+  return parts.length ? parts.join(", ") : "an unknown location";
+}
+
 export function allowedSiteOrigin(env) {
   const siteUrl = env.SITE_URL || "https://kanasaka.com";
   try {

@@ -8,7 +8,7 @@ import {
   sessionPayload,
 } from "../../lib/auth.js";
 import { verifyTwoFactorLogin } from "../../lib/two-factor.js";
-import { clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
+import { approxLocation, clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -21,6 +21,7 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
+  const location = approxLocation(request);
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
@@ -50,7 +51,7 @@ export async function onRequestPost(context) {
     await notifyLogin(env, user.email, {
       success: true,
       reason: "Two-factor verification code was correct. Signed in successfully.",
-      ip,
+      location,
     });
 
     return jsonResponse(sessionPayload(user, env), 200, {
@@ -62,7 +63,7 @@ export async function onRequestPost(context) {
       await notifyLogin(env, err.userEmail, {
         success: false,
         reason: "The two-factor verification code entered was incorrect.",
-        ip,
+        location,
       });
     }
     return errorResponse(err.message || "Two-factor verification failed.", 401);
