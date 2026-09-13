@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=73">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=73">
-  <script defer src="/assets/js/password-policy.js?v=73"></script>
-  <script defer src="/assets/js/auth.js?v=73"></script>
-  <script defer src="/assets/js/main.js?v=73"></script>
+  <link rel="stylesheet" href="/assets/css/style.css?v=74">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=74">
+  <script defer src="/assets/js/password-policy.js?v=74"></script>
+  <script defer src="/assets/js/auth.js?v=74"></script>
+  <script defer src="/assets/js/main.js?v=74"></script>
 </head>
 <body>
 
@@ -27,54 +27,7 @@
 
   <section class="auth-page">
     <div class="auth-page-backdrop" aria-hidden="true"></div>
-
-    <div class="auth-card auth-card--modern auth-card-elevated">
-      <div class="auth-card-accent" aria-hidden="true"></div>
-      <div class="auth-card-body">
-
-      <p class="auth-eyebrow">Account</p>
-      <h1>Log In</h1>
-      <p class="auth-lead">Sign in with your email and password. Account ID is not required here.</p>
-
-      <form id="login-form" class="auth-form">
-        <div class="auth-field">
-          <label for="login-email">Email</label>
-          <input id="login-email" name="email" type="email" autocomplete="email" required>
-        </div>
-
-        <div class="auth-field">
-          <label for="login-password">Password</label>
-          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
-        </div>
-
-        <label class="auth-legal-consent">
-          <input id="login-remember" name="remember" type="checkbox" value="1" checked>
-          <span>Stay logged in on this device.</span>
-        </label>
-
-        <button class="button auth-submit" type="submit">Log In</button>
-      </form>
-
-      <form id="login-2fa-form" class="auth-form" hidden>
-        <p id="login-2fa-lead" class="auth-lead">Enter the 6-digit code we sent you.</p>
-        <div class="auth-field">
-          <label id="login-2fa-code-label">Verification code</label>
-          <div class="otp-boxes" id="login-2fa-code-boxes" role="group" aria-labelledby="login-2fa-code-label"></div>
-          <input type="hidden" id="login-2fa-code" name="code">
-        </div>
-        <button class="button auth-submit" type="submit">Verify</button>
-      </form>
-
-      <div class="auth-footer">
-        <p class="auth-switch"><a href="/forgot-password/">Forgot password?</a></p>
-        <p class="auth-switch">No account yet? <a href="/register/">Register</a></p>
-      </div>
-      </div>
-    </div>
-
-
   </section>
-
 
 </main>
 

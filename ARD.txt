@@ -54,6 +54,43 @@ docs/CLOUDFLARE_WAF.md      WAF rule documentation
 
 4. AUTH DESIGN
 --------------
+Login/register UI: stepped modal, not dedicated pages
+  Login and Register are no longer single-page forms -- clicking the header's
+  "Log In"/"Register" opens a centered modal OVER the current page (backdrop
+  blur on #site-header/main/#site-footer, no navigation), built entirely by
+  JS: assets/js/auth.js's openAuthModal(mode) ("login"|"register"), exposed as
+  window.KanasakaAuth.openAuthModal. /login/ and /register/ still exist as
+  direct-link targets (bookmarks, ?next=) but now render as a near-empty
+  .auth-page shell that auto-opens the same modal on load via
+  initProtectedPages(); closing the modal there navigates home since there's
+  no prior page to reveal, whereas closing it when opened from any other page
+  just removes the overlay in place.
+  Login steps: [chooser (skipped if no remembered accounts)] -> email ->
+  password (+ "stay logged in") -> verification (2FA, only if required).
+  Register steps: accountId (optional, replaces the chooser slot) -> email ->
+  password (+ ToS) -> verification (email code) -- verification now happens
+  INLINE in the same modal instead of redirecting to /verify/; that page still
+  works standalone as a fallback (e.g. if someone closes the modal mid-flow
+  and comes back later).
+  "Remembered accounts" chooser: client-side only, no server concept of
+  "devices". On a successful login/registration where "stay logged in" is
+  checked, {email, displayLabel, initials} is saved to localStorage
+  (kanasaka:rememberedAccounts, max 5, most-recent-first). The login modal's
+  first step shows these as clickable tiles (password still required after
+  picking one -- only the email is remembered, never anything that bypasses
+  auth) with a per-tile remove (x) button; "Log in with new account" or an
+  empty list goes straight to the email step.
+  Both flows share one <form> per set of data-entry steps (all fields always
+  in the DOM, only one step's div visible at a time) so login()/register()
+  (unchanged) can still read fields via form.querySelector('[name=...]')
+  regardless of which step is showing, and so browser password-manager
+  save-prompts still see email+password together. Enter-key on a non-final
+  step is intercepted (bindEnterAdvance) to click that step's own button
+  instead of letting the browser hunt for the form's one submit button.
+  The old single-page forms/JS (bindEmailPasswordForm, the static
+  login-form/register-form/login-2fa-form markup) were removed entirely,
+  not kept as a fallback.
+
 Password policy (register, reset, change password)
   Min 15 chars, max 128
   Requires uppercase, lowercase, digit, special character
@@ -315,6 +352,16 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-12  UI: replaced the single-page login/register forms with a
+            4-step modal overlay (chooser/accountId -> email -> password ->
+            verification), opened over the current page with the page
+            blurred behind it instead of navigating to /login//register/.
+            Added a client-side "remembered accounts" chooser (localStorage,
+            tied to "stay logged in"). Register's email-code verification
+            now happens inline in the same modal instead of redirecting to
+            /verify/. Removed the old static forms and their JS entirely
+            (bindEmailPasswordForm, showTwoFactorChallenge, etc.) rather
+            than keeping them alongside the new flow.
 2026-09-12  Auth: login notification emails now show an approximate
             location (city/region/country via Cloudflare's request.cf)
             instead of the raw IP address -- less invasive, still useful

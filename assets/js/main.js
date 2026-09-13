@@ -175,15 +175,29 @@
       return wrap;
     }
 
+    function openModalOnClick(link, mode) {
+      link.addEventListener("click", function (event) {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
+        if (window.KanasakaAuth && window.KanasakaAuth.openAuthModal) {
+          event.preventDefault();
+          window.KanasakaAuth.openAuthModal(mode);
+        }
+      });
+    }
+
     const login = document.createElement("a");
     login.className = "auth-link";
     login.href = "/login/";
     login.textContent = "Log In";
+    openModalOnClick(login, "login");
 
     const register = document.createElement("a");
     register.className = "auth-link secondary";
     register.href = "/register/";
     register.textContent = "Register";
+    openModalOnClick(register, "register");
 
     wrap.appendChild(login);
     wrap.appendChild(register);

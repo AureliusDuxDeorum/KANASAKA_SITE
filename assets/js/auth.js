@@ -290,58 +290,6 @@
     });
   }
 
-  function bindEmailPasswordForm(formId, handler, options) {
-    const form = document.getElementById(formId);
-    if (!form) return;
-
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      clearFormError(form);
-      clearFormSuccess(form);
-
-      const email = form.querySelector('[name="email"]').value.trim();
-      const passwordField = form.querySelector('[name="password"]');
-      const password = passwordField ? passwordField.value : "";
-      const submit = form.querySelector('[type="submit"]');
-      const defaultLabel = submit.textContent;
-
-      if (formId === "register-form") {
-        const passwordError = validateNewPassword(password, { email });
-        if (passwordError) {
-          showFormError(form, passwordError);
-          return;
-        }
-
-        const tosCheckbox = form.querySelector('[name="tosAccepted"]');
-        if (tosCheckbox && !tosCheckbox.checked) {
-          showFormError(
-            form,
-            "You must accept the Terms of Service and Privacy Policy."
-          );
-          return;
-        }
-      }
-
-      submit.disabled = true;
-      submit.textContent = "Please wait...";
-
-      try {
-        const result = await handler(email, password, form);
-        if (options && options.onSuccess) {
-          options.onSuccess(result, form);
-          submit.disabled = false;
-          submit.textContent = defaultLabel;
-          return;
-        }
-        window.location.href = getNextPath();
-      } catch (error) {
-        showFormError(form, error.message || "Request failed.");
-        submit.disabled = false;
-        submit.textContent = defaultLabel;
-      }
-    });
-  }
-
   function bindForgotPasswordForm() {
     const form = document.getElementById("forgot-password-form");
     if (!form) return;
@@ -1625,6 +1573,14 @@
     if (path.indexOf("/verify") === 0) {
       initVerifyPage();
     }
+
+    if (path.indexOf("/login") === 0) {
+      openAuthModal("login");
+    }
+
+    if (path.indexOf("/register") === 0) {
+      openAuthModal("register");
+    }
   }
 
   function initRegisterAccountIdCheck() {
@@ -1674,42 +1630,432 @@
     });
   }
 
-  function showTwoFactorChallenge(result, loginForm) {
-    const challengeForm = document.getElementById("login-2fa-form");
-    if (!challengeForm) {
-      window.location.reload();
-      return;
-    }
-
-    loginForm.hidden = true;
-    challengeForm.hidden = false;
-    challengeForm.dataset.challenge = result.challenge || "";
-
-    const lead = document.getElementById("login-2fa-lead");
-    if (lead) {
-      const destination = result.emailMasked || result.phoneMasked;
-      lead.textContent = destination
-        ? "Enter the 6-digit code we sent to " + destination + "."
-        : "Enter the 6-digit code we sent you.";
-    }
-
-    const firstBox = document.querySelector("#login-2fa-code-boxes .otp-box");
-    if (firstBox) firstBox.focus();
+  function initAuthForms() {
+    bindForgotPasswordForm();
+    bindResetPasswordForm();
+    initPasswordPolicyFields();
+    initAuthPageMotion();
   }
 
-  function bindTwoFactorChallengeForm() {
-    const form = document.getElementById("login-2fa-form");
-    if (!form) return;
+  // ===== Auth modal: stepped login/register overlay =====
 
-    initOtpGroup(document.getElementById("login-2fa-code-boxes"), form.querySelector('[name="code"]'));
+  const REMEMBERED_ACCOUNTS_KEY = "kanasaka:rememberedAccounts";
+  const REMEMBERED_ACCOUNTS_MAX = 5;
+  const EMAIL_FORMAT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    form.addEventListener("submit", async function (event) {
+  function getRememberedAccounts() {
+    try {
+      const raw = window.localStorage.getItem(REMEMBERED_ACCOUNTS_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveRememberedAccount(account) {
+    if (!account || !account.email) return;
+    try {
+      const list = getRememberedAccounts().filter(function (a) {
+        return a.email !== account.email;
+      });
+      list.unshift({
+        email: account.email,
+        displayLabel: account.displayLabel || account.email,
+        initials: account.initials || "KS",
+      });
+      window.localStorage.setItem(
+        REMEMBERED_ACCOUNTS_KEY,
+        JSON.stringify(list.slice(0, REMEMBERED_ACCOUNTS_MAX))
+      );
+    } catch {
+      // localStorage unavailable (private mode, etc.) -- not critical
+    }
+  }
+
+  function removeRememberedAccount(email) {
+    try {
+      const list = getRememberedAccounts().filter(function (a) {
+        return a.email !== email;
+      });
+      window.localStorage.setItem(REMEMBERED_ACCOUNTS_KEY, JSON.stringify(list));
+    } catch {
+      // ignore
+    }
+  }
+
+  function modalEscapeHandler(event) {
+    if (event.key === "Escape") dismissAuthModal();
+  }
+
+  function buildAuthModalShell() {
+    const overlay = document.createElement("div");
+    overlay.className = "auth-modal-overlay";
+    overlay.id = "auth-modal-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "auth-modal-backdrop";
+    backdrop.setAttribute("data-modal-dismiss", "");
+
+    const shell = document.createElement("div");
+    shell.className = "auth-modal-shell";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "auth-modal-close";
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.textContent = "×";
+    closeBtn.setAttribute("data-modal-dismiss", "");
+
+    const card = document.createElement("div");
+    card.className = "auth-card auth-card--modern auth-card-elevated auth-modal-card";
+
+    const accent = document.createElement("div");
+    accent.className = "auth-card-accent";
+    accent.setAttribute("aria-hidden", "true");
+
+    const body = document.createElement("div");
+    body.className = "auth-card-body";
+    body.id = "auth-modal-content";
+
+    card.appendChild(accent);
+    card.appendChild(body);
+    shell.appendChild(closeBtn);
+    shell.appendChild(card);
+    overlay.appendChild(backdrop);
+    overlay.appendChild(shell);
+
+    overlay.addEventListener("click", function (event) {
+      if (event.target && event.target.hasAttribute("data-modal-dismiss")) {
+        dismissAuthModal();
+      }
+    });
+
+    return { overlay: overlay, content: body };
+  }
+
+  function closeAuthModal() {
+    const overlay = document.getElementById("auth-modal-overlay");
+    document.removeEventListener("keydown", modalEscapeHandler);
+    document.body.classList.remove("auth-modal-open");
+    if (!overlay) return;
+    overlay.classList.remove("is-open");
+    window.setTimeout(function () {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }, 280);
+  }
+
+  function onAuthModalPage() {
+    const path = window.location.pathname;
+    return path.indexOf("/login") === 0 || path.indexOf("/register") === 0;
+  }
+
+  function dismissAuthModal() {
+    const wasDedicatedPage = onAuthModalPage();
+    closeAuthModal();
+    if (wasDedicatedPage) {
+      window.location.href = "/";
+    }
+  }
+
+  function finishAuthModalSuccess(sessionData) {
+    updateSession(sessionData);
+    const wasDedicatedPage = onAuthModalPage();
+    closeAuthModal();
+    if (wasDedicatedPage) {
+      window.location.href = getNextPath();
+    }
+  }
+
+  function openAuthModal(mode) {
+    const existing = document.getElementById("auth-modal-overlay");
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
+    document.removeEventListener("keydown", modalEscapeHandler);
+
+    const built = buildAuthModalShell();
+    document.body.appendChild(built.overlay);
+    document.body.classList.add("auth-modal-open");
+    document.addEventListener("keydown", modalEscapeHandler);
+
+    if (mode === "register") {
+      renderAuthModalRegister(built.content);
+    } else {
+      renderAuthModalLogin(built.content);
+    }
+
+    window.requestAnimationFrame(function () {
+      built.overlay.classList.add("is-open");
+    });
+  }
+
+  function setupSteps(form, order) {
+    const panels = {};
+    order.forEach(function (name) {
+      panels[name] = form.querySelector('[data-step="' + name + '"]');
+    });
+    let current = order[0];
+
+    function show(name) {
+      if (!panels[name]) return;
+      current = name;
+      order.forEach(function (n) {
+        if (panels[n]) panels[n].hidden = n !== name;
+      });
+      window.setTimeout(function () {
+        const target = panels[name].querySelector("input, .otp-box");
+        if (target) target.focus();
+      }, 30);
+    }
+
+    return {
+      show: show,
+      next: function () {
+        const idx = order.indexOf(current);
+        if (idx < order.length - 1) show(order[idx + 1]);
+      },
+      back: function () {
+        const idx = order.indexOf(current);
+        if (idx > 0) show(order[idx - 1]);
+      },
+      current: function () {
+        return current;
+      },
+    };
+  }
+
+  function bindEnterAdvance(panel, button) {
+    if (!panel || !button) return;
+    panel.querySelectorAll("input").forEach(function (input) {
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          button.click();
+        }
+      });
+    });
+  }
+
+  function renderAuthModalLogin(root) {
+    const hasChooser = getRememberedAccounts().length > 0;
+
+    root.innerHTML =
+      (hasChooser
+        ? '<div class="auth-modal-step" data-step="chooser">' +
+          '<p class="auth-eyebrow">Account</p>' +
+          "<h1>Log In</h1>" +
+          '<p class="auth-lead">Choose an account to continue.</p>' +
+          '<div class="auth-modal-chooser-list" id="auth-modal-chooser-list"></div>' +
+          '<button type="button" class="button secondary" data-action="new-account">Log in with new account</button>' +
+          "</div>"
+        : "") +
+      '<form id="auth-modal-login-form" novalidate>' +
+      '<div class="auth-modal-step" data-step="email"' +
+      (hasChooser ? " hidden" : "") +
+      ">" +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Log In</h1>" +
+      '<p class="auth-lead">Enter your email to continue.</p>' +
+      '<div class="auth-field">' +
+      '<label for="auth-modal-login-email">Email</label>' +
+      '<input id="auth-modal-login-email" name="email" type="email" autocomplete="email" required>' +
+      "</div>" +
+      '<button type="button" class="button auth-submit" data-action="next">Continue</button>' +
+      (hasChooser
+        ? '<p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>'
+        : "") +
+      "</div>" +
+      '<div class="auth-modal-step" data-step="password" hidden>' +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Log In</h1>" +
+      '<p class="auth-lead" id="auth-modal-login-password-lead">Enter your password.</p>' +
+      '<div class="auth-field">' +
+      '<label for="auth-modal-login-password">Password</label>' +
+      '<input id="auth-modal-login-password" name="password" type="password" autocomplete="current-password" required>' +
+      "</div>" +
+      '<label class="auth-legal-consent">' +
+      '<input id="auth-modal-login-remember" name="remember" type="checkbox" value="1" checked>' +
+      "<span>Stay logged in on this device.</span>" +
+      "</label>" +
+      '<button type="submit" class="button auth-submit">Log In</button>' +
+      '<p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button> · <a href="/forgot-password/">Forgot password?</a></p>' +
+      "</div>" +
+      "</form>" +
+      '<form id="auth-modal-login-verify-form" hidden>' +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Verification</h1>" +
+      '<p class="auth-lead" id="auth-modal-login-verify-lead">Enter the 6-digit code.</p>' +
+      '<div class="auth-field">' +
+      '<label id="auth-modal-login-verify-label">Verification code</label>' +
+      '<div class="otp-boxes" id="auth-modal-login-verify-boxes" role="group" aria-labelledby="auth-modal-login-verify-label"></div>' +
+      '<input type="hidden" name="code">' +
+      "</div>" +
+      '<button type="submit" class="button auth-submit">Verify</button>' +
+      "</form>" +
+      '<p class="auth-switch auth-modal-switch-mode">No account yet? <button type="button" class="link-button" data-action="switch-mode">Register</button></p>';
+
+    const loginForm = root.querySelector("#auth-modal-login-form");
+    const verifyForm = root.querySelector("#auth-modal-login-verify-form");
+    const chooserList = root.querySelector("#auth-modal-chooser-list");
+    const chooserStep = root.querySelector('[data-step="chooser"]');
+    const switchModeBtn = root.querySelector('[data-action="switch-mode"]');
+    const steps = setupSteps(loginForm, ["email", "password"]);
+
+    let selectedEmail = "";
+
+    function showLoginStep(name) {
+      if (name === "chooser") {
+        if (chooserStep) chooserStep.hidden = false;
+        loginForm.hidden = true;
+      } else {
+        if (chooserStep) chooserStep.hidden = true;
+        loginForm.hidden = false;
+        steps.show(name);
+      }
+    }
+
+    function renderChooser() {
+      if (!chooserList) return;
+      chooserList.innerHTML = "";
+      getRememberedAccounts().forEach(function (acct) {
+        const item = document.createElement("div");
+        item.className = "auth-modal-chooser-item";
+
+        const avatar = document.createElement("span");
+        avatar.className = "auth-modal-chooser-avatar";
+        avatar.textContent = acct.initials || "KS";
+
+        const info = document.createElement("span");
+        info.className = "auth-modal-chooser-info";
+        const name = document.createElement("span");
+        name.className = "auth-modal-chooser-name";
+        name.textContent = acct.displayLabel || acct.email;
+        const email = document.createElement("span");
+        email.className = "auth-modal-chooser-email";
+        email.textContent = acct.email;
+        info.appendChild(name);
+        info.appendChild(email);
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "auth-modal-chooser-remove";
+        remove.setAttribute("aria-label", "Forget this account");
+        remove.textContent = "×";
+        remove.addEventListener("click", function (event) {
+          event.stopPropagation();
+          removeRememberedAccount(acct.email);
+          renderChooser();
+        });
+
+        item.appendChild(avatar);
+        item.appendChild(info);
+        item.appendChild(remove);
+
+        item.addEventListener("click", function () {
+          selectedEmail = acct.email;
+          const passwordLead = root.querySelector("#auth-modal-login-password-lead");
+          if (passwordLead) passwordLead.textContent = "Signing in as " + acct.email + ".";
+          showLoginStep("password");
+        });
+
+        chooserList.appendChild(item);
+      });
+    }
+
+    if (hasChooser) {
+      renderChooser();
+      const newAccountBtn = root.querySelector('[data-action="new-account"]');
+      if (newAccountBtn) {
+        newAccountBtn.addEventListener("click", function () {
+          selectedEmail = "";
+          showLoginStep("email");
+        });
+      }
+    }
+
+    bindEnterAdvance(
+      loginForm.querySelector('[data-step="email"]'),
+      loginForm.querySelector('[data-step="email"] [data-action="next"]')
+    );
+
+    loginForm.querySelectorAll('[data-action="back"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (steps.current() === "email" && hasChooser) {
+          showLoginStep("chooser");
+        } else {
+          steps.back();
+        }
+      });
+    });
+
+    loginForm.querySelector('[data-action="next"]').addEventListener("click", function () {
+      const emailInput = document.getElementById("auth-modal-login-email");
+      const email = emailInput.value.trim();
+      if (!email || !EMAIL_FORMAT_RE.test(email)) {
+        emailInput.focus();
+        return;
+      }
+      selectedEmail = email;
+      steps.next();
+    });
+
+    loginForm.addEventListener("submit", async function (event) {
       event.preventDefault();
-      clearFormError(form);
+      if (steps.current() !== "password") {
+        steps.next();
+        return;
+      }
 
-      const code = form.querySelector('[name="code"]').value.trim();
-      const challenge = form.dataset.challenge || "";
-      const submit = form.querySelector('[type="submit"]');
+      clearFormError(loginForm);
+      const submit = loginForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const result = await login(
+          selectedEmail,
+          loginForm.querySelector('[name="password"]').value,
+          loginForm
+        );
+
+        if (result && result.twoFactorRequired) {
+          loginForm.hidden = true;
+          verifyForm.hidden = false;
+          verifyForm.dataset.challenge = result.challenge || "";
+          const destination = result.emailMasked || result.phoneMasked;
+          const lead = root.querySelector("#auth-modal-login-verify-lead");
+          if (lead) {
+            lead.textContent = destination
+              ? "Enter the 6-digit code we sent to " + destination + "."
+              : "Enter the 6-digit code we sent you.";
+          }
+          const firstBox = root.querySelector("#auth-modal-login-verify-boxes .otp-box");
+          if (firstBox) firstBox.focus();
+          return;
+        }
+
+        if (loginForm.querySelector('[name="remember"]').checked) {
+          saveRememberedAccount(result);
+        }
+
+        finishAuthModalSuccess(result);
+      } catch (error) {
+        showFormError(loginForm, error.message || "Login failed.");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    initOtpGroup(root.querySelector("#auth-modal-login-verify-boxes"), verifyForm.querySelector('[name="code"]'));
+
+    verifyForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(verifyForm);
+      const code = verifyForm.querySelector('[name="code"]').value.trim();
+      const challenge = verifyForm.dataset.challenge || "";
+      const submit = verifyForm.querySelector('[type="submit"]');
       submit.disabled = true;
 
       try {
@@ -1722,37 +2068,225 @@
           throw new Error((data && data.error) || "Verification failed.");
         }
 
-        sessionCache = data;
-        window.location.href = getNextPath();
+        if (loginForm.querySelector('[name="remember"]').checked) {
+          saveRememberedAccount(data);
+        }
+
+        finishAuthModalSuccess(data);
       } catch (error) {
-        showFormError(form, error.message || "Verification failed.");
+        showFormError(verifyForm, error.message || "Verification failed.");
         submit.disabled = false;
       }
     });
+
+    if (switchModeBtn) {
+      switchModeBtn.addEventListener("click", function () {
+        openAuthModal("register");
+      });
+    }
   }
 
-  function initAuthForms() {
-    bindEmailPasswordForm("login-form", login, {
-      onSuccess: function (result, form) {
-        if (result && result.twoFactorRequired) {
-          showTwoFactorChallenge(result, form);
-          return;
-        }
-        window.location.href = getNextPath();
-      },
-    });
-    bindTwoFactorChallengeForm();
-    bindEmailPasswordForm("register-form", register, {
-      onSuccess: function (result, form) {
-        const email = form.querySelector('[name="email"]').value.trim();
-        window.location.href = "/verify/?email=" + encodeURIComponent(email);
-      },
-    });
-    bindForgotPasswordForm();
-    bindResetPasswordForm();
-    initPasswordPolicyFields();
+  function renderAuthModalRegister(root) {
+    root.innerHTML =
+      '<form id="auth-modal-register-form" novalidate>' +
+      '<div class="auth-modal-step" data-step="accountId">' +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Register</h1>" +
+      '<p class="auth-lead">Choose an account ID, or skip for now.</p>' +
+      '<div class="auth-field">' +
+      '<label for="register-account-id">Account ID</label>' +
+      '<input id="register-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">' +
+      '<p class="auth-field-hint">Optional now — set or change anytime in Account Settings.</p>' +
+      '<p id="register-account-id-status" class="auth-field-status" hidden></p>' +
+      "</div>" +
+      '<button type="button" class="button auth-submit" data-action="next">Continue</button>' +
+      "</div>" +
+      '<div class="auth-modal-step" data-step="email" hidden>' +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Register</h1>" +
+      '<p class="auth-lead">Enter your email.</p>' +
+      '<div class="auth-field">' +
+      '<label for="auth-modal-register-email">Email</label>' +
+      '<input id="auth-modal-register-email" name="email" type="email" autocomplete="email" required>' +
+      "</div>" +
+      '<button type="button" class="button auth-submit" data-action="next">Continue</button>' +
+      '<p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>' +
+      "</div>" +
+      '<div class="auth-modal-step" data-step="password" hidden>' +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Register</h1>" +
+      '<p class="auth-lead">Choose a password.</p>' +
+      '<div class="auth-field">' +
+      '<label for="register-password">Password</label>' +
+      '<input id="register-password" name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>' +
+      '<ul id="register-password-policy" class="password-policy" aria-live="polite"></ul>' +
+      "</div>" +
+      '<label class="auth-legal-consent">' +
+      '<input id="auth-modal-register-tos" name="tosAccepted" type="checkbox" value="1" required>' +
+      '<span>I agree to the <a href="/legal/terms/" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy/" target="_blank" rel="noopener">Privacy Policy</a>.</span>' +
+      "</label>" +
+      '<button type="submit" class="button auth-submit">Create Account</button>' +
+      '<p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>' +
+      "</div>" +
+      "</form>" +
+      '<form id="auth-modal-register-verify-form" hidden>' +
+      '<p class="auth-eyebrow">Account</p>' +
+      "<h1>Verify Email</h1>" +
+      '<p class="auth-lead" id="auth-modal-register-verify-lead">Enter the 6-digit code we emailed you.</p>' +
+      '<div class="auth-field">' +
+      '<label id="auth-modal-register-verify-label">Verification code</label>' +
+      '<div class="otp-boxes" id="auth-modal-register-verify-boxes" role="group" aria-labelledby="auth-modal-register-verify-label"></div>' +
+      '<input type="hidden" name="code">' +
+      "</div>" +
+      '<button type="submit" class="button auth-submit">Verify</button>' +
+      '<p class="auth-switch">Didn’t get a code? <button type="button" class="link-button" data-action="resend">Resend code</button></p>' +
+      "</form>" +
+      '<p class="auth-switch auth-modal-switch-mode">Already registered? <button type="button" class="link-button" data-action="switch-mode">Log in</button></p>';
+
+    const registerForm = root.querySelector("#auth-modal-register-form");
+    const verifyForm = root.querySelector("#auth-modal-register-verify-form");
+    const switchModeBtn = root.querySelector('[data-action="switch-mode"]');
+    const steps = setupSteps(registerForm, ["accountId", "email", "password"]);
+
+    let registeredEmail = "";
+
     initRegisterAccountIdCheck();
-    initAuthPageMotion();
+    bindPasswordPolicyField({
+      passwordInput: document.getElementById("register-password"),
+      checklist: document.getElementById("register-password-policy"),
+      contextInput: document.getElementById("auth-modal-register-email"),
+      getContext: function () {
+        const emailInput = document.getElementById("auth-modal-register-email");
+        return { email: emailInput ? emailInput.value.trim() : "" };
+      },
+    });
+
+    bindEnterAdvance(
+      registerForm.querySelector('[data-step="accountId"]'),
+      registerForm.querySelector('[data-step="accountId"] [data-action="next"]')
+    );
+    bindEnterAdvance(
+      registerForm.querySelector('[data-step="email"]'),
+      registerForm.querySelector('[data-step="email"] [data-action="next"]')
+    );
+
+    registerForm.querySelectorAll('[data-action="next"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (steps.current() === "email") {
+          const emailInput = document.getElementById("auth-modal-register-email");
+          const email = emailInput.value.trim();
+          if (!email || !EMAIL_FORMAT_RE.test(email)) {
+            emailInput.focus();
+            return;
+          }
+        }
+        steps.next();
+      });
+    });
+
+    registerForm.querySelectorAll('[data-action="back"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        steps.back();
+      });
+    });
+
+    registerForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      if (steps.current() !== "password") {
+        steps.next();
+        return;
+      }
+
+      clearFormError(registerForm);
+      const password = registerForm.querySelector('[name="password"]').value;
+      const email = registerForm.querySelector('[name="email"]').value.trim();
+      const passwordError = validateNewPassword(password, { email });
+      if (passwordError) {
+        showFormError(registerForm, passwordError);
+        return;
+      }
+
+      const tosCheckbox = registerForm.querySelector('[name="tosAccepted"]');
+      if (tosCheckbox && !tosCheckbox.checked) {
+        showFormError(registerForm, "You must accept the Terms of Service and Privacy Policy.");
+        return;
+      }
+
+      const submit = registerForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        await register(email, password, registerForm);
+        registeredEmail = email;
+        registerForm.hidden = true;
+        verifyForm.hidden = false;
+        const lead = root.querySelector("#auth-modal-register-verify-lead");
+        if (lead) lead.textContent = "Enter the 6-digit code we sent to " + email + ".";
+        const firstBox = root.querySelector("#auth-modal-register-verify-boxes .otp-box");
+        if (firstBox) firstBox.focus();
+      } catch (error) {
+        showFormError(registerForm, error.message || "Registration failed.");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    initOtpGroup(root.querySelector("#auth-modal-register-verify-boxes"), verifyForm.querySelector('[name="code"]'));
+
+    verifyForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(verifyForm);
+      const code = verifyForm.querySelector('[name="code"]').value.trim();
+      const submit = verifyForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await apiRequest("/api/auth/verify", {
+          method: "POST",
+          body: JSON.stringify({ email: registeredEmail, code }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Verification failed.");
+        }
+
+        saveRememberedAccount(data);
+        finishAuthModalSuccess(data);
+      } catch (error) {
+        showFormError(verifyForm, error.message || "Verification failed.");
+        submit.disabled = false;
+      }
+    });
+
+    const resendBtn = verifyForm.querySelector('[data-action="resend"]');
+    if (resendBtn) {
+      resendBtn.addEventListener("click", async function () {
+        clearFormError(verifyForm);
+        clearFormSuccess(verifyForm);
+        resendBtn.disabled = true;
+        try {
+          const { data } = await apiRequest("/api/auth/resend-verification", {
+            method: "POST",
+            body: JSON.stringify({ email: registeredEmail }),
+          });
+          showFormSuccess(
+            verifyForm,
+            (data && data.message) ||
+              "If an account exists for that email, a verification code has been sent."
+          );
+        } catch {
+          showFormError(verifyForm, "Could not resend code. Try again later.");
+        } finally {
+          resendBtn.disabled = false;
+        }
+      });
+    }
+
+    if (switchModeBtn) {
+      switchModeBtn.addEventListener("click", function () {
+        openAuthModal("login");
+      });
+    }
   }
 
   window.KanasakaAuth = {
@@ -1767,5 +2301,6 @@
     initProtectedPages: initProtectedPages,
     initAuthForms: initAuthForms,
     initSettingsPage: initSettingsPage,
+    openAuthModal: openAuthModal,
   };
 })();
