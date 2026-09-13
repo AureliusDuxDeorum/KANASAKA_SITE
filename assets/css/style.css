@@ -1132,6 +1132,7 @@ h1 {
 .otp-boxes {
   display: flex;
   gap: 10px;
+  margin-bottom: 14px;
 }
 
 .otp-box {
