@@ -66,6 +66,32 @@
     };
   }
 
+  const KS_SPINNER_HTML =
+    '<span class="ks-spinner" role="status" aria-label="Loading">' +
+    '<span class="ks-spinner-bars">' +
+    '<span class="ks-spinner-side"><span></span><span></span></span>' +
+    '<span class="ks-spinner-side"><span></span><span></span></span>' +
+    "</span>" +
+    '<span class="ks-spinner-letters"><span>K</span><span>S</span></span>' +
+    "</span>";
+
+  function setButtonLoading(button, isLoading) {
+    if (!button) return;
+    if (isLoading) {
+      if (button.dataset.originalLabel === undefined) {
+        button.dataset.originalLabel = button.innerHTML;
+      }
+      button.disabled = true;
+      button.innerHTML = KS_SPINNER_HTML;
+    } else {
+      button.disabled = false;
+      if (button.dataset.originalLabel !== undefined) {
+        button.innerHTML = button.dataset.originalLabel;
+        delete button.dataset.originalLabel;
+      }
+    }
+  }
+
   function getNextPath() {
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
@@ -1684,8 +1710,42 @@
     }
   }
 
-  function modalEscapeHandler(event) {
-    if (event.key === "Escape") dismissAuthModal();
+  function getModalFocusable(overlay) {
+    const nodes = overlay.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    );
+    return Array.prototype.filter.call(nodes, function (el) {
+      return el.offsetParent !== null;
+    });
+  }
+
+  function modalKeydownHandler(event) {
+    if (event.key === "Escape") {
+      dismissAuthModal();
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+
+    const overlay = document.getElementById("auth-modal-overlay");
+    if (!overlay) return;
+
+    const focusable = getModalFocusable(overlay);
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    } else if (!overlay.contains(document.activeElement)) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function buildAuthModalShell() {
@@ -1738,7 +1798,7 @@
 
   function closeAuthModal() {
     const overlay = document.getElementById("auth-modal-overlay");
-    document.removeEventListener("keydown", modalEscapeHandler);
+    document.removeEventListener("keydown", modalKeydownHandler);
     document.body.classList.remove("auth-modal-open");
     if (!overlay) return;
     overlay.classList.remove("is-open");
@@ -1774,12 +1834,12 @@
     if (existing && existing.parentNode) {
       existing.parentNode.removeChild(existing);
     }
-    document.removeEventListener("keydown", modalEscapeHandler);
+    document.removeEventListener("keydown", modalKeydownHandler);
 
     const built = buildAuthModalShell();
     document.body.appendChild(built.overlay);
     document.body.classList.add("auth-modal-open");
-    document.addEventListener("keydown", modalEscapeHandler);
+    document.addEventListener("keydown", modalKeydownHandler);
 
     if (mode === "register") {
       renderAuthModalRegister(built.content);
@@ -1789,6 +1849,12 @@
 
     window.requestAnimationFrame(function () {
       built.overlay.classList.add("is-open");
+      const focusable = getModalFocusable(built.overlay);
+      const firstField = focusable.find(function (el) {
+        return el.tagName === "INPUT" || el.getAttribute("role") === "button";
+      });
+      const toFocus = firstField || focusable[0];
+      if (toFocus) toFocus.focus();
     });
   }
 
@@ -1827,6 +1893,29 @@
     };
   }
 
+  function addPasswordToggle(input) {
+    if (!input || input.dataset.toggleAdded) return;
+    input.dataset.toggleAdded = "1";
+
+    const wrap = document.createElement("div");
+    wrap.className = "auth-password-wrap";
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "auth-password-toggle";
+    toggle.textContent = "Show";
+    toggle.setAttribute("aria-label", "Show password");
+    toggle.addEventListener("click", function () {
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      toggle.textContent = showing ? "Show" : "Hide";
+      toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+    });
+    wrap.appendChild(toggle);
+  }
+
   function bindEnterAdvance(panel, button) {
     if (!panel || !button) return;
     panel.querySelectorAll("input").forEach(function (input) {
@@ -1856,7 +1945,7 @@
       '<div class="auth-modal-step" data-step="email"' +
       (hasChooser ? " hidden" : "") +
       ">" +
-      '<p class="auth-eyebrow">Account</p>' +
+      '<p class="auth-eyebrow">Account · Step 1 of 2</p>' +
       "<h1>Log In</h1>" +
       '<p class="auth-lead">Enter your email to continue.</p>' +
       '<div class="auth-field">' +
@@ -1869,7 +1958,7 @@
         : "") +
       "</div>" +
       '<div class="auth-modal-step" data-step="password" hidden>' +
-      '<p class="auth-eyebrow">Account</p>' +
+      '<p class="auth-eyebrow">Account · Step 2 of 2</p>' +
       "<h1>Log In</h1>" +
       '<p class="auth-lead" id="auth-modal-login-password-lead">Enter your password.</p>' +
       '<div class="auth-field">' +
@@ -1904,6 +1993,8 @@
     const switchModeBtn = root.querySelector('[data-action="switch-mode"]');
     const steps = setupSteps(loginForm, ["email", "password"]);
 
+    addPasswordToggle(document.getElementById("auth-modal-login-password"));
+
     let selectedEmail = "";
 
     function showLoginStep(name) {
@@ -1923,6 +2014,8 @@
       getRememberedAccounts().forEach(function (acct) {
         const item = document.createElement("div");
         item.className = "auth-modal-chooser-item";
+        item.setAttribute("role", "button");
+        item.setAttribute("tabindex", "0");
 
         const avatar = document.createElement("span");
         avatar.className = "auth-modal-chooser-avatar";
@@ -1954,11 +2047,19 @@
         item.appendChild(info);
         item.appendChild(remove);
 
-        item.addEventListener("click", function () {
+        function selectAccount() {
           selectedEmail = acct.email;
           const passwordLead = root.querySelector("#auth-modal-login-password-lead");
           if (passwordLead) passwordLead.textContent = "Signing in as " + acct.email + ".";
           showLoginStep("password");
+        }
+
+        item.addEventListener("click", selectAccount);
+        item.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectAccount();
+          }
         });
 
         chooserList.appendChild(item);
@@ -2011,7 +2112,7 @@
 
       clearFormError(loginForm);
       const submit = loginForm.querySelector('[type="submit"]');
-      submit.disabled = true;
+      setButtonLoading(submit, true);
 
       try {
         const result = await login(
@@ -2044,7 +2145,7 @@
       } catch (error) {
         showFormError(loginForm, error.message || "Login failed.");
       } finally {
-        submit.disabled = false;
+        setButtonLoading(submit, false);
       }
     });
 
@@ -2056,7 +2157,7 @@
       const code = verifyForm.querySelector('[name="code"]').value.trim();
       const challenge = verifyForm.dataset.challenge || "";
       const submit = verifyForm.querySelector('[type="submit"]');
-      submit.disabled = true;
+      setButtonLoading(submit, true);
 
       try {
         const { response, data } = await apiRequest("/api/auth/two-factor", {
@@ -2075,7 +2176,7 @@
         finishAuthModalSuccess(data);
       } catch (error) {
         showFormError(verifyForm, error.message || "Verification failed.");
-        submit.disabled = false;
+        setButtonLoading(submit, false);
       }
     });
 
@@ -2090,7 +2191,7 @@
     root.innerHTML =
       '<form id="auth-modal-register-form" novalidate>' +
       '<div class="auth-modal-step" data-step="accountId">' +
-      '<p class="auth-eyebrow">Account</p>' +
+      '<p class="auth-eyebrow">Account · Step 1 of 3</p>' +
       "<h1>Register</h1>" +
       '<p class="auth-lead">Choose an account ID, or skip for now.</p>' +
       '<div class="auth-field">' +
@@ -2102,7 +2203,7 @@
       '<button type="button" class="button auth-submit" data-action="next">Continue</button>' +
       "</div>" +
       '<div class="auth-modal-step" data-step="email" hidden>' +
-      '<p class="auth-eyebrow">Account</p>' +
+      '<p class="auth-eyebrow">Account · Step 2 of 3</p>' +
       "<h1>Register</h1>" +
       '<p class="auth-lead">Enter your email.</p>' +
       '<div class="auth-field">' +
@@ -2113,7 +2214,7 @@
       '<p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>' +
       "</div>" +
       '<div class="auth-modal-step" data-step="password" hidden>' +
-      '<p class="auth-eyebrow">Account</p>' +
+      '<p class="auth-eyebrow">Account · Step 3 of 3</p>' +
       "<h1>Register</h1>" +
       '<p class="auth-lead">Choose a password.</p>' +
       '<div class="auth-field">' +
@@ -2160,6 +2261,7 @@
         return { email: emailInput ? emailInput.value.trim() : "" };
       },
     });
+    addPasswordToggle(document.getElementById("register-password"));
 
     bindEnterAdvance(
       registerForm.querySelector('[data-step="accountId"]'),
@@ -2213,7 +2315,7 @@
       }
 
       const submit = registerForm.querySelector('[type="submit"]');
-      submit.disabled = true;
+      setButtonLoading(submit, true);
 
       try {
         await register(email, password, registerForm);
@@ -2227,7 +2329,7 @@
       } catch (error) {
         showFormError(registerForm, error.message || "Registration failed.");
       } finally {
-        submit.disabled = false;
+        setButtonLoading(submit, false);
       }
     });
 
@@ -2238,7 +2340,7 @@
       clearFormError(verifyForm);
       const code = verifyForm.querySelector('[name="code"]').value.trim();
       const submit = verifyForm.querySelector('[type="submit"]');
-      submit.disabled = true;
+      setButtonLoading(submit, true);
 
       try {
         const { response, data } = await apiRequest("/api/auth/verify", {
@@ -2254,7 +2356,7 @@
         finishAuthModalSuccess(data);
       } catch (error) {
         showFormError(verifyForm, error.message || "Verification failed.");
-        submit.disabled = false;
+        setButtonLoading(submit, false);
       }
     });
 

@@ -90,6 +90,14 @@ Login/register UI: stepped modal, not dedicated pages
   The old single-page forms/JS (bindEmailPasswordForm, the static
   login-form/register-form/login-2fa-form markup) were removed entirely,
   not kept as a fallback.
+  UX polish: submit buttons show a KS-mark spinner (setButtonLoading,
+  .ks-spinner in style.css -- the header logo's 4 bars spinning in 90deg
+  increments around a counter-rotated, upright "KS") instead of just
+  disabling silently. Each numbered step shows "Step N of M" in its eyebrow
+  (chooser/verify are unnumbered by design). Password fields get a Show/Hide
+  toggle (addPasswordToggle). The modal traps Tab focus and supports Escape
+  (modalKeydownHandler); remembered-account chooser tiles are real
+  tab-stops (role="button", Enter/Space to select).
 
 Password policy (register, reset, change password)
   Min 15 chars, max 128
@@ -352,6 +360,14 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-12  UI: auth modal polish -- submit buttons show a spinning KS-mark
+            instead of disabling silently (setButtonLoading), each numbered
+            step shows "Step N of M", password fields got a Show/Hide
+            toggle, and the modal now traps Tab focus with remembered-
+            account tiles as real keyboard tab-stops. Verified OTP boxes
+            and the modal card both fit at 375px mobile width (a pre-
+            existing, unrelated horizontal-overflow issue on the site was
+            noticed during this check but not fixed -- out of scope).
 2026-09-12  UI: replaced the single-page login/register forms with a
             4-step modal overlay (chooser/accountId -> email -> password ->
             verification), opened over the current page with the page

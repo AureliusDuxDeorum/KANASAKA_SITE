@@ -706,6 +706,69 @@ h1 {
   transform: scale(0.985);
 }
 
+.button[disabled] {
+  cursor: default;
+  opacity: 0.85;
+}
+
+/* KS-mark loading spinner: the 4 header-logo bars spin in 90deg increments
+   around the (counter-rotated, so it stays upright) "KS" mark. */
+.ks-spinner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+}
+
+.ks-spinner-bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: ks-spinner-spin 1.6s steps(4, end) infinite;
+}
+
+.ks-spinner-side {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ks-spinner-side span {
+  display: block;
+  width: 7px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.ks-spinner-letters {
+  position: relative;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 0.75;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: ks-spinner-counter-spin 1.6s steps(4, end) infinite;
+}
+
+@keyframes ks-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ks-spinner-counter-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1164,6 +1227,33 @@ h1 {
     0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+.auth-password-wrap {
+  position: relative;
+}
+
+.auth-password-wrap input {
+  padding-right: 64px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.auth-password-toggle:hover {
+  color: var(--color-text);
+}
+
 .auth-field-hint {
   margin: 10px 0 0;
   font-size: 12px;
@@ -1555,6 +1645,12 @@ body.auth-modal-open > #site-footer {
 
 .auth-modal-chooser-item:hover {
   border-color: var(--color-border-light);
+}
+
+.auth-modal-chooser-item:focus-visible {
+  outline: none;
+  border-color: var(--color-border-light);
+  box-shadow: 0 0 0 3px var(--color-glow);
 }
 
 .auth-modal-chooser-avatar {
