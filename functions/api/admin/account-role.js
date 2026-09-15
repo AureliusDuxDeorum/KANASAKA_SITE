@@ -1,7 +1,12 @@
 import { errorResponse, jsonResponse, readJson } from "../../lib/auth.js";
 import { normalizeAccountId, validateAccountId } from "../../lib/account-id.js";
 import { normalizeRole, ROLES } from "../../lib/roles.js";
-import { clientIp, logAuthEvent, requireAdmin } from "../../lib/security.js";
+import {
+  clientIp,
+  logAuthEvent,
+  requireAdminAccess,
+  requireSameOrigin,
+} from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -10,7 +15,10 @@ export async function onRequestPost(context) {
     return errorResponse("Authentication service is not configured.", 503);
   }
 
-  const adminError = requireAdmin(request, env);
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
+
+  const { error: adminError } = await requireAdminAccess(request, env);
   if (adminError) return adminError;
 
   const body = await readJson(request);

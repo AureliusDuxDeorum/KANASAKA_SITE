@@ -852,6 +852,170 @@
     });
   }
 
+  function escapeHtml(value) {
+    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return map[ch];
+    });
+  }
+
+  function initDeveloperSettings(profile) {
+    const navBtn = document.getElementById("settings-nav-developer");
+    const panel = document.getElementById("settings-panel-developer");
+    if (!navBtn || !panel) return;
+
+    const isDev = profile.accountId === "dev_ks" || profile.role === "admin";
+    navBtn.hidden = !isDev;
+    if (!isDev) {
+      // initSettingsNavigation() runs before this gate and will happily show
+      // the (data-less) panel shell if reached via ?section=developer --
+      // force back to a safe default rather than leaving it exposed.
+      if (!panel.hidden) {
+        showSettingsPanel("personal");
+      }
+      return;
+    }
+
+    const sessionInfo = document.getElementById("settings-dev-session");
+    if (sessionInfo) {
+      sessionInfo.innerHTML =
+        "<dt>Email</dt><dd>" + escapeHtml(profile.email) + "</dd>" +
+        "<dt>Account ID</dt><dd>" + escapeHtml(profile.accountId || "—") + "</dd>" +
+        "<dt>Role</dt><dd>" + escapeHtml(profile.role || "user") + "</dd>" +
+        "<dt>2FA</dt><dd>" +
+        (profile.twoFactorEnabled ? "Enabled (" + escapeHtml(profile.twoFactorMethod || "?") + ")" : "Off") +
+        "</dd>";
+    }
+
+    const lookupForm = document.getElementById("settings-dev-lookup-form");
+    const lookupResult = document.getElementById("settings-dev-lookup-result");
+    const roleForm = document.getElementById("settings-dev-role-form");
+    const roleSelect = document.getElementById("settings-dev-role-select");
+    let lookedUpAccountId = null;
+
+    if (lookupForm) {
+      lookupForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(lookupForm);
+        const query = lookupForm.querySelector('[name="query"]').value.trim();
+        if (!query) return;
+
+        const submit = lookupForm.querySelector('[type="submit"]');
+        setButtonLoading(submit, true);
+
+        try {
+          const { response, data } = await apiRequest(
+            "/api/admin/lookup?q=" + encodeURIComponent(query),
+            { method: "GET" }
+          );
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Lookup failed.");
+          }
+
+          lookedUpAccountId = data.accountId || null;
+          lookupResult.hidden = false;
+          lookupResult.innerHTML =
+            "<dt>Email</dt><dd>" + escapeHtml(data.email) + "</dd>" +
+            "<dt>Account ID</dt><dd>" + escapeHtml(data.accountId || "—") + "</dd>" +
+            "<dt>Role</dt><dd>" + escapeHtml(data.role || "user") + "</dd>" +
+            "<dt>Verified</dt><dd>" + (data.emailVerified ? "Yes" : "No") + "</dd>" +
+            "<dt>2FA</dt><dd>" + (data.twoFactorEnabled ? "Enabled" : "Off") + "</dd>" +
+            "<dt>Created</dt><dd>" + escapeHtml(data.createdAt) + "</dd>";
+
+          if (lookedUpAccountId) {
+            roleForm.hidden = false;
+            roleSelect.value = data.role || "user";
+          } else {
+            roleForm.hidden = true;
+          }
+        } catch (error) {
+          showFormError(lookupForm, error.message || "Lookup failed.");
+          lookupResult.hidden = true;
+          roleForm.hidden = true;
+        } finally {
+          setButtonLoading(submit, false);
+        }
+      });
+    }
+
+    if (roleForm) {
+      roleForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(roleForm);
+        clearFormSuccess(roleForm);
+        if (!lookedUpAccountId) return;
+
+        const submit = roleForm.querySelector('[type="submit"]');
+        setButtonLoading(submit, true);
+
+        try {
+          const { response, data } = await apiRequest("/api/admin/account-role", {
+            method: "POST",
+            body: JSON.stringify({ accountId: lookedUpAccountId, role: roleSelect.value }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Role update failed.");
+          }
+
+          showFormSuccess(roleForm, data.message || "Role updated.");
+        } catch (error) {
+          showFormError(roleForm, error.message || "Role update failed.");
+        } finally {
+          setButtonLoading(submit, false);
+        }
+      });
+    }
+
+    const eventsBox = document.getElementById("settings-dev-events");
+    const eventsRefresh = document.getElementById("settings-dev-events-refresh");
+
+    async function loadEvents() {
+      if (!eventsBox) return;
+      eventsBox.textContent = "Loading...";
+
+      try {
+        const { response, data } = await apiRequest("/api/admin/events?limit=25", { method: "GET" });
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not load events.");
+        }
+
+        const events = (data && data.events) || [];
+        if (!events.length) {
+          eventsBox.textContent = "No events yet.";
+          return;
+        }
+
+        eventsBox.innerHTML = events
+          .map(function (ev) {
+            return (
+              '<div class="settings-dev-event">' +
+              '<span class="settings-dev-event-time">' +
+              escapeHtml(ev.created_at) +
+              "</span>" +
+              '<span class="settings-dev-event-type">' +
+              escapeHtml(ev.event_type) +
+              "</span>" +
+              '<span class="settings-dev-event-meta">' +
+              escapeHtml(ev.meta) +
+              "</span>" +
+              "</div>"
+            );
+          })
+          .join("");
+      } catch (error) {
+        eventsBox.textContent = error.message || "Could not load events.";
+      }
+    }
+
+    if (eventsRefresh) {
+      eventsRefresh.addEventListener("click", loadEvents);
+    }
+
+    loadEvents();
+  }
+
   function initTwoFactorSettings(profile) {
     const statusEl = document.getElementById("settings-2fa-status");
     const offBox = document.getElementById("settings-2fa-off");
@@ -1237,6 +1401,7 @@
     });
 
     initTwoFactorSettings(profile);
+    initDeveloperSettings(profile);
 
     deleteForm.addEventListener("submit", async function (event) {
       event.preventDefault();

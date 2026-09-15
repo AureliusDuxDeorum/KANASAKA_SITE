@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=77">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=77">
-  <script defer src="/assets/js/password-policy.js?v=77"></script>
-  <script defer src="/assets/js/auth.js?v=77"></script>
-  <script defer src="/assets/js/main.js?v=77"></script>
+  <link rel="stylesheet" href="/assets/css/style.css?v=78">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=78">
+  <script defer src="/assets/js/password-policy.js?v=78"></script>
+  <script defer src="/assets/js/auth.js?v=78"></script>
+  <script defer src="/assets/js/main.js?v=78"></script>
 </head>
 <body>
 
@@ -47,6 +47,9 @@
           </button>
           <button type="button" class="settings-nav-item" data-settings-panel="billing">
             <span class="settings-nav-label">Billing</span>
+          </button>
+          <button type="button" class="settings-nav-item" data-settings-panel="developer" id="settings-nav-developer" hidden>
+            <span class="settings-nav-label">Developer</span>
           </button>
         </nav>
       </aside>
@@ -272,6 +275,46 @@
                   <button class="button" type="button" data-billing-plan="annual">Subscribe annually</button>
                 </article>
               </div>
+            </div>
+          </section>
+
+          <section id="settings-panel-developer" class="settings-panel" hidden>
+            <h2>Developer</h2>
+            <p class="settings-panel-intro">Diagnostics and admin tools, visible only to developer/admin accounts.</p>
+
+            <div class="settings-section">
+              <h3 class="settings-subsection-title">Session</h3>
+              <dl id="settings-dev-session" class="settings-dev-info"></dl>
+            </div>
+
+            <div class="settings-section">
+              <h3 class="settings-subsection-title">Account Lookup</h3>
+              <form id="settings-dev-lookup-form" class="auth-form settings-form">
+                <div class="auth-field">
+                  <label for="settings-dev-lookup-query">Email or account ID</label>
+                  <input id="settings-dev-lookup-query" name="query" type="text" autocomplete="off">
+                </div>
+                <button class="button secondary" type="submit">Look Up</button>
+              </form>
+              <dl id="settings-dev-lookup-result" class="settings-dev-info" hidden></dl>
+
+              <form id="settings-dev-role-form" class="auth-form settings-form" hidden>
+                <div class="auth-field">
+                  <label for="settings-dev-role-select">Change role for this account</label>
+                  <select id="settings-dev-role-select" name="role">
+                    <option value="user">user</option>
+                    <option value="beta">beta</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </div>
+                <button class="button secondary" type="submit">Update Role</button>
+              </form>
+            </div>
+
+            <div class="settings-section">
+              <h3 class="settings-subsection-title">Recent Site Events</h3>
+              <button id="settings-dev-events-refresh" class="button secondary" type="button">Refresh</button>
+              <div id="settings-dev-events" class="settings-dev-events"></div>
             </div>
           </section>
         </div>

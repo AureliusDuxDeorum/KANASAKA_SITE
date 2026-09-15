@@ -1,7 +1,7 @@
 KANASAKA SITE — Architecture Reference Document (ARD)
 ======================================================
 Maintained by: Cursor agent (update this file after every substantive change)
-Last updated: 2026-09-12
+Last updated: 2026-09-15
 Repo: AureliusDuxDeorum/KANASAKA_SITE
 Local path: ~/KANASAKA_SITE
 Production: https://kanasaka.com
@@ -118,10 +118,44 @@ Registration
 
 Account ID & roles
   account_id: 3–32 chars, lowercase [a-z0-9_-], unique, immutable after set.
-  role: user | beta | admin (default user). Assign via D1 or:
-  POST /api/admin/account-role  Authorization: Bearer ADMIN_SECRET
-  Body: { "accountId": "example", "role": "admin" }
+  role: user | beta | admin (default user). Assign via D1, or the account-role
+  endpoint below, or the in-app Developer panel.
   GET /api/account/id-available?accountId=example — availability check (public)
+
+Admin / developer access (dev_ks)
+  functions/lib/roles.js isAdminUser(user) = role==="admin" OR the account_id
+  is "dev_ks" (isKsStocksDeveloperAccount from ks-stocks-access.js, the same
+  constant that already grants dev_ks permanent KS Stocks + downloads access —
+  its own comment documents dev_ks as "permanent developer admin ... all gated
+  features"; this extends that same grant to the admin-panel checks below).
+  security.js requireAdminAccess(request, env) accepts EITHER the existing
+  Authorization: Bearer ADMIN_SECRET header (unchanged, for curl/scripts) OR
+  an authenticated session belonging to an isAdminUser account — lets the
+  in-app panel call these endpoints with the user's own cookie instead of
+  shipping ADMIN_SECRET to the browser. requireAdmin() (secret-only) still
+  exists unchanged for functions/api/auth/email-status.js.
+  POST /api/admin/account-role — session-or-secret gated (now also
+  requireSameOrigin, added when the session path was introduced).
+  Body: { "accountId": "example", "role": "admin" }
+  GET  /api/admin/lookup?q=<email-or-accountId> — session-or-secret gated,
+  returns id/email/accountId/role/emailVerified/twoFactorEnabled/hasPhone/
+  createdAt for one account (never the password hash).
+  GET  /api/admin/events?limit=N (default 25, max 100) — session-or-secret
+  gated, tails auth_events across ALL users (ip/email in meta) for
+  diagnostics; there's no other site than dev_ks/admin able to see this.
+  UI: Account Settings → "Developer" nav item, hidden unless
+  isDev = profile.accountId === "dev_ks" || profile.role === "admin"
+  (initDeveloperSettings in auth.js). Shows own session info, the lookup +
+  role-change tools above, and a refreshable recent-events tail. Guards
+  against a non-admin reaching the panel shell via ?section=developer by
+  re-routing back to "personal" once the real profile-based check runs
+  (initSettingsNavigation's URL-param handling runs earlier and doesn't
+  know the account's role yet).
+  NOTE (2026-09-15): dev_ks's role column was still "user" as of this
+  writing — isAdminUser's account-id fallback makes it admin-equivalent
+  regardless, but the role column itself needs a manual update since D1
+  writes aren't run by the agent:
+    npx wrangler d1 execute kanasaka-auth --remote --command "UPDATE users SET role = 'admin' WHERE account_id = 'dev_ks';"
 
 Email verification
   6-digit numeric code, not a link. POST /api/auth/register and
@@ -360,6 +394,16 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-15  Added real dev/admin features for the dev_ks account: a session-
+            based admin gate (requireAdminAccess, alongside the unchanged
+            secret-only requireAdmin) that treats dev_ks as admin-equivalent;
+            two new endpoints (/api/admin/lookup, /api/admin/events); and an
+            Account Settings "Developer" panel (session info, account
+            lookup + role changer, recent auth_events tail) visible only to
+            dev_ks/admin. dev_ks's role column still needs a manual D1
+            UPDATE to actually say "admin" (see Admin/developer access
+            section above) -- the agent's write attempt was blocked by the
+            auto-mode classifier as a production DB mutation.
 2026-09-12  UI: auth modal polish -- submit buttons show a spinning KS-mark
             instead of disabling silently (setButtonLoading), each numbered
             step shows "Step N of M", password fields got a Show/Hide

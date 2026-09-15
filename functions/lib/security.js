@@ -1,5 +1,6 @@
-import { errorResponse, jsonResponse } from "./auth.js";
+import { errorResponse, jsonResponse, resolveSession } from "./auth.js";
 import { sendLoginNotificationEmail } from "./email.js";
+import { isAdminUser } from "./roles.js";
 
 export function clientIp(request) {
   const cfIp = request.headers.get("CF-Connecting-IP");
@@ -135,4 +136,29 @@ export function requireAdmin(request, env) {
   }
 
   return null;
+}
+
+// Same admin gate as requireAdmin, but also accepts an authenticated session
+// belonging to an admin-role or dev_ks account -- lets the admin panel in
+// Account Settings call these endpoints with the user's own session cookie
+// instead of shipping ADMIN_SECRET to the browser. Scripts/curl using the
+// bearer secret keep working unchanged.
+export async function requireAdminAccess(request, env) {
+  const secret = env.ADMIN_SECRET;
+  const header = request.headers.get("Authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (secret && token && token === secret) {
+    return { user: null };
+  }
+
+  if (!env.DB) {
+    return { error: errorResponse("Forbidden.", 403) };
+  }
+
+  const { user } = await resolveSession(request, env);
+  if (isAdminUser(user)) {
+    return { user };
+  }
+
+  return { error: errorResponse("Forbidden.", 403) };
 }

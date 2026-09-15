@@ -1894,6 +1894,59 @@ body.auth-modal-open > #site-footer {
   border-color: var(--color-border-light);
 }
 
+.settings-dev-info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.settings-dev-info dt {
+  color: var(--color-text-muted);
+}
+
+.settings-dev-info dd {
+  margin: 0;
+  color: var(--color-text);
+  word-break: break-all;
+}
+
+.settings-dev-events {
+  margin-top: 16px;
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+}
+
+.settings-dev-event {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.settings-dev-event:last-child {
+  border-bottom: none;
+}
+
+.settings-dev-event-type {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.settings-dev-event-meta {
+  color: var(--color-text-muted);
+  word-break: break-all;
+  display: block;
+  margin-top: 2px;
+}
+
+.settings-dev-event-time {
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  float: right;
+}
+
 .settings-section-danger {
   border-color: #5a1a1a;
   background: linear-gradient(180deg, rgba(90, 26, 26, 0.12), var(--color-base));
