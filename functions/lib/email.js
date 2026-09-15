@@ -223,6 +223,22 @@ export async function sendLoginNotificationEmail(env, email, { success, reason, 
   });
 }
 
+export async function sendRoleChangedEmail(env, email, { role, location }) {
+  const when = new Date().toUTCString();
+  const html = `
+    <p>Your KANASAKA account's role was just changed to <strong>${role}</strong> by an administrator.</p>
+    <p><strong>Approximate location of the request:</strong> ${location || "unknown"}</p>
+    <p><strong>Time:</strong> ${when}</p>
+    <p>If you don't recognize this change, contact support immediately.</p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: "Your KANASAKA account role changed",
+    html,
+  });
+}
+
 const TWO_FACTOR_EMAIL_COPY = {
   setup: {
     subject: "Enable two-factor authentication",

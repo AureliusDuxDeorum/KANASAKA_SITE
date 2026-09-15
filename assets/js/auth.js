@@ -946,13 +946,18 @@
         clearFormSuccess(roleForm);
         if (!lookedUpAccountId) return;
 
+        const passwordField = roleForm.querySelector('[name="currentPassword"]');
         const submit = roleForm.querySelector('[type="submit"]');
         setButtonLoading(submit, true);
 
         try {
           const { response, data } = await apiRequest("/api/admin/account-role", {
             method: "POST",
-            body: JSON.stringify({ accountId: lookedUpAccountId, role: roleSelect.value }),
+            body: JSON.stringify({
+              accountId: lookedUpAccountId,
+              role: roleSelect.value,
+              currentPassword: passwordField.value,
+            }),
           });
 
           if (!response.ok) {
@@ -963,6 +968,7 @@
         } catch (error) {
           showFormError(roleForm, error.message || "Role update failed.");
         } finally {
+          passwordField.value = "";
           setButtonLoading(submit, false);
         }
       });

@@ -143,6 +143,12 @@ export function requireAdmin(request, env) {
 // Account Settings call these endpoints with the user's own session cookie
 // instead of shipping ADMIN_SECRET to the browser. Scripts/curl using the
 // bearer secret keep working unchanged.
+//
+// The session path additionally requires the account to have 2FA enabled --
+// privileged accounts get a materially higher bar than a bare password
+// (OWASP: MFA is mandatory for admin/privileged access). This does not apply
+// to the bearer-secret path, which is a separate, already-strong trust
+// channel (possession of a long random secret, never stored in a browser).
 export async function requireAdminAccess(request, env) {
   const secret = env.ADMIN_SECRET;
   const header = request.headers.get("Authorization") || "";
@@ -156,9 +162,38 @@ export async function requireAdminAccess(request, env) {
   }
 
   const { user } = await resolveSession(request, env);
-  if (isAdminUser(user)) {
-    return { user };
+  if (!isAdminUser(user)) {
+    return { error: errorResponse("Forbidden.", 403) };
   }
 
-  return { error: errorResponse("Forbidden.", 403) };
+  if (!user.totp_enabled) {
+    return {
+      error: errorResponse(
+        "Enable two-factor authentication in Account Settings before using admin tools.",
+        403
+      ),
+    };
+  }
+
+  return { user };
+}
+
+// Actor label used consistently across admin audit log entries and throttle
+// keys: the acting admin's email when session-authenticated, or a fixed
+// "secret" label for bearer-secret (curl/script) access, which has no user.
+export function adminActorLabel(user) {
+  return user ? user.email : "secret";
+}
+
+// Rate limit for privileged admin actions themselves -- even a legitimate,
+// still-logged-in admin session being used abusively (compromised device,
+// leaked cookie) shouldn't be able to enumerate every account or hammer role
+// changes without limit. Reuses the same auth_events-based throttle pattern
+// as login/verification codes; keyed by actor + action so one throttled
+// action type doesn't block a different one.
+export async function throttleAdminAction(env, actionType, actorLabel, options = {}) {
+  return tooManyRecentFailures(env, actionType, actorLabel, {
+    max: options.max || 30,
+    windowMinutes: options.windowMinutes || 10,
+  });
 }

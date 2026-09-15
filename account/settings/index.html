@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=78">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=78">
-  <script defer src="/assets/js/password-policy.js?v=78"></script>
-  <script defer src="/assets/js/auth.js?v=78"></script>
-  <script defer src="/assets/js/main.js?v=78"></script>
+  <link rel="stylesheet" href="/assets/css/style.css?v=79">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=79">
+  <script defer src="/assets/js/password-policy.js?v=79"></script>
+  <script defer src="/assets/js/auth.js?v=79"></script>
+  <script defer src="/assets/js/main.js?v=79"></script>
 </head>
 <body>
 
@@ -306,6 +306,10 @@
                     <option value="beta">beta</option>
                     <option value="admin">admin</option>
                   </select>
+                </div>
+                <div class="auth-field">
+                  <label for="settings-dev-role-password">Your current password (confirms this change)</label>
+                  <input id="settings-dev-role-password" name="currentPassword" type="password" autocomplete="current-password">
                 </div>
                 <button class="button secondary" type="submit">Update Role</button>
               </form>

@@ -157,6 +157,42 @@ Admin / developer access (dev_ks)
   writes aren't run by the agent:
     npx wrangler d1 execute kanasaka-auth --remote --command "UPDATE users SET role = 'admin' WHERE account_id = 'dev_ks';"
 
+  Hardening (2026-09-15, researched against OWASP/NIST privileged-account
+  guidance — see change log for sources):
+  - 2FA required for the session path: requireAdminAccess additionally
+    checks user.totp_enabled and refuses (403, with a message pointing at
+    Account Settings) if 2FA isn't on. Bearer-secret access is exempt — it's
+    a separate, already-strong trust channel (a long random secret that
+    never touches a browser), not a password-equivalent.
+  - Step-up re-authentication on the destructive action: account-role.js
+    requires body.currentPassword (verified against the ACTING admin's own
+    password_hash) whenever called via session, on top of the existing
+    session/2FA check — a stolen cookie or unattended device alone can't
+    change anyone's role. Not required for bearer-secret calls (no session
+    to hijack there).
+  - Rate limiting: throttleAdminAction (security.js, reuses the
+    tooManyRecentFailures auth_events pattern) caps lookups at 30/10min,
+    events views at 60/10min, and role changes at 10/10min, keyed by actor
+    (admin's email, or the literal string "secret" for bearer access) — even
+    a legitimate-but-compromised admin session can't be used to enumerate
+    every account or spam role changes without limit.
+  - Full audit trail: lookup.js and events.js previously logged nothing;
+    they now call logAuthEvent (admin_lookup, admin_events_viewed) with the
+    actor and query/limit, matching the audit trail account-role.js already
+    had (admin_role_updated, now also recording previousRole and
+    targetEmail, plus a new admin_role_update_failed entry on a bad step-up
+    password). All of this shows up in the Developer panel's own event tail.
+  - Alerting: sendRoleChangedEmail (email.js) notifies the TARGET account
+    (not the acting admin) whenever their role actually changes, with the
+    same approxLocation() used by login notifications — if an attacker ever
+    got in and escalated some account's privilege, that account's owner
+    finds out immediately, not from an audit log nobody's watching.
+  - Deliberately NOT built: WebAuthn/hardware-key MFA (research recommends
+    phishing-resistant MFA for admins over TOTP/email codes) and a
+    last-admin-lockout guard (moot here since dev_ks's account-ID fallback
+    means true zero-admin lockout isn't reachable through this UI) — noted
+    as known gaps rather than scope-crept into this change.
+
 Email verification
   6-digit numeric code, not a link. POST /api/auth/register and
   POST /api/auth/resend-verification both call createVerificationCode() (auth.js),
@@ -394,6 +430,15 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-15  Hardened the new admin/developer tools per researched OWASP/NIST
+            privileged-account guidance: session-based admin access now
+            requires 2FA; role changes require step-up re-entry of the
+            acting admin's own password; all three admin endpoints are
+            rate-limited and fully audit-logged (lookup/events previously
+            logged nothing); the target account gets emailed whenever its
+            role actually changes. See "Admin / developer access" above for
+            what was deliberately left out (WebAuthn, last-admin lockout)
+            and why.
 2026-09-15  Added real dev/admin features for the dev_ks account: a session-
             based admin gate (requireAdminAccess, alongside the unchanged
             secret-only requireAdmin) that treats dev_ks as admin-equivalent;
