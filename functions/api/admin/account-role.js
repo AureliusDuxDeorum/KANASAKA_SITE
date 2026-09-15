@@ -1,7 +1,14 @@
 import { errorResponse, jsonResponse, readJson, verifyPassword } from "../../lib/auth.js";
 import { normalizeAccountId, validateAccountId } from "../../lib/account-id.js";
 import { normalizeRole, ROLES } from "../../lib/roles.js";
-import { sendRoleChangedEmail } from "../../lib/email.js";
+import {
+  sendPendingRoleChangeAdminCopyEmail,
+  sendPendingRoleChangeEmail,
+  sendRoleChangedEmail,
+  siteUrl,
+} from "../../lib/email.js";
+import { getSecurityPhrase } from "../../lib/security-phrase.js";
+import { schedulePendingRoleChange } from "../../lib/pending-changes.js";
 import {
   adminActorLabel,
   approxLocation,
@@ -32,6 +39,7 @@ export async function onRequestPost(context) {
 
   const actor = adminActorLabel(actingUser);
   const ip = clientIp(request);
+  const location = approxLocation(request);
 
   if (await throttleAdminAction(env, "admin_role_updated", actor, { max: 10, windowMinutes: 10 })) {
     return errorResponse("Too many role changes. Try again later.", 429);
@@ -42,6 +50,8 @@ export async function onRequestPost(context) {
   // admin session (mitigates a stolen/hijacked session or an unattended,
   // unlocked device). Bearer-secret access is a separate, already-strong
   // trust channel and skips this -- there's no "current password" to check.
+  // A wrong password here also counts toward the escalating admin lockout
+  // in requireAdminAccess (keyed on the same admin_role_update_failed event).
   if (actingUser) {
     const password = String(body.currentPassword || "");
     if (!password) {
@@ -86,11 +96,28 @@ export async function onRequestPost(context) {
     return errorResponse("No account found with that ID.", 404);
   }
 
-  await env.DB.prepare("UPDATE users SET role = ? WHERE id = ?")
-    .bind(role, user.id)
-    .run();
+  if (role === user.role) {
+    return jsonResponse({
+      success: true,
+      accountId: validated.value,
+      role,
+      message: "@" + validated.value + " already has that role.",
+    });
+  }
 
-  await logAuthEvent(env, "admin_role_updated", {
+  // Vault-style time lock (Coinbase Vault / Kraken Global Settings Lock):
+  // the change is scheduled, not applied immediately. Both the target and
+  // the requesting admin get a cancel link; if nothing cancels it, it
+  // applies automatically once the delay elapses (see pending-changes.js
+  // for how "elapsed" is detected without a cron trigger).
+  const scheduled = await schedulePendingRoleChange(env, {
+    userId: user.id,
+    previousRole: user.role,
+    newRole: role,
+    requestedBy: actor,
+  });
+
+  await logAuthEvent(env, "admin_role_change_scheduled", {
     ip,
     email: actor,
     userId: user.id,
@@ -98,13 +125,57 @@ export async function onRequestPost(context) {
     accountId: validated.value,
     previousRole: user.role,
     role,
+    immediate: !scheduled,
   });
 
-  if (role !== user.role) {
+  if (!scheduled) {
+    // migrations/016_admin_hardening.sql hasn't been run yet -- fail back to
+    // the pre-hardening immediate-apply behavior rather than silently
+    // dropping the request.
+    await env.DB.prepare("UPDATE users SET role = ? WHERE id = ?").bind(role, user.id).run();
+
     try {
-      await sendRoleChangedEmail(env, user.email, { role, location: approxLocation(request) });
+      const securityPhrase = await getSecurityPhrase(env, user.id);
+      await sendRoleChangedEmail(env, user.email, { role, location, securityPhrase });
     } catch (err) {
       console.error("Role change notification email failed:", err);
+    }
+
+    return jsonResponse({
+      success: true,
+      accountId: validated.value,
+      role,
+      message: "Role updated for @" + validated.value + " (migration 016 not applied yet -- applied immediately).",
+    });
+  }
+
+  const cancelUrl = siteUrl(env) + "/admin/cancel-role-change/?token=" + encodeURIComponent(scheduled.cancelToken);
+
+  try {
+    const securityPhrase = await getSecurityPhrase(env, user.id);
+    await sendPendingRoleChangeEmail(env, user.email, {
+      previousRole: user.role,
+      role,
+      effectiveAt: scheduled.effectiveAt,
+      cancelUrl,
+      location,
+      securityPhrase,
+    });
+  } catch (err) {
+    console.error("Pending role change email failed:", err);
+  }
+
+  if (actingUser && actingUser.email !== user.email) {
+    try {
+      await sendPendingRoleChangeAdminCopyEmail(env, actingUser.email, {
+        targetAccountId: validated.value,
+        previousRole: user.role,
+        role,
+        effectiveAt: scheduled.effectiveAt,
+        cancelUrl,
+      });
+    } catch (err) {
+      console.error("Admin copy email failed:", err);
     }
   }
 
@@ -112,6 +183,10 @@ export async function onRequestPost(context) {
     success: true,
     accountId: validated.value,
     role,
-    message: "Role updated for @" + validated.value + ".",
+    pending: true,
+    effectiveAt: scheduled.effectiveAt,
+    message:
+      "Role change to " + role + " for @" + validated.value + " is scheduled for " +
+      scheduled.effectiveAt + ". Both the account and you were emailed a cancel link.",
   });
 }

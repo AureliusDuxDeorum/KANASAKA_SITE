@@ -1,6 +1,7 @@
 import { errorResponse, jsonResponse, resolveSession } from "./auth.js";
-import { sendLoginNotificationEmail } from "./email.js";
+import { sendAdminLockoutEmail, sendLoginNotificationEmail } from "./email.js";
 import { isAdminUser } from "./roles.js";
+import { getSecurityPhrase } from "./security-phrase.js";
 
 export function clientIp(request) {
   const cfIp = request.headers.get("CF-Connecting-IP");
@@ -116,7 +117,8 @@ export async function notifyLogin(env, email, details) {
   }
 
   try {
-    await sendLoginNotificationEmail(env, email, details);
+    const securityPhrase = details.userId ? await getSecurityPhrase(env, details.userId) : null;
+    await sendLoginNotificationEmail(env, email, { ...details, securityPhrase });
     await logAuthEvent(env, "login_notification_sent", { email });
   } catch (err) {
     console.error("Login notification email failed:", err);
@@ -175,7 +177,46 @@ export async function requireAdminAccess(request, env) {
     };
   }
 
+  // Coinbase-style escalating freeze: repeated wrong step-up passwords lock
+  // out ALL admin tools for a cool-down window, not just the one action that
+  // was being confirmed -- a session that keeps failing step-up looks like a
+  // hijacked session guessing, not the real owner having a typo.
+  const actor = adminActorLabel(user);
+  const lockedOut = await tooManyRecentFailures(env, "admin_role_update_failed", actor, {
+    max: ADMIN_LOCKOUT_FAILURE_THRESHOLD,
+    windowMinutes: ADMIN_LOCKOUT_WINDOW_MINUTES,
+  });
+
+  if (lockedOut) {
+    await notifyAdminLockout(env, user, actor);
+    return {
+      error: errorResponse(
+        `Admin access is temporarily locked after repeated failed confirmations. Try again in ${ADMIN_LOCKOUT_WINDOW_MINUTES} minutes.`,
+        423
+      ),
+    };
+  }
+
   return { user };
+}
+
+const ADMIN_LOCKOUT_FAILURE_THRESHOLD = 3;
+const ADMIN_LOCKOUT_WINDOW_MINUTES = 15;
+
+async function notifyAdminLockout(env, user, actor) {
+  // One email per lockout window, not one per blocked request.
+  const alreadyNotified = await tooManyRecentFailures(env, "admin_lockout_notified", actor, {
+    max: 1,
+    windowMinutes: ADMIN_LOCKOUT_WINDOW_MINUTES,
+  });
+  if (alreadyNotified) return;
+
+  try {
+    await sendAdminLockoutEmail(env, user.email, { minutes: ADMIN_LOCKOUT_WINDOW_MINUTES });
+    await logAuthEvent(env, "admin_lockout_notified", { email: actor });
+  } catch (err) {
+    console.error("Admin lockout email failed:", err);
+  }
 }
 
 // Actor label used consistently across admin audit log entries and throttle

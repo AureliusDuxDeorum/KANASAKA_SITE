@@ -52,6 +52,7 @@ export async function onRequestPost(context) {
       success: true,
       reason: "Two-factor verification code was correct. Signed in successfully.",
       location,
+      userId: user.user_id,
     });
 
     return jsonResponse(sessionPayload(user, env), 200, {
@@ -64,6 +65,7 @@ export async function onRequestPost(context) {
         success: false,
         reason: "The two-factor verification code entered was incorrect.",
         location,
+        userId: err.userId,
       });
     }
     return errorResponse(err.message || "Two-factor verification failed.", 401);

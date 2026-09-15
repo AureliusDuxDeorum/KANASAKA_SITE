@@ -63,7 +63,7 @@ export async function onRequestPost(context) {
   const valid = await verifyPassword(password, user.password_hash, env);
   if (!valid) {
     await logAuthEvent(env, "login_failed", { ip, reason: "bad_password" });
-    await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", location });
+    await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", location, userId: user.id });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
@@ -73,6 +73,7 @@ export async function onRequestPost(context) {
       success: false,
       reason: "The correct password was entered, but this account's email is not verified yet.",
       location,
+      userId: user.id,
     });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
@@ -88,6 +89,7 @@ export async function onRequestPost(context) {
         success: false,
         reason: "The correct password was entered, but the two-factor code could not be sent (misconfigured).",
         location,
+        userId: user.id,
       });
       return errorResponse("Two-factor authentication is misconfigured. Contact support.", 503);
     }
@@ -104,6 +106,7 @@ export async function onRequestPost(context) {
           success: true,
           reason: "The correct password was entered. A two-factor verification code was requested to finish signing in.",
           location,
+          userId: user.id,
         });
       }
       return jsonResponse({
@@ -120,6 +123,7 @@ export async function onRequestPost(context) {
         success: false,
         reason: "The correct password was entered, but the two-factor code could not be sent.",
         location,
+        userId: user.id,
       });
       return errorResponse(err.message || "Could not send verification code.", 503);
     }
@@ -128,7 +132,7 @@ export async function onRequestPost(context) {
   await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id, remember);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
-  await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", location });
+  await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", location, userId: user.id });
 
   return jsonResponse(sessionPayload(user, env), 200, {
     "Set-Cookie": sessionCookieHeader(session.token, session.maxAge),

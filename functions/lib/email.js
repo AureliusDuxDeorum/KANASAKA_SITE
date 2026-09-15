@@ -206,9 +206,18 @@ export async function sendPasswordResetCodeEmail(env, email, code) {
   });
 }
 
-export async function sendLoginNotificationEmail(env, email, { success, reason, location }) {
+// Anti-phishing security phrase (Coinbase/Binance pattern): stamped at the
+// top of every security-sensitive email below when the user has one set, so
+// a phishing lookalike -- which can't know it -- is immediately obvious.
+function securityPhraseBanner(securityPhrase) {
+  if (!securityPhrase) return "";
+  return `<p style="padding:12px 14px;background:#f2f2f2;border-left:4px solid #111;margin:0 0 16px;"><strong>Your security phrase:</strong> ${securityPhrase}<br>If you don't see this exact phrase, or don't recognize it, this email is not really from KANASAKA.</p>`;
+}
+
+export async function sendLoginNotificationEmail(env, email, { success, reason, location, securityPhrase }) {
   const when = new Date().toUTCString();
   const html = `
+    ${securityPhraseBanner(securityPhrase)}
     <p>${success ? "A sign-in to your KANASAKA account just succeeded." : "A sign-in attempt on your KANASAKA account was blocked."}</p>
     <p><strong>Result:</strong> ${reason}</p>
     <p><strong>Approximate location:</strong> ${location || "unknown"}</p>
@@ -223,9 +232,10 @@ export async function sendLoginNotificationEmail(env, email, { success, reason, 
   });
 }
 
-export async function sendRoleChangedEmail(env, email, { role, location }) {
+export async function sendRoleChangedEmail(env, email, { role, location, securityPhrase }) {
   const when = new Date().toUTCString();
   const html = `
+    ${securityPhraseBanner(securityPhrase)}
     <p>Your KANASAKA account's role was just changed to <strong>${role}</strong> by an administrator.</p>
     <p><strong>Approximate location of the request:</strong> ${location || "unknown"}</p>
     <p><strong>Time:</strong> ${when}</p>
@@ -235,6 +245,65 @@ export async function sendRoleChangedEmail(env, email, { role, location }) {
   return sendEmail(env, {
     to: email,
     subject: "Your KANASAKA account role changed",
+    html,
+  });
+}
+
+// Vault-style time-locked change notice (Coinbase Vault / Kraken Global
+// Settings Lock pattern) -- the change hasn't happened yet, and this link is
+// how the account owner stops it if they didn't request it.
+export async function sendPendingRoleChangeEmail(
+  env,
+  email,
+  { previousRole, role, effectiveAt, cancelUrl, location, securityPhrase }
+) {
+  const html = `
+    ${securityPhraseBanner(securityPhrase)}
+    <p>An administrator has requested to change your KANASAKA account's role from <strong>${previousRole}</strong> to <strong>${role}</strong>.</p>
+    <p>This change will take effect automatically at <strong>${effectiveAt}</strong> (about 30 minutes from now) unless you cancel it.</p>
+    <p><a href="${cancelUrl}">Cancel this change</a></p>
+    <p><strong>Approximate location of the request:</strong> ${location || "unknown"}</p>
+    <p>If you requested or expected this, no action is needed -- it will apply automatically.</p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: "Pending role change on your KANASAKA account",
+    html,
+  });
+}
+
+// Sent to the admin who requested the change, as their own confirmation +
+// cancel path -- exchanges typically notify both the account holder and
+// whoever initiated a sensitive change.
+export async function sendPendingRoleChangeAdminCopyEmail(
+  env,
+  email,
+  { targetAccountId, previousRole, role, effectiveAt, cancelUrl }
+) {
+  const html = `
+    <p>You scheduled a role change for @${targetAccountId}: <strong>${previousRole}</strong> → <strong>${role}</strong>.</p>
+    <p>It will take effect automatically at <strong>${effectiveAt}</strong> unless cancelled.</p>
+    <p><a href="${cancelUrl}">Cancel this change</a></p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: "You scheduled a role change on KANASAKA",
+    html,
+  });
+}
+
+export async function sendAdminLockoutEmail(env, email, { minutes }) {
+  const html = `
+    <p>Admin tools on your KANASAKA account were temporarily locked after several incorrect confirmation-password attempts.</p>
+    <p>Access will unlock automatically in about ${minutes} minutes. No action is needed if this was you mistyping your password.</p>
+    <p>If you don't recognize this activity, change your password immediately.</p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: "Admin access temporarily locked on your KANASAKA account",
     html,
   });
 }

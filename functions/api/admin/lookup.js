@@ -1,5 +1,6 @@
 import { errorResponse, jsonResponse } from "../../lib/auth.js";
 import { normalizeAccountId } from "../../lib/ks-stocks-access.js";
+import { applyDuePendingRoleChanges, getPendingRoleChange } from "../../lib/pending-changes.js";
 import {
   adminActorLabel,
   clientIp,
@@ -52,6 +53,12 @@ export async function onRequestGet(context) {
     return errorResponse("No account found.", 404);
   }
 
+  const applied = await applyDuePendingRoleChanges(env, user_.id);
+  if (applied) {
+    user_.role = applied.role;
+  }
+  const pending = await getPendingRoleChange(env, user_.id);
+
   return jsonResponse({
     id: user_.id,
     email: user_.email,
@@ -61,5 +68,8 @@ export async function onRequestGet(context) {
     twoFactorEnabled: Boolean(user_.totp_enabled),
     hasPhone: Boolean(user_.phone_e164),
     createdAt: user_.created_at,
+    pendingRoleChange: pending
+      ? { newRole: pending.new_role, previousRole: pending.previous_role, effectiveAt: pending.effective_at }
+      : null,
   });
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Email | KANASAKA</title>
+  <title>Cancel Role Change | KANASAKA</title>
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -15,7 +15,6 @@
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="/assets/css/style.css?v=80">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=80">
-  <script defer src="/assets/js/password-policy.js?v=80"></script>
   <script defer src="/assets/js/auth.js?v=80"></script>
   <script defer src="/assets/js/main.js?v=80"></script>
 </head>
@@ -28,42 +27,48 @@
   <section class="auth-page">
     <div class="auth-page-backdrop" aria-hidden="true"></div>
 
-    <div class="auth-card auth-card--modern">
+    <div class="auth-card auth-card--modern auth-card-elevated">
       <div class="auth-card-accent" aria-hidden="true"></div>
       <div class="auth-card-body">
 
       <p class="auth-eyebrow">Account</p>
-      <h1>Verify Email</h1>
-      <p class="auth-lead">Enter the 6-digit code we emailed you to finish setting up your account.</p>
+      <h1>Role Change</h1>
+      <p id="cancel-role-status" class="auth-lead">Checking this link...</p>
 
-      <form id="verify-form" class="auth-form">
-        <div class="auth-field">
-          <label for="verify-email">Email</label>
-          <input id="verify-email" name="email" type="email" autocomplete="email" required>
-        </div>
-
-        <div class="auth-field">
-          <label id="verify-code-label">Verification code</label>
-          <div class="otp-boxes" id="verify-code-boxes" role="group" aria-labelledby="verify-code-label"></div>
-          <input type="hidden" id="verify-code" name="code">
-        </div>
-
-        <button class="button auth-submit" type="submit">Verify</button>
-      </form>
-
-      <div class="auth-footer">
-        <p class="auth-switch">Didn't get a code? <button id="verify-resend" class="link-button" type="button">Resend code</button></p>
-      </div>
       </div>
     </div>
 
-
   </section>
-
 
 </main>
 
 <div id="site-footer"></div>
+
+<script>
+  (function () {
+    document.addEventListener("DOMContentLoaded", async function () {
+      const status = document.getElementById("cancel-role-status");
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+
+      if (!token) {
+        status.textContent = "This link is missing its token.";
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/admin/cancel-role-change?token=" + encodeURIComponent(token), {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        status.textContent = (data && data.message) || "Something went wrong.";
+      } catch {
+        status.textContent = "Could not reach the server. Try again shortly.";
+      }
+    });
+  })();
+</script>
 
 </body>
 </html>

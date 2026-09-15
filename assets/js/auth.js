@@ -859,6 +859,54 @@
     });
   }
 
+  function initSecurityPhraseSettings() {
+    const form = document.getElementById("settings-security-phrase-form");
+    if (!form) return;
+
+    const phraseInput = form.querySelector('[name="securityPhrase"]');
+
+    apiRequest("/api/account/security-phrase", { method: "GET" })
+      .then(function (result) {
+        if (result.response.ok && result.data && result.data.securityPhrase) {
+          phraseInput.value = result.data.securityPhrase;
+        }
+      })
+      .catch(function () {
+        // Non-critical; the field just stays empty.
+      });
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(form);
+      clearFormSuccess(form);
+
+      const passwordField = form.querySelector('[name="currentPassword"]');
+      const submit = form.querySelector('[type="submit"]');
+      setButtonLoading(submit, true);
+
+      try {
+        const { response, data } = await apiRequest("/api/account/security-phrase", {
+          method: "POST",
+          body: JSON.stringify({
+            securityPhrase: phraseInput.value,
+            currentPassword: passwordField.value,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not save security phrase.");
+        }
+
+        showFormSuccess(form, data.message || "Saved.");
+      } catch (error) {
+        showFormError(form, error.message || "Could not save security phrase.");
+      } finally {
+        passwordField.value = "";
+        setButtonLoading(submit, false);
+      }
+    });
+  }
+
   function initDeveloperSettings(profile) {
     const navBtn = document.getElementById("settings-nav-developer");
     const panel = document.getElementById("settings-panel-developer");
@@ -921,7 +969,16 @@
             "<dt>Role</dt><dd>" + escapeHtml(data.role || "user") + "</dd>" +
             "<dt>Verified</dt><dd>" + (data.emailVerified ? "Yes" : "No") + "</dd>" +
             "<dt>2FA</dt><dd>" + (data.twoFactorEnabled ? "Enabled" : "Off") + "</dd>" +
-            "<dt>Created</dt><dd>" + escapeHtml(data.createdAt) + "</dd>";
+            "<dt>Created</dt><dd>" + escapeHtml(data.createdAt) + "</dd>" +
+            (data.pendingRoleChange
+              ? "<dt>Pending change</dt><dd>" +
+                escapeHtml(data.pendingRoleChange.previousRole) +
+                " → " +
+                escapeHtml(data.pendingRoleChange.newRole) +
+                " at " +
+                escapeHtml(data.pendingRoleChange.effectiveAt) +
+                " (emailed cancel link)</dd>"
+              : "");
 
           if (lookedUpAccountId) {
             roleForm.hidden = false;
@@ -1407,6 +1464,7 @@
     });
 
     initTwoFactorSettings(profile);
+    initSecurityPhraseSettings();
     initDeveloperSettings(profile);
 
     deleteForm.addEventListener("submit", async function (event) {

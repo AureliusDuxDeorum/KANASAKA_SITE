@@ -187,11 +187,52 @@ Admin / developer access (dev_ks)
     same approxLocation() used by login notifications — if an attacker ever
     got in and escalated some account's privilege, that account's owner
     finds out immediately, not from an audit log nobody's watching.
+
+  Round 2 (2026-09-15, same day — "go more aggressive, crypto-exchange
+  style"), functions/lib/pending-changes.js and functions/lib/security-phrase.js:
+  - Vault-style time-locked role changes (Coinbase Vault / Kraken Global
+    Settings Lock): account-role.js no longer applies a role change
+    immediately. It inserts a pending_role_changes row
+    (ROLE_CHANGE_DELAY_MINUTES = 30) and emails a cancel link to BOTH the
+    target account and the requesting admin. GET /api/admin/cancel-role-change
+    ?token=... (no auth required — the token itself is the credential, same
+    "magic link" trust model as email verification/reset links) deletes the
+    pending row. There's no Cron Trigger here, so "the delay elapsed" is
+    checked lazily: resolveSession() (auth.js) applies any due change for
+    the CURRENT session's own account on its next authenticated request, and
+    GET /api/admin/lookup does the same for whichever account an admin is
+    looking at — both via applyDuePendingRoleChanges(). Fails soft to
+    pre-hardening immediate-apply if migration 016 hasn't run yet
+    (pendingTableExists() try/catches the SELECT). UI: the Developer panel's
+    lookup result shows a "Pending change" line when one exists; /admin/
+    cancel-role-change/ is the plain-language landing page the emailed link
+    opens.
+  - Anti-phishing security phrase (Coinbase/Binance pattern): any user can
+    set a short phrase (Account Settings → Account Management → Security
+    Phrase, step-up password required to change it — functions/api/account/
+    security-phrase.js) that gets stamped at the top of their login-
+    notification, role-changed, and pending-role-change emails
+    (securityPhraseBanner() in email.js). A phishing email impersonating
+    KANASAKA won't know the phrase, making it immediately identifiable as
+    fake. Column is nullable/optional; emails just render without the
+    banner if unset or if migration 016 hasn't run.
+  - Escalating lockout (Coinbase-style temporary freeze): 3 wrong step-up
+    passwords within 15 minutes (ADMIN_LOCKOUT_FAILURE_THRESHOLD /
+    ADMIN_LOCKOUT_WINDOW_MINUTES, security.js) locks out ALL admin
+    endpoints for that actor for the rest of the window — checked inside
+    requireAdminAccess itself, so it's not just the one action being
+    reattempted that's blocked. Sends sendAdminLockoutEmail once per
+    lockout window (throttled the same way login failure notifications
+    are), not once per blocked request.
   - Deliberately NOT built: WebAuthn/hardware-key MFA (research recommends
-    phishing-resistant MFA for admins over TOTP/email codes) and a
+    phishing-resistant MFA for admins over TOTP/email codes), a
     last-admin-lockout guard (moot here since dev_ks's account-ID fallback
-    means true zero-admin lockout isn't reachable through this UI) — noted
-    as known gaps rather than scope-crept into this change.
+    means true zero-admin lockout isn't reachable through this UI), and a
+    real Cron-triggered apply for pending changes (Cloudflare Pages
+    Functions don't run scheduled handlers the way plain Workers do; lazy
+    apply-on-next-touch was chosen instead of standing up separate Worker
+    infrastructure for one feature) — noted as known gaps/trade-offs rather
+    than scope-crept into this change.
 
 Email verification
   6-digit numeric code, not a link. POST /api/auth/register and
@@ -315,7 +356,13 @@ users
   tos_accepted_at TEXT, tos_version TEXT,
   totp_secret TEXT, totp_pending_secret TEXT,
   totp_enabled INTEGER DEFAULT 0, totp_enabled_at TEXT,
-  phone_e164 TEXT, phone_pending_e164 TEXT
+  phone_e164 TEXT, phone_pending_e164 TEXT,
+  security_phrase TEXT (migration 016, not yet applied remotely)
+
+pending_role_changes (migration 016, not yet applied remotely)
+  id INTEGER PK, user_id INTEGER FK, previous_role TEXT, new_role TEXT,
+  requested_by TEXT (admin's email, or "secret"), cancel_token_hash TEXT UNIQUE,
+  effective_at TEXT, created_at TEXT
 
 sessions
   id INTEGER PK, token_hash TEXT UNIQUE, user_id INTEGER FK,
@@ -376,6 +423,7 @@ Public vars (wrangler.toml)
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/010_tos_acceptance.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/011_account_id.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/015_session_remember.sql
+  npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/016_admin_hardening.sql
 
 007_wipe_accounts.sql — IRREVERSIBLE data wipe (users, sessions, tokens, avatars,
   auth_events, rate_limits). Schema preserved.
@@ -388,6 +436,13 @@ Public vars (wrangler.toml)
   to survive session rotation past SESSION_ROTATE_HOURS; login itself already
   honors the checkbox correctly before this is applied (schema.js detects the
   missing column and falls back to always-remember on rotation).
+
+016_admin_hardening.sql — NOT YET RUN ON REMOTE D1. Adds the
+  pending_role_changes table and users.security_phrase. Both are optional in
+  the sense that the code fails soft without them: account-role.js applies
+  role changes immediately (pre-hardening behavior) if the table doesn't
+  exist, and emails just skip the security-phrase banner if the column
+  doesn't exist -- see "Admin hardening" below.
 
 
 8. DEPLOY / BUILD
@@ -430,6 +485,18 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-15  Crypto-exchange-inspired admin hardening, round 2 (migration
+            016, not yet run on remote D1): role changes are now
+            time-locked and cancellable (Coinbase Vault / Kraken Global
+            Settings Lock style) instead of applying instantly -- a 30-
+            minute delay, cancel links emailed to both the target and the
+            requesting admin, applied lazily on next account touch since
+            there's no cron trigger available. Added a per-user anti-
+            phishing security phrase (Coinbase/Binance pattern) stamped
+            into security emails. Added an escalating lockout: 3 wrong
+            step-up passwords freezes ALL admin tools for 15 minutes, not
+            just the one action being confirmed. See "Admin hardening,
+            round 2" above for what was deliberately left out and why.
 2026-09-15  Hardened the new admin/developer tools per researched OWASP/NIST
             privileged-account guidance: session-based admin access now
             requires 2FA; role changes require step-up re-entry of the

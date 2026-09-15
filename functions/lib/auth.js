@@ -12,6 +12,7 @@ import {
 import { getAuthSchema, usersHaveKsStocksSubscriptionColumns } from "./schema.js";
 import { ksStocksEntitlementFromUser, ksPackageSubscriptionsOpen, KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE } from "./ks-stocks-access.js";
 import { generateNumericCode, generateRawToken, hashSecret } from "./tokens.js";
+import { applyDuePendingRoleChanges } from "./pending-changes.js";
 
 export {
   PASSWORD_MAX_LENGTH,
@@ -417,6 +418,15 @@ export async function resolveSession(request, env) {
   const row = await loadSessionUser(env, tokenHash, schema);
   if (!row || !row.email_verified) {
     return { user: null, sessionHeaders: {} };
+  }
+
+  // Vault-style time-locked role changes apply lazily -- there's no cron
+  // trigger here, so "the delay elapsed" is checked the next time the
+  // account's own session is used, which is the most reliable touch-point
+  // for the account itself (see pending-changes.js).
+  const applied = await applyDuePendingRoleChanges(env, row.id);
+  if (applied) {
+    row.role = applied.role;
   }
 
   const sessionHeaders = {};

@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=79">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=79">
-  <script defer src="/assets/js/password-policy.js?v=79"></script>
-  <script defer src="/assets/js/auth.js?v=79"></script>
-  <script defer src="/assets/js/main.js?v=79"></script>
+  <link rel="stylesheet" href="/assets/css/style.css?v=80">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=80">
+  <script defer src="/assets/js/password-policy.js?v=80"></script>
+  <script defer src="/assets/js/auth.js?v=80"></script>
+  <script defer src="/assets/js/main.js?v=80"></script>
 </head>
 <body>
 
@@ -138,6 +138,26 @@
                 </div>
 
                 <button class="button secondary" type="submit">Update Password</button>
+              </form>
+            </div>
+
+            <div class="settings-section">
+              <h3 class="settings-subsection-title">Security Phrase</h3>
+              <p class="settings-panel-intro">
+                Set a personal phrase that we'll include in every security email we send you
+                (sign-ins, role changes). If a message claiming to be from KANASAKA doesn't
+                show your phrase, it isn't really from us.
+              </p>
+              <form id="settings-security-phrase-form" class="auth-form settings-form">
+                <div class="auth-field">
+                  <label for="settings-security-phrase">Security Phrase</label>
+                  <input id="settings-security-phrase" name="securityPhrase" type="text" maxlength="40" autocomplete="off">
+                </div>
+                <div class="auth-field">
+                  <label for="settings-security-phrase-password">Current Password</label>
+                  <input id="settings-security-phrase-password" name="currentPassword" type="password" autocomplete="current-password">
+                </div>
+                <button class="button secondary" type="submit">Save Phrase</button>
               </form>
             </div>
 
