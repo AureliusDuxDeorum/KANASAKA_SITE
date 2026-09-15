@@ -13,6 +13,38 @@ export const AVATAR_MIME_TYPES = {
   "image/gif": "gif",
 };
 
+// The browser-supplied Content-Type on a multipart upload is just a label
+// the client attached -- trivially spoofed by renaming a file or crafting
+// the multipart body by hand. Checking the actual file signature (magic
+// bytes) means an upload can't claim to be a PNG while actually being
+// something else the server would otherwise store and serve back as-is.
+function matchesSignature(bytes, signature) {
+  if (bytes.length < signature.length) return false;
+  return signature.every(function (byte, i) {
+    return byte === null || bytes[i] === byte;
+  });
+}
+
+export function isValidImageSignature(mimeType, bytes) {
+  if (mimeType === "image/jpeg") {
+    return matchesSignature(bytes, [0xff, 0xd8, 0xff]);
+  }
+  if (mimeType === "image/png") {
+    return matchesSignature(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  }
+  if (mimeType === "image/gif") {
+    return matchesSignature(bytes, [0x47, 0x49, 0x46, 0x38]);
+  }
+  if (mimeType === "image/webp") {
+    return (
+      matchesSignature(bytes, [0x52, 0x49, 0x46, 0x46]) &&
+      bytes.length >= 12 &&
+      matchesSignature(bytes.subarray(8, 12), [0x57, 0x45, 0x42, 0x50])
+    );
+  }
+  return false;
+}
+
 export function validateDisplayName(value) {
   const name = String(value || "").trim();
   if (!name) {
@@ -63,7 +95,8 @@ export async function getUserProfile(env, userId) {
 
   const row = await env.DB.prepare(
     `SELECT u.id, u.email, u.display_name, u.account_id, ${changedAtSelect} u.role, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
-            ua.mime_type, ua.updated_at AS avatar_updated_at
+            ua.mime_type, ua.updated_at AS avatar_updated_at,
+            (SELECT COUNT(*) FROM twofa_backup_codes WHERE user_id = u.id AND used_at IS NULL) AS backup_codes_remaining
      FROM users u
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
      WHERE u.id = ?`
@@ -87,6 +120,7 @@ export async function getUserProfile(env, userId) {
     phone_e164: row.phone_e164,
     has_avatar: Boolean(row.mime_type),
     avatar_updated_at: row.avatar_updated_at,
+    backup_codes_remaining: Number(row.backup_codes_remaining || 0),
   };
 }
 
@@ -116,6 +150,7 @@ export function profilePayload(user) {
     phoneMasked: user.phone_e164 ? maskPhone(user.phone_e164) : null,
     emailMasked:
       user.totp_enabled && !user.phone_e164 ? maskEmail(user.email) : null,
+    backupCodesRemaining: user.totp_enabled ? Number(user.backup_codes_remaining || 0) : null,
   };
 }
 

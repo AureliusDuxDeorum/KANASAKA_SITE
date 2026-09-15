@@ -1091,19 +1091,38 @@
     const disableStartBtn = document.getElementById("settings-2fa-disable-start");
     const disableForm = document.getElementById("settings-2fa-disable-form");
     const disableResendBtn = document.getElementById("settings-2fa-disable-resend");
+    const backupBox = document.getElementById("settings-2fa-backup-codes");
+    const backupList = document.getElementById("settings-2fa-backup-codes-list");
+    const backupDismissBtn = document.getElementById("settings-2fa-backup-codes-dismiss");
+    const backupRemainingEl = document.getElementById("settings-2fa-backup-remaining");
+    const regenerateStartBtn = document.getElementById("settings-2fa-regenerate-start");
+    const regenerateForm = document.getElementById("settings-2fa-regenerate-form");
+
+    function showBackupCodes(codes) {
+      if (!backupBox || !backupList || !Array.isArray(codes)) return;
+      backupList.textContent = codes.join("\n");
+      backupBox.hidden = false;
+    }
 
     function render() {
       setupForm.hidden = true;
       disableForm.hidden = true;
+      if (regenerateForm) regenerateForm.hidden = true;
 
       if (profile.twoFactorEnabled) {
         statusEl.textContent = "Enabled.";
         offBox.hidden = true;
         onBox.hidden = false;
+        if (backupRemainingEl) {
+          const remaining = profile.backupCodesRemaining || 0;
+          backupRemainingEl.textContent =
+            remaining === 1 ? "1 backup code remaining." : remaining + " backup codes remaining.";
+        }
       } else {
         statusEl.textContent = "Currently off.";
         offBox.hidden = false;
         onBox.hidden = true;
+        if (backupBox) backupBox.hidden = true;
       }
     }
 
@@ -1169,14 +1188,62 @@
 
         profile.twoFactorEnabled = true;
         profile.emailMasked = data.emailMasked || profile.emailMasked;
+        profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
         updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
         render();
+        showBackupCodes(data.backupCodes);
       } catch (error) {
         showFormError(setupForm, error.message || "Could not enable two-factor authentication.");
       } finally {
         submit.disabled = false;
       }
     });
+
+    if (backupDismissBtn) {
+      backupDismissBtn.addEventListener("click", function () {
+        backupBox.hidden = true;
+        backupList.textContent = "";
+      });
+    }
+
+    if (regenerateStartBtn && regenerateForm) {
+      regenerateStartBtn.addEventListener("click", function () {
+        clearFormError(regenerateForm);
+        clearFormSuccess(regenerateForm);
+        regenerateForm.hidden = !regenerateForm.hidden;
+      });
+
+      regenerateForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(regenerateForm);
+        clearFormSuccess(regenerateForm);
+
+        const passwordField = regenerateForm.querySelector('[name="currentPassword"]');
+        const submit = regenerateForm.querySelector('[type="submit"]');
+        setButtonLoading(submit, true);
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/regenerate-backup-codes", {
+            method: "POST",
+            body: JSON.stringify({ currentPassword: passwordField.value }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Could not regenerate backup codes.");
+          }
+
+          profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
+          regenerateForm.hidden = true;
+          render();
+          showBackupCodes(data.backupCodes);
+        } catch (error) {
+          showFormError(regenerateForm, error.message || "Could not regenerate backup codes.");
+        } finally {
+          passwordField.value = "";
+          setButtonLoading(submit, false);
+        }
+      });
+    }
 
     disableStartBtn.addEventListener("click", async function () {
       disableStartBtn.disabled = true;
@@ -2206,12 +2273,17 @@
       '<p class="auth-eyebrow">Account</p>' +
       "<h1>Verification</h1>" +
       '<p class="auth-lead" id="auth-modal-login-verify-lead">Enter the 6-digit code.</p>' +
-      '<div class="auth-field">' +
+      '<div class="auth-field" id="auth-modal-login-verify-otp-field">' +
       '<label id="auth-modal-login-verify-label">Verification code</label>' +
       '<div class="otp-boxes" id="auth-modal-login-verify-boxes" role="group" aria-labelledby="auth-modal-login-verify-label"></div>' +
       '<input type="hidden" name="code">' +
       "</div>" +
+      '<div class="auth-field" id="auth-modal-login-verify-backup-field" hidden>' +
+      '<label for="auth-modal-login-verify-backup">Backup code</label>' +
+      '<input id="auth-modal-login-verify-backup" type="text" autocomplete="off" placeholder="XXXXX-XXXXX">' +
+      "</div>" +
       '<button type="submit" class="button auth-submit">Verify</button>' +
+      '<p class="auth-switch"><button type="button" class="link-button" data-action="toggle-backup-code">Use a backup code instead</button></p>' +
       "</form>" +
       '<p class="auth-switch auth-modal-switch-mode">No account yet? <button type="button" class="link-button" data-action="switch-mode">Register</button></p>';
 
@@ -2380,10 +2452,33 @@
 
     initOtpGroup(root.querySelector("#auth-modal-login-verify-boxes"), verifyForm.querySelector('[name="code"]'));
 
+    const backupToggleBtn = verifyForm.querySelector('[data-action="toggle-backup-code"]');
+    const otpField = verifyForm.querySelector("#auth-modal-login-verify-otp-field");
+    const backupField = verifyForm.querySelector("#auth-modal-login-verify-backup-field");
+    const backupInput = verifyForm.querySelector("#auth-modal-login-verify-backup");
+    let usingBackupCode = false;
+
+    if (backupToggleBtn) {
+      backupToggleBtn.addEventListener("click", function () {
+        usingBackupCode = !usingBackupCode;
+        otpField.hidden = usingBackupCode;
+        backupField.hidden = !usingBackupCode;
+        backupToggleBtn.textContent = usingBackupCode
+          ? "Use the emailed code instead"
+          : "Use a backup code instead";
+        const toFocus = usingBackupCode
+          ? backupInput
+          : root.querySelector("#auth-modal-login-verify-boxes .otp-box");
+        if (toFocus) toFocus.focus();
+      });
+    }
+
     verifyForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       clearFormError(verifyForm);
-      const code = verifyForm.querySelector('[name="code"]').value.trim();
+      const code = usingBackupCode
+        ? backupInput.value.trim()
+        : verifyForm.querySelector('[name="code"]').value.trim();
       const challenge = verifyForm.dataset.challenge || "";
       const submit = verifyForm.querySelector('[type="submit"]');
       setButtonLoading(submit, true);

@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=80">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=80">
-  <script defer src="/assets/js/password-policy.js?v=80"></script>
-  <script defer src="/assets/js/auth.js?v=80"></script>
-  <script defer src="/assets/js/main.js?v=80"></script>
+  <link rel="stylesheet" href="/assets/css/style.css?v=81">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=81">
+  <script defer src="/assets/js/password-policy.js?v=81"></script>
+  <script defer src="/assets/js/auth.js?v=81"></script>
+  <script defer src="/assets/js/main.js?v=81"></script>
 </head>
 <body>
 
@@ -182,9 +182,20 @@
                 </form>
               </div>
 
+              <div id="settings-2fa-backup-codes" class="settings-backup-codes" hidden>
+                <p class="settings-panel-intro">
+                  Save these one-time backup codes somewhere safe. Each can be used once, in place of the
+                  emailed code, if you ever lose access to your email. They won't be shown again.
+                </p>
+                <pre id="settings-2fa-backup-codes-list" class="settings-backup-codes-list"></pre>
+                <button id="settings-2fa-backup-codes-dismiss" class="button secondary" type="button">I've saved these</button>
+              </div>
+
               <div id="settings-2fa-on" hidden>
                 <p class="settings-panel-intro">Two-factor authentication is on. Codes are sent to your account email.</p>
+                <p id="settings-2fa-backup-remaining" class="settings-panel-intro"></p>
                 <button id="settings-2fa-disable-start" class="button secondary" type="button">Disable</button>
+                <button id="settings-2fa-regenerate-start" class="button secondary" type="button">Regenerate Backup Codes</button>
 
                 <form id="settings-2fa-disable-form" class="auth-form settings-form" hidden>
                   <div class="auth-field">
@@ -196,6 +207,14 @@
                     <button class="button settings-delete-button" type="submit">Disable Two-Factor</button>
                     <button id="settings-2fa-disable-resend" class="link-button" type="button">Resend code</button>
                   </div>
+                </form>
+
+                <form id="settings-2fa-regenerate-form" class="auth-form settings-form" hidden>
+                  <div class="auth-field">
+                    <label for="settings-2fa-regenerate-password">Current Password</label>
+                    <input id="settings-2fa-regenerate-password" name="currentPassword" type="password" autocomplete="current-password">
+                  </div>
+                  <button class="button secondary" type="submit">Generate New Codes</button>
                 </form>
               </div>
             </div>

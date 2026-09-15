@@ -318,15 +318,38 @@ Two-factor authentication (email code)
     the 2FA step (a real gap in the code found and fixed while building this —
     previously `user.totp_enabled && smsConfigured(env)` would bypass 2FA
     entirely whenever SMS wasn't configured).
-  Login UI: /login/ shows a code-entry step (#login-2fa-form) when the server
-    returns twoFactorRequired; no resend button on this step (re-submitting the
-    login form issues a fresh challenge + code instead).
+  Login UI: the auth modal's verify step (see "Login/register UI" above)
+    shows the code-entry form when the server returns twoFactorRequired; no
+    resend button on this step (re-submitting the login form issues a fresh
+    challenge + code instead).
   functions/api/account/two-factor/setup.js, enable.js — legacy SMS-only setup
     endpoints (phone number entry). Backend only, no frontend ever built, and
     smsConfigured(env) requires TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM_NUMBER which
     aren't set — effectively dead code, left in place, not wired to any UI.
-  functions/lib/totp.js (RFC 6238) and twofa_backup_codes are unused/dead —
-    no code path issues real TOTP secrets or backup codes despite the naming.
+  functions/lib/totp.js (RFC 6238) is unused/dead — no code path issues real
+    TOTP secrets despite the naming.
+
+Backup codes (2026-09-15 — closes the "no 2FA recovery path" gap)
+  twofa_backup_codes was schema-only (migration 008) until now — nothing
+  ever wrote to it. generateBackupCodes(env, userId) (two-factor.js) issues
+  BACKUP_CODE_COUNT=8 codes (format XXXXX-XXXXX, 32-char alphabet excluding
+  0/O/1/I to avoid misreads), hashed with the same hashSecret() as
+  everything else, replacing any previous set. Called from enableEmail2fa
+  (returned once, alongside emailMasked, in the email-enable response) and
+  from POST /api/account/two-factor/regenerate-backup-codes (session +
+  current-password required, same step-up pattern as everything else in
+  Account Settings).
+  verifyTwoFactorLogin tries the normal emailed OTP first, then falls back
+  to verifyBackupCode() (marks the code used_at, one-time) -- a backup code
+  is NOT 6 digits so it never matches the OTP regex, so there's no ambiguity
+  between the two checks.
+  UI: Account Settings → Two-Factor Authentication shows the codes once
+  right after enabling (dismissible, never shown again) and a live "N
+  backup codes remaining" count (profilePayload.backupCodesRemaining) plus
+  a "Regenerate Backup Codes" action. The login modal's verification step
+  has a "Use a backup code instead" toggle that swaps the 6 OTP boxes for a
+  single plain-text field (auth.js renderAuthModalLogin) -- backup codes
+  don't fit the 6-digit-box shape.
 
 Password reset (6-digit email code, same pattern as email verification)
   POST /api/auth/forgot-password → generic success + createPasswordResetCode()
@@ -340,11 +363,29 @@ Password reset (6-digit email code, same pattern as email verification)
 
 Account
   /api/account/profile, /password, /avatar, /delete
+  /api/account/avatar upload validates the actual file bytes (magic-number
+  signature check, isValidImageSignature in profile.js), not just the
+  client-supplied Content-Type -- a renamed/relabeled file no longer gets
+  stored and served back just because the upload's MIME type header claimed
+  to be an image. Client-type + magic-byte type must both match one of
+  AVATAR_MIME_TYPES.
 
 Security
   requireSameOrigin() on mutating auth routes
   logAuthEvent() → auth_events table (best-effort)
   Legacy PBKDF2 hashes still verify; upgraded to Argon2 on login
+  App-level rate limiting on auth endpoints is minimal (the throttles in
+  security.js are aimed at low-entropy codes and admin actions specifically,
+  not general request-flood protection) -- primary abuse control is meant
+  to be Cloudflare WAF/Rate Limiting rules per docs/CLOUDFLARE_WAF.md, and
+  as of 2026-09-15 those are STILL UNVERIFIED (scripts/check-waf-rules.mjs
+  fails with "Invalid access token" -- the wrangler OAuth token in this
+  environment only has account/user/workers scopes, no Zone/WAF permission,
+  so neither reading nor applying these rules is possible via this token).
+  Apply the 6 rules in docs/CLOUDFLARE_WAF.md manually from the Cloudflare
+  dashboard (Security → WAF → Custom rules / Rate limiting rules), or issue
+  a Zone-scoped API token (Zone > Firewall Services > Edit, or the newer
+  Rulesets Edit permission) if you want this automated later.
 
 
 5. D1 SCHEMA (CURRENT — post migration 008)
@@ -485,6 +526,17 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-09-15  Site-wide safety pass: (1) confirmed via scripts/check-waf-
+            rules.mjs that Cloudflare WAF rate limiting is still
+            unverified/likely absent -- can't fix from here, the wrangler
+            token has no Zone scope; docs/CLOUDFLARE_WAF.md has the 6
+            rules to apply manually. (2) 2FA backup codes are real now --
+            twofa_backup_codes was schema-only since migration 008;
+            enableEmail2fa issues 8 one-time codes shown once, with a
+            regenerate action and a "use a backup code instead" option at
+            the login verification step. (3) Avatar uploads now check the
+            actual file's magic-byte signature, not just the client-
+            supplied Content-Type header.
 2026-09-15  Crypto-exchange-inspired admin hardening, round 2 (migration
             016, not yet run on remote D1): role changes are now
             time-locked and cancellable (Coinbase Vault / Kraken Global

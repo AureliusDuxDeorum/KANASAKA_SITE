@@ -61,6 +61,70 @@ async function verifySmsOtp(env, userId, purpose, code) {
   return true;
 }
 
+const BACKUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
+const BACKUP_CODE_COUNT = 8;
+
+function generateBackupCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  let raw = "";
+  for (let i = 0; i < bytes.length; i += 1) {
+    raw += BACKUP_CODE_ALPHABET[bytes[i] % BACKUP_CODE_ALPHABET.length];
+  }
+  return raw.slice(0, 5) + "-" + raw.slice(5);
+}
+
+function normalizeBackupCode(code) {
+  return String(code || "").trim().toUpperCase();
+}
+
+// One-time recovery codes for when the account can't receive the normal
+// login code (e.g. no access to the 2FA email inbox). Replaces any
+// previously issued set -- codes are shown to the user exactly once, right
+// after generation, so old ones are useless once new ones are issued anyway.
+export async function generateBackupCodes(env, userId) {
+  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
+
+  const codes = [];
+  for (let i = 0; i < BACKUP_CODE_COUNT; i += 1) {
+    const raw = generateBackupCode();
+    const hash = await hashSecret("backup:" + raw, env);
+    await env.DB.prepare("INSERT INTO twofa_backup_codes (user_id, code_hash) VALUES (?, ?)")
+      .bind(userId, hash)
+      .run();
+    codes.push(raw);
+  }
+
+  return codes;
+}
+
+async function verifyBackupCode(env, userId, rawCode) {
+  const normalized = normalizeBackupCode(rawCode);
+  if (!normalized) return false;
+
+  const hash = await hashSecret("backup:" + normalized, env);
+  const row = await env.DB.prepare(
+    "SELECT id FROM twofa_backup_codes WHERE user_id = ? AND code_hash = ? AND used_at IS NULL"
+  )
+    .bind(userId, hash)
+    .first();
+
+  if (!row) return false;
+
+  await env.DB.prepare("UPDATE twofa_backup_codes SET used_at = datetime('now') WHERE id = ?")
+    .bind(row.id)
+    .run();
+  return true;
+}
+
+export async function countUnusedBackupCodes(env, userId) {
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS c FROM twofa_backup_codes WHERE user_id = ? AND used_at IS NULL"
+  )
+    .bind(userId)
+    .first();
+  return row ? Number(row.c) : 0;
+}
+
 export async function beginSmsSetup(env, userId, phoneInput) {
   const phone = normalizePhone(phoneInput);
   if (!phone) {
@@ -224,10 +288,11 @@ export async function enableEmail2fa(env, userId, code) {
     .bind(userId)
     .run();
 
-  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
+  const backupCodes = await generateBackupCodes(env, userId);
 
   return {
     emailMasked: maskEmail(row.email),
+    backupCodes,
   };
 }
 
@@ -383,7 +448,9 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
     throw new Error("Two-factor challenge expired. Sign in again.");
   }
 
-  const verified = await verifySmsOtp(env, row.user_id, "login", code);
+  const verified =
+    (await verifySmsOtp(env, row.user_id, "login", code)) ||
+    (await verifyBackupCode(env, row.user_id, code));
   if (!verified) {
     const err = new Error("Invalid or expired verification code.");
     err.userEmail = row.email;

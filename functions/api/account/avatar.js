@@ -5,6 +5,7 @@ import {
   deleteAvatar,
   getAvatarRecord,
   getUserProfile,
+  isValidImageSignature,
   profilePayload,
   saveAvatar,
 } from "../../lib/profile.js";
@@ -74,6 +75,10 @@ export async function onRequestPost(context) {
 
   if (bytes.length > AVATAR_MAX_BYTES) {
     return errorResponse("Profile picture must be 512 KB or smaller.");
+  }
+
+  if (!isValidImageSignature(mimeType, bytes)) {
+    return errorResponse("That file doesn't look like a valid " + AVATAR_MIME_TYPES[mimeType].toUpperCase() + " image.");
   }
 
   await saveAvatar(context.env, user.id, mimeType, bytes);
