@@ -69,10 +69,10 @@
   const KS_SPINNER_HTML =
     '<span class="ks-spinner" role="status" aria-label="Loading">' +
     '<span class="ks-spinner-bars">' +
-    '<span class="ks-spinner-slot ks-spinner-slot--top"><span class="ks-spinner-line"></span></span>' +
-    '<span class="ks-spinner-slot ks-spinner-slot--right"><span class="ks-spinner-line"></span></span>' +
-    '<span class="ks-spinner-slot ks-spinner-slot--bottom"><span class="ks-spinner-line"></span></span>' +
-    '<span class="ks-spinner-slot ks-spinner-slot--left"><span class="ks-spinner-line"></span></span>' +
+    '<span class="ks-spinner-line ks-spinner-line--top"></span>' +
+    '<span class="ks-spinner-line ks-spinner-line--right"></span>' +
+    '<span class="ks-spinner-line ks-spinner-line--bottom"></span>' +
+    '<span class="ks-spinner-line ks-spinner-line--left"></span>' +
     "</span>" +
     '<span class="ks-spinner-letters"><span>K</span><span>S</span></span>' +
     "</span>";

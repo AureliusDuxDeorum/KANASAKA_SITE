@@ -711,10 +711,9 @@ h1 {
   opacity: 0.85;
 }
 
-/* KS-mark loading spinner: 4 horizontal lines orbit the (static) "KS" mark
-   in 45deg increments. The bars group carries the orbit (position); each
-   line counter-rotates in place so it stays horizontal the whole way round
-   instead of turning edge-on (90deg from the logo) at the quarter marks. */
+/* KS-mark loading spinner: 4 thin horizontal lines around the (static) "KS"
+   mark, all rigidly rotating clockwise together in 45deg increments about
+   the shared center — each line spins on its own axis as it goes. */
 .ks-spinner {
   position: relative;
   display: inline-flex;
@@ -731,39 +730,30 @@ h1 {
   animation: ks-spinner-spin 6s ease-in-out infinite;
 }
 
-.ks-spinner-slot {
+.ks-spinner-line {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 0;
-  height: 0;
+  width: 7px;
+  height: 1px;
+  margin: -0.5px 0 0 -3.5px;
+  background: currentColor;
 }
 
-.ks-spinner-slot--top {
+.ks-spinner-line--top {
   transform: translateY(-9px);
 }
 
-.ks-spinner-slot--bottom {
+.ks-spinner-line--bottom {
   transform: translateY(9px);
 }
 
-.ks-spinner-slot--left {
+.ks-spinner-line--left {
   transform: translateX(-9px);
 }
 
-.ks-spinner-slot--right {
+.ks-spinner-line--right {
   transform: translateX(9px);
-}
-
-.ks-spinner-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 7px;
-  height: 1.5px;
-  margin: -0.75px 0 0 -3.5px;
-  background: currentColor;
-  animation: ks-spinner-counter-spin 6s ease-in-out infinite;
 }
 
 .ks-spinner-letters {
@@ -830,62 +820,6 @@ h1 {
   }
   100% {
     transform: rotate(360deg);
-  }
-}
-
-/* Mirrors ks-spinner-spin with negated angles, perfectly cancelling the
-   bars group's rotation so each line's own tilt never moves. */
-@keyframes ks-spinner-counter-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  4.1667% {
-    transform: rotate(-45deg);
-  }
-  12.5% {
-    transform: rotate(-45deg);
-  }
-  16.6667% {
-    transform: rotate(-90deg);
-  }
-  25% {
-    transform: rotate(-90deg);
-  }
-  29.1667% {
-    transform: rotate(-135deg);
-  }
-  37.5% {
-    transform: rotate(-135deg);
-  }
-  41.6667% {
-    transform: rotate(-180deg);
-  }
-  50% {
-    transform: rotate(-180deg);
-  }
-  54.1667% {
-    transform: rotate(-225deg);
-  }
-  62.5% {
-    transform: rotate(-225deg);
-  }
-  66.6667% {
-    transform: rotate(-270deg);
-  }
-  75% {
-    transform: rotate(-270deg);
-  }
-  79.1667% {
-    transform: rotate(-315deg);
-  }
-  87.5% {
-    transform: rotate(-315deg);
-  }
-  91.6667% {
-    transform: rotate(-360deg);
-  }
-  100% {
-    transform: rotate(-360deg);
   }
 }
 
