@@ -726,7 +726,7 @@ h1 {
 .ks-spinner-bars {
   position: absolute;
   inset: 0;
-  animation: ks-spinner-spin 1.6s steps(8, end) infinite;
+  animation: ks-spinner-spin 6s ease-in-out infinite;
 }
 
 .ks-spinner-line {
@@ -766,8 +766,58 @@ h1 {
   align-items: center;
 }
 
+/* Each 45deg step glides for 0.25s then holds for 0.5s before the next glide
+   (a flat pair of stops at the same angle produces the hold). */
 @keyframes ks-spinner-spin {
-  to {
+  0% {
+    transform: rotate(0deg);
+  }
+  4.1667% {
+    transform: rotate(45deg);
+  }
+  12.5% {
+    transform: rotate(45deg);
+  }
+  16.6667% {
+    transform: rotate(90deg);
+  }
+  25% {
+    transform: rotate(90deg);
+  }
+  29.1667% {
+    transform: rotate(135deg);
+  }
+  37.5% {
+    transform: rotate(135deg);
+  }
+  41.6667% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  54.1667% {
+    transform: rotate(225deg);
+  }
+  62.5% {
+    transform: rotate(225deg);
+  }
+  66.6667% {
+    transform: rotate(270deg);
+  }
+  75% {
+    transform: rotate(270deg);
+  }
+  79.1667% {
+    transform: rotate(315deg);
+  }
+  87.5% {
+    transform: rotate(315deg);
+  }
+  91.6667% {
+    transform: rotate(360deg);
+  }
+  100% {
     transform: rotate(360deg);
   }
 }
