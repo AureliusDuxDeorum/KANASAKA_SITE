@@ -1,3 +1,4 @@
 .wrangler/
 node_modules/
 _worker.bundle
+.dev.vars
