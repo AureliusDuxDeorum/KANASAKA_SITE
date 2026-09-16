@@ -34,7 +34,7 @@ const uploads = [
     local: process.env.KS_K_MOBILE_ANDROID_APK,
     remote: "installers/ks-k-mobile/android/app-debug.apk",
     defaultLocal:
-      "/home/prometheus/Desktop/Projects/K_0.2/mobile/android/app/build/outputs/apk/debug/app-debug.apk",
+      "/home/prometheus/Desktop/Projects/K_V0.3/mobile/android/app/build/outputs/apk/debug/app-debug.apk",
   },
 ];
 
