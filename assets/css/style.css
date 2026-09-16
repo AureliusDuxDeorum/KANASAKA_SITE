@@ -711,8 +711,8 @@ h1 {
   opacity: 0.85;
 }
 
-/* KS-mark loading spinner: the 4 header-logo bars spin in 90deg increments
-   around the (counter-rotated, so it stays upright) "KS" mark. */
+/* KS-mark loading spinner: 4 horizontal lines frame the (static) "KS" mark
+   and spin around it in 45deg increments. */
 .ks-spinner {
   position: relative;
   display: inline-flex;
@@ -726,23 +726,33 @@ h1 {
 .ks-spinner-bars {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   animation: ks-spinner-spin 1.6s steps(8, end) infinite;
 }
 
-.ks-spinner-side {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.ks-spinner-side span {
-  display: block;
+.ks-spinner-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 7px;
   height: 1.5px;
+  margin: -0.75px 0 0 -3.5px;
   background: currentColor;
+}
+
+.ks-spinner-line--top {
+  transform: translateY(-9px);
+}
+
+.ks-spinner-line--bottom {
+  transform: translateY(9px);
+}
+
+.ks-spinner-line--left {
+  transform: translateX(-9px);
+}
+
+.ks-spinner-line--right {
+  transform: translateX(9px);
 }
 
 .ks-spinner-letters {
@@ -754,18 +764,11 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: ks-spinner-counter-spin 1.6s steps(8, end) infinite;
 }
 
 @keyframes ks-spinner-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes ks-spinner-counter-spin {
-  to {
-    transform: rotate(-360deg);
   }
 }
 
