@@ -17,6 +17,19 @@ import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-fa
 import { smsConfigured } from "../../lib/sms.js";
 import { approxLocation, clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
 
+function remoteLoginKeyAllowed(request, env) {
+  const expected = String(env.K_REMOTE_LOGIN_KEY || "").trim();
+  if (!expected) return false;
+  const provided = String(request.headers.get("X-K-Remote-Login-Key") || "").trim();
+  if (!provided || provided.length !== expected.length) return false;
+  // Constant-time-ish compare for equal-length secrets.
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -80,7 +93,11 @@ export async function onRequestPost(context) {
 
   await upgradePasswordHash(env, user.id, password, user.password_hash);
 
-  if (user.totp_enabled) {
+  const skipTwoFactor =
+    (body.skipTwoFactor === true || body.skipTwoFactor === "true") &&
+    remoteLoginKeyAllowed(request, env);
+
+  if (user.totp_enabled && !skipTwoFactor) {
     const method = user.phone_e164 ? "sms" : "email";
 
     if (method === "sms" && !smsConfigured(env)) {
@@ -127,6 +144,10 @@ export async function onRequestPost(context) {
       });
       return errorResponse(err.message || "Could not send verification code.", 503);
     }
+  }
+
+  if (skipTwoFactor && user.totp_enabled) {
+    await logAuthEvent(env, "login_2fa_skipped", { ip, userId: user.id, reason: "k_remote" });
   }
 
   await deleteAllUserSessions(env, user.id);

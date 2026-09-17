@@ -63,6 +63,7 @@ Under **Security → WAF → Managed rules**:
 | `SESSION_SECRET` | HMAC for session and email token hashes (required) |
 | `RESEND_API_KEY` | Transactional email |
 | `ADMIN_SECRET` | Optional access to `/api/auth/email-status` |
+| `K_REMOTE_LOGIN_KEY` | Shared with K (`K_KANASAKA_REMOTE_LOGIN_KEY`) so K-Remote can skip account SMS 2FA for mobile login |
 
 ## After deploy
 

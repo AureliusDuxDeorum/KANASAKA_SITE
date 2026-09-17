@@ -21,6 +21,8 @@ pages_build_output_dir = "."
 # Live Stripe:
 #   Secrets (Pages → Settings → Variables and secrets → Production):
 #     STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+#   K-Remote mobile login (optional):
+#     K_REMOTE_LOGIN_KEY — must match K's K_KANASAKA_REMOTE_LOGIN_KEY
 # Alpaca Connect (KS Stocks OAuth):
 #   [vars] ALPACA_CLIENT_ID below
 #   Secret (Pages → Production secrets only): ALPACA_CLIENT_SECRET
