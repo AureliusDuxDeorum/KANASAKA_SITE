@@ -6,9 +6,25 @@
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
+  // hash() is a pure function of its (integer) inputs but was recomputing
+  // Math.sin(...)*43758.5453 live on every call -- 4x per noise(), 3x per
+  // fbm(), so every one of the thousands of grid cells cost up to 12 sin()
+  // evaluations, every rendered frame. Neighbouring cells sample nx/ny only
+  // ~0.09/0.16 apart, so ~11-16 consecutive cells share the same floored
+  // lattice point -- the same handful of (xi,yi) pairs get re-hashed
+  // dozens of times per row. Memoizing per frame (cache cleared at the top
+  // of render()) turns that into one sin() per unique lattice point instead
+  // of one per cell -- exact same values, just not recomputed redundantly.
+  let hashCache = new Map();
   function hash(x, y) {
-    const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
-    return s - Math.floor(s);
+    const key = x + "," + y;
+    let v = hashCache.get(key);
+    if (v === undefined) {
+      const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+      v = s - Math.floor(s);
+      hashCache.set(key, v);
+    }
+    return v;
   }
   function noise(x, y) {
     const xi = Math.floor(x), yi = Math.floor(y);
@@ -78,6 +94,22 @@
       ],
     },
   ];
+
+  // Every run's opening <span> tag only ever depends on (isLetter, tier) --
+  // a fixed set of 10 letter tiers + 4 ambient tiers -- so the opacity/color
+  // string can be built once instead of toFixed()'d and concatenated fresh
+  // for every run, every frame. Index: ambient tiers at 0-9, letter tiers
+  // (offset +100 like the render loop's `key`) at 100-109.
+  const SPAN_OPEN = new Array(210);
+  for (let tier = 1; tier <= 4; tier++) {
+    const frac = (tier - 1) / 3;
+    SPAN_OPEN[tier] = '<span style="opacity:' + (0.36 + frac * 0.3).toFixed(2) + ';color:inherit">';
+  }
+  for (let tier = 0; tier < RAMP.length; tier++) {
+    const frac = tier / (RAMP.length - 1);
+    SPAN_OPEN[100 + tier] =
+      '<span style="opacity:' + (0.68 + frac * 0.32).toFixed(2) + ';color:var(--color-text)">';
+  }
 
   function canSeeGated(id) {
     return (
@@ -234,6 +266,7 @@
     const start = performance.now();
 
     function render(now) {
+      hashCache.clear();
       const t = (now - start) / 1000;
       mouseSmooth[0] += (mouseTarget[0] - mouseSmooth[0]) * 0.05;
       mouseSmooth[1] += (mouseTarget[1] - mouseSmooth[1]) * 0.05;
@@ -242,24 +275,35 @@
       const my = mouseSmooth[1] * rows;
       const lines = [];
 
+      // hoisted out of the per-cell loop -- these don't vary by x/y, only
+      // by frame (t) or by fixed geometry (cellH/cellW), so recomputing
+      // them for every one of the thousands of cells was pure waste.
+      const driftX = reduced ? 0 : t * 0.025;
+      const driftY = reduced ? 0 : t * 0.016;
+      const rippleT = t * 0.9;
+      const shimmerT = reduced ? 0 : t * 0.5;
+      const hoverT = t * 9;
+      const rowAspect = cellH / cellW;
+
       for (let y = 0; y < rows; y++) {
         let runChar = "";
         let runKey = null;
         const runs = [];
+        const ny = y * 0.16 - driftY;
+        const dyBase = (y - my) * rowAspect;
+        const rowMaskOffset = y * cols;
 
         for (let x = 0; x < cols; x++) {
           const dx = x - mx;
-          const dy = (y - my) * (cellH / cellW);
-          const distToMouse = Math.sqrt(dx * dx + dy * dy);
+          const distToMouse = Math.sqrt(dx * dx + dyBase * dyBase);
           const ripple = reduced
             ? 0
-            : Math.exp(-distToMouse * 0.06) * Math.sin(distToMouse * 0.22 - t * 0.9) * 0.28;
+            : Math.exp(-distToMouse * 0.06) * Math.sin(distToMouse * 0.22 - rippleT) * 0.28;
 
-          const nx = x * 0.09 + (reduced ? 0 : t * 0.025);
-          const ny = y * 0.16 - (reduced ? 0 : t * 0.016);
+          const nx = x * 0.09 + driftX;
           let v = fbm(nx, ny) + ripple;
 
-          const m = letterMask ? letterMask[y * cols + x] : 0;
+          const m = letterMask ? letterMask[rowMaskOffset + x] : 0;
           const isLetter = m > 0.1;
 
           if (isLetter) {
@@ -267,7 +311,6 @@
             // breathing across the mark's own coordinates on its own clock
             // -- instead of inheriting the ambient field's drift. Kept
             // deliberately gentle: a quiet ambient quality, not a sweep.
-            const shimmerT = reduced ? 0 : t * 0.5;
             const shimmer = Math.sin(x * 0.1 + y * 0.16 - shimmerT) * 0.5 + 0.5;
             const base = m * (0.82 + shimmer * 0.13);
             // the K/S also react to the cursor much faster and more sharply
@@ -276,7 +319,7 @@
             // flickers between characters instead of just gently drifting.
             const hoverReact = reduced
               ? 0
-              : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - t * 9) * 0.5;
+              : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - hoverT) * 0.5;
             v = Math.max(v, base + hoverReact);
           }
           v = Math.max(0, Math.min(1, v));
@@ -289,65 +332,96 @@
           const key = tier + (isLetter ? 100 : 0);
 
           if (key !== runKey) {
-            if (runChar) runs.push([runKey, runChar]);
+            if (runChar) runs.push(runKey, runChar);
             runChar = ch;
             runKey = key;
           } else {
             runChar += ch;
           }
         }
-        if (runChar) runs.push([runKey, runChar]);
+        if (runChar) runs.push(runKey, runChar);
 
-        lines.push(
-          runs
-            .map(function (pair) {
-              const key = pair[0];
-              const chars = pair[1];
-              if (key === null) return chars;
-              const isLetter = key >= 100;
-              const tier = isLetter ? key - 100 : key;
-              const frac = isLetter ? tier / (RAMP.length - 1) : (tier - 1) / 3;
-              // letters get a distinctly brighter, near-white band so the
-              // mark reads clearly against the dimmer ambient noise floor
-              const opacity = isLetter
-                ? (0.68 + frac * 0.32).toFixed(2)
-                : (0.36 + frac * 0.3).toFixed(2);
-              const color = isLetter ? "var(--color-text)" : "inherit";
-              return (
-                '<span style="opacity:' + opacity + ";color:" + color + '">' + chars + "</span>"
-              );
-            })
-            .join("")
-        );
+        let line = "";
+        for (let i = 0; i < runs.length; i += 2) {
+          line += SPAN_OPEN[runs[i]] + runs[i + 1] + "</span>";
+        }
+        lines.push(line);
       }
 
       fieldEl.innerHTML = lines.join("\n");
     }
 
     let frameCount = 0;
+    // Adaptive throttle: start at ~30fps (render every 2nd rAF tick) and
+    // back off further if actual render() cost runs high, so slow hardware
+    // settles into a lower update rate instead of pegging the main thread.
+    // The noise drift is slow enough that even 10fps reads as smooth, so
+    // this never changes what's on screen, only how often it's redrawn.
+    let renderEvery = 2;
+    let slowFrameStreak = 0;
+
     function frame(now) {
       if (!running) return;
-      // render at ~30fps instead of every rAF tick — the noise drift is
-      // slow enough that this reads as smooth while halving the CPU cost
       frameCount++;
-      if (frameCount % 2 === 0) render(now);
+      if (frameCount % renderEvery === 0) {
+        const before = performance.now();
+        render(now);
+        const cost = performance.now() - before;
+        if (cost > 8) {
+          slowFrameStreak++;
+          if (slowFrameStreak >= 5 && renderEvery < 6) {
+            renderEvery++;
+            slowFrameStreak = 0;
+          }
+        } else {
+          slowFrameStreak = 0;
+        }
+      }
       rafId = window.requestAnimationFrame(frame);
     }
 
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) {
-        running = false;
-        if (rafId) window.cancelAnimationFrame(rafId);
-      } else if (!reduced) {
+    // Two independent gates -- tab visibility and hero scroll position --
+    // both need to allow running before the rAF loop is (re)started, and
+    // either one can stop it. `running` is a single source of truth for
+    // "is a frame() chain currently scheduled" so the two observers below
+    // can never both schedule one, which would otherwise double up (each
+    // scheduled frame() reschedules itself, so two concurrent chains
+    // doubles again on every tick).
+    let tabVisible = !document.hidden;
+    let onScreen = true;
+
+    function syncRunning() {
+      const shouldRun = tabVisible && onScreen;
+      if (shouldRun && !running) {
         running = true;
         rafId = window.requestAnimationFrame(frame);
+      } else if (!shouldRun && running) {
+        running = false;
+        if (rafId) window.cancelAnimationFrame(rafId);
       }
+    }
+
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        function (entries) {
+          onScreen = entries[entries.length - 1].isIntersecting;
+          syncRunning();
+        },
+        { threshold: 0 }
+      );
+      io.observe(hero);
+    }
+
+    document.addEventListener("visibilitychange", function () {
+      tabVisible = !document.hidden;
+      syncRunning();
     });
 
+    running = false;
     if (reduced) {
       render(performance.now());
     } else {
-      rafId = window.requestAnimationFrame(frame);
+      syncRunning();
     }
   }
 
