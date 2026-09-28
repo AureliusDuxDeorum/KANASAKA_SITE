@@ -34,9 +34,11 @@ const uploads = [
   {
     platform: "android",
     local: process.env.KS_K_MOBILE_ANDROID_APK,
-    remote: "installers/ks-k-mobile/android/app-debug.apk",
+    remote: "installers/ks-k-mobile/android/app-release.apk",
+    // Signed with K_V0.4's release keystore (scripts/mobile/generate-release-keystore.sh)
+    // so installing this over an existing K install upgrades in place.
     defaultLocal:
-      "/home/prometheus/Desktop/Projects/K_V0.4/mobile/android/app/build/outputs/apk/debug/app-debug.apk",
+      "/home/prometheus/Desktop/Projects/K_V0.4/mobile/android/app/build/outputs/apk/release/app-release.apk",
   },
 ];
 

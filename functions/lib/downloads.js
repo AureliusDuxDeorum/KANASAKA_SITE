@@ -18,8 +18,8 @@ export const INSTALLER_OBJECTS = {
     contentType: "application/x-apple-diskimage",
   },
   android: {
-    key: "installers/ks-k-mobile/android/app-debug.apk",
-    filename: "app-debug.apk",
+    key: "installers/ks-k-mobile/android/app-release.apk",
+    filename: "k-mobile.apk",
     contentType: "application/vnd.android.package-archive",
     requiredAccountId: "dev_ks",
   },
