@@ -15,6 +15,22 @@ export function clientIp(request) {
   return "unknown";
 }
 
+// Shared secret between this site and K's own HTTP client (never a browser)
+// -- used both to let K skip SMS 2FA on login and to gate the K-updater
+// endpoints below. Same header, same constant-time-ish comparison either
+// way, so it lives in one place instead of being copy-pasted per call site.
+export function kRemoteLoginKeyAllowed(request, env) {
+  const expected = String(env.K_REMOTE_LOGIN_KEY || "").trim();
+  if (!expected) return false;
+  const provided = String(request.headers.get("X-K-Remote-Login-Key") || "").trim();
+  if (!provided || provided.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 // Cloudflare attaches geolocation to every request (request.cf) derived from
 // the edge that received it -- no external geo-IP lookup, no extra latency.
 // city/region granularity only; the raw IP itself is never put in an email.

@@ -15,20 +15,14 @@ import {
 } from "../../lib/auth.js";
 import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-factor.js";
 import { smsConfigured } from "../../lib/sms.js";
-import { approxLocation, clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
-
-function remoteLoginKeyAllowed(request, env) {
-  const expected = String(env.K_REMOTE_LOGIN_KEY || "").trim();
-  if (!expected) return false;
-  const provided = String(request.headers.get("X-K-Remote-Login-Key") || "").trim();
-  if (!provided || provided.length !== expected.length) return false;
-  // Constant-time-ish compare for equal-length secrets.
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
-  }
-  return diff === 0;
-}
+import {
+  approxLocation,
+  clientIp,
+  kRemoteLoginKeyAllowed,
+  logAuthEvent,
+  notifyLogin,
+  requireSameOrigin,
+} from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -95,7 +89,7 @@ export async function onRequestPost(context) {
 
   const skipTwoFactor =
     (body.skipTwoFactor === true || body.skipTwoFactor === "true") &&
-    remoteLoginKeyAllowed(request, env);
+    kRemoteLoginKeyAllowed(request, env);
 
   if (user.totp_enabled && !skipTwoFactor) {
     const method = user.phone_e164 ? "sms" : "email";

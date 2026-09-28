@@ -42,3 +42,22 @@ Set `KS_UNIFY_WINDOWS_INSTALLER`, `KS_UNIFY_LINUX_INSTALLER`, `KS_UNIFY_MACOS_IN
 | linux | `installers/linux/KS.Unify_0.1.0_amd64.deb` |
 | macos | `installers/macos/KS.Unify_0.1.0_aarch64.dmg` |
 | android (KS-K Mobile, `@dev_ks` only) | `installers/ks-k-mobile/android/app-debug.apk` |
+| android updater manifest | `installers/ks-k-mobile/android/latest.json` |
+
+## K's own updater (not the browser download flow above)
+
+K's own HTTP client checks for updates itself -- no browser, no session
+cookie. It authenticates with the same shared secret used to skip SMS 2FA
+(see `K_REMOTE_LOGIN_KEY` / `X-K-Remote-Login-Key` in `docs/CLOUDFLARE_WAF.md`),
+sent as a header on both requests below:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/k-updater/latest.json` | Returns `{version, versionCode, pubDate, size, sha256, url}` -- everything but `url` comes straight from the R2 object; `url` is filled in per-request from the live origin |
+| `GET /api/k-updater/apk` | Streams the APK itself |
+
+`scripts/upload-installers-r2.mjs` writes the manifest automatically whenever
+it uploads the android APK (reads `versionName`/`versionCode` from the
+build's `output-metadata.json`, hashes the APK for `sha256`). Both endpoints
+403 without a valid `X-K-Remote-Login-Key` header -- there is no public,
+unauthenticated path to either the manifest or the APK.
