@@ -7,3 +7,11 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-site
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+# Cloudflare Pages' default max-age=14400 for static JS meant a browser could
+# sit on a stale downloads-page label (file size, versionCode) for up to 4
+# hours after a fresh upload. Force revalidation instead -- ETag still lets
+# an unchanged file return a cheap 304, but a changed one is never silently
+# stale.
+/assets/js/auth.js
+  Cache-Control: no-cache, must-revalidate
