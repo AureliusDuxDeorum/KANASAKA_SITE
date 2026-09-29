@@ -581,7 +581,7 @@
         '<span class="platform-label">Android</span>' +
         '<strong class="platform-title">Android APK</strong>' +
         '<span class="platform-detail">Private alpha · sideload on Android</span>' +
-        '<span class="platform-file">k-mobile.apk · 5,039,253 bytes (v8)</span>' +
+        '<span class="platform-file">k-mobile.apk · 4,946,786 bytes (v9 — isolation test: pre-session native shell + near-zero JS)</span>' +
         '<a class="button" href="/api/download/android">Download</a>' +
         "</article>" +
         "</div>";
