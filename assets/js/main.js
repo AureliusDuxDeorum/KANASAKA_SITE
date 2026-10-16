@@ -75,6 +75,8 @@
       children: [
         { label: "Privacy", href: "/legal/privacy/" },
         { label: "Terms", href: "/legal/terms/" },
+        { label: "Refunds", href: "/legal/refunds/" },
+        { label: "Cookies", href: "/legal/cookies/" },
         { label: "Licenses", href: "/legal/licenses/" },
         { label: "Security", href: "/legal/security/" },
         { label: "Impressum", href: "/legal/impressum/" },
@@ -85,6 +87,8 @@
   const FOOTER_LINKS = [
     { label: "Privacy", href: "/legal/privacy/" },
     { label: "Terms", href: "/legal/terms/" },
+    { label: "Refunds", href: "/legal/refunds/" },
+    { label: "Cookies", href: "/legal/cookies/" },
     { label: "Impressum", href: "/legal/impressum/" },
     { label: "Contact", href: "/support/contact/" },
   ];
@@ -426,8 +430,39 @@
     });
   }
 
+  const COOKIE_ACK_KEY = "kanasaka-cookie-ack";
+
+  function initCookieConsent() {
+    if (localStorage.getItem(COOKIE_ACK_KEY) === "1") return;
+
+    const banner = document.createElement("div");
+    banner.className = "cookie-consent";
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-label", "Cookie notice");
+
+    const text = document.createElement("p");
+    text.className = "cookie-consent-text";
+    text.innerHTML =
+      'We use a strictly necessary session cookie to keep you signed in — no tracking or advertising cookies. ' +
+      '<a href="/legal/cookies/">Cookie Policy</a>';
+
+    const ok = document.createElement("button");
+    ok.type = "button";
+    ok.className = "cookie-consent-ok";
+    ok.textContent = "OK";
+    ok.addEventListener("click", function () {
+      localStorage.setItem(COOKIE_ACK_KEY, "1");
+      banner.remove();
+    });
+
+    banner.appendChild(text);
+    banner.appendChild(ok);
+    document.body.appendChild(banner);
+  }
+
   async function boot() {
     initTheme();
+    initCookieConsent();
 
     if (window.KanasakaAuth) {
       await window.KanasakaAuth.initSession();

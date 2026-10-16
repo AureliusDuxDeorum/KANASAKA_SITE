@@ -526,6 +526,35 @@ KS Unify desktop app (separate repo) uses cookie-jar auth client — no localSto
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-10-16  Compliance pass (K5 feature-wave Slice 5, planned alongside the
+            K_V0.4 desktop app's own ARD-171): added /legal/refunds/ (new
+            standalone page expanding Terms 6.5-6.9's existing refund
+            language, cross-linked from Terms 6.7) and /legal/cookies/
+            (new standalone page expanding Privacy 6's cookie clause,
+            cross-linked from Privacy 6) -- both added to the Legal nav
+            dropdown and footer (main.js). Added a cookie-consent banner
+            (main.js initCookieConsent, localStorage key
+            "kanasaka-cookie-ack") -- scoped to a plain acknowledgement,
+            not a granular opt-in, since the only cookie in use is the
+            strictly-necessary session cookie (ePrivacy/GDPR consent
+            exemption applies; confirmed no third-party tracking/ad
+            cookies exist on the site). Added a skip-to-main-content link
+            (first focusable element, every page) and an aria-label
+            "KANASAKA"/aria-hidden on the decorative logo markup (11
+            pages using the compact hero variant) -- the site has zero
+            <img>/<svg> tags, so "alt text" work targeted this instead.
+            Audited every form: register's ToS checkbox is correctly
+            `required` + JS-validated (auth.js); login/contact/password-
+            reset collect no consent-relevant data; checkout/cancellation
+            both route to Stripe's own hosted Checkout/Billing Portal
+            (no custom friction, pre-checked opt-ins, or hidden fees
+            built on top) -- confirmed by reading functions/api/stripe/
+            {checkout,portal}.js. Found no dark patterns. Bumped main.js
+            to v=92 and redesign.css to v=89 site-wide (40 HTML files)
+            for the cache-busting convention this log already uses.
+            NOT deployed -- committed locally only; this is a live
+            production site with real Stripe billing, so pushing/
+            deploying needs a separate explicit go-ahead.
 2026-09-15  Site-wide safety pass: (1) confirmed via scripts/check-waf-
             rules.mjs that Cloudflare WAF rate limiting is still
             unverified/likely absent -- can't fix from here, the wrangler
