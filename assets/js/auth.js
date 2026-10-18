@@ -2717,8 +2717,75 @@
     }
   }
 
+  // Shows one dismissible banner per pending legal notice (ToS/privacy/
+  // cookie-policy updates the signed-in user hasn't acknowledged yet) --
+  // see functions/lib/legal-notices.js. Anonymous visitors never hit this;
+  // they only get the plain cookie-consent banner in main.js.
+  async function initLegalNotices() {
+    if (!getSession().authenticated) return;
+
+    let notices;
+    try {
+      const { response, data } = await apiRequest("/api/legal-notices/pending", { method: "GET" });
+      if (!response.ok || !data || !Array.isArray(data.notices)) return;
+      notices = data.notices;
+    } catch {
+      return;
+    }
+
+    if (!notices.length) return;
+
+    let i = 0;
+    function showNext() {
+      if (i >= notices.length) return;
+      const notice = notices[i];
+
+      const banner = document.createElement("div");
+      banner.className = "legal-notice-banner";
+      banner.setAttribute("role", "dialog");
+      banner.setAttribute("aria-label", "Policy update notice");
+
+      const text = document.createElement("p");
+      text.className = "legal-notice-banner-text";
+      text.innerHTML =
+        "We've updated our <strong>" +
+        notice.title +
+        "</strong>. " +
+        notice.summary +
+        ' <a href="' +
+        notice.url +
+        '">Read it</a>';
+
+      const ok = document.createElement("button");
+      ok.type = "button";
+      ok.className = "legal-notice-banner-ok";
+      ok.textContent = "Got it";
+      ok.addEventListener("click", async function () {
+        ok.disabled = true;
+        try {
+          await apiRequest("/api/legal-notices/acknowledge", {
+            method: "POST",
+            body: JSON.stringify({ noticeType: notice.noticeType, version: notice.version }),
+          });
+        } catch {
+          // best-effort -- it'll just show again next load if this failed
+        }
+        banner.remove();
+        i++;
+        showNext();
+      });
+
+      banner.appendChild(text);
+      banner.appendChild(ok);
+      document.body.appendChild(banner);
+    }
+
+    showNext();
+  }
+
   window.KanasakaAuth = {
     initSession: initSession,
+    initLegalNotices: initLegalNotices,
     getSession: getSession,
     canSeeAccountGated: canSeeAccountGated,
     applyAccountGatedVisibility: applyAccountGatedVisibility,

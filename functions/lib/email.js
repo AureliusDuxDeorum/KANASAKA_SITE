@@ -343,6 +343,20 @@ export async function sendTwoFactorCodeEmail(env, email, code, context) {
   });
 }
 
+export async function sendLegalNoticeEmail(env, email, { title, summary, url }) {
+  const html = `
+    <p>We've updated our <strong>${title}</strong>.</p>
+    <p>${summary}</p>
+    <p><a href="${url}">Read the updated policy</a></p>
+  `;
+
+  return sendEmail(env, {
+    to: email,
+    subject: `KANASAKA: ${title} updated`,
+    html,
+  });
+}
+
 export async function sendTermsEmail(env, email) {
   const { getTermsEmailHtml } = await import("./terms.js");
 

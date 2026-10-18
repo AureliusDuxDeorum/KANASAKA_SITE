@@ -18,6 +18,9 @@ pages_build_output_dir = "."
 # WAF audit:
 #   node scripts/check-waf-rules.mjs
 #   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/014_ks_stocks_subscription.sql
+# Legal notice system (publish a policy update, email + in-app banner):
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/017_legal_notices.sql
+#   see docs/LEGAL_NOTICES.md
 # Live Stripe:
 #   Secrets (Pages → Settings → Variables and secrets → Production):
 #     STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET

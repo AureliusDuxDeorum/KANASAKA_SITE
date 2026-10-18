@@ -481,6 +481,9 @@
       if (window.KanasakaAuth.applyAccountGatedVisibility) {
         window.KanasakaAuth.applyAccountGatedVisibility(document);
       }
+      if (window.KanasakaAuth.initLegalNotices) {
+        window.KanasakaAuth.initLegalNotices();
+      }
     }
 
     await loadLogoAnimation();
