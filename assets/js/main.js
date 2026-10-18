@@ -419,7 +419,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=81").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=82").then(resolve);
     });
   }
 

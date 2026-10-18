@@ -8,6 +8,11 @@
   // custom S below lines up with K at both places using the same ratio.
   const TEKTUR_CAP_HEIGHT_RATIO = 0.6967;
 
+  // The boxy shape still reads a touch smaller than K at a literal
+  // cap-height match (same adjustment made to the header logo's CSS size),
+  // so it's scaled up on top of that for comparable visual weight.
+  const ANGULAR_S_SIZE_BOOST = 1.18;
+
   // Purely rectilinear S (no curves, no 45deg diagonals) in a 625x1000 unit
   // box, stroke thickness 0.2057x the box height -- that's Tektur's own
   // measured stroke-to-cap-height ratio, so this reads as the same weight
@@ -256,7 +261,7 @@
       mctx.translate(fieldCenterX, 0);
       mctx.scale(aspectFix, 1);
       mctx.fillText("K", 0, mh * 0.39);
-      drawAngularS(mctx, mh * 0.78, letterSize * TEKTUR_CAP_HEIGHT_RATIO);
+      drawAngularS(mctx, mh * 0.78, letterSize * TEKTUR_CAP_HEIGHT_RATIO * ANGULAR_S_SIZE_BOOST);
       mctx.restore();
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
