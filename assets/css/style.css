@@ -1672,11 +1672,13 @@ body.auth-modal-open > #site-footer {
   justify-content: center;
   padding: 24px;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 280ms ease;
 }
 
 .auth-modal-overlay.is-open {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .auth-modal-backdrop {
@@ -2197,6 +2199,14 @@ body.auth-modal-open > #site-footer {
 
 .settings-form {
   margin-top: 8px;
+}
+
+.settings-step-trigger-row {
+  margin-top: 8px;
+}
+
+.settings-static-field {
+  max-width: 420px;
 }
 
 .settings-form .auth-field {

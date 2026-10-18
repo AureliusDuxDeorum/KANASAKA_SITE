@@ -13,10 +13,10 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=94">
+  <link rel="stylesheet" href="/assets/css/style.css?v=95">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=91">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
-  <script defer src="/assets/js/auth.js?v=94"></script>
+  <script defer src="/assets/js/auth.js?v=95"></script>
   <script defer src="/assets/js/main.js?v=96"></script>
 </head>
 <body>
@@ -33,33 +33,46 @@
       <div class="auth-card-accent" aria-hidden="true"></div>
       <div class="auth-card-body">
 
-      <p class="auth-eyebrow">Account</p>
-      <h1>Reset Password</h1>
-      <p class="auth-lead">Enter the 6-digit code we emailed you and choose a new password.</p>
-
       <form id="reset-password-form" class="auth-form">
-        <div class="auth-field">
-          <label for="reset-email">Email</label>
-          <input id="reset-email" name="email" type="email" autocomplete="email" required>
+        <div class="auth-modal-step" data-step="email">
+          <p class="auth-eyebrow">Account &middot; Step 1 of 3</p>
+          <h1>Reset Password</h1>
+          <p class="auth-lead">Confirm the email you're resetting.</p>
+          <div class="auth-field">
+            <label for="reset-email">Email</label>
+            <input id="reset-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <button type="button" class="button auth-submit" data-action="next">Continue</button>
         </div>
 
-        <div class="auth-field">
-          <label id="reset-code-label">Verification code</label>
-          <div class="otp-boxes" id="reset-code-boxes" role="group" aria-labelledby="reset-code-label"></div>
-          <input type="hidden" id="reset-code" name="code">
+        <div class="auth-modal-step" data-step="code" hidden>
+          <p class="auth-eyebrow">Account &middot; Step 2 of 3</p>
+          <h1>Reset Password</h1>
+          <p class="auth-lead">Enter the 6-digit code we emailed you.</p>
+          <div class="auth-field">
+            <label id="reset-code-label">Verification code</label>
+            <div class="otp-boxes" id="reset-code-boxes" role="group" aria-labelledby="reset-code-label"></div>
+            <input type="hidden" id="reset-code" name="code">
+          </div>
+          <button type="button" class="button auth-submit" data-action="next">Continue</button>
+          <p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button> &middot; <button id="reset-resend" class="link-button" type="button">Resend code</button></p>
         </div>
 
-        <div class="auth-field">
-          <label for="reset-password">New Password</label>
-          <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
-          <ul id="reset-password-policy" class="password-policy" aria-live="polite"></ul>
+        <div class="auth-modal-step" data-step="password" hidden>
+          <p class="auth-eyebrow">Account &middot; Step 3 of 3</p>
+          <h1>Reset Password</h1>
+          <p class="auth-lead">Choose a new password.</p>
+          <div class="auth-field">
+            <label for="reset-password">New Password</label>
+            <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+            <ul id="reset-password-policy" class="password-policy" aria-live="polite"></ul>
+          </div>
+          <button class="button auth-submit" type="submit">Update Password</button>
+          <p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>
         </div>
-
-        <button class="button auth-submit" type="submit">Update Password</button>
       </form>
 
       <div class="auth-footer">
-        <p class="auth-switch"><button id="reset-resend" class="link-button" type="button">Resend code</button></p>
         <p class="auth-switch"><a href="/login/">Back to log in</a></p>
       </div>
       </div>

@@ -363,8 +363,48 @@
       emailField.value = prefillEmail;
     }
 
+    const steps = setupSteps(form, ["email", "code", "password"]);
+
+    ["email", "code"].forEach(function (stepName) {
+      bindEnterAdvance(
+        form.querySelector('[data-step="' + stepName + '"]'),
+        form.querySelector('[data-step="' + stepName + '"] [data-action="next"]')
+      );
+    });
+
+    form.querySelectorAll('[data-action="next"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (steps.current() === "email") {
+          if (!emailField.value.trim() || !EMAIL_FORMAT_RE.test(emailField.value.trim())) {
+            emailField.focus();
+            return;
+          }
+        }
+        if (steps.current() === "code") {
+          const codeValue = form.querySelector('[name="code"]').value.trim();
+          if (codeValue.length !== 6) {
+            const firstBox = form.querySelector("#reset-code-boxes .otp-box");
+            if (firstBox) firstBox.focus();
+            return;
+          }
+        }
+        steps.next();
+      });
+    });
+
+    form.querySelectorAll('[data-action="back"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        steps.back();
+      });
+    });
+
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      if (steps.current() !== "password") {
+        steps.next();
+        return;
+      }
+
       clearFormError(form);
 
       const email = emailField.value.trim();
@@ -1459,6 +1499,24 @@
     }
 
     initBillingPanel();
+
+    initSettingsStepModal(profileForm, {
+      triggerLabel: "Edit Profile",
+      steps: ["accountId", "displayName"],
+    });
+    initSettingsStepModal(passwordForm, {
+      triggerLabel: "Update Password",
+      steps: ["current", "new"],
+    });
+    initSettingsStepModal(document.getElementById("settings-security-phrase-form"), {
+      triggerLabel: "Set Security Phrase",
+      steps: ["phrase", "password"],
+    });
+    initSettingsStepModal(deleteForm, {
+      triggerLabel: "Delete Account",
+      steps: ["password", "confirm"],
+      danger: true,
+    });
   }
 
   function formatBillingDate(value) {
@@ -1641,6 +1699,135 @@
     } catch (error) {
       setBillingMessage(error.message || "Could not load billing.", true);
     }
+  }
+
+  // Collapses a multi-field settings form down to a single trigger button,
+  // moving the form itself (steps, submit handler, and all) into a modal
+  // shell that reuses the exact same .auth-modal-* classes as the login/
+  // register overlay -- so "a separate window similar to log in" is
+  // literally true, not just visually similar. The form's existing submit
+  // handler, field lookups (all by [name]), and showFormError/showFormSuccess
+  // calls are untouched: moving a node via appendChild preserves its
+  // listeners, and hidden .auth-modal-step siblings don't stop a value from
+  // being read at submit time.
+  function initSettingsStepModal(form, options) {
+    if (!form) return;
+    options = options || {};
+    const stepOrder = options.steps || [];
+    const danger = Boolean(options.danger);
+
+    let steps = null;
+    if (stepOrder.length > 1) {
+      steps = setupSteps(form, stepOrder);
+
+      stepOrder.slice(0, -1).forEach(function (stepName) {
+        bindEnterAdvance(
+          form.querySelector('[data-step="' + stepName + '"]'),
+          form.querySelector('[data-step="' + stepName + '"] [data-action="next"]')
+        );
+      });
+
+      form.querySelectorAll('[data-action="next"]').forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const panel = form.querySelector('[data-step="' + steps.current() + '"]');
+          const input = panel
+            ? panel.querySelector("input:not([type=hidden]), select, textarea")
+            : null;
+          if (input && !input.checkValidity()) {
+            input.reportValidity();
+            return;
+          }
+          steps.next();
+        });
+      });
+
+      form.querySelectorAll('[data-action="back"]').forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          steps.back();
+        });
+      });
+    }
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = danger ? "button settings-delete-button" : "button secondary";
+    trigger.textContent = options.triggerLabel || "Edit";
+
+    const triggerRow = document.createElement("div");
+    triggerRow.className = "settings-step-trigger-row";
+    triggerRow.appendChild(trigger);
+    form.parentNode.insertBefore(triggerRow, form);
+
+    const overlay = document.createElement("div");
+    overlay.className = "auth-modal-overlay settings-step-modal-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "auth-modal-backdrop";
+
+    const shell = document.createElement("div");
+    shell.className = "auth-modal-shell";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "auth-modal-close";
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.textContent = "×";
+
+    const card = document.createElement("div");
+    card.className = "auth-card auth-card--modern auth-card-elevated auth-modal-card";
+    const accent = document.createElement("div");
+    accent.className = "auth-card-accent";
+    accent.setAttribute("aria-hidden", "true");
+    const body = document.createElement("div");
+    body.className = "auth-card-body";
+
+    card.appendChild(accent);
+    card.appendChild(body);
+    shell.appendChild(closeBtn);
+    shell.appendChild(card);
+    overlay.appendChild(backdrop);
+    overlay.appendChild(shell);
+    document.body.appendChild(overlay);
+
+    body.appendChild(form);
+    form.hidden = false;
+
+    let keydownHandler = null;
+
+    function open() {
+      clearFormError(form);
+      clearFormSuccess(form);
+      if (steps) steps.show(stepOrder[0]);
+      overlay.classList.add("is-open");
+      document.body.classList.add("auth-modal-open");
+      keydownHandler = function (event) {
+        if (event.key === "Escape") close();
+      };
+      document.addEventListener("keydown", keydownHandler);
+      window.requestAnimationFrame(function () {
+        const target = form.querySelector(
+          ".auth-modal-step:not([hidden]) input, .auth-modal-step:not([hidden]) .otp-box"
+        ) || form.querySelector("input");
+        if (target) target.focus();
+      });
+    }
+
+    function close() {
+      overlay.classList.remove("is-open");
+      document.body.classList.remove("auth-modal-open");
+      if (keydownHandler) {
+        document.removeEventListener("keydown", keydownHandler);
+        keydownHandler = null;
+      }
+    }
+
+    trigger.addEventListener("click", open);
+    closeBtn.addEventListener("click", close);
+    backdrop.addEventListener("click", close);
+
+    return { open: open, close: close };
   }
 
   function initSettingsNavigation() {

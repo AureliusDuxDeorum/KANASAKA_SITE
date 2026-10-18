@@ -13,10 +13,10 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=94">
+  <link rel="stylesheet" href="/assets/css/style.css?v=95">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=91">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
-  <script defer src="/assets/js/auth.js?v=94"></script>
+  <script defer src="/assets/js/auth.js?v=95"></script>
   <script defer src="/assets/js/main.js?v=96"></script>
 </head>
 <body>
@@ -78,25 +78,36 @@
               </div>
             </div>
 
+            <div class="auth-field settings-static-field">
+              <label for="settings-email">Email</label>
+              <input id="settings-email" name="email" type="email" disabled>
+            </div>
+
             <form id="settings-profile-form" class="auth-form settings-form">
-              <div class="auth-field">
-                <label for="settings-account-id">Account ID</label>
-                <input id="settings-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
-                <p id="settings-account-id-hint" class="auth-field-hint">Choose a unique ID for permissions and lookup. You can change it once every 6 months after it is set.</p>
-                <p id="settings-account-id-status" class="auth-field-status" hidden></p>
+              <div class="auth-modal-step" data-step="accountId">
+                <p class="auth-eyebrow">Account &middot; Step 1 of 2</p>
+                <h1>Personal Information</h1>
+                <p class="auth-lead">Choose a unique account ID.</p>
+                <div class="auth-field">
+                  <label for="settings-account-id">Account ID</label>
+                  <input id="settings-account-id" name="accountId" type="text" minlength="3" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
+                  <p id="settings-account-id-hint" class="auth-field-hint">Choose a unique ID for permissions and lookup. You can change it once every 6 months after it is set.</p>
+                  <p id="settings-account-id-status" class="auth-field-status" hidden></p>
+                </div>
+                <button type="button" class="button auth-submit" data-action="next">Continue</button>
               </div>
 
-              <div class="auth-field">
-                <label for="settings-display-name">Display Name</label>
-                <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
+              <div class="auth-modal-step" data-step="displayName" hidden>
+                <p class="auth-eyebrow">Account &middot; Step 2 of 2</p>
+                <h1>Personal Information</h1>
+                <p class="auth-lead">Choose how your name appears to others.</p>
+                <div class="auth-field">
+                  <label for="settings-display-name">Display Name</label>
+                  <input id="settings-display-name" name="displayName" type="text" maxlength="40" autocomplete="nickname">
+                </div>
+                <button class="button" type="submit">Save Profile</button>
+                <p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>
               </div>
-
-              <div class="auth-field">
-                <label for="settings-email">Email</label>
-                <input id="settings-email" name="email" type="email" disabled>
-              </div>
-
-              <button class="button" type="submit">Save Profile</button>
             </form>
           </section>
 
@@ -127,18 +138,29 @@
             <div class="settings-section">
               <h3 class="settings-subsection-title">Change Password</h3>
               <form id="settings-password-form" class="auth-form settings-form">
-                <div class="auth-field">
-                  <label for="settings-current-password">Current Password</label>
-                  <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password">
+                <div class="auth-modal-step" data-step="current">
+                  <p class="auth-eyebrow">Account &middot; Step 1 of 2</p>
+                  <h1>Change Password</h1>
+                  <p class="auth-lead">Confirm your current password.</p>
+                  <div class="auth-field">
+                    <label for="settings-current-password">Current Password</label>
+                    <input id="settings-current-password" name="currentPassword" type="password" autocomplete="current-password" required>
+                  </div>
+                  <button type="button" class="button auth-submit" data-action="next">Continue</button>
                 </div>
 
-                <div class="auth-field">
-                  <label for="settings-new-password">New Password</label>
-                  <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="15" maxlength="128">
-                  <ul id="settings-new-password-policy" class="password-policy" aria-live="polite"></ul>
+                <div class="auth-modal-step" data-step="new" hidden>
+                  <p class="auth-eyebrow">Account &middot; Step 2 of 2</p>
+                  <h1>Change Password</h1>
+                  <p class="auth-lead">Choose a new password.</p>
+                  <div class="auth-field">
+                    <label for="settings-new-password">New Password</label>
+                    <input id="settings-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+                    <ul id="settings-new-password-policy" class="password-policy" aria-live="polite"></ul>
+                  </div>
+                  <button class="button secondary" type="submit">Update Password</button>
+                  <p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>
                 </div>
-
-                <button class="button secondary" type="submit">Update Password</button>
               </form>
             </div>
 
@@ -150,15 +172,27 @@
                 show your phrase, it isn't really from us.
               </p>
               <form id="settings-security-phrase-form" class="auth-form settings-form">
-                <div class="auth-field">
-                  <label for="settings-security-phrase">Security Phrase</label>
-                  <input id="settings-security-phrase" name="securityPhrase" type="text" maxlength="40" autocomplete="off">
+                <div class="auth-modal-step" data-step="phrase">
+                  <p class="auth-eyebrow">Account &middot; Step 1 of 2</p>
+                  <h1>Security Phrase</h1>
+                  <p class="auth-lead">Set a phrase we'll include in every security email.</p>
+                  <div class="auth-field">
+                    <label for="settings-security-phrase">Security Phrase</label>
+                    <input id="settings-security-phrase" name="securityPhrase" type="text" maxlength="40" autocomplete="off">
+                  </div>
+                  <button type="button" class="button auth-submit" data-action="next">Continue</button>
                 </div>
-                <div class="auth-field">
-                  <label for="settings-security-phrase-password">Current Password</label>
-                  <input id="settings-security-phrase-password" name="currentPassword" type="password" autocomplete="current-password">
+                <div class="auth-modal-step" data-step="password" hidden>
+                  <p class="auth-eyebrow">Account &middot; Step 2 of 2</p>
+                  <h1>Security Phrase</h1>
+                  <p class="auth-lead">Confirm your current password.</p>
+                  <div class="auth-field">
+                    <label for="settings-security-phrase-password">Current Password</label>
+                    <input id="settings-security-phrase-password" name="currentPassword" type="password" autocomplete="current-password" required>
+                  </div>
+                  <button class="button secondary" type="submit">Save Phrase</button>
+                  <p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>
                 </div>
-                <button class="button secondary" type="submit">Save Phrase</button>
               </form>
             </div>
 
@@ -226,17 +260,24 @@
                 This permanently removes your account, profile picture, and access to downloads.
               </p>
 
-              <div class="auth-field">
-                <label for="settings-delete-password">Password</label>
-                <input id="settings-delete-password" name="password" type="password" autocomplete="current-password">
+              <div class="auth-modal-step" data-step="password">
+                <p class="auth-eyebrow">Step 1 of 2</p>
+                <div class="auth-field">
+                  <label for="settings-delete-password">Password</label>
+                  <input id="settings-delete-password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button type="button" class="button settings-delete-button" data-action="next">Continue</button>
               </div>
 
-              <div class="auth-field">
-                <label for="settings-delete-confirm">Type DELETE to confirm</label>
-                <input id="settings-delete-confirm" name="confirmation" type="text" autocomplete="off">
+              <div class="auth-modal-step" data-step="confirm" hidden>
+                <p class="auth-eyebrow">Step 2 of 2</p>
+                <div class="auth-field">
+                  <label for="settings-delete-confirm">Type DELETE to confirm</label>
+                  <input id="settings-delete-confirm" name="confirmation" type="text" autocomplete="off" required>
+                </div>
+                <button class="button settings-delete-button" type="submit">Delete Account</button>
+                <p class="auth-switch"><button type="button" class="link-button" data-action="back">Back</button></p>
               </div>
-
-              <button class="button settings-delete-button" type="submit">Delete Account</button>
             </form>
 
             <div class="settings-section settings-section-logout">
