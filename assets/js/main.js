@@ -11,7 +11,6 @@
       label: "Products",
       children: [
         { label: "KS_Link", href: "/products/ks-link/" },
-        { label: "KS Stocks", href: "/products/ks-stocks/" },
         { label: "Robotics", href: "/products/robotics/" },
       ],
     },
@@ -417,7 +416,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=78").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=79").then(resolve);
     });
   }
 

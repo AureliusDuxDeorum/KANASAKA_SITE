@@ -73,7 +73,6 @@
       head: "Products",
       lines: [
         { t: "KS_Link", cls: "ha-item", href: "/products/ks-link/" },
-        { t: "KS Stocks", cls: "ha-item", href: "/products/ks-stocks/" },
         { t: "Robotics", cls: "ha-item", href: "/products/robotics/" },
       ],
     },

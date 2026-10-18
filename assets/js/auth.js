@@ -524,29 +524,6 @@
       "</div></div>";
   }
 
-  function renderPaywallGate(gateId, message, subscriptionsOpen) {
-    const gate = document.getElementById(gateId);
-    if (!gate) return;
-
-    const open = subscriptionsOpen === true;
-    const label = open ? "KS_Package Required" : "Coming Soon";
-    const title = open ? "Subscribe to download" : "Subscriptions paused";
-    const actions = open
-      ? '<a class="button" href="/account/settings/?section=billing">Subscribe</a>' +
-        '<a class="button secondary" href="/products/ks-stocks/">Learn more</a>'
-      : '<a class="button secondary" href="/products/ks-stocks/">KS Stocks</a>';
-
-    gate.hidden = false;
-    gate.innerHTML =
-      '<div class="auth-gate-box">' +
-      '<span class="coming-soon-label">' + label + "</span>" +
-      "<h2>" + title + "</h2>" +
-      "<p>" + message + "</p>" +
-      '<div class="auth-gate-actions">' +
-      actions +
-      "</div></div>";
-  }
-
   function renderContactDetails(container, contact) {
     container.innerHTML =
       '<dl class="contact-item">' +
