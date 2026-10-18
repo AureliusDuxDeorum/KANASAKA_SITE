@@ -35,8 +35,6 @@ Apply these in **Cloudflare Dashboard → Security → WAF → Custom rules** (o
 
 ### 5. Block non-browser origins on mutating auth routes
 
-Skip if you rely on KS Unify desktop (no `Origin` header). Otherwise:
-
 - **Expression:** `(http.request.uri.path starts with "/api/auth/") and (http.request.method in {"POST" "PATCH" "DELETE"}) and (http.request.headers["origin"][0] ne "https://kanasaka.com") and (http.request.headers["origin"][0] ne "")`
 - **Action:** Block
 
@@ -63,14 +61,12 @@ Under **Security → WAF → Managed rules**:
 | `SESSION_SECRET` | HMAC for session and email token hashes (required) |
 | `RESEND_API_KEY` | Transactional email |
 | `ADMIN_SECRET` | Optional access to `/api/auth/email-status` |
-| `K_REMOTE_LOGIN_KEY` | Shared with K (`K_KANASAKA_REMOTE_LOGIN_KEY`) so K-Remote can skip account SMS 2FA for mobile login, and so its own updater can fetch `/api/k-updater/latest.json` and `/api/k-updater/apk` |
 
 ## After deploy
 
 1. Run migration 005 (invalidates all sessions and pending email links).
 2. Users sign in again; passwords upgrade to Argon2id on next successful login.
 3. Verify login, register, reset, and verify flows from the website.
-4. Verify KS Unify login after desktop rebuild (Rust cookie jar).
 
 ## Argon2 tuning (optional)
 

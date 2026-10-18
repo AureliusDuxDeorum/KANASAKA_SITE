@@ -46,7 +46,7 @@ wrangler.toml               Pages + D1 + R2 binding config
 scripts/pages-build.mjs     No-op build step (Cloudflare Pages)
 scripts/generate_pages.py   Static HTML page generator
 scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
-scripts/upload-installers-r2.mjs  Upload KS Unify installers to R2
+scripts/publish-ks-link-update.mjs  Upload a KS_Link installer/manifest to R2
 docs/R2_INSTALLERS.md       R2 bucket setup + upload instructions
 docs/WAF_STATUS.txt         Last WAF audit output (scripts/check-waf-rules.mjs)
 docs/CLOUDFLARE_WAF.md      WAF rule documentation
@@ -503,19 +503,20 @@ GitHub PR checks: Cloudflare Pages must pass for merge (was failing before c1417
 
 9. DOWNLOADS
 ------------
-Gated behind login at /downloads/
-GET /api/download/{platform} — auth check → 302 to signed /api/download/file?token=...
-GET /api/download/file — validates HMAC token (5 min TTL), streams object from R2
-Platforms: windows (.exe), linux (.deb), macos (.dmg)
-R2 bucket: kanasaka-installers (enable R2 in dashboard, bind INSTALLERS in Pages)
-Upload: node scripts/upload-installers-r2.mjs (see docs/R2_INSTALLERS.md)
-Legacy GitHub URLs removed from download flow (DOWNLOAD_URLS may remain in auth.js)
-KS Unify desktop app (separate repo) uses cookie-jar auth client — no localStorage tokens.
+KS_Unify and K-Mobile (and their entitlement-gated /api/download/* flow,
+functions/lib/downloads.js, the K-remote-login-key 2FA bypass, and the
+K-updater endpoints) were removed 2026-10-18 — both products retired.
+KS_Link replaced them: free, public, no login required, at /downloads/#ks-link.
+GET /api/ks-link-updater/latest.json — Tauri self-updater manifest (Windows only)
+GET /api/ks-link-updater/download/{platform} — streams the installer from R2, no auth
+Platforms: windows-x86_64 (.exe), linux-deb, linux-rpm, linux-appimage, android (.apk)
+R2 bucket: kanasaka-installers (same bucket other products use), shared binding INSTALLERS
+Upload: node scripts/publish-ks-link-update.mjs <platform> <file> [notes] (see docs/R2_INSTALLERS.md)
 
 
 10. OPERATIONAL NOTES
 ---------------------
-- Always run D1 commands from ~/KANASAKA_SITE, not KS_UNIFY
+- Always run D1 commands from ~/KANASAKA_SITE
 - Production deploy can lag if Cloudflare build fails; check Deployments dashboard
 - Registration SQLITE_MISMATCH was caused by old code + new D1 schema mismatch
 - Remote D1 wiped 2026-08-01: 0 users, clean slate for testing

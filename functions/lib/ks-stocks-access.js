@@ -8,7 +8,7 @@
  * - sessionPayload() exposes ksStocksEntitled to the desktop app via /api/auth/session
  *
  * Rules:
- * - account_id "dev_ks" → permanent developer admin (KS Stocks, downloads, KS-K Mobile, all gated features)
+ * - account_id "dev_ks" → permanent developer admin (KS Stocks and other gated features)
  * - everyone else → ksStocksEntitled when subscription status is active or trialing
  */
 

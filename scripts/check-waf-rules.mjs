@@ -145,7 +145,6 @@ async function main() {
   lines.push("Notes:");
   lines.push("- Cloudflare API visibility varies by plan and token scope.");
   lines.push("- If any rule shows MISSING/UNVERIFIED, apply it manually from docs/CLOUDFLARE_WAF.md.");
-  lines.push("- Rule 5 (origin block) is intentionally skipped when KS Unify desktop auth is used.");
 
   const output = lines.join("\n") + "\n";
   fs.writeFileSync(OUTPUT_PATH, output, "utf8");

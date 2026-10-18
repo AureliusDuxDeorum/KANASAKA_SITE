@@ -18,7 +18,6 @@ import { smsConfigured } from "../../lib/sms.js";
 import {
   approxLocation,
   clientIp,
-  kRemoteLoginKeyAllowed,
   logAuthEvent,
   notifyLogin,
   requireSameOrigin,
@@ -87,11 +86,7 @@ export async function onRequestPost(context) {
 
   await upgradePasswordHash(env, user.id, password, user.password_hash);
 
-  const skipTwoFactor =
-    (body.skipTwoFactor === true || body.skipTwoFactor === "true") &&
-    kRemoteLoginKeyAllowed(request, env);
-
-  if (user.totp_enabled && !skipTwoFactor) {
+  if (user.totp_enabled) {
     const method = user.phone_e164 ? "sms" : "email";
 
     if (method === "sms" && !smsConfigured(env)) {
@@ -138,10 +133,6 @@ export async function onRequestPost(context) {
       });
       return errorResponse(err.message || "Could not send verification code.", 503);
     }
-  }
-
-  if (skipTwoFactor && user.totp_enabled) {
-    await logAuthEvent(env, "login_2fa_skipped", { ip, userId: user.id, reason: "k_remote" });
   }
 
   await deleteAllUserSessions(env, user.id);

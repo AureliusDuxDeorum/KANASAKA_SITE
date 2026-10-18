@@ -1,23 +1,34 @@
-# Private installer downloads (R2)
+# KS_Link installer downloads (R2)
 
-Production downloads no longer redirect to public GitHub URLs. Authenticated users receive a short-lived signed link that streams the installer from private R2 storage.
+Unlike the entitlement-gated download flow this used to describe (for
+KS_Unify and K-Mobile, both retired), KS_Link is free — every download and
+the self-updater manifest are served publicly, with no session, no
+subscription check, no signed/expiring link.
 
 ## One-time setup
 
-1. Create bucket (if needed):
+1. Create bucket (if needed — shared with other KANASAKA products):
 
 ```bash
 cd ~/KANASAKA_SITE
 npx wrangler r2 bucket create kanasaka-installers
 ```
 
-2. Upload installers:
+2. Build KS_Link (in the `KS_Link` repo, not this one) and publish each
+   platform artifact:
 
 ```bash
-node scripts/upload-installers-r2.mjs
+node scripts/publish-ks-link-update.mjs windows-x86_64 <path-to-exe> [notes]
+node scripts/publish-ks-link-update.mjs linux-deb <path-to-deb>
+node scripts/publish-ks-link-update.mjs linux-rpm <path-to-rpm>
+node scripts/publish-ks-link-update.mjs linux-appimage <path-to-AppImage>
+node scripts/publish-ks-link-update.mjs android <path-to-apk>
 ```
 
-Set `KS_UNIFY_WINDOWS_INSTALLER`, `KS_UNIFY_LINUX_INSTALLER`, `KS_UNIFY_MACOS_INSTALLER`, or `KS_K_MOBILE_ANDROID_APK` if files live elsewhere.
+Only `windows-x86_64` needs a `.sig` next to it (produced automatically by
+`tauri build` with `TAURI_SIGNING_PRIVATE_KEY` set) and publishes a
+self-updater manifest alongside the installer. The rest are plain
+downloads with no manifest entry.
 
 3. Bind R2 in **Cloudflare Pages → kanasaka-site → Settings → Bindings**:
 
@@ -29,35 +40,27 @@ Set `KS_UNIFY_WINDOWS_INSTALLER`, `KS_UNIFY_LINUX_INSTALLER`, `KS_UNIFY_MACOS_IN
 
 ## Flow
 
-1. Logged-in user clicks download on `/downloads/`
-2. `/api/download/{platform}` checks session
-3. Worker issues HMAC-signed URL valid for 5 minutes
-4. `/api/download/file?token=...` streams object from R2 once
+1. Visitor clicks a platform button on `/downloads/#ks-link` (no login) —
+   or the installed Windows app's self-updater checks on its own.
+2. `GET /api/ks-link-updater/latest.json` returns Tauri's own
+   update-manifest shape (`version`, `notes`, `pub_date`, `platforms`),
+   read straight from the R2 object with `platforms.*.url` filled in per
+   request from the live origin.
+3. `GET /api/ks-link-updater/download/<platform>` streams the matching
+   installer from R2.
 
 ## Object keys
 
 | Platform | R2 key |
 |----------|--------|
-| windows | `installers/windows/KS.Unify_0.1.0_x64-setup.exe` |
-| linux | `installers/linux/KS.Unify_0.1.0_amd64.deb` |
-| macos | `installers/macos/KS.Unify_0.1.0_aarch64.dmg` |
-| android (KS-K Mobile, `@dev_ks` only) | `installers/ks-k-mobile/android/app-release.apk` |
-| android updater manifest | `installers/ks-k-mobile/android/latest.json` |
+| windows-x86_64 | `installers/ks-link/windows-x86_64/KS_Link.exe` |
+| windows-x86_64 updater manifest | `installers/ks-link/windows-x86_64/latest.json` |
+| linux-deb | `installers/ks-link/linux-deb/KS_Link.deb` |
+| linux-rpm | `installers/ks-link/linux-rpm/KS_Link.rpm` |
+| linux-appimage | `installers/ks-link/linux-appimage/KS_Link.AppImage` |
+| android | `installers/ks-link/android/KS_Link.apk` |
 
-## K's own updater (not the browser download flow above)
-
-K's own HTTP client checks for updates itself -- no browser, no session
-cookie. It authenticates with the same shared secret used to skip SMS 2FA
-(see `K_REMOTE_LOGIN_KEY` / `X-K-Remote-Login-Key` in `docs/CLOUDFLARE_WAF.md`),
-sent as a header on both requests below:
-
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/k-updater/latest.json` | Returns `{version, versionCode, pubDate, size, sha256, url}` -- everything but `url` comes straight from the R2 object; `url` is filled in per-request from the live origin |
-| `GET /api/k-updater/apk` | Streams the APK itself |
-
-`scripts/upload-installers-r2.mjs` writes the manifest automatically whenever
-it uploads the android APK (reads `versionName`/`versionCode` from the
-build's `output-metadata.json`, hashes the APK for `sha256`). Both endpoints
-403 without a valid `X-K-Remote-Login-Key` header -- there is no public,
-unauthenticated path to either the manifest or the APK.
+Only Windows self-updates (tauri-plugin-updater) — Linux's package
+managers / AppImage's own mechanism and Android's Play Store/APK
+side-load path handle that differently, and Tauri's desktop updater
+plugin doesn't build for mobile at all.

@@ -4,23 +4,14 @@
       label: "Downloads",
       children: [
         { label: "All Downloads", href: "/downloads/" },
-        { label: "KS Unify", href: "/downloads/#ks-unify" },
-        {
-          label: "KS-K Mobile",
-          href: "/downloads/#ks-k-mobile",
-          visibleAccountId: "dev_ks",
-        },
+        { label: "KS_Link", href: "/downloads/#ks-link" },
       ],
     },
     {
       label: "Products",
       children: [
-        { label: "KS Unify", href: "/products/ks-unify/" },
-        {
-          label: "KS-K Mobile",
-          href: "/products/ks-k-mobile/",
-          visibleAccountId: "dev_ks",
-        },
+        { label: "KS_Link", href: "/products/ks-link/" },
+        { label: "KS Stocks", href: "/products/ks-stocks/" },
         { label: "Robotics", href: "/products/robotics/" },
       ],
     },

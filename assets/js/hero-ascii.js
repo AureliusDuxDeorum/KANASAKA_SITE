@@ -59,9 +59,8 @@
     {
       head: "Products",
       lines: [
-        { t: "KS Unify", cls: "ha-item", href: "/products/ks-unify/" },
+        { t: "KS_Link", cls: "ha-item", href: "/products/ks-link/" },
         { t: "KS Stocks", cls: "ha-item", href: "/products/ks-stocks/" },
-        { t: "KS-K Mobile", cls: "ha-item", href: "/products/ks-k-mobile/", gated: "dev_ks" },
         { t: "Robotics", cls: "ha-item", href: "/products/robotics/" },
       ],
     },

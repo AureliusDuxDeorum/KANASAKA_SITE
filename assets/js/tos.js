@@ -1,6 +1,6 @@
 (function () {
   var TOS_KEY = "kanasaka-tos-accepted";
-  var TOS_VERSION = "2";
+  var TOS_VERSION = "3";
   var SHOW_DELAY_MS = 1000;
 
   var TERMS_HTML =
@@ -10,7 +10,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>2. Description of Service</h3>" +
-    "<p>KANASAKA provides an informational website, user accounts, subscription billing for KS_Package, authenticated access to entitled product downloads (including KS Unify), desktop software access (including KS Stocks where entitled), support and contact channels, and related online services. Features, pricing, and product availability may change, be limited, or be withdrawn during active development.</p>" +
+    "<p>KANASAKA provides an informational website, user accounts, subscription billing for KS_Package, authenticated access to entitled product downloads, desktop software access (including KS Stocks where entitled), a free public download of KS_Link (a separate messaging service described in Section 15), support and contact channels, and related online services. Features, pricing, and product availability may change, be limited, or be withdrawn during active development.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>3. Eligibility</h3>" +
@@ -35,7 +35,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>6. Subscriptions and Billing (KS_Package)</h3>" +
-    "<p><strong>6.1 Product.</strong> KS_Package is a recurring subscription that grants entitlement to KANASAKA software and downloads made available under these Terms while the subscription is active, including KS Stocks desktop access and authenticated product downloads such as KS Unify, unless a specific product page states additional restrictions.</p>" +
+    "<p><strong>6.1 Product.</strong> KS_Package is a recurring subscription that grants entitlement to KANASAKA software and downloads made available under these Terms while the subscription is active, including KS Stocks desktop access, unless a specific product page states additional restrictions.</p>" +
     "<p><strong>6.2 Pricing.</strong> Current list prices are €10.00 per month or €100.00 per year. The price shown at checkout is the price that applies to your purchase. We may change prices for future billing periods with reasonable notice where required by law.</p>" +
     "<p><strong>6.3 Payment processing.</strong> Payments are processed by Stripe. By subscribing, you also agree to Stripe's applicable terms and privacy practices for payment processing. We do not store full payment card numbers on our servers.</p>" +
     "<p><strong>6.4 Account-based entitlement.</strong> Your subscription is linked to your KANASAKA account and account ID. Entitlement applies when you sign in with that account on supported applications and the Site. It is not transferable and does not constitute a device license.</p>" +
@@ -47,7 +47,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>7. Software Access and Downloads</h3>" +
-    "<p>Access to product downloads and entitled desktop software requires a valid KS_Package subscription or authorized complimentary access, except where a product page explicitly states different requirements. Software such as KS Unify and KS Stocks is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
+    "<p>Access to product downloads and entitled desktop software requires a valid KS_Package subscription or authorized complimentary access, except where a product page explicitly states different requirements — KS_Link is free and requires neither, as described in Section 15. Software such as KS Stocks is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
     "<p><strong>KS Stocks third-party accounts.</strong> KS Stocks does not include Alpaca or Ollama accounts. You must create and maintain your own Alpaca brokerage account and Ollama access (cloud API key or local instance) to use core app features. You are responsible for those third-party accounts, their fees, and compliance with their terms.</p>" +
     "</section>" +
     '<section class="tos-section">' +
@@ -79,13 +79,19 @@
     "<p>We may update these Terms from time to time. Material changes will be indicated by updating the effective date and, where appropriate, the Terms version. Continued use after changes become effective constitutes acceptance of the revised Terms. If you do not agree to updated Terms, you must stop using the Site and cancel any active subscription.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>15. Governing Law</h3>" +
+    "<h3>15. KS_Link</h3>" +
+    "<p>KS_Link is a free, alpha-stage end-to-end encrypted messaging application distributed from this Site. Unlike the KS_Package-entitled downloads described in Sections 6–7, KS_Link requires no subscription and no KANASAKA account — it operates its own, separate account and messaging service with its own infrastructure, which is described for your reference in our Privacy Policy. Creating an account within KS_Link does not create an account on this Site, and vice versa.</p>" +
+    "<p>KS_Link is pre-release software: it may be incomplete or unstable, may contain security issues not yet discovered, and may change materially — including in ways that are not backward compatible — without notice. It is provided \"as is\" under the disclaimers in Section 10. You must be at least 16 years old to create a KS_Link account.</p>" +
+    "<p>KS_Link includes a user-facing reporting mechanism for content or accounts that violate the law or KS_Link's own acceptable-use terms. Reported material and limited associated records may be retained for a period after a report (at least 90 days) to support a review process and to meet legal reporting obligations that may apply to online messaging services, including reporting apparent child sexual abuse material to the relevant authorities where required by law. We may suspend or remove access to KS_Link, or to a specific account, for violations of its acceptable-use terms, for legal compliance, or for security reasons.</p>" +
+    "</section>" +
+    '<section class="tos-section">' +
+    "<h3>16. Governing Law</h3>" +
     "<p>These Terms are governed by the laws of Germany, excluding conflict-of-law rules. Mandatory consumer protections in your country of residence remain unaffected where applicable.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>16. Contact</h3>" +
+    "<h3>17. Contact</h3>" +
     "<p>Questions about these Terms: <a href=\"mailto:contactns@kanasaka.com\">contactns@kanasaka.com</a></p>" +
-    "<p class=\"tos-effective\">Effective date: 21 August 2026</p>" +
+    "<p class=\"tos-effective\">Effective date: 18 October 2026</p>" +
     "</section>";
 
   var scheduled = false;

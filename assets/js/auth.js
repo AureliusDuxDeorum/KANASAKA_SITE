@@ -547,16 +547,6 @@
       "</div></div>";
   }
 
-  function hasDownloadAccess(session) {
-    return Boolean(session && session.authenticated && session.ksStocksEntitled);
-  }
-
-  function hideDownloadActions() {
-    document.querySelectorAll(".download-actions").forEach(function (el) {
-      el.hidden = true;
-    });
-  }
-
   function renderContactDetails(container, contact) {
     container.innerHTML =
       '<dl class="contact-item">' +
@@ -570,86 +560,6 @@
         ? '<dd class="contact-note">' + contact.note + "</dd>"
         : "") +
       "</dl>";
-    container.hidden = false;
-  }
-
-  function renderDownloadActions(container, productId) {
-    if (productId === "ks-k-mobile") {
-      container.innerHTML =
-        '<div class="download-platform-grid download-platform-grid-single">' +
-        '<article class="download-platform-card">' +
-        '<span class="platform-label">Android</span>' +
-        '<strong class="platform-title">Android APK</strong>' +
-        '<span class="platform-detail">Private alpha · sideload on Android</span>' +
-        '<span class="platform-file">k-mobile.apk · 4,946,786 bytes (v9 — isolation test: pre-session native shell + near-zero JS)</span>' +
-        '<a class="button" href="/api/download/android">Download</a>' +
-        "</article>" +
-        "</div>";
-      container.hidden = false;
-      return;
-    }
-
-    const platforms = [
-      {
-        id: "windows",
-        label: "Windows",
-        title: "x64 Installer",
-        file: "KS.Unify_0.1.0_x64-setup.exe",
-        size: "~21 MB",
-        detail: "Windows 10/11 · 64-bit",
-        primary: true,
-      },
-      {
-        id: "macos",
-        label: "macOS",
-        title: "Apple Silicon",
-        file: "KS.Unify_0.1.0_aarch64.dmg",
-        size: "~23 MB",
-        detail: "M1 / M2 / M3 · macOS 11+",
-        primary: false,
-      },
-      {
-        id: "linux",
-        label: "Linux",
-        title: "Debian Package",
-        file: "KS.Unify_0.1.0_amd64.deb",
-        size: "~31 MB",
-        detail: "Ubuntu / Debian · amd64",
-        primary: false,
-      },
-    ];
-
-    container.innerHTML =
-      '<div class="download-platform-grid">' +
-      platforms
-        .map(function (platform) {
-          const buttonClass = platform.primary ? "button" : "button secondary";
-          return (
-            '<article class="download-platform-card">' +
-            '<span class="platform-label">' +
-            platform.label +
-            "</span>" +
-            "<strong class=\"platform-title\">" +
-            platform.title +
-            "</strong>" +
-            '<span class="platform-detail">' +
-            platform.detail +
-            "</span>" +
-            '<span class="platform-file">' +
-            platform.file +
-            " · " +
-            platform.size +
-            "</span>" +
-            '<a class="' +
-            buttonClass +
-            '" href="/api/download/' +
-            platform.id +
-            '">Download</a>' +
-            "</article>"
-          );
-        })
-        .join("") +
-      "</div>";
     container.hidden = false;
   }
 
@@ -680,51 +590,6 @@
 
     gate.hidden = true;
     renderContactDetails(details, data);
-  }
-
-  async function initDownloadsPage() {
-    const gate = document.getElementById("auth-gate-downloads");
-    if (!gate) return;
-
-    applyAccountGatedVisibility(document);
-
-    const session = getSession();
-    if (!session.authenticated) {
-      renderAuthGate(
-        "auth-gate-downloads",
-        "Downloads require a KANASAKA account."
-      );
-      hideDownloadActions();
-      return;
-    }
-
-    if (!hasDownloadAccess(session)) {
-      const pausedMessage =
-        session.subscriptionsPausedMessage ||
-        "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.";
-      const paywallMessage = session.subscriptionsOpen === true
-        ? "Product downloads are included with KS_Package (€10/month or €100/year). Subscribe to unlock KS Unify and other builds. KS Stocks also requires your own Alpaca and Ollama accounts."
-        : pausedMessage + " KS Stocks requires separate Alpaca and Ollama accounts when it launches.";
-      renderPaywallGate(
-        "auth-gate-downloads",
-        paywallMessage,
-        session.subscriptionsOpen === true
-      );
-      hideDownloadActions();
-      return;
-    }
-
-    gate.hidden = true;
-
-    const unifyActions = document.getElementById("download-actions-unify");
-    if (unifyActions) {
-      renderDownloadActions(unifyActions, "ks-unify");
-    }
-
-    const mobileActions = document.getElementById("download-actions-ks-k-mobile");
-    if (mobileActions && canSeeAccountGated("dev_ks")) {
-      renderDownloadActions(mobileActions, "ks-k-mobile");
-    }
   }
 
   function updateSession(data) {
@@ -1901,39 +1766,13 @@
     });
   }
 
-  async function initKskMobilePage() {
-    const content = document.getElementById("ks-k-mobile-content");
-    const gate = document.getElementById("ks-k-mobile-gate");
-    if (!content || !gate) {
-      return;
-    }
-
-    applyAccountGatedVisibility(document);
-
-    if (canSeeAccountGated("dev_ks")) {
-      gate.hidden = true;
-      return;
-    }
-
-    content.hidden = true;
-    gate.hidden = false;
-  }
-
   function initProtectedPages() {
     applyAccountGatedVisibility(document);
 
     const path = window.location.pathname;
 
-    if (path.indexOf("/products/ks-k-mobile") === 0) {
-      initKskMobilePage();
-    }
-
     if (path.indexOf("/support/contact") === 0) {
       initContactPage();
-    }
-
-    if (path.indexOf("/downloads") === 0) {
-      initDownloadsPage();
     }
 
     if (path.indexOf("/verify") === 0) {
