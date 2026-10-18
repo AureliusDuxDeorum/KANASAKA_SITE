@@ -610,7 +610,7 @@ h1 {
 
 .download-platform-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
 }
@@ -741,6 +741,12 @@ h1 {
 .button[disabled] {
   cursor: default;
   opacity: 0.85;
+}
+
+.platform-coming-soon[disabled] {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
 }
 
 /* KS-mark loading spinner: 4 thin horizontal lines around the (static) "KS"
@@ -2813,6 +2819,10 @@ body.tos-open {
 /* ── Responsive ── */
 
 @media (max-width: 1024px) {
+  .download-platform-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .header-auth {
     order: 3;
     width: 100%;
