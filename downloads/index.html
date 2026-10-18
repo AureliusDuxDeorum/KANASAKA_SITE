@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=93">
+  <link rel="stylesheet" href="/assets/css/style.css?v=94">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=91">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=94"></script>
-  <script defer src="/assets/js/main.js?v=95"></script>
+  <script defer src="/assets/js/main.js?v=96"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -67,7 +67,6 @@
           </article>
 
           <article class="download-platform-card">
-            <span class="platform-alpha-badge">Alpha</span>
             <div class="platform-info">
               <span class="platform-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M6.5 8h11a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-.5v2a1 1 0 1 1-2 0v-2h-5v2a1 1 0 1 1-2 0v-2H7a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Zm-.9-2.6 1 1.4a7 7 0 0 1 10.8 0l1-1.4a.6.6 0 1 1 1 .7l-1 1.4a6.9 6.9 0 0 1 1.6 3.9H2a6.9 6.9 0 0 1 1.6-3.9l-1-1.4a.6.6 0 1 1 1-.7ZM9 9.8a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8Zm6 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8Z"/></svg>
@@ -76,11 +75,13 @@
               <strong class="platform-title">APK (arm64)</strong>
               <span class="platform-detail">Self-signed — enable "install from unknown sources"</span>
             </div>
-            <a class="button" href="/api/ks-link-updater/download/android">Download .apk</a>
+            <div class="platform-actions">
+              <span class="platform-alpha-badge">Alpha</span>
+              <a class="button" href="/api/ks-link-updater/download/android">Download .apk</a>
+            </div>
           </article>
 
           <article class="download-platform-card">
-            <span class="platform-alpha-badge">Alpha</span>
             <div class="platform-info">
               <span class="platform-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M3 5.5 11 4.3v7.3H3V5.5Zm0 13L11 19.7v-7.1H3v6.9ZM12 4.1 21 3v8.6h-9V4.1Zm0 8.5h9V21l-9-1.2v-7.2Z"/></svg>
@@ -89,11 +90,13 @@
               <strong class="platform-title">x64 Installer</strong>
               <span class="platform-detail">Windows 10/11 · 64-bit</span>
             </div>
-            <a class="button" href="/api/ks-link-updater/download/windows-x86_64">Download .exe</a>
+            <div class="platform-actions">
+              <span class="platform-alpha-badge">Alpha</span>
+              <a class="button" href="/api/ks-link-updater/download/windows-x86_64">Download .exe</a>
+            </div>
           </article>
 
           <article class="download-platform-card">
-            <span class="platform-alpha-badge">Alpha</span>
             <div class="platform-info">
               <span class="platform-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M12 2c-1.1 0-2 1.3-2 3 0 .6.1 1.1.3 1.6-.9.7-1.5 1.8-1.8 3-1.4.5-2.5 1.8-2.5 3.4 0 .4.1.8.2 1.1-.6.5-1 1.3-1 2.2C5.2 18.3 6.9 20 9 20c.5 0 1-.1 1.4-.3.4.6 1 1 1.6 1s1.2-.4 1.6-1c.4.2.9.3 1.4.3 2.1 0 3.8-1.7 3.8-3.7 0-.9-.4-1.7-1-2.2.1-.3.2-.7.2-1.1 0-1.6-1.1-2.9-2.5-3.4-.3-1.2-.9-2.3-1.8-3 .2-.5.3-1 .3-1.6 0-1.7-.9-3-2-3Zm-1.5 11.5c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5Zm3 0c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5Z"/></svg>
@@ -102,10 +105,13 @@
               <strong class="platform-title">.deb / .rpm / AppImage</strong>
               <span class="platform-detail">Debian/Ubuntu, Fedora/RHEL, or any distro</span>
             </div>
-            <div class="download-platform-links">
-              <a class="button" href="/api/ks-link-updater/download/linux-deb">.deb</a>
-              <a class="button secondary" href="/api/ks-link-updater/download/linux-rpm">.rpm</a>
-              <a class="button secondary" href="/api/ks-link-updater/download/linux-appimage">AppImage</a>
+            <div class="platform-actions">
+              <span class="platform-alpha-badge">Alpha</span>
+              <div class="download-platform-links">
+                <a class="button" href="/api/ks-link-updater/download/linux-deb">.deb</a>
+                <a class="button secondary" href="/api/ks-link-updater/download/linux-rpm">.rpm</a>
+                <a class="button secondary" href="/api/ks-link-updater/download/linux-appimage">AppImage</a>
+              </div>
             </div>
           </article>
         </div>

@@ -175,17 +175,6 @@
     buildColumns(colsEl);
 
     const reduced = prefersReducedMotion();
-    let mouseTarget = [0.5, 0.5];
-    let mouseSmooth = [0.5, 0.5];
-
-    function onMouseMove(e) {
-      const r = hero.getBoundingClientRect();
-      mouseTarget[0] = (e.clientX - r.left) / r.width;
-      mouseTarget[1] = (e.clientY - r.top) / r.height;
-    }
-    if (!reduced) {
-      window.addEventListener("mousemove", onMouseMove, { passive: true });
-    }
 
     let cols = 0;
     let rows = 0;
@@ -286,11 +275,6 @@
     function render(now) {
       hashCache.clear();
       const t = (now - start) / 1000;
-      mouseSmooth[0] += (mouseTarget[0] - mouseSmooth[0]) * 0.05;
-      mouseSmooth[1] += (mouseTarget[1] - mouseSmooth[1]) * 0.05;
-
-      const mx = mouseSmooth[0] * cols;
-      const my = mouseSmooth[1] * rows;
       const lines = [];
 
       // hoisted out of the per-cell loop -- these don't vary by x/y, only
@@ -298,28 +282,18 @@
       // them for every one of the thousands of cells was pure waste.
       const driftX = reduced ? 0 : t * 0.025;
       const driftY = reduced ? 0 : t * 0.016;
-      const rippleT = t * 0.9;
       const shimmerT = reduced ? 0 : t * 0.5;
-      const hoverT = t * 9;
-      const rowAspect = cellH / cellW;
 
       for (let y = 0; y < rows; y++) {
         let runChar = "";
         let runKey = null;
         const runs = [];
         const ny = y * 0.16 - driftY;
-        const dyBase = (y - my) * rowAspect;
         const rowMaskOffset = y * cols;
 
         for (let x = 0; x < cols; x++) {
-          const dx = x - mx;
-          const distToMouse = Math.sqrt(dx * dx + dyBase * dyBase);
-          const ripple = reduced
-            ? 0
-            : Math.exp(-distToMouse * 0.06) * Math.sin(distToMouse * 0.22 - rippleT) * 0.28;
-
           const nx = x * 0.09 + driftX;
-          let v = fbm(nx, ny) + ripple;
+          let v = fbm(nx, ny);
 
           const m = letterMask ? letterMask[rowMaskOffset + x] : 0;
           const isLetter = m > 0.1;
@@ -331,14 +305,7 @@
             // deliberately gentle: a quiet ambient quality, not a sweep.
             const shimmer = Math.sin(x * 0.1 + y * 0.16 - shimmerT) * 0.5 + 0.5;
             const base = m * (0.82 + shimmer * 0.13);
-            // the K/S also react to the cursor much faster and more sharply
-            // than the ambient field -- tight falloff so it's felt right
-            // where you're hovering, quick oscillation so it visibly
-            // flickers between characters instead of just gently drifting.
-            const hoverReact = reduced
-              ? 0
-              : Math.exp(-distToMouse * 0.18) * Math.sin(distToMouse * 0.6 - hoverT) * 0.5;
-            v = Math.max(v, base + hoverReact);
+            v = Math.max(v, base);
           }
           v = Math.max(0, Math.min(1, v));
 

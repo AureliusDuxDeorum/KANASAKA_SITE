@@ -416,7 +416,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=79").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=80").then(resolve);
     });
   }
 
