@@ -282,7 +282,10 @@
     logo.innerHTML =
       '<div class="site-logo-mark">' +
       '<div class="logo-side"><div></div><div></div></div>' +
-      '<div class="logo-center"><span>K</span><span>S</span></div>' +
+      '<div class="logo-center"><span>K</span>' +
+      '<svg class="logo-s" viewBox="0 0 625 1000" aria-hidden="true" focusable="false">' +
+      '<path d="M0,0 L625,0 L625,206 L206,206 L206,397 L625,397 L625,1000 L0,1000 L0,794 L419,794 L419,603 L0,603 Z"/>' +
+      "</svg></div>" +
       '<div class="logo-side"><div></div><div></div></div>' +
       "</div>" +
       '<span class="site-logo-text">KANASAKA</span>';
@@ -416,7 +419,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=80").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=81").then(resolve);
     });
   }
 

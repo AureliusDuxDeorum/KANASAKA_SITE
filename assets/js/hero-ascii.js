@@ -2,6 +2,41 @@
   const RAMP = " .:-=+*#%@";
   const MASK_SCALE = 6;
 
+  // Tektur's actual rendered cap-height as a fraction of font-size (measured
+  // directly off the glyph's own pixels, not a nominal font-metrics number) --
+  // shared with the header logo's inline SVG sizing in style.css so the
+  // custom S below lines up with K at both places using the same ratio.
+  const TEKTUR_CAP_HEIGHT_RATIO = 0.6967;
+
+  // Purely rectilinear S (no curves, no 45deg diagonals) in a 625x1000 unit
+  // box, stroke thickness 0.2057x the box height -- that's Tektur's own
+  // measured stroke-to-cap-height ratio, so this reads as the same weight
+  // as the K glyph it sits under rather than a mismatched custom shape.
+  const ANGULAR_S_POINTS = [
+    [0, 0], [625, 0], [625, 206], [206, 206], [206, 397], [625, 397],
+    [625, 1000], [0, 1000], [0, 794], [419, 794], [419, 603], [0, 603],
+  ];
+  const ANGULAR_S_WIDTH = 625;
+  const ANGULAR_S_HEIGHT = 1000;
+
+  // Draws the shape above into ctx, already-centered horizontally (matches
+  // textAlign:"center" fillText behavior) with its bottom edge sitting on
+  // baselineY -- a drop-in replacement for fillText("S", 0, baselineY).
+  function drawAngularS(ctx, baselineY, heightPx) {
+    const scale = heightPx / ANGULAR_S_HEIGHT;
+    const offsetX = -(ANGULAR_S_WIDTH * scale) / 2;
+    const offsetY = baselineY - heightPx;
+    ctx.beginPath();
+    ANGULAR_S_POINTS.forEach(function (point, i) {
+      const px = point[0] * scale + offsetX;
+      const py = point[1] * scale + offsetY;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.closePath();
+    ctx.fill();
+  }
+
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
@@ -221,7 +256,7 @@
       mctx.translate(fieldCenterX, 0);
       mctx.scale(aspectFix, 1);
       mctx.fillText("K", 0, mh * 0.39);
-      mctx.fillText("S", 0, mh * 0.78);
+      drawAngularS(mctx, mh * 0.78, letterSize * TEKTUR_CAP_HEIGHT_RATIO);
       mctx.restore();
 
       const data = mctx.getImageData(0, 0, mw, mh).data;

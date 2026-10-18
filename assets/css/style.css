@@ -172,6 +172,19 @@ main {
   letter-spacing: 0.02em;
 }
 
+/* Purely rectilinear S (no curves, no 45deg diagonals) replacing the font
+   glyph -- sized/weighted to match the K span exactly: Tektur's actual
+   rendered K (measured, since only weight 600 is loaded -- "800" above
+   silently falls back to it) has a cap-height of 0.6967em and a stroke
+   width 0.2057x that cap-height; this SVG's box and path were built from
+   those same two ratios at the K span's own 18px font-size. */
+.site-logo-mark .logo-center .logo-s {
+  display: block;
+  height: 12.54px;
+  width: 7.84px;
+  fill: currentColor;
+}
+
 .site-logo-text {
   font-size: 14px;
   font-weight: 700;
