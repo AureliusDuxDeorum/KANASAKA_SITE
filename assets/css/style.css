@@ -239,7 +239,6 @@ main {
   color: var(--color-text);
   background: var(--color-middle);
   border-color: var(--color-border);
-  border-bottom-color: transparent;
 }
 
 .nav-dropdown {
