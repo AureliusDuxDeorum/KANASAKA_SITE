@@ -1033,6 +1033,48 @@
       });
     }
 
+    const noticeForm = document.getElementById("settings-dev-notice-form");
+    if (noticeForm) {
+      noticeForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(noticeForm);
+        clearFormSuccess(noticeForm);
+
+        const passwordField = noticeForm.querySelector('[name="currentPassword"]');
+        const submit = noticeForm.querySelector('[type="submit"]');
+        setButtonLoading(submit, true);
+
+        try {
+          const { response, data } = await apiRequest("/api/admin/legal-notices", {
+            method: "POST",
+            body: JSON.stringify({
+              noticeType: noticeForm.querySelector('[name="noticeType"]').value.trim(),
+              version: noticeForm.querySelector('[name="version"]').value.trim(),
+              title: noticeForm.querySelector('[name="title"]').value.trim(),
+              summary: noticeForm.querySelector('[name="summary"]').value.trim(),
+              url: noticeForm.querySelector('[name="url"]').value.trim(),
+              currentPassword: passwordField.value,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Could not publish notice.");
+          }
+
+          showFormSuccess(
+            noticeForm,
+            "Sent to " + data.sent + " of " + data.recipients + " users" +
+              (data.failed ? " (" + data.failed + " failed)" : "") + "."
+          );
+        } catch (error) {
+          showFormError(noticeForm, error.message || "Could not publish notice.");
+        } finally {
+          passwordField.value = "";
+          setButtonLoading(submit, false);
+        }
+      });
+    }
+
     const eventsBox = document.getElementById("settings-dev-events");
     const eventsRefresh = document.getElementById("settings-dev-events-refresh");
 

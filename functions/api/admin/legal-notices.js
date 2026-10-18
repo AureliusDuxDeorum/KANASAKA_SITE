@@ -1,8 +1,9 @@
-import { errorResponse, jsonResponse, readJson } from "../../lib/auth.js";
+import { errorResponse, jsonResponse, readJson, verifyPassword } from "../../lib/auth.js";
 import { markLegalNoticeEmailed, publishLegalNotice } from "../../lib/legal-notices.js";
 import { sendLegalNoticeEmail } from "../../lib/email.js";
 import {
   adminActorLabel,
+  clientIp,
   logAuthEvent,
   requireAdminAccess,
   requireSameOrigin,
@@ -33,6 +34,34 @@ export async function onRequestPost(context) {
   const body = await readJson(request);
   if (!body) {
     return errorResponse("Invalid request body.");
+  }
+
+  // Step-up re-authentication, same as account-role.js: this mass-emails
+  // every verified user, so a session cookie alone shouldn't be enough even
+  // from an already-logged-in admin (stolen/hijacked session, unattended
+  // device). Bearer-secret access skips this -- it's a separate, already-
+  // strong trust channel with no "current password" to check. Logged under
+  // the same admin_role_update_failed event requireAdminAccess's escalating
+  // lockout already watches, so repeated failures here count toward it too.
+  if (actingUser) {
+    const password = String(body.currentPassword || "");
+    if (!password) {
+      return errorResponse("Enter your current password to confirm this.");
+    }
+
+    const row = await env.DB.prepare("SELECT password_hash FROM users WHERE id = ?")
+      .bind(actingUser.id)
+      .first();
+
+    const validPassword = row && (await verifyPassword(password, row.password_hash, env));
+    if (!validPassword) {
+      await logAuthEvent(env, "admin_role_update_failed", {
+        ip: clientIp(request),
+        email: actor,
+        reason: "bad_step_up_password_legal_notice",
+      });
+      return errorResponse("Current password is incorrect.", 401);
+    }
   }
 
   const noticeType = String(body.noticeType || "").trim().toLowerCase();

@@ -1220,7 +1220,8 @@ h1 {
   color: var(--color-text-muted);
 }
 
-.auth-field input {
+.auth-field input,
+.auth-field textarea {
   width: 100%;
   padding: 15px 16px;
   border: 1px solid var(--color-border);
@@ -1234,11 +1235,17 @@ h1 {
     transform 240ms var(--auth-ease);
 }
 
-.auth-field input:hover:not(:disabled) {
+.auth-field textarea {
+  resize: vertical;
+}
+
+.auth-field input:hover:not(:disabled),
+.auth-field textarea:hover:not(:disabled) {
   border-color: var(--color-border-light);
 }
 
-.auth-field input:focus {
+.auth-field input:focus,
+.auth-field textarea:focus {
   outline: none;
   border-color: var(--color-border-light);
   box-shadow:

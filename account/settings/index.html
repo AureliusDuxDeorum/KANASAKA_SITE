@@ -13,10 +13,10 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=88">
+  <link rel="stylesheet" href="/assets/css/style.css?v=89">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=90">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
-  <script defer src="/assets/js/auth.js?v=92"></script>
+  <script defer src="/assets/js/auth.js?v=93"></script>
   <script defer src="/assets/js/main.js?v=93"></script>
 </head>
 <body>
@@ -352,6 +352,38 @@
                   <input id="settings-dev-role-password" name="currentPassword" type="password" autocomplete="current-password">
                 </div>
                 <button class="button secondary" type="submit">Update Role</button>
+              </form>
+            </div>
+
+            <div class="settings-section">
+              <h3 class="settings-subsection-title">Legal Notices</h3>
+              <p class="settings-panel-intro">Publish a policy update — emails every verified user immediately and shows a dismissible banner to anyone who hasn't acknowledged it yet, next time they're signed in.</p>
+              <form id="settings-dev-notice-form" class="auth-form settings-form">
+                <div class="auth-field">
+                  <label for="settings-dev-notice-type">Notice type</label>
+                  <input id="settings-dev-notice-type" name="noticeType" type="text" autocomplete="off" placeholder="cookies">
+                </div>
+                <div class="auth-field">
+                  <label for="settings-dev-notice-version">Version</label>
+                  <input id="settings-dev-notice-version" name="version" type="text" autocomplete="off" placeholder="2026-10-16">
+                </div>
+                <div class="auth-field">
+                  <label for="settings-dev-notice-title">Title</label>
+                  <input id="settings-dev-notice-title" name="title" type="text" autocomplete="off" placeholder="Cookie Policy">
+                </div>
+                <div class="auth-field">
+                  <label for="settings-dev-notice-summary">Summary</label>
+                  <textarea id="settings-dev-notice-summary" name="summary" rows="3" placeholder="We added a cookie consent banner and refreshed our Cookie Policy."></textarea>
+                </div>
+                <div class="auth-field">
+                  <label for="settings-dev-notice-url">Link</label>
+                  <input id="settings-dev-notice-url" name="url" type="url" autocomplete="off" placeholder="https://kanasaka.com/legal/cookies/">
+                </div>
+                <div class="auth-field">
+                  <label for="settings-dev-notice-password">Your current password (confirms this send)</label>
+                  <input id="settings-dev-notice-password" name="currentPassword" type="password" autocomplete="current-password">
+                </div>
+                <button class="button secondary" type="submit">Send Policy Update</button>
               </form>
             </div>
 
