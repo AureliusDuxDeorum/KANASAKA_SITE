@@ -63,6 +63,7 @@
     {
       label: "Legal",
       children: [
+        { label: "Products", href: "/legal/products/" },
         { label: "Privacy", href: "/legal/privacy/" },
         { label: "Terms", href: "/legal/terms/" },
         { label: "Refunds", href: "/legal/refunds/" },

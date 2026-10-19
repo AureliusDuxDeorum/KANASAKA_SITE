@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products | KANASAKA</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+  <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="/assets/css/style.css?v=98">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=91">
+  <script defer src="/assets/js/password-policy.js?v=88"></script>
+  <script defer src="/assets/js/auth.js?v=95"></script>
+  <script defer src="/assets/js/main.js?v=100"></script>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div id="site-header"></div>
+
+<main id="main-content">
+
+  <section class="hero compact">
+    <div class="kanasaka-logo small" role="img" aria-label="KANASAKA">
+      <div class="logo-side" aria-hidden="true"><div></div><div></div></div>
+      <div class="logo-center" aria-hidden="true"><span>K</span><span>S</span></div>
+      <div class="logo-side" aria-hidden="true"><div></div><div></div></div>
+    </div>
+
+    <h1>Products</h1>
+
+    <p>How each KANASAKA product actually works &mdash; function and system design, not marketing copy.</p>
+  </section>
+
+  <section class="page-section legal-document">
+    <article class="content-card legal-card">
+      <section class="tos-section">
+        <h2>About this page</h2>
+        <p>Product pages on this Site link here instead of repeating a product's full description in multiple places. This page documents what each product does and how it is built, for anyone who wants the complete technical picture &mdash; support, press, security reviewers, or just the curious. It is not an advertisement and does not need to sell you anything.</p>
+        <p>Data handling and privacy specifics for a product are covered in the <a href="/legal/privacy/">Privacy Policy</a> rather than repeated here; this page links to the relevant section where one exists.</p>
+      </section>
+
+      <section class="tos-section" id="ks_link">
+        <h2>KS_Link</h2>
+        <p>KS_Link is a free, end-to-end encrypted messaging application, built as a Tauri desktop app (Windows, Linux) and a native Android app, with iOS planned. It is currently in alpha.</p>
+
+        <h3>Messaging</h3>
+        <p>Messages are encrypted on the sending device before they ever reach KANASAKA's relay server, using per-conversation keys derived from each participant's device keys. The relay stores and forwards encrypted payloads, conversation membership, and delivery metadata (timestamps, delivery acknowledgements) &mdash; it has no access to message content. Images are sent through the same end-to-end encrypted channel as text.</p>
+
+        <h3>Account system</h3>
+        <p>KS_Link runs its own self-hosted account system, entirely independent of kanasaka.com. Registering in KS_Link does not create a KANASAKA_SITE account, and a KANASAKA_SITE account does not give you a KS_Link account &mdash; the two systems share no login, no database, and no subscription. KS_Link does not require, and is not gated behind, a KS_Package subscription.</p>
+        <p>Account security includes TOTP-based two-factor authentication with backup codes for account recovery, and a session list that lets you see every device currently signed in and revoke any of them individually.</p>
+
+        <h3>Plugin system</h3>
+        <p>Optional features run as plugins inside a WASM sandbox with an explicit, revocable permission model &mdash; a plugin only gets the data access you grant it, and that access can be withdrawn at any time. The first plugin is KS_Social, an opt-in feed where contacts can share posts; unlike direct messages, KS_Social content is not end-to-end encrypted, since it is meant to be visible to your contacts rather than private between two people.</p>
+
+        <h3>Moderation</h3>
+        <p>You can block a contact at any time, and report a message, post, or account for review. Reported content and limited associated records are retained to support that review and to meet legal reporting obligations that apply to messaging services.</p>
+
+        <h3>Alpha status</h3>
+        <p>KS_Link is early, active-development software. Features, APIs, and the protocol itself may change between releases without backward compatibility. See the <a href="/legal/privacy/#ks_link">Privacy Policy</a> for how KS_Link handles your data, and the <a href="/legal/terms/">Terms of Service</a> for the alpha-software terms that apply to it.</p>
+
+        <p><a href="/downloads/#ks-link">Download KS_Link</a></p>
+      </section>
+
+      <section class="tos-section">
+        <h2>More products</h2>
+        <p>Write-ups for additional products will be added here as they launch.</p>
+      </section>
+
+      <section class="tos-section">
+        <h2>Contact</h2>
+        <p>Questions: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a></p>
+      </section>
+    </article>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+
+</body>
+</html>
