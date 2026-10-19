@@ -18,7 +18,12 @@ import {
   isAccountIdAvailable,
   validateAccountId,
 } from "../../lib/account-id.js";
-import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import {
+  clientIp,
+  logAuthEvent,
+  requireSameOrigin,
+  tooManyRecentFailures,
+} from "../../lib/security.js";
 
 function registerFailure(err) {
   const message = errorMessage(err);
@@ -106,6 +111,15 @@ export async function onRequestPost(context) {
   if (originError) return originError;
 
   const ip = clientIp(request);
+
+  // tooManyRecentFailures is keyed on meta.email, not IP -- registration
+  // abuse uses a fresh email every time, so there's no account to key on.
+  // Reusing the same helper against the IP (logged under the "email" meta
+  // key purely so the lookup matches) throttles by source instead.
+  if (await tooManyRecentFailures(env, "register_attempt", ip, { max: 10, windowMinutes: 15 })) {
+    return errorResponse("Too many registration attempts. Please try again later.", 429);
+  }
+  await logAuthEvent(env, "register_attempt", { email: ip });
 
   try {
     const body = await readJson(request);

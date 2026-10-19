@@ -21,6 +21,7 @@ import {
   logAuthEvent,
   notifyLogin,
   requireSameOrigin,
+  tooManyRecentFailures,
 } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
@@ -45,8 +46,12 @@ export async function onRequestPost(context) {
   const remember = body.remember === true || body.remember === "true";
   const passwordError = loginPasswordValidationError(password);
 
+  if (await tooManyRecentFailures(env, "login_failed", email, { max: 8, windowMinutes: 15 })) {
+    return errorResponse("Too many failed login attempts. Please try again later.", 429);
+  }
+
   if (!validateEmail(email) || passwordError) {
-    await logAuthEvent(env, "login_failed", { ip, reason: "invalid_input" });
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "invalid_input" });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
@@ -62,19 +67,19 @@ export async function onRequestPost(context) {
     .first();
 
   if (!user) {
-    await logAuthEvent(env, "login_failed", { ip, reason: "unknown_user" });
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "unknown_user" });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
   const valid = await verifyPassword(password, user.password_hash, env);
   if (!valid) {
-    await logAuthEvent(env, "login_failed", { ip, reason: "bad_password" });
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "bad_password" });
     await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", location, userId: user.id });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
 
   if (!user.email_verified) {
-    await logAuthEvent(env, "login_failed", { ip, reason: "unverified" });
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "unverified" });
     await notifyLogin(env, user.email, {
       success: false,
       reason: "The correct password was entered, but this account's email is not verified yet.",
