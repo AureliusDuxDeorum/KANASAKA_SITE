@@ -188,6 +188,15 @@ main {
   display: block;
   height: 16.3px;
   width: 10.19px;
+  /* flexbox's computed centering of this and the K span above measure out
+     mathematically centered (verified: both box centers land on the same
+     coordinate, K's own glyph-ink center within its box is off by under
+     0.2px) -- but it was still reported as visibly left of K's axis at
+     this ~10px rendered width, where even a sub-pixel rounding/hinting
+     difference between how the browser rasterizes inline text vs an SVG
+     reads as a real shift. Nudged right to compensate; revisit the exact
+     amount if it over/undershoots. */
+  margin-left: 1.2px;
   fill: currentColor;
 }
 

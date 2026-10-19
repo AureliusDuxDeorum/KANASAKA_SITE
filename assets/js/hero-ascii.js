@@ -266,8 +266,18 @@
       mctx.save();
       mctx.translate(fieldCenterX, 0);
       mctx.scale(aspectFix, 1);
-      mctx.fillText("K", 0, mh * 0.39);
-      drawAngularS(mctx, mh * 0.78, letterSize * TEKTUR_CAP_HEIGHT_RATIO * ANGULAR_S_SIZE_BOOST);
+      const kBaseline = mh * 0.39;
+      const sHeight = letterSize * TEKTUR_CAP_HEIGHT_RATIO * ANGULAR_S_SIZE_BOOST;
+      // Was a hardcoded mh*0.78 baseline for S, sized for the old,
+      // unboosted S height -- once S got taller (ANGULAR_S_SIZE_BOOST),
+      // its top edge crept above K's own bottom edge with no gap left
+      // between them at all. Deriving the baseline from kBaseline + an
+      // explicit gap + sHeight keeps a real, visible gap regardless of
+      // how tall S ends up being.
+      const ksGap = letterSize * TEKTUR_CAP_HEIGHT_RATIO * 0.25;
+      const sBaseline = kBaseline + ksGap + sHeight;
+      mctx.fillText("K", 0, kBaseline);
+      drawAngularS(mctx, sBaseline, sHeight);
       mctx.restore();
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
