@@ -284,7 +284,7 @@
       '<div class="logo-side"><div></div><div></div></div>' +
       '<div class="logo-center"><span>K</span>' +
       '<svg class="logo-s" viewBox="0 0 625 1000" aria-hidden="true" focusable="false">' +
-      '<path d="M0,0 L625,0 L625,206 L206,206 L206,397 L625,397 L625,1000 L0,1000 L0,794 L419,794 L419,603 L0,603 Z"/>' +
+      '<path d="M0,0 L625,0 L625,158 L158,158 L158,421 L625,421 L625,1000 L0,1000 L0,842 L467,842 L467,579 L0,579 Z"/>' +
       "</svg></div>" +
       '<div class="logo-side"><div></div><div></div></div>' +
       "</div>" +
@@ -419,7 +419,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=82").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=83").then(resolve);
     });
   }
 

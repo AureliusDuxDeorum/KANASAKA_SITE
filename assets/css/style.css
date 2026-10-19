@@ -174,17 +174,20 @@ main {
 }
 
 /* Purely rectilinear S (no curves, no 45deg diagonals) replacing the font
-   glyph. Base size/weight comes from Tektur's actual rendered K (measured,
-   since only weight 600 is loaded -- "800" above silently falls back to
-   it): cap-height 0.6967em, stroke width 0.2057x that cap-height. The
-   boxy shape still read a touch smaller than K at a literal cap-height
-   match, so it's scaled up 18% (1.18x) on top of that for comparable
-   visual weight -- the `gap` above (K and S had almost no breathing room
-   between them) is unrelated to this sizing. */
+   glyph. Base size comes from Tektur's actual rendered K (measured, since
+   only weight 600 is loaded -- "800" above silently falls back to it):
+   cap-height 0.6967em. The boxy shape still read a touch smaller than K at
+   a literal cap-height match, so the box is scaled up 1.3x here -- but the
+   *stroke* inside that box (see the SVG path in main.js) is sized to
+   0.2057/1.3 of the box, which cancels back out to K's own absolute
+   stroke width once rendered at this larger size. An earlier version
+   scaled the stroke right along with the box and ended up visibly
+   thicker than K; this keeps the two independent. The `gap` above (K and
+   S had almost no breathing room between them) is unrelated to sizing. */
 .site-logo-mark .logo-center .logo-s {
   display: block;
-  height: 14.8px;
-  width: 9.25px;
+  height: 16.3px;
+  width: 10.19px;
   fill: currentColor;
 }
 
@@ -654,7 +657,7 @@ h1 {
 .platform-icon {
   width: 32px;
   height: 32px;
-  color: var(--color-text-primary);
+  color: var(--color-text);
 }
 
 .platform-icon svg {
@@ -670,7 +673,7 @@ h1 {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--color-text-primary);
+  color: var(--color-text);
 }
 
 .platform-actions {
