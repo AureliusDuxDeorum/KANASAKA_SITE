@@ -3003,9 +3003,22 @@ body.tos-open {
 }
 
 @media (min-width: 1700px) {
+  :root {
+    --rail-fs: min(22vh, 10.5vw);
+  }
+
+  /* The rail is 6.4em tall (8 letters x 0.8em). Ink sits ~0.124em below the
+     box top and ~0.085em above its bottom, so these offsets make the gap from
+     the header to the first letter equal the gap from the last letter to the
+     footer (32px each). */
+  main {
+    position: relative;
+    min-height: calc(var(--rail-fs) * 6.191 + 64px);
+  }
+
   .kanasaka-rail {
     position: absolute;
-    top: 72px;
+    top: calc(32px - var(--rail-fs) * 0.124);
     right: clamp(16px, 1.6vw, 40px);
     z-index: 0;
     display: flex;
@@ -3018,7 +3031,7 @@ body.tos-open {
     -webkit-user-select: none;
     font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
     font-weight: 600;
-    font-size: min(22vh, 10.5vw);
+    font-size: var(--rail-fs);
     line-height: 0.8;
     color: rgba(255, 255, 255, 0.09);
   }
