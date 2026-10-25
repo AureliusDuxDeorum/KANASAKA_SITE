@@ -281,14 +281,7 @@
     logo.className = "site-logo";
     logo.href = "/";
     logo.innerHTML =
-      '<div class="site-logo-mark">' +
-      '<div class="logo-side"><div></div><div></div></div>' +
-      '<div class="logo-center"><span>K</span>' +
-      '<svg class="logo-s" viewBox="0 0 625 1000" aria-hidden="true" focusable="false">' +
-      '<path d="M130,0 L625,0 L625,158 L158,158 L158,421 L625,421 L625,870 L495,1000 L0,1000 L0,842 L467,842 L467,579 L0,579 L0,130 Z"/>' +
-      "</svg></div>" +
-      '<div class="logo-side"><div></div><div></div></div>' +
-      "</div>" +
+      '<span class="site-logo-ks" aria-hidden="true">KS</span>' +
       '<span class="site-logo-text">KANASAKA</span>';
 
     const actions = document.createElement("div");
