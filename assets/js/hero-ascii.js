@@ -16,16 +16,17 @@
   // the stroke stays pinned to K's own absolute stroke width (below).
   const ANGULAR_S_SIZE_BOOST = 1.3;
 
-  // Purely rectilinear S (no curves, no 45deg diagonals) in a 625x1000 unit
-  // box. Stroke thickness is 0.2057/ANGULAR_S_SIZE_BOOST of the box height
+  // Angular S in a 625x1000 unit box: straight strokes, square inner corners,
+  // and 130-unit 45deg chamfers on the top-left and bottom-right outer corners. Stroke thickness is 0.2057/ANGULAR_S_SIZE_BOOST of the box height
   // -- that fraction, not the raw 0.2057, because this box renders at
   // ANGULAR_S_SIZE_BOOST x K's cap-height (see the call site below): height
   // * (0.2057/boost) * boost cancels back out to height * 0.2057, i.e. the
   // *rendered* stroke always equals K's own measured absolute stroke width
   // regardless of how much taller than K this box is drawn.
   const ANGULAR_S_POINTS = [
-    [0, 0], [625, 0], [625, 158], [158, 158], [158, 421], [625, 421],
-    [625, 1000], [0, 1000], [0, 842], [467, 842], [467, 579], [0, 579],
+    [130, 0], [625, 0], [625, 158], [158, 158], [158, 421], [625, 421],
+    [625, 870], [495, 1000], [0, 1000], [0, 842], [467, 842], [467, 579],
+    [0, 579], [0, 130],
   ];
   const ANGULAR_S_WIDTH = 625;
   const ANGULAR_S_HEIGHT = 1000;

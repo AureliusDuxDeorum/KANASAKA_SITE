@@ -173,8 +173,8 @@ main {
   letter-spacing: 0.02em;
 }
 
-/* Purely rectilinear S (no curves, no 45deg diagonals) replacing the font
-   glyph. Base size comes from Tektur's actual rendered K (measured, since
+/* Angular S (straight strokes, chamfered top-left and bottom-right corners)
+   replacing the font glyph. Base size comes from Tektur's actual rendered K (measured, since
    only weight 600 is loaded -- "800" above silently falls back to it):
    cap-height 0.6967em. The boxy shape still read a touch smaller than K at
    a literal cap-height match, so the box is scaled up 1.3x here -- but the
