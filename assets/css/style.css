@@ -2991,11 +2991,12 @@ body.tos-open {
   }
 }
 
-/* ── Ambient wordmark rails ──
-   Decorative stacked "KANASAKA" (Tektur 600, same face as the logo) pinned
-   to the left/right viewport edges. Only shown once the viewport is wide
-   enough that the rails sit in the empty gutters beside the 1280px content
-   column. Injected by main.js (mountAmbientRails). */
+/* ── Ambient wordmark rail ──
+   One oversized, sideways "KANASAKA" (Tektur 600, same face as the logo) in
+   the left gutter. It scrolls with the page and is taller than the viewport
+   on purpose. Only shown once the viewport is wide enough that it sits in
+   the empty gutter beside the 1280px content column. Injected by main.js
+   (mountAmbientRails). */
 
 .kanasaka-rail {
   display: none;
@@ -3003,37 +3004,26 @@ body.tos-open {
 
 @media (min-width: 1700px) {
   .kanasaka-rail {
-    position: fixed;
-    top: 0;
-    bottom: 0;
+    position: absolute;
+    top: 72px;
+    left: clamp(16px, 1.6vw, 40px);
     z-index: 0;
-    width: 130px;
     display: flex;
     flex-direction: column-reverse;
     align-items: center;
-    justify-content: space-evenly;
-    padding: 96px 0 40px;
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
     font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
     font-weight: 600;
-    font-size: clamp(64px, 9.5vh, 124px);
-    line-height: 1;
+    font-size: min(22vh, 10.5vw);
+    line-height: 0.8;
     color: rgba(255, 255, 255, 0.17);
   }
 
   .kanasaka-rail span {
     display: block;
     transform: rotate(-90deg);
-  }
-
-  .kanasaka-rail--left {
-    left: clamp(16px, 3vw, 72px);
-  }
-
-  .kanasaka-rail--right {
-    right: clamp(16px, 3vw, 72px);
   }
 
   [data-theme="light"] .kanasaka-rail {
