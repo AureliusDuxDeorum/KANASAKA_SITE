@@ -3009,7 +3009,7 @@ body.tos-open {
     z-index: 0;
     width: 130px;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: center;
     justify-content: space-evenly;
     padding: 96px 0 40px;
@@ -3018,9 +3018,14 @@ body.tos-open {
     -webkit-user-select: none;
     font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
     font-weight: 600;
-    font-size: clamp(64px, 8vh, 108px);
+    font-size: clamp(64px, 9.5vh, 124px);
     line-height: 1;
     color: rgba(255, 255, 255, 0.17);
+  }
+
+  .kanasaka-rail span {
+    display: block;
+    transform: rotate(-90deg);
   }
 
   .kanasaka-rail--left {
