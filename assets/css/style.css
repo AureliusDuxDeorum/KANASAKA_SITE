@@ -2943,6 +2943,37 @@ body.tos-open {
   }
 }
 
+/* Phones: logo + MENU share the first row, Log In / Register get their own
+   full-width row. Without this the header (logo + auth buttons side by side)
+   is ~431px wide and spills off the right edge of narrower screens. */
+@media (max-width: 560px) {
+  .site-header-inner {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    padding: 10px 16px;
+    min-height: 0;
+  }
+
+  .header-actions {
+    display: contents;
+  }
+
+  .nav-toggle {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .header-auth {
+    order: 3;
+    width: 100%;
+  }
+
+  .header-auth .auth-link {
+    flex: 1;
+    text-align: center;
+  }
+}
+
 @media (max-width: 768px) {
   .product-card,
   .download-card,
