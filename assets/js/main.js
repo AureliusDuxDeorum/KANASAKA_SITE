@@ -374,7 +374,7 @@
       return;
     }
 
-    document.body.appendChild(buildAmbientRail("left"));
+    document.body.appendChild(buildAmbientRail("right"));
   }
 
   function mountLayout() {

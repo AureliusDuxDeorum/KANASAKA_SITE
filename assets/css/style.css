@@ -2993,7 +2993,7 @@ body.tos-open {
 
 /* ── Ambient wordmark rail ──
    One oversized, sideways "KANASAKA" (Tektur 600, same face as the logo) in
-   the left gutter. It scrolls with the page and is taller than the viewport
+   the right gutter. It scrolls with the page and is taller than the viewport
    on purpose. Only shown once the viewport is wide enough that it sits in
    the empty gutter beside the 1280px content column. Injected by main.js
    (mountAmbientRails). */
@@ -3006,11 +3006,13 @@ body.tos-open {
   .kanasaka-rail {
     position: absolute;
     top: 72px;
-    left: clamp(16px, 1.6vw, 40px);
+    right: clamp(16px, 1.6vw, 40px);
     z-index: 0;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: center;
+    width: 0.8em;
+    overflow: clip;
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
@@ -3023,7 +3025,7 @@ body.tos-open {
 
   .kanasaka-rail span {
     display: block;
-    transform: rotate(-90deg);
+    transform: rotate(90deg);
   }
 
   [data-theme="light"] .kanasaka-rail {
