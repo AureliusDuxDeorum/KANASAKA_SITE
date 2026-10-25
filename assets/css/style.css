@@ -3086,3 +3086,24 @@ body.tos-open {
     display: none !important;
   }
 }
+
+/* ── Buttons use Tektur (the logo face) ──
+   Listed explicitly because several of these classes set their own
+   `font-family: inherit`, which a bare `button` selector can't beat. Only the
+   600 weight is loaded, so every button renders at that weight. */
+button,
+.button,
+.auth-link,
+.nav-toggle,
+.nav-link,
+.link-button,
+.theme-option,
+.settings-nav-item,
+.settings-delete-button,
+.cookie-consent-ok,
+.legal-notice-banner-ok,
+.auth-modal-close,
+.auth-password-toggle,
+.auth-modal-chooser-remove {
+  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+}
