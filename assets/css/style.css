@@ -2990,3 +2990,58 @@ body.tos-open {
     flex-direction: column;
   }
 }
+
+/* ── Ambient wordmark rails ──
+   Decorative stacked "KANASAKA" (Tektur 600, same face as the logo) pinned
+   to the left/right viewport edges. Only shown once the viewport is wide
+   enough that the rails sit in the empty gutters beside the 1280px content
+   column. Injected by main.js (mountAmbientRails). */
+
+.kanasaka-rail {
+  display: none;
+}
+
+@media (min-width: 1700px) {
+  .kanasaka-rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 96px 0 40px;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: clamp(64px, 8vh, 108px);
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.17);
+  }
+
+  .kanasaka-rail--left {
+    left: clamp(16px, 3vw, 72px);
+  }
+
+  .kanasaka-rail--right {
+    right: clamp(16px, 3vw, 72px);
+  }
+
+  [data-theme="light"] .kanasaka-rail {
+    color: rgba(0, 0, 0, 0.14);
+  }
+
+  [data-theme="accent"] .kanasaka-rail {
+    color: rgba(180, 150, 255, 0.2);
+  }
+}
+
+@media print {
+  .kanasaka-rail {
+    display: none !important;
+  }
+}

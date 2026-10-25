@@ -353,6 +353,31 @@
     return footer;
   }
 
+  const WORDMARK = ["K", "A", "N", "A", "S", "A", "K", "A"];
+
+  function buildAmbientRail(side) {
+    const rail = document.createElement("div");
+    rail.className = "kanasaka-rail kanasaka-rail--" + side;
+    rail.setAttribute("aria-hidden", "true");
+
+    WORDMARK.forEach(function (letter) {
+      const span = document.createElement("span");
+      span.textContent = letter;
+      rail.appendChild(span);
+    });
+
+    return rail;
+  }
+
+  function mountAmbientRails() {
+    if (document.querySelector(".kanasaka-rail") || document.querySelector(".hero-ascii")) {
+      return;
+    }
+
+    document.body.appendChild(buildAmbientRail("left"));
+    document.body.appendChild(buildAmbientRail("right"));
+  }
+
   function mountLayout() {
     const headerSlot = document.getElementById("site-header");
     const footerSlot = document.getElementById("site-footer");
@@ -364,6 +389,8 @@
     if (footerSlot) {
       footerSlot.replaceWith(buildFooter());
     }
+
+    mountAmbientRails();
   }
 
   window.KanasakaLayout = {
