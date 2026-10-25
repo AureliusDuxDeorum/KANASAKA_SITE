@@ -3024,33 +3024,44 @@ body.tos-open {
 
 /* ── Ambient wordmark rail ──
    One oversized, sideways "KANASAKA" (Tektur 600, same face as the logo) in
-   the right gutter. It scrolls with the page and is taller than the viewport
-   on purpose. Only shown once the viewport is wide enough that it sits in
-   the empty gutter beside the 1280px content column. Injected by main.js
-   (mountAmbientRails). */
+   the right margin of every page except the landing page. It scrolls with the
+   page. Shown from 1024px up; below that there's no room for it, so phones
+   and small tablets keep the full width for content. Injected by main.js
+   (mountAmbientRails), which also adds body.has-rail. */
 
 .kanasaka-rail {
   display: none;
 }
 
-@media (min-width: 1700px) {
+@media (min-width: 1024px) {
   :root {
-    --rail-fs: min(22vh, 10.5vw);
+    --rail-fs: clamp(84px, 8vw, 150px);
+    --rail-off: clamp(16px, 1.6vw, 40px);
+    /* space the rail needs on the right: its width + edge offset + 16px gap */
+    --rail-r: calc(var(--rail-fs) * 0.8 + var(--rail-off) + 16px);
+    /* empty space already left of/right of the 1280px content column */
+    --rail-g: max(0px, calc((100vw - 1280px) / 2));
   }
 
   /* The rail is 6.4em tall (8 letters x 0.8em). Ink sits ~0.124em below the
      box top and ~0.085em above its bottom, so these offsets make the gap from
      the header to the first letter equal the gap from the last letter to the
-     footer (32px each). */
-  main {
+     footer (32px each).
+
+     padding-right makes room where the natural gutter is too small. A centred
+     column only moves half the padding, so while it still has slack
+     (gutter >= half the space needed) the padding is doubled: 2 * (need -
+     gutter); once the column would be squeezed it is just the full need. */
+  body.has-rail main {
     position: relative;
     min-height: calc(var(--rail-fs) * 6.191 + 64px);
+    padding-right: max(0px, min(calc(2 * (var(--rail-r) - var(--rail-g))), var(--rail-r)));
   }
 
   .kanasaka-rail {
     position: absolute;
     top: calc(32px - var(--rail-fs) * 0.124);
-    right: clamp(16px, 1.6vw, 40px);
+    right: var(--rail-off);
     z-index: 0;
     display: flex;
     flex-direction: column;
@@ -3079,6 +3090,20 @@ body.tos-open {
   [data-theme="accent"] .kanasaka-rail {
     color: rgba(180, 150, 255, 0.1);
   }
+}
+
+@media (min-width: 1700px) {
+  :root {
+    --rail-fs: min(22vh, 10.5vw);
+  }
+}
+
+/* The static ASCII margin decoration (redesign.css) used to sit in the right
+   margin on some pages; that margin now belongs to the rail, so those move
+   to the left like the pages that already had it there. */
+body.has-rail .page-decoration:not(.page-decoration-left) {
+  right: auto;
+  left: -132px;
 }
 
 @media print {

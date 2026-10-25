@@ -370,10 +370,11 @@
   }
 
   function mountAmbientRails() {
-    if (document.querySelector(".kanasaka-rail") || document.querySelector(".hero-ascii")) {
+    if (document.querySelector(".kanasaka-rail") || document.getElementById("hero-ascii")) {
       return;
     }
 
+    document.body.classList.add("has-rail");
     (document.querySelector("main") || document.body).appendChild(buildAmbientRail("right"));
   }
 
