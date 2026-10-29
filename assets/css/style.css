@@ -141,12 +141,13 @@ main {
   flex-shrink: 0;
 }
 
+/* The KS mark is a 2:1 vector (assets/logo/ks-horizontal.svg), inlined so it
+   follows the theme colour. Keep width = 2 x height. */
 .site-logo-ks {
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: 0.04em;
+  display: block;
+  width: 46px;
+  height: 23px;
+  fill: currentColor;
 }
 
 .site-logo-text {

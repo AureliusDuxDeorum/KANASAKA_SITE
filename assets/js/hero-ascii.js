@@ -2,51 +2,34 @@
   const RAMP = " .:-=+*#%@";
   const MASK_SCALE = 6;
 
-  // Tektur's actual rendered cap-height as a fraction of font-size (measured
-  // directly off the glyph's own pixels, not a nominal font-metrics number) --
-  // shared with the header logo's inline SVG sizing in style.css so the
-  // custom S below lines up with K at both places using the same ratio.
-  const TEKTUR_CAP_HEIGHT_RATIO = 0.6967;
-
-  // The boxy shape still read a touch smaller than K at a literal
-  // cap-height match, and an earlier fix scaled the *whole* shape up
-  // (height, width, and stroke together) to compensate -- which made the
-  // stroke thicker than K's right along with it, overcorrecting. Those two
-  // need to be independent: this boost only grows the overall height/width;
-  // the stroke stays pinned to K's own absolute stroke width (below).
-  const ANGULAR_S_SIZE_BOOST = 1.3;
-
-  // Angular S in a 625x1000 unit box: straight strokes, square inner corners,
-  // and 130-unit 45deg chamfers on the top-left and bottom-right outer corners. Stroke thickness is 0.2057/ANGULAR_S_SIZE_BOOST of the box height
-  // -- that fraction, not the raw 0.2057, because this box renders at
-  // ANGULAR_S_SIZE_BOOST x K's cap-height (see the call site below): height
-  // * (0.2057/boost) * boost cancels back out to height * 0.2057, i.e. the
-  // *rendered* stroke always equals K's own measured absolute stroke width
-  // regardless of how much taller than K this box is drawn.
-  const ANGULAR_S_POINTS = [
-    [130, 0], [625, 0], [625, 158], [158, 158], [158, 421], [625, 421],
-    [625, 870], [495, 1000], [0, 1000], [0, 842], [467, 842], [467, 579],
-    [0, 579], [0, 130],
+  // The vertical KS logo (assets/logo/ks-vertical.svg) as polygons in its own
+  // units: first loop is the outline, the rest are the holes. Drawn with the
+  // even-odd rule, so nothing else needs to know which is which.
+  const LOGO_WIDTH = 762.05;
+  const LOGO_HEIGHT = 1523.4;
+  const LOGO_LOOPS = [
+    [[0, 0], [101.5, 0], [101.5, 514.75], [615.98, 0], [762.05, 0], [381.05, 380.95], [460.32, 460.3], [762.05, 158.6], [762.05, 304.45], [533.23, 533.2], [762.05, 761.9], [762.05, 863.4], [203.1, 863.4], [101.5, 964.95], [101.5, 1096.65], [762.05, 1096.65], [762.05, 1370.83], [609.6, 1523.4], [0, 1523.4], [0, 1422.02], [565.35, 1422.02], [660.25, 1326.95], [660.25, 1198.28], [0, 1198.28]],
+    [[307.67, 453.71], [387.75, 533.2], [101.5, 819.22], [101.5, 660.32]],
+    [[460.32, 605.63], [615.98, 761.9], [307.67, 761.9]],
   ];
-  const ANGULAR_S_WIDTH = 625;
-  const ANGULAR_S_HEIGHT = 1000;
 
-  // Draws the shape above into ctx, already-centered horizontally (matches
-  // textAlign:"center" fillText behavior) with its bottom edge sitting on
-  // baselineY -- a drop-in replacement for fillText("S", 0, baselineY).
-  function drawAngularS(ctx, baselineY, heightPx) {
-    const scale = heightPx / ANGULAR_S_HEIGHT;
-    const offsetX = -(ANGULAR_S_WIDTH * scale) / 2;
-    const offsetY = baselineY - heightPx;
+  // Fills the logo into ctx, centred on x = 0 with its top edge at topY and
+  // `heightPx` tall. The ctx is expected to already carry the horizontal
+  // stretch that compensates for tall character cells.
+  function drawLogo(ctx, topY, heightPx) {
+    const scale = heightPx / LOGO_HEIGHT;
+    const offsetX = -(LOGO_WIDTH * scale) / 2;
     ctx.beginPath();
-    ANGULAR_S_POINTS.forEach(function (point, i) {
-      const px = point[0] * scale + offsetX;
-      const py = point[1] * scale + offsetY;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+    LOGO_LOOPS.forEach(function (loop) {
+      loop.forEach(function (point, i) {
+        const px = point[0] * scale + offsetX;
+        const py = point[1] * scale + topY;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
     });
-    ctx.closePath();
-    ctx.fill();
+    ctx.fill("evenodd");
   }
 
   function prefersReducedMotion() {
@@ -236,36 +219,17 @@
       mctx.fillStyle = "#000";
       mctx.fillRect(0, 0, mw, mh);
       mctx.fillStyle = "#fff";
-      mctx.textAlign = "center";
-      mctx.textBaseline = "alphabetic";
 
-      // centered on the window's true horizontal midpoint (not the field
-      // area to the right of the nav columns) -- sized/positioned with
-      // margin so ascenders/descenders never clip against the field
-      // bounds, K stacked above S like the wordmark.
-      const fieldCenterX = mw / 2;
-      const letterSize = mh * 0.44;
-      mctx.font = '600 ' + letterSize + 'px "Tektur", ui-monospace, monospace';
-      // character cells are much taller than wide (cellH >> cellW), so a
-      // glyph drawn "normally" here reads as squeezed on the x-axis once
-      // it's re-flattened into that grid — pre-stretch it horizontally to
-      // compensate.
-      const aspectFix = cellH / cellW;
+      // Centred on the window's true horizontal midpoint (not the field area
+      // to the right of the nav columns). The logo keeps its true 1:2 shape:
+      // character cells are much taller than wide (cellH >> cellW), so the
+      // x axis is stretched by cellH / cellW to compensate.
+      const logoHeight = mh * 0.78;
+      const logoTop = mh * 0.474 - logoHeight / 2;
       mctx.save();
-      mctx.translate(fieldCenterX, 0);
-      mctx.scale(aspectFix, 1);
-      const kBaseline = mh * 0.39;
-      const sHeight = letterSize * TEKTUR_CAP_HEIGHT_RATIO * ANGULAR_S_SIZE_BOOST;
-      // Was a hardcoded mh*0.78 baseline for S, sized for the old,
-      // unboosted S height -- once S got taller (ANGULAR_S_SIZE_BOOST),
-      // its top edge crept above K's own bottom edge with no gap left
-      // between them at all. Deriving the baseline from kBaseline + an
-      // explicit gap + sHeight keeps a real, visible gap regardless of
-      // how tall S ends up being.
-      const ksGap = letterSize * TEKTUR_CAP_HEIGHT_RATIO * 0.25;
-      const sBaseline = kBaseline + ksGap + sHeight;
-      mctx.fillText("K", 0, kBaseline);
-      drawAngularS(mctx, sBaseline, sHeight);
+      mctx.translate(mw / 2, 0);
+      mctx.scale(cellH / cellW, 1);
+      drawLogo(mctx, logoTop, logoHeight);
       mctx.restore();
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
@@ -302,15 +266,6 @@
 
     window.addEventListener("resize", measure);
     measure();
-
-    if (document.fonts && document.fonts.load) {
-      document.fonts
-        .load('600 40px "Tektur"')
-        .then(function () {
-          buildLetterMask();
-        })
-        .catch(function () {});
-    }
 
     let running = true;
     let rafId = null;

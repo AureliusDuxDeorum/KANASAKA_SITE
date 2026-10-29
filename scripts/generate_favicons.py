@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Render the "KS" mark in Tektur, then generate the favicon assets from it."""
+"""Generate favicon assets from the KANASAKA logo source image (the horizontal KS logo)."""
 
 import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "assets" / "images" / "kanasaka-logo.png"
-FONT = ROOT / "assets" / "fonts" / "Tektur-SemiBold.ttf"
 ICONS_DIR = ROOT / "assets" / "icons"
 
 
@@ -20,26 +19,11 @@ def crop_center_square(image: Image.Image) -> Image.Image:
     return image.crop((left, top, left + side, top + side))
 
 
-def render_source(side: int = 1024, fill: float = 0.82) -> Image.Image:
-    """White "KS" (Tektur 600) centred on black; ink spans `fill` of the width."""
-    image = Image.new("RGBA", (side, side), (0, 0, 0, 255))
-    draw = ImageDraw.Draw(image)
-    size = 100
-    font = ImageFont.truetype(str(FONT), size)
-    left, top, right, bottom = draw.textbbox((0, 0), "KS", font=font)
-    size = int(size * side * fill / (right - left))
-    font = ImageFont.truetype(str(FONT), size)
-    left, top, right, bottom = draw.textbbox((0, 0), "KS", font=font)
-    x = (side - (right - left)) / 2 - left
-    y = (side - (bottom - top)) / 2 - top
-    draw.text((x, y), "KS", font=font, fill=(255, 255, 255, 255))
-    return image
-
-
 def main() -> None:
+    if not SOURCE.exists():
+        raise SystemExit(f"Logo source not found: {SOURCE}")
+
     ICONS_DIR.mkdir(parents=True, exist_ok=True)
-    render_source().save(SOURCE, format="PNG")
-    print(f"  wrote {SOURCE.relative_to(ROOT)}")
 
     source = Image.open(SOURCE).convert("RGBA")
     square = crop_center_square(source)

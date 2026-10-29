@@ -281,7 +281,8 @@
     logo.className = "site-logo";
     logo.href = "/";
     logo.innerHTML =
-      '<span class="site-logo-ks" aria-hidden="true">KS</span>' +
+      '<svg class="site-logo-ks" viewBox="0 0 1523.6 761.85" aria-hidden="true" focusable="false">' +
+      '<path fill-rule="evenodd" d="M0,0 L101.6,0 L101.6,514.4 L615.98,0 L761.75,0 L380.73,380.7 L460.22,460.1 L920.35,0 L1523.6,0 L1523.6,101.8 L964.6,101.8 L863.1,203.08 L863.1,334.88 L1523.6,334.88 L1523.6,606.05 L1371.35,761.85 L615.98,761.85 L460.22,606.05 L307.35,761.85 L0,761.85 Z M761.75,304.45 L761.75,436.43 L1421.9,436.43 L1421.9,565.2 L1326.98,660.12 L659.85,660.12 L533.25,533 Z M307.35,453.7 L387.48,533 L260.35,660.12 L101.6,660.12 Z"/></svg>' +
       '<span class="site-logo-text">KANASAKA</span>';
 
     const actions = document.createElement("div");
@@ -440,7 +441,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=86").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=87").then(resolve);
     });
   }
 
