@@ -2,7 +2,13 @@
   "use strict";
 
   var LOOP_SECONDS = 70;
-  var SMOOTHING = 0.16;
+  // Seconds to get back to full drift speed after the cursor leaves, and to
+  // wind down once it enters. Both are eased, so neither starts nor stops
+  // abruptly.
+  var SPEED_UP_SECONDS = 0.5;
+  var SLOW_DOWN_SECONDS = 0.6;
+  // Time constant (seconds) for the wheel's smoothing.
+  var WHEEL_SMOOTHING = 0.09;
 
   function init() {
     var showcase = document.querySelector(".showcase");
@@ -17,7 +23,8 @@
 
     var groupWidth = groups[0].getBoundingClientRect().width;
     var offset = 0;
-    var target = 0;
+    var pending = 0;
+    var drift = 1;
     var hovered = false;
     var focused = false;
     var visible = true;
@@ -33,22 +40,33 @@
       track.style.transform = "translate3d(" + -offset.toFixed(2) + "px,0,0)";
     }
 
+    function ease(t) {
+      return t * t * (3 - 2 * t);
+    }
+
     function frame(now) {
       rafId = 0;
       var dt = Math.min((now - last) / 1000, 0.1);
       last = now;
 
-      if (hovered) {
-        offset += (target - offset) * SMOOTHING;
-      } else if (!focused) {
-        offset += (groupWidth / LOOP_SECONDS) * dt;
-        target = offset;
+      // drift (0..1) is how far along the speed ramp we are; the actual
+      // speed is eased from it, so it never starts or stops abruptly.
+      if (hovered || focused) {
+        drift = Math.max(0, drift - dt / SLOW_DOWN_SECONDS);
+      } else {
+        drift = Math.min(1, drift + dt / SPEED_UP_SECONDS);
+      }
+      offset += (groupWidth / LOOP_SECONDS) * ease(drift) * dt;
+
+      // Wheel input is applied gradually rather than in one jump.
+      if (pending) {
+        var step = pending * (1 - Math.exp(-dt / WHEEL_SMOOTHING));
+        offset += step;
+        pending -= step;
+        if (Math.abs(pending) < 0.01) pending = 0;
       }
 
-      // Offset and target move together so wrapping never causes a jump.
-      var wrapped = wrap(offset);
-      target += wrapped - offset;
-      offset = wrapped;
+      offset = wrap(offset);
       apply();
       schedule();
     }
@@ -67,7 +85,6 @@
     showcase.addEventListener("pointerenter", function (event) {
       if (event.pointerType === "touch") return;
       hovered = true;
-      target = offset;
     });
 
     showcase.addEventListener("pointerleave", function (event) {
@@ -93,7 +110,7 @@
         var unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
         var dy = event.deltaY * unit;
         var dx = event.deltaX * unit;
-        target += Math.abs(dx) > Math.abs(dy) ? dx : -dy;
+        pending += Math.abs(dx) > Math.abs(dy) ? dx : -dy;
       },
       { passive: false }
     );
@@ -104,7 +121,7 @@
         if (width && width !== groupWidth) {
           var ratio = groupWidth ? width / groupWidth : 1;
           offset *= ratio;
-          target *= ratio;
+          pending *= ratio;
           groupWidth = width;
           apply();
         }
