@@ -879,7 +879,6 @@ h1 {
 
 .feature-grid article:hover {
   border-color: var(--color-border-light);
-  transform: translateY(-2px);
   box-shadow: 0 8px 28px var(--color-glow);
 }
 
@@ -3045,14 +3044,6 @@ body.tos-open {
   :root {
     --rail-fs: min(22vh, 10.5vw);
   }
-}
-
-/* The static ASCII margin decoration (redesign.css) used to sit in the right
-   margin on some pages; that margin now belongs to the rail, so those move
-   to the left like the pages that already had it there. */
-body.has-rail .page-decoration:not(.page-decoration-left) {
-  right: auto;
-  left: -132px;
 }
 
 @media print {
