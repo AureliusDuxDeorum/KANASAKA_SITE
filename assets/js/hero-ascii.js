@@ -111,25 +111,12 @@
       head: null,
       lines: [
         { t: "KANASAKA", cls: "ha-brand" },
-        { t: "Software, AI,", cls: "ha-brand-sub" },
-        { t: "robotics and", cls: "ha-brand-sub" },
-        { t: "biotech.", cls: "ha-brand-sub" },
       ],
     },
     {
       head: "Products",
       lines: [
         { t: "KS_Link", cls: "ha-item", href: "/products/ks-link/" },
-        { t: "Robotics", cls: "ha-item", href: "/products/robotics/" },
-      ],
-    },
-    {
-      head: "Research",
-      lines: [
-        { t: "AI", cls: "ha-item", href: "/research/artificial-intelligence/" },
-        { t: "Robotics", cls: "ha-item", href: "/research/robotics/" },
-        { t: "Publications", cls: "ha-item", href: "/research/publications/" },
-        { t: "Future work", cls: "ha-item", href: "/research/future-projects/" },
       ],
     },
     {

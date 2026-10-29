@@ -75,7 +75,6 @@
       color: var(--color-text-muted);
     }
     .ha-col .ha-brand { color: #6e6e6e; font-family: "Tektur", monospace; letter-spacing: 0.04em; }
-    .ha-col .ha-brand-sub { color: #3a3a3a; }
 
     /* the column sitemap doesn't shrink/wrap and eats too much width on
        narrow screens, pushing the K/S mark (centered on the true window
@@ -107,17 +106,6 @@
       user-select: none;
       font-size: 12px;
       line-height: 14px;
-    }
-
-    .ha-tagline {
-      position: absolute;
-      bottom: 40px;
-      left: clamp(20px, 4vw, 64px);
-      z-index: 4;
-      color: #555555;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      font-size: 11px;
     }
 
     /* Products: endless horizontal strip -- each product name next to a
@@ -227,7 +215,7 @@
   </style>
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=95"></script>
-  <script defer src="/assets/js/main.js?v=110"></script>
+  <script defer src="/assets/js/main.js?v=111"></script>
   <script defer src="/assets/js/product-showcase.js?v=2"></script>
 </head>
 <body>
@@ -241,7 +229,6 @@
     <h1 class="visually-hidden">KANASAKA</h1>
     <div class="ha-cols" id="ha-cols"></div>
     <div class="ha-field-wrap"><pre id="ha-field"></pre></div>
-    <div class="ha-tagline">Software &middot; AI &middot; Robotics &middot; Manufacturing</div>
   </section>
 
   <section class="page-section product-showcase" aria-labelledby="products-heading">
