@@ -2181,6 +2181,11 @@ body.auth-modal-open > #site-footer {
   margin-top: 8px;
 }
 
+/* Delete Account sits below Log Out with clear space between them. */
+.settings-section-logout + .settings-step-trigger-row {
+  margin-top: 40px;
+}
+
 .settings-static-field {
   max-width: 420px;
 }
@@ -2236,13 +2241,21 @@ body.auth-modal-open > #site-footer {
   font-size: 14px;
 }
 
-.settings-delete-button {
-  background: #5a1a1a;
-  color: #ffffff;
+/* Destructive buttons: gray with a red outline (same treatment as an admin
+   in the user catalogue) instead of a solid red fill. */
+.settings-delete-button,
+.button.settings-delete-button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: #e5484d;
+  box-shadow: 0 0 0 1px #e5484d;
 }
 
-.settings-delete-button:hover {
-  box-shadow: 0 0 24px rgba(180, 40, 40, 0.38);
+.settings-delete-button:hover,
+.button.settings-delete-button:hover {
+  background: var(--color-middle);
+  border-color: #e5484d;
+  box-shadow: 0 0 0 1px #e5484d, 0 0 24px rgba(229, 72, 77, 0.3);
 }
 
 .settings-coming-soon {
