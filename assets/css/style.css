@@ -3052,6 +3052,49 @@ body.tos-open {
   }
 }
 
+/* ── Collapsible settings sections (native <details>) ── */
+
+.settings-collapsible > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.settings-collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-collapsible > summary .settings-subsection-title {
+  margin: 0;
+}
+
+.settings-collapsible > summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-text-subtle);
+  border-bottom: 2px solid var(--color-text-subtle);
+  transform: rotate(45deg);
+  transition: transform 220ms ease;
+}
+
+.settings-collapsible[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.settings-collapsible > summary:hover .settings-subsection-title {
+  color: var(--color-text);
+}
+
+.settings-collapsible[open] > summary {
+  margin-bottom: 18px;
+}
+
 /* ── Developer panel: user catalogue ── */
 
 .user-catalogue-toolbar {

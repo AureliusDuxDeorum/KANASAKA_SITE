@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=118">
+  <link rel="stylesheet" href="/assets/css/style.css?v=119">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=92">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=96"></script>
@@ -196,8 +196,8 @@
               </form>
             </div>
 
-            <div class="settings-section" id="settings-2fa-section">
-              <h3 class="settings-subsection-title">Two-Factor Authentication</h3>
+            <details class="settings-section settings-collapsible" id="settings-2fa-section">
+              <summary><h3 class="settings-subsection-title">Two-Factor Authentication</h3></summary>
               <p id="settings-2fa-status" class="settings-panel-intro">Checking status...</p>
 
               <div id="settings-2fa-off" hidden>
@@ -252,7 +252,7 @@
                   <button class="button secondary" type="submit">Generate New Codes</button>
                 </form>
               </div>
-            </div>
+            </details>
 
             <form id="settings-delete-form" class="auth-form settings-form settings-section settings-section-danger">
               <h3 class="settings-subsection-title">Delete Account</h3>
@@ -388,8 +388,8 @@
               </div>
             </div>
 
-            <div class="settings-section">
-              <h3 class="settings-subsection-title">Account Lookup</h3>
+            <details class="settings-section settings-collapsible">
+              <summary><h3 class="settings-subsection-title">Account Lookup</h3></summary>
               <form id="settings-dev-lookup-form" class="auth-form settings-form">
                 <div class="auth-field">
                   <label for="settings-dev-lookup-query">Email or account ID</label>
@@ -414,10 +414,10 @@
                 </div>
                 <button class="button secondary" type="submit">Update Role</button>
               </form>
-            </div>
+            </details>
 
-            <div class="settings-section">
-              <h3 class="settings-subsection-title">Legal Notices</h3>
+            <details class="settings-section settings-collapsible">
+              <summary><h3 class="settings-subsection-title">Legal Notices</h3></summary>
               <p class="settings-panel-intro">Publish a policy update — emails every verified user immediately and shows a dismissible banner to anyone who hasn't acknowledged it yet, next time they're signed in.</p>
               <form id="settings-dev-notice-form" class="auth-form settings-form">
                 <div class="auth-field">
@@ -446,13 +446,13 @@
                 </div>
                 <button class="button secondary" type="submit">Send Policy Update</button>
               </form>
-            </div>
+            </details>
 
-            <div class="settings-section">
-              <h3 class="settings-subsection-title">Recent Site Events</h3>
+            <details class="settings-section settings-collapsible">
+              <summary><h3 class="settings-subsection-title">Recent Site Events</h3></summary>
               <button id="settings-dev-events-refresh" class="button secondary" type="button">Refresh</button>
               <div id="settings-dev-events" class="settings-dev-events"></div>
-            </div>
+            </details>
           </section>
         </div>
         </div>
