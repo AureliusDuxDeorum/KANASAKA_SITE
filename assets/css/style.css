@@ -3052,6 +3052,176 @@ body.tos-open {
   }
 }
 
+/* ── Developer panel: user catalogue ── */
+
+.user-catalogue-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-catalogue-search {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-base);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.user-catalogue-search:focus {
+  outline: none;
+  border-color: var(--color-border-light);
+}
+
+.user-catalogue-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.user-catalogue-filter {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.user-catalogue-filter:hover,
+.user-catalogue-filter.is-active {
+  color: var(--color-text);
+  border-color: var(--color-border-light);
+  background: var(--color-middle);
+}
+
+.user-catalogue-filter-count {
+  margin-left: 4px;
+  color: var(--color-text-subtle);
+}
+
+.user-catalogue-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.user-catalogue-refresh {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.user-catalogue-status {
+  margin: 0;
+  min-height: 1.4em;
+  color: var(--color-text-subtle);
+  font-size: 13px;
+}
+
+.user-catalogue-list {
+  max-height: 440px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-base);
+  overscroll-behavior: contain;
+}
+
+.user-catalogue-group {
+  padding-bottom: 6px;
+}
+
+.user-catalogue-letter {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 12px;
+  background: var(--color-middle);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.user-catalogue-user {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 6px 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-catalogue-user:hover {
+  background: var(--color-middle);
+  border-color: var(--color-border-light);
+}
+
+/* Admins stand out while scrolling: red outline in every theme. */
+.user-catalogue-user.is-admin,
+.user-catalogue-user.is-admin:hover {
+  border-color: #e5484d;
+  box-shadow: 0 0 0 1px #e5484d;
+}
+
+.user-catalogue-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-catalogue-name {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.user-catalogue-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.user-catalogue-badge--admin {
+  border-color: #e5484d;
+  color: #e5484d;
+}
+
+.user-catalogue-meta,
+.user-catalogue-extra {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.user-catalogue-extra {
+  color: var(--color-text-subtle);
+}
+
+.user-catalogue-empty {
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--color-text-subtle);
+}
+
 /* ── Buttons use Tektur (the logo face) ──
    Listed explicitly because several of these classes set their own
    `font-family: inherit`, which a bare `button` selector can't beat. Only the
@@ -3071,4 +3241,10 @@ button,
 .auth-password-toggle,
 .auth-modal-chooser-remove {
   font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+}
+
+/* The catalogue rows are list items, not calls to action: keep the body font
+   so names and emails stay easy to scan. */
+.user-catalogue .user-catalogue-user {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
 }

@@ -1002,7 +1002,166 @@
       eventsRefresh.addEventListener("click", loadEvents);
     }
 
+    initUserCatalogue(navBtn, panel, lookupForm);
+
     loadEvents();
+  }
+
+  // Alphabetical, searchable, role-filterable list of every account. Loaded
+  // the first time the Developer tab is opened (not on every settings load)
+  // because the endpoint is audited and rate limited.
+  function initUserCatalogue(navBtn, panel, lookupForm) {
+    const listEl = document.getElementById("settings-dev-catalogue-list");
+    const searchEl = document.getElementById("settings-dev-catalogue-search");
+    const statusEl = document.getElementById("settings-dev-catalogue-status");
+    const refreshBtn = document.getElementById("settings-dev-catalogue-refresh");
+    const filterBtns = Array.prototype.slice.call(document.querySelectorAll("[data-role-filter]"));
+    if (!listEl || !searchEl || !statusEl) return;
+
+    const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+    let users = [];
+    let roleFilter = "all";
+    let loaded = false;
+    let searchTimer = null;
+
+    function label(u) {
+      return (u.displayName || "").trim() || u.accountId || u.email;
+    }
+
+    function groupLetter(u) {
+      const first = label(u).charAt(0).toUpperCase();
+      return /[A-Z]/.test(first.normalize("NFD").charAt(0)) ? first.normalize("NFD").charAt(0) : "#";
+    }
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function updateCounts() {
+      const counts = { all: users.length, admin: 0, beta: 0, user: 0 };
+      users.forEach(function (u) {
+        if (counts[u.role] !== undefined) counts[u.role] += 1;
+      });
+      filterBtns.forEach(function (btn) {
+        const el = btn.querySelector("[data-count]");
+        if (el) el.textContent = String(counts[btn.getAttribute("data-role-filter")] || 0);
+      });
+    }
+
+    function render() {
+      const query = searchEl.value.trim().toLowerCase();
+      const shown = users.filter(function (u) {
+        if (roleFilter !== "all" && u.role !== roleFilter) return false;
+        if (!query) return true;
+        return (
+          (u.displayName || "").toLowerCase().indexOf(query) !== -1 ||
+          (u.accountId || "").toLowerCase().indexOf(query) !== -1 ||
+          u.email.toLowerCase().indexOf(query) !== -1
+        );
+      });
+
+      setStatus(
+        shown.length === users.length
+          ? users.length + (users.length === 1 ? " user" : " users")
+          : "Showing " + shown.length + " of " + users.length
+      );
+
+      if (!shown.length) {
+        listEl.innerHTML = '<p class="user-catalogue-empty">No users match.</p>';
+        return;
+      }
+
+      let html = "";
+      let currentLetter = null;
+      shown.forEach(function (u) {
+        const letter = groupLetter(u);
+        if (letter !== currentLetter) {
+          if (currentLetter !== null) html += "</div>";
+          html += '<div class="user-catalogue-group"><div class="user-catalogue-letter">' + escapeHtml(letter) + "</div>";
+          currentLetter = letter;
+        }
+        const lookupKey = u.accountId || u.email;
+        html +=
+          '<button type="button" class="user-catalogue-user' + (u.role === "admin" ? " is-admin" : "") +
+          '" data-lookup="' + escapeHtml(lookupKey) + '">' +
+          '<span class="user-catalogue-line">' +
+          '<span class="user-catalogue-name">' + escapeHtml(label(u)) + "</span>" +
+          '<span class="user-catalogue-badge user-catalogue-badge--' + escapeHtml(u.role) + '">' + escapeHtml(u.role) + "</span>" +
+          "</span>" +
+          '<span class="user-catalogue-meta">' + escapeHtml(u.email) +
+          (u.accountId ? " · " + escapeHtml(u.accountId) : "") + "</span>" +
+          '<span class="user-catalogue-extra">' +
+          (u.emailVerified ? "Verified" : "Unverified") +
+          " · 2FA " + (u.twoFactorEnabled ? "on" : "off") +
+          " · joined " + escapeHtml(String(u.createdAt || "").slice(0, 10)) +
+          "</span></button>";
+      });
+      if (currentLetter !== null) html += "</div>";
+      listEl.innerHTML = html;
+    }
+
+    async function load() {
+      setStatus("Loading…");
+      listEl.innerHTML = "";
+      try {
+        const { response, data } = await apiRequest("/api/admin/users", { method: "GET" });
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not load users.");
+        }
+        users = ((data && data.users) || []).slice().sort(function (a, b) {
+          return collator.compare(label(a), label(b)) || collator.compare(a.email, b.email);
+        });
+        loaded = true;
+        updateCounts();
+        render();
+      } catch (error) {
+        users = [];
+        updateCounts();
+        setStatus(error.message || "Could not load users.");
+      }
+    }
+
+    searchEl.addEventListener("input", function () {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(render, 80);
+    });
+
+    filterBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        roleFilter = btn.getAttribute("data-role-filter");
+        filterBtns.forEach(function (other) {
+          const on = other === btn;
+          other.classList.toggle("is-active", on);
+          other.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        render();
+      });
+    });
+
+    // Picking a user runs the existing Account Lookup (where roles are changed).
+    listEl.addEventListener("click", function (event) {
+      const row = event.target.closest("[data-lookup]");
+      if (!row || !lookupForm) return;
+      const input = lookupForm.querySelector('[name="query"]');
+      input.value = row.getAttribute("data-lookup");
+      lookupForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (lookupForm.requestSubmit) {
+        lookupForm.requestSubmit();
+      } else {
+        lookupForm.dispatchEvent(new Event("submit", { cancelable: true }));
+      }
+    });
+
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", load);
+    }
+
+    function loadOnce() {
+      if (!loaded) load();
+    }
+
+    navBtn.addEventListener("click", loadOnce);
+    if (!panel.hidden) loadOnce();
   }
 
   function initTwoFactorSettings(profile) {
