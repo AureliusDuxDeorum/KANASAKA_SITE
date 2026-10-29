@@ -122,8 +122,9 @@
 
     /* Products: endless horizontal strip -- each product name next to a
        picture of its UI. The group is duplicated (second copy aria-hidden)
-       and the track slides by exactly one group's width, so the loop is
-       seamless. Swap /assets/images/products/placeholder.svg per product
+       and the track moves by exactly one group's width, so the loop is
+       seamless. It drifts on its own; while the mouse is over it the wheel
+       drives it instead (product-showcase.js). Swap /assets/images/products/placeholder.svg per product
        once real screenshots exist. */
     .product-showcase {
       max-width: none;
@@ -185,6 +186,12 @@
       from { transform: translateX(0); }
       to { transform: translateX(-50%); }
     }
+    /* product-showcase.js takes over the motion (autoplay + wheel control);
+       the CSS animation above is only the no-script fallback. */
+    .showcase--js .showcase-track {
+      animation: none;
+      will-change: transform;
+    }
     @media (prefers-reduced-motion: reduce) {
       .showcase { overflow-x: auto; }
       .showcase-track { animation: none; }
@@ -194,6 +201,7 @@
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=95"></script>
   <script defer src="/assets/js/main.js?v=110"></script>
+  <script defer src="/assets/js/product-showcase.js?v=1"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
