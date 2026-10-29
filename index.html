@@ -124,7 +124,7 @@
        picture of its UI. The group is duplicated (second copy aria-hidden)
        and the track moves by exactly one group's width, so the loop is
        seamless. It drifts on its own; while the mouse is over it the wheel
-       drives it instead (product-showcase.js). Swap /assets/images/products/placeholder.svg per product
+       drives it instead (product-showcase.js). Swap /assets/images/products/preview.webp per product
        once real screenshots exist. */
     .product-showcase {
       max-width: none;
@@ -179,13 +179,35 @@
       color: var(--color-text);
       white-space: nowrap;
     }
+    .showcase-media {
+      position: relative;
+      display: block;
+      flex-shrink: 0;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
     .showcase-shot {
       display: block;
       height: clamp(170px, 22vw, 340px);
       width: auto;
-      aspect-ratio: 16 / 10;
-      border-radius: 12px;
-      flex-shrink: 0;
+    }
+    /* Dimmed with a semi-transparent gray veil and labelled. Drop the
+       .showcase-soon span from a product once it is ready to show undimmed. */
+    .showcase-soon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(34, 34, 34, 0.72);
+      color: rgba(255, 255, 255, 0.92);
+      font-family: "Tektur", Inter, system-ui, sans-serif;
+      font-weight: 600;
+      font-size: clamp(16px, 2.2vw, 34px);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      text-align: center;
     }
     @keyframes showcase-scroll {
       from { transform: translateX(0); }
@@ -231,25 +253,25 @@
         <li class="showcase-item">
           <a class="showcase-hit" href="/products/ks-link/">
             <span class="showcase-name">KS_Link</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </a>
         </li>
         <li class="showcase-item">
           <div class="showcase-hit">
             <span class="showcase-name">KS_Stocks</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </div>
         </li>
         <li class="showcase-item">
           <div class="showcase-hit">
             <span class="showcase-name">KS_K</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </div>
         </li>
         <li class="showcase-item">
           <div class="showcase-hit">
             <span class="showcase-name">KS_Unify</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </div>
         </li>
       </ul>
@@ -257,25 +279,25 @@
         <li class="showcase-item">
           <a class="showcase-hit" href="/products/ks-link/" tabindex="-1">
             <span class="showcase-name">KS_Link</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </a>
         </li>
         <li class="showcase-item">
           <div class="showcase-hit">
             <span class="showcase-name">KS_Stocks</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </div>
         </li>
         <li class="showcase-item">
           <div class="showcase-hit">
             <span class="showcase-name">KS_K</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </div>
         </li>
         <li class="showcase-item">
           <div class="showcase-hit">
             <span class="showcase-name">KS_Unify</span>
-            <img class="showcase-shot" src="/assets/images/products/placeholder.svg" width="1600" height="1000" alt="">
+            <span class="showcase-media"><img class="showcase-shot" src="/assets/images/products/preview.webp" width="1400" height="710" alt=""><span class="showcase-soon">Coming Soon</span></span>
           </div>
         </li>
       </ul>
