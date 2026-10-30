@@ -716,3 +716,107 @@ h1 {
 .skip-link:focus {
   top: 0;
 }
+
+/* ── Text-only buttons ──
+   A button is just its word; the rectangle is an invisible hit area (the
+   padding stays, the box goes). Hover/active is an underline, and the
+   existing little lift on hover is kept. Last block in the last stylesheet
+   so it wins over the older per-button boxes in style.css above.
+   Not covered on purpose: .theme-option tiles (selection cards) and the
+   small .billing-badge / .download-badge style tags (labels, not buttons). */
+
+.button,
+.button.secondary,
+.button.settings-delete-button,
+.settings-delete-button,
+.auth-link,
+.auth-link.secondary,
+.nav-toggle,
+.nav-link,
+.settings-nav-item,
+.cookie-consent-ok,
+.legal-notice-banner-ok,
+.auth-modal-close,
+.user-catalogue-filter {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.button::after {
+  display: none;
+}
+
+.button,
+.auth-link,
+.nav-toggle,
+.cookie-consent-ok,
+.legal-notice-banner-ok,
+.auth-modal-close {
+  color: var(--color-text);
+}
+
+.button.secondary,
+.auth-link.secondary,
+.user-catalogue-filter {
+  color: var(--color-text-muted);
+}
+
+.button.settings-delete-button,
+.settings-delete-button {
+  color: #e5484d;
+}
+
+.button:hover,
+.button.secondary:hover,
+.auth-link:hover,
+.auth-link.secondary:hover,
+.nav-toggle:hover,
+.nav-link:hover,
+.nav-link.active,
+.settings-nav-item:hover,
+.settings-nav-item.is-active,
+.cookie-consent-ok:hover,
+.legal-notice-banner-ok:hover,
+.auth-modal-close:hover,
+.user-catalogue-filter:hover,
+.user-catalogue-filter.is-active {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.button:hover,
+.button.secondary:hover,
+.auth-link:hover,
+.auth-link.secondary:hover,
+.nav-toggle:hover,
+.nav-link:hover,
+.nav-link.active,
+.cookie-consent-ok:hover,
+.legal-notice-banner-ok:hover,
+.user-catalogue-filter:hover,
+.user-catalogue-filter.is-active {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 7px;
+}
+
+.button.settings-delete-button:hover,
+.settings-delete-button:hover {
+  color: #e5484d;
+}
+
+.settings-nav-item:hover,
+.settings-nav-item.is-active {
+  color: var(--color-text);
+}
+
+.button[disabled],
+.platform-coming-soon[disabled] {
+  color: var(--color-text-subtle);
+  text-decoration: none;
+}
