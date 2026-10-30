@@ -7,6 +7,10 @@
   // even-odd rule, so nothing else needs to know which is which.
   const LOGO_WIDTH = 762.05;
   const LOGO_HEIGHT = 1523.4;
+  // How much of the hero field's height the logo takes up, and where its
+  // vertical centre sits (as fractions of that height).
+  const LOGO_SPAN = 0.78;
+  const LOGO_CENTER_Y = 0.474;
   const LOGO_LOOPS = [
     [[0, 0], [101.5, 0], [101.5, 514.75], [615.98, 0], [762.05, 0], [381.05, 380.95], [460.32, 460.3], [762.05, 158.6], [762.05, 304.45], [533.23, 533.2], [762.05, 761.9], [762.05, 863.4], [203.1, 863.4], [101.5, 964.95], [101.5, 1096.65], [762.05, 1096.65], [762.05, 1370.83], [609.6, 1523.4], [0, 1523.4], [0, 1422.02], [565.35, 1422.02], [660.25, 1326.95], [660.25, 1198.28], [0, 1198.28]],
     [[307.67, 453.71], [387.75, 533.2], [101.5, 819.22], [101.5, 660.32]],
@@ -224,8 +228,8 @@
       // to the right of the nav columns). The logo keeps its true 1:2 shape:
       // character cells are much taller than wide (cellH >> cellW), so the
       // x axis is stretched by cellH / cellW to compensate.
-      const logoHeight = mh * 0.78;
-      const logoTop = mh * 0.474 - logoHeight / 2;
+      const logoHeight = mh * LOGO_SPAN;
+      const logoTop = mh * LOGO_CENTER_Y - logoHeight / 2;
       mctx.save();
       mctx.translate(mw / 2, 0);
       mctx.scale(cellH / cellW, 1);
@@ -250,22 +254,38 @@
       letterMask = mask;
     }
 
+    // The sitemap table is decoration. If it would run into the logo (any
+    // layout narrower than a wide desktop), drop it and give the field the
+    // whole width instead of letting the two collide.
+    const TABLE_LOGO_GAP = 160;
+
     function measure() {
       const cell = measureCell(fieldEl);
       cellW = cell.w || cellW;
       cellH = cell.h || cellH;
 
       const wrapRect = fieldWrap.getBoundingClientRect();
-      const colsRect = colsEl.getBoundingClientRect();
-      contentColsWidth = colsRect.width + 24;
       cols = Math.floor(wrapRect.width / cellW);
       rows = Math.floor(wrapRect.height / cellH);
+
+      hero.classList.remove("ha-no-cols");
+      const logoWidthPx = (rows * LOGO_SPAN * cellH * LOGO_WIDTH) / LOGO_HEIGHT;
+      const logoLeft = wrapRect.left + wrapRect.width / 2 - logoWidthPx / 2;
+      if (colsEl.getBoundingClientRect().right + TABLE_LOGO_GAP > logoLeft) {
+        hero.classList.add("ha-no-cols");
+      }
+
+      const colsRect = colsEl.getBoundingClientRect();
+      contentColsWidth = colsRect.width + 24;
       startCol = Math.ceil(contentColsWidth / cellW) + 2;
       buildLetterMask();
     }
 
     window.addEventListener("resize", measure);
     measure();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(measure).catch(function () {});
+    }
 
     let running = true;
     let rafId = null;

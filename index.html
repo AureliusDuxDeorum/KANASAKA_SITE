@@ -88,6 +88,12 @@
       }
     }
 
+    /* Set by hero-ascii.js when the table would collide with the logo. */
+    .hero-ascii.ha-no-cols .ha-cols,
+    .hero-ascii.ha-no-cols .ha-cols::before {
+      display: none;
+    }
+
     .ha-field-wrap {
       position: absolute;
       inset: 40px clamp(20px, 4vw, 64px);
@@ -215,7 +221,7 @@
   </style>
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=96"></script>
-  <script defer src="/assets/js/main.js?v=112"></script>
+  <script defer src="/assets/js/main.js?v=114"></script>
   <script defer src="/assets/js/product-showcase.js?v=2"></script>
 </head>
 <body>
