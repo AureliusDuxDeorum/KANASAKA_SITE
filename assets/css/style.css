@@ -3432,9 +3432,8 @@ body.tos-open {
     gap: 6px 12px;
   }
 
-  /* phones keep BASE and INK only (the 6th and 7th items are SURF and LINE) */
-  .hud-line .hud-item:nth-child(6),
-  .hud-line .hud-item:nth-child(7) {
+  /* phones keep BASE and INK only */
+  .hud-line .hud-swatch--extra {
     display: none;
   }
 }

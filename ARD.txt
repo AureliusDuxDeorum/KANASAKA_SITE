@@ -44,9 +44,13 @@ functions/vendor/argon2-wasm-edge/  Vendored Argon2 lib + WASM (no npm install o
 migrations/002–008.sql      D1 schema migrations (run manually on remote)
 wrangler.toml               Pages + D1 + R2 binding config
 scripts/pages-build.mjs     Build step (Cloudflare Pages); runs stamp-version.mjs if a build command is set
-scripts/stamp-version.mjs   Writes assets/site-meta.json (CalVer version, build time, git revision).
-                            The Pages build command is EMPTY, so run `npm run stamp` and commit the
-                            result before each deploy; the footer HUD reads it.
+scripts/stamp-version.mjs   Writes assets/site-meta.json (version from package.json, build date, git
+                            revision). The Pages build command is EMPTY, so run `npm run stamp` and commit
+                            the result before each deploy; the footer HUD reads it.
+                            VERSIONING: package.json "version" (x.y.z) is the single source of truth.
+                            Bump: npm version <patch|minor|major> --no-git-tag-version, npm run stamp,
+                            commit, deploy, then tag the deployed commit: git tag -a vX.Y.Z -m "..."
+                            (patch = fixes, minor = features, major = redesigns / breaking changes).
 assets/js/hud.js            Quiet console-style labels: footer line (build, theme, theme hex codes) and a
                             vertical page code on the left edge. Code grammar: //xf_SSP_T_LL = nav section
                             in header order (00 Home ... 08 Legal; 09x account, 09x auth pages), page

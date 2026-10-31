@@ -410,7 +410,7 @@
   function loadHud() {
     if (window.__ksHudLoaded) return;
     window.__ksHudLoaded = true;
-    loadScript("/assets/js/hud.js?v=1");
+    loadScript("/assets/js/hud.js?v=2");
   }
 
   function loadLogoAnimation() {

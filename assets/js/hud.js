@@ -3,7 +3,7 @@
 
   // Quiet "console" labels. Everything shown is read from the page or the build:
   //
-  //   footer line   //SYS  build version / time / revision (assets/site-meta.json),
+  //   footer line   //SYS  site version / build date / revision (assets/site-meta.json),
   //                 the active theme and its four real hex codes (live from CSS)
   //   left edge     //xf_<route>_<theme>_<layout>  + route + scroll position
   //
@@ -125,21 +125,16 @@
     if (!footerEl) return;
     footerEl.textContent = "";
 
-    var build = "//SYS";
-    footerEl.appendChild(span("hud-item", build));
-    footerEl.appendChild(
-      span(
-        "hud-item",
-        "BUILD " + (meta && meta.version ? meta.version : "---") + (meta && meta.built ? " " + meta.built : "")
-      )
-    );
+    footerEl.appendChild(span("hud-item", "//SYS"));
+    footerEl.appendChild(span("hud-item", "VER " + (meta && meta.version ? meta.version : "---")));
+    if (meta && meta.built) footerEl.appendChild(span("hud-item", "BUILT " + meta.built));
     if (meta && meta.rev) footerEl.appendChild(span("hud-item", "REV " + meta.rev));
     footerEl.appendChild(span("hud-item", "THEME " + theme().toUpperCase()));
 
     var styles = window.getComputedStyle(document.documentElement);
     SWATCHES.forEach(function (entry) {
       var hex = toHex(styles.getPropertyValue(entry[1]));
-      var item = span("hud-item hud-swatch");
+      var item = span("hud-item hud-swatch" + (entry[0] === "SURF" || entry[0] === "LINE" ? " hud-swatch--extra" : ""));
       var chip = span("hud-chip");
       chip.style.setProperty("--chip", hex);
       item.appendChild(chip);
