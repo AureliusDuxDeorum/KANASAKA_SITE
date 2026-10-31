@@ -9,6 +9,7 @@
   const LOGO_HEIGHT = 1523.4;
   // How much of the hero field's height the logo takes up, and where its
   // vertical centre sits (as fractions of that height).
+  const SHIMMER_RATE = 0.0127; // radians per pixel along each axis (~350px wavelength on the diagonal)
   const LOGO_SPAN = 0.78;
   const LOGO_CENTER_Y = 0.474;
   const LOGO_LOOPS = [
@@ -302,6 +303,13 @@
       const driftX = reduced ? 0 : t * 0.025;
       const driftY = reduced ? 0 : t * 0.016;
       const shimmerT = reduced ? 0 : t * 0.5;
+      // The shimmer wave runs at exactly 45deg on screen, matching the
+      // logo's diagonals. Its phase is in real pixels (cell size x a fixed
+      // rate per axis) rather than per character cell: cells are about twice
+      // as tall as wide, and how much so depends on the visitor's monospace
+      // font, so a per-cell phase tilts the wave differently on every machine.
+      const shimmerPhaseX = cellW * SHIMMER_RATE;
+      const shimmerPhaseY = cellH * SHIMMER_RATE;
 
       for (let y = 0; y < rows; y++) {
         let runChar = "";
@@ -309,6 +317,7 @@
         const runs = [];
         const ny = y * 0.16 - driftY;
         const rowMaskOffset = y * cols;
+        const rowShimmerPhase = y * shimmerPhaseY - shimmerT;
 
         for (let x = 0; x < cols; x++) {
           const nx = x * 0.09 + driftX;
@@ -322,7 +331,7 @@
             // breathing across the mark's own coordinates on its own clock
             // -- instead of inheriting the ambient field's drift. Kept
             // deliberately gentle: a quiet ambient quality, not a sweep.
-            const shimmer = Math.sin(x * 0.1 + y * 0.16 - shimmerT) * 0.5 + 0.5;
+            const shimmer = Math.sin(x * shimmerPhaseX + rowShimmerPhase) * 0.5 + 0.5;
             const base = m * (0.82 + shimmer * 0.13);
             v = Math.max(v, base);
           }
