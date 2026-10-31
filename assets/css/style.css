@@ -751,115 +751,93 @@ h1 {
   pointer-events: none;
 }
 
-/* KS-mark loading spinner: 4 thin horizontal lines around the (static) "KS"
-   mark, all rigidly rotating clockwise together in 45deg increments about
-   the shared center — each line spins on its own axis as it goes. */
-.ks-spinner {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+/* KS loading mark. The logo is split into 9 pieces (see auth.js); each flies in
+   from its own direction with a very fast start and a hard brake, overshoots
+   its seat by a hair and settles, holds assembled, then reverses out the way
+   it came and does it again. The stagger (--d) keeps something moving at all
+   times. Per-piece vars: --fx/--fy/--fr entry offset + spin, --ox/--oy the
+   overshoot nudge. Offsets are in the logo's own units (it is ~1524 wide). */
+.ks-loader {
+  display: inline-block;
+  width: 52px;
+  height: 26px;
   vertical-align: middle;
+  overflow: visible;
+  color: var(--color-text);
 }
 
-.ks-spinner-bars {
-  position: absolute;
-  inset: 0;
-  animation: ks-spinner-spin 6s ease-in-out infinite;
+/* A solid copy of the whole logo sits under the pieces and is shown only while
+   every piece is seated (t = 31%-62% of the cycle; the last piece lands at 22%
+   plus its 135ms stagger). Pieces are separate transformed elements, which
+   Chrome anti-aliases on their own, leaving hairline seams between them; the
+   solid copy underneath shows white through those instead of black. It is
+   inset by ~half a pixel so it never doubles up on the logo's outline. */
+.ks-loader .ks-loader-whole {
+  fill: currentColor;
+  fill-rule: evenodd; /* the logo has two holes */
+  opacity: 0;
+  animation: ks-assemble-base 1.5s linear infinite;
 }
 
-.ks-spinner-line {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12px;
-  height: 1.5px;
-  margin: -0.75px 0 0 -6px;
-  background: currentColor;
-}
-
-.ks-spinner-line--top {
-  transform: translateY(-15px);
-}
-
-.ks-spinner-line--bottom {
-  transform: translateY(15px);
-}
-
-.ks-spinner-line--left {
-  transform: translateX(-15px);
-}
-
-.ks-spinner-line--right {
-  transform: translateX(15px);
-}
-
-.ks-spinner-letters {
-  position: relative;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 0.75;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Each 45deg step glides for 0.25s then holds for 0.5s before the next glide
-   (a flat pair of stops at the same angle produces the hold). */
-@keyframes ks-spinner-spin {
-  0% {
-    transform: rotate(0deg);
+@keyframes ks-assemble-base {
+  0%,
+  30% {
+    opacity: 0;
   }
-  4.1667% {
-    transform: rotate(45deg);
+  31%,
+  62% {
+    opacity: 1;
   }
-  12.5% {
-    transform: rotate(45deg);
-  }
-  16.6667% {
-    transform: rotate(90deg);
-  }
-  25% {
-    transform: rotate(90deg);
-  }
-  29.1667% {
-    transform: rotate(135deg);
-  }
-  37.5% {
-    transform: rotate(135deg);
-  }
-  41.6667% {
-    transform: rotate(180deg);
-  }
-  50% {
-    transform: rotate(180deg);
-  }
-  54.1667% {
-    transform: rotate(225deg);
-  }
-  62.5% {
-    transform: rotate(225deg);
-  }
-  66.6667% {
-    transform: rotate(270deg);
-  }
-  75% {
-    transform: rotate(270deg);
-  }
-  79.1667% {
-    transform: rotate(315deg);
-  }
-  87.5% {
-    transform: rotate(315deg);
-  }
-  91.6667% {
-    transform: rotate(360deg);
-  }
+  63%,
   100% {
-    transform: rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.ks-loader path:not(.ks-loader-whole) {
+  /* each piece overlaps its neighbours by a hair (inside the logo only), which
+     hides the anti-aliasing seams that abutting edges would otherwise show */
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: ks-assemble 1.5s linear infinite;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes ks-assemble {
+  0% {
+    transform: translate(var(--fx), var(--fy)) rotate(var(--fr));
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.08, 0.85, 0.16, 1);
+  }
+  3% {
+    opacity: 1;
+  }
+  16% {
+    transform: translate(var(--ox), var(--oy)) rotate(0deg);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  22% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  62% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.6, 0, 0.92, 0.45);
+  }
+  84%,
+  100% {
+    transform: translate(var(--fx), var(--fy)) rotate(var(--fr));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-loader path {
+    animation: none;
+    opacity: 1;
   }
 }
 

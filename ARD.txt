@@ -90,9 +90,10 @@ Login/register UI: stepped modal, not dedicated pages
   The old single-page forms/JS (bindEmailPasswordForm, the static
   login-form/register-form/login-2fa-form markup) were removed entirely,
   not kept as a fallback.
-  UX polish: submit buttons show a KS-mark spinner (setButtonLoading,
-  .ks-spinner in style.css -- the header logo's 4 bars spinning in 90deg
-  increments around a counter-rotated, upright "KS") instead of just
+  UX polish: submit buttons show a KS loading mark (setButtonLoading,
+  .ks-loader in style.css -- the logo split into 9 pieces that fly in, snap
+  together, hold, reverse out and repeat; markup is KS_SPINNER_HTML in
+  auth.js, built from assets/logo/ks-horizontal.svg) instead of just
   disabling silently. Each numbered step shows "Step N of M" in its eyebrow
   (chooser/verify are unnumbered by design). Password fields get a Show/Hide
   toggle (addPasswordToggle). The modal traps Tab focus and supports Escape
