@@ -751,93 +751,154 @@ h1 {
   pointer-events: none;
 }
 
-/* KS loading mark. The logo is split into 9 pieces (see auth.js); each flies in
-   from its own direction with a very fast start and a hard brake, overshoots
-   its seat by a hair and settles, holds assembled, then reverses out the way
-   it came and does it again. The stagger (--d) keeps something moving at all
-   times. Per-piece vars: --fx/--fy/--fr entry offset + spin, --ox/--oy the
-   overshoot nudge. Offsets are in the logo's own units (it is ~1524 wide). */
+/* KS loading mark: the logo is a monoline drawing, so it is drawn by three
+   constant-width lines (a: stem, foot, long diagonal and S top bar; b: the K
+   arm; c: the K leg, S bottom bar, right side, middle bar and left side).
+   Each line follows its route, bending at the 90deg/45deg corners, starts fast
+   and brakes hard, and stops in turn (a, then b, then c). Once all are seated
+   an exact solid copy of the logo takes over for the hold (the lines differ
+   from the artwork by ~2 units of 1524), then the lines retract back along
+   their routes in reverse order (c, b, a) and the loop repeats. The svg box is
+   the logo's own bounding box and clips the lines (overflow: hidden), which is
+   also what gives the arm and the S their flat, cut-off ends.
+   Loop: 2200ms. The keyframes are generated; their times come from one schedule
+   (ms): a 0-480, b 300-680, c 560-1080; hold 1080-1560; retract c 1560-1830,
+   b 1660-1900, a 1760-2090. */
 .ks-loader {
   display: inline-block;
   width: 52px;
   height: 26px;
   vertical-align: middle;
-  overflow: visible;
+  overflow: hidden;
   color: var(--color-text);
 }
 
-/* A solid copy of the whole logo sits under the pieces and is shown only while
-   every piece is seated (t = 31%-62% of the cycle; the last piece lands at 22%
-   plus its 135ms stagger). Pieces are separate transformed elements, which
-   Chrome anti-aliases on their own, leaving hairline seams between them; the
-   solid copy underneath shows white through those instead of black. It is
-   inset by ~half a pixel so it never doubles up on the logo's outline. */
 .ks-loader .ks-loader-whole {
   fill: currentColor;
   fill-rule: evenodd; /* the logo has two holes */
   opacity: 0;
-  animation: ks-assemble-base 1.5s linear infinite;
+  animation: ks-whole 2200ms linear infinite;
 }
 
-@keyframes ks-assemble-base {
-  0%,
-  30% {
-    opacity: 0;
-  }
-  31%,
-  62% {
-    opacity: 1;
-  }
-  63%,
-  100% {
-    opacity: 0;
-  }
+.ks-loader .ks-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 102px;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+  animation-duration: 2200ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
-.ks-loader path:not(.ks-loader-whole) {
-  /* each piece overlaps its neighbours by a hair (inside the logo only), which
-     hides the anti-aliasing seams that abutting edges would otherwise show */
-  fill: currentColor;
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  opacity: 0;
-  animation: ks-assemble 1.5s linear infinite;
-  animation-delay: var(--d, 0ms);
+.ks-loader .ks-line--a { animation-name: ks-line-a; }
+.ks-loader .ks-line--b { animation-name: ks-line-b; }
+.ks-loader .ks-line--c { animation-name: ks-line-c; }
+
+@keyframes ks-whole {
+  0%, 49.089% { opacity: 0; }
+  49.091%, 70.907% { opacity: 1; }
+  70.909%, 100% { opacity: 0; }
 }
 
-@keyframes ks-assemble {
+@keyframes ks-line-a {
   0% {
-    transform: translate(var(--fx), var(--fy)) rotate(var(--fr));
+    stroke-dashoffset: 100;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  21.818% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  49.089% {
+    opacity: 1;
+  }
+  49.091%, 70.907% {
     opacity: 0;
-    animation-timing-function: cubic-bezier(0.08, 0.85, 0.16, 1);
   }
-  3% {
+  70.909% {
+    stroke-dashoffset: 0;
     opacity: 1;
   }
-  16% {
-    transform: translate(var(--ox), var(--oy)) rotate(0deg);
-    animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+  80% {
+    stroke-dashoffset: 0;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45);
   }
-  22% {
-    transform: translate(0, 0) rotate(0deg);
+  95%, 100% {
+    stroke-dashoffset: 100;
     opacity: 1;
   }
-  62% {
-    transform: translate(0, 0) rotate(0deg);
+}
+
+@keyframes ks-line-b {
+  0%, 13.636% {
+    stroke-dashoffset: 100;
     opacity: 1;
-    animation-timing-function: cubic-bezier(0.6, 0, 0.92, 0.45);
+    animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
   }
-  84%,
-  100% {
-    transform: translate(var(--fx), var(--fy)) rotate(var(--fr));
+  30.909% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  49.089% {
+    opacity: 1;
+  }
+  49.091%, 70.907% {
     opacity: 0;
+  }
+  70.909% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  75.455% {
+    stroke-dashoffset: 0;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45);
+  }
+  86.364%, 100% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+}
+
+@keyframes ks-line-c {
+  0%, 25.455% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  49.091% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  49.089% {
+    opacity: 1;
+  }
+  49.091%, 70.907% {
+    opacity: 0;
+  }
+  70.909% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45);
+  }
+  83.182%, 100% {
+    stroke-dashoffset: 100;
+    opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ks-loader path {
+  .ks-loader .ks-loader-whole {
     animation: none;
     opacity: 1;
+  }
+
+  .ks-loader .ks-line {
+    animation: none;
+    opacity: 0;
   }
 }
 
