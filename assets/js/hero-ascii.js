@@ -276,6 +276,16 @@
         hero.classList.add("ha-no-cols");
       }
 
+      const hudH = document.getElementById("ha-hud-h");
+      const hudV = document.getElementById("ha-hud-v");
+      if (hudH) {
+        hudH.textContent =
+          "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
+      }
+      if (hudV) {
+        hudV.textContent = "//MASK KS_V 1:2  //SPAN " + Math.round(LOGO_SPAN * 100) + "%  //WAVE 45DEG";
+      }
+
       const colsRect = colsEl.getBoundingClientRect();
       contentColsWidth = colsRect.width + 24;
       startCol = Math.ceil(contentColsWidth / cellW) + 2;

@@ -407,6 +407,12 @@
     });
   }
 
+  function loadHud() {
+    if (window.__ksHudLoaded) return;
+    window.__ksHudLoaded = true;
+    loadScript("/assets/js/hud.js?v=1");
+  }
+
   function loadLogoAnimation() {
     return new Promise(function (resolve) {
       if (window.KanasakaLogoAnimation) {
@@ -441,7 +447,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=90").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=91").then(resolve);
     });
   }
 
@@ -484,6 +490,7 @@
     }
 
     mountLayout();
+    loadHud();
 
     window.requestAnimationFrame(function () {
       document.body.classList.add("is-site-ready");

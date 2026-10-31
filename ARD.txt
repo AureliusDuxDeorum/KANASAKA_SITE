@@ -43,7 +43,16 @@ functions/lib/two-factor.js 2FA setup/enable/disable + login challenges
 functions/vendor/argon2-wasm-edge/  Vendored Argon2 lib + WASM (no npm install on CI)
 migrations/002–008.sql      D1 schema migrations (run manually on remote)
 wrangler.toml               Pages + D1 + R2 binding config
-scripts/pages-build.mjs     No-op build step (Cloudflare Pages)
+scripts/pages-build.mjs     Build step (Cloudflare Pages); runs stamp-version.mjs if a build command is set
+scripts/stamp-version.mjs   Writes assets/site-meta.json (CalVer version, build time, git revision).
+                            The Pages build command is EMPTY, so run `npm run stamp` and commit the
+                            result before each deploy; the footer HUD reads it.
+assets/js/hud.js            Quiet console-style labels: footer line (build, theme, theme hex codes) and a
+                            vertical page code on the left edge. Code grammar: //xf_SSP_T_LL = nav section
+                            in header order (00 Home ... 08 Legal; 09x account, 09x auth pages), page
+                            within the section, theme letter (d/l/a), layout class (01 phone <768, 02 tablet
+                            <1024, 03 laptop <1700, 04 desktop). The home hero adds its own grid/mask
+                            readout (hero-ascii.js). All values are live or from the build, none invented.
 scripts/generate_pages.py   Static HTML page generator
 scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
 scripts/publish-ks-link-update.mjs  Upload a KS_Link installer/manifest to R2

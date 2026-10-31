@@ -3318,6 +3318,133 @@ body.tos-open {
   color: var(--color-text-subtle);
 }
 
+/* ── HUD labels ──
+   Quiet console-style readouts in the corners (assets/js/hud.js, plus the
+   hero's own in hero-ascii.js). Decorative and aria-hidden, but every value is
+   real: build version, theme hex codes, route code, grid size. Gray on purpose,
+   never full white. */
+:root,
+[data-theme="dark"] {
+  --hud-color: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="light"] {
+  --hud-color: rgba(0, 0, 0, 0.44);
+}
+
+[data-theme="accent"] {
+  --hud-color: rgba(200, 184, 255, 0.46);
+}
+
+.hud {
+  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hud-color);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hud-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin: 8px 0 0;
+}
+
+.hud-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-chip {
+  width: 8px;
+  height: 8px;
+  background: var(--chip);
+  border: 1px solid var(--hud-color);
+}
+
+/* vertical labels read bottom-to-top on the left edge, top-to-bottom on the
+   right (mirroring the wordmark rail) */
+.hud-v {
+  display: none;
+  gap: 12px;
+  writing-mode: vertical-rl;
+}
+
+.hud-v .hud-sep {
+  opacity: 0.55;
+}
+
+.hud-v.hud-page {
+  position: fixed;
+  left: 10px;
+  top: 104px;
+  z-index: 1;
+  transform: rotate(180deg);
+}
+
+@media (min-width: 1024px) {
+  .hud-v.hud-page {
+    display: flex;
+  }
+}
+
+/* Home hero: an L-shaped corner at the top right (the hero is taller than the
+   first screen, so its bottom is below the fold). */
+.hud-hero-h,
+.hud-hero-v {
+  position: absolute;
+  z-index: 5;
+  right: clamp(20px, 4vw, 64px);
+}
+
+.hud-hero-h {
+  top: 24px;
+}
+
+.hud-hero-v {
+  top: 56px;
+  right: clamp(8px, 1.4vw, 22px);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .hud-hero-v {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .hud {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+
+  .hud-line {
+    gap: 6px 12px;
+  }
+
+  /* phones keep BASE and INK only (the 6th and 7th items are SURF and LINE) */
+  .hud-line .hud-item:nth-child(6),
+  .hud-line .hud-item:nth-child(7) {
+    display: none;
+  }
+}
+
+@media print {
+  .hud {
+    display: none !important;
+  }
+}
+
 /* ── Buttons use Tektur (the logo face) ──
    Listed explicitly because several of these classes set their own
    `font-family: inherit`, which a bare `button` selector can't beat. Only the
