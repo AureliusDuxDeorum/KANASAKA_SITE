@@ -55,6 +55,7 @@
 }
 .showcase {
   overflow: hidden;
+  contain: layout paint;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
 }
@@ -62,9 +63,14 @@
   display: flex;
   width: max-content;
   animation: showcase-scroll 70s linear infinite;
+  /* own compositor layer: the drift runs off the main thread */
+  will-change: transform;
 }
-.showcase:hover .showcase-track,
-.showcase:focus-within .showcase-track {
+/* Pure-CSS behaviour (no JS / no Web Animations): pause while hovered. With
+   product-showcase.js running (.showcase--js) the script eases the animation's
+   playbackRate instead, so this rule must not also freeze it. */
+.showcase:not(.showcase--js):hover .showcase-track,
+.showcase:not(.showcase--js):focus-within .showcase-track {
   animation-play-state: paused;
 }
 .showcase-group {
@@ -133,12 +139,6 @@ a.showcase-hit {
 @keyframes showcase-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
-}
-/* product-showcase.js takes over the motion (autoplay + wheel control);
-   the CSS animation above is only the no-script fallback. */
-.showcase--js .showcase-track {
-  animation: none;
-  will-change: transform;
 }
 @media (prefers-reduced-motion: reduce) {
   .showcase { overflow-x: auto; }

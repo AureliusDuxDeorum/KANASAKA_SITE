@@ -64,6 +64,13 @@ assets/js/hero-ascii.js     Home hero: ASCII field with the KS logo as its mask:
                             period/offset, core cells only) and settle back on their own character; the
                             ambient field drifts underneath. No sitemap table. Frozen (rendered once) on
                             slow hardware or prefers-reduced-motion.
+assets/js/product-showcase.js  Home product strip. The endless drift is the CSS animation showcase-scroll
+                            (home.css), which runs on the compositor thread so it stays smooth while the main
+                            thread is busy. The script only steers it via the Web Animations API: hover/focus
+                            eases playbackRate to 0 and back (0.6 s / 0.5 s), the wheel nudges currentTime, and
+                            there is no per-frame JS at steady state. Pure-CSS fallback without getAnimations.
+                            Images: preview-700.webp + preview.webp via srcset. Footer has no backdrop-filter
+                            (invisible, but an extra render pass per frame).
 main.js (mountPageMark)     Adds a quiet "//" (.page-mark) at the top of every page except the home page.
 functions/api/_middleware.js  Runs in front of every /api/* route: global same-origin (CSRF) check on all
                             non-GET requests (Stripe webhook exempt: signature-authenticated) + security

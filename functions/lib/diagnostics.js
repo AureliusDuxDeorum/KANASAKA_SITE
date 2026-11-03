@@ -188,7 +188,7 @@ async function databaseChecks(env) {
   const queries = {
     users: "SELECT COUNT(*) AS c FROM users",
     verifiedUsers: "SELECT COUNT(*) AS c FROM users WHERE email_verified = 1",
-    activeSessions: "SELECT COUNT(*) AS c FROM sessions WHERE expires_at > datetime('now')",
+    activeSessions: "SELECT COUNT(*) AS c FROM sessions WHERE datetime(expires_at) > datetime('now')",
     events: "SELECT COUNT(*) AS c FROM auth_events",
     adminsWithout2fa:
       "SELECT COUNT(*) AS c FROM users WHERE role = 'admin' AND (totp_enabled IS NULL OR totp_enabled = 0)",

@@ -474,8 +474,10 @@ h1 {
 .site-footer {
   position: relative;
   background: var(--glass-nav-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  /* No backdrop-filter: nothing scrolls behind the footer (it sits at the end
+     of the page flow), so the blur changed nothing visible, but it forced an
+     extra full-width render pass on every frame -- ~8 fps on a software-
+     rendered desktop while the product strip moved. */
   border-top: 1px solid var(--glass-border);
 }
 

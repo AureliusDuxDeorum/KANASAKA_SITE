@@ -405,7 +405,9 @@
           onScreen = entries[entries.length - 1].isIntersecting;
           syncRunning();
         },
-        { threshold: 0 }
+        // stop the 30 fps DOM rewrite once the hero is nearly out of view, not
+        // only when its last pixel has left (it competes with everything else)
+        { threshold: 0.25 }
       );
       io.observe(hero);
     }
