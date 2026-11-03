@@ -1,10 +1,11 @@
 {
   "name": "kanasaka-site",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/pages-build.mjs",
-    "stamp": "node scripts/stamp-version.mjs"
+    "stamp": "node scripts/stamp-version.mjs",
+    "test": "node --import ./tests/register.mjs --no-warnings --test-reporter=spec --test \"tests/*.test.mjs\""
   }
 }

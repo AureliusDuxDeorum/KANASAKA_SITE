@@ -7,7 +7,7 @@ import {
   validateEmail,
 } from "../../lib/auth.js";
 import { sendPasswordResetCodeEmail } from "../../lib/email.js";
-import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import { allowSend, clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -40,6 +40,10 @@ export async function onRequestPost(context) {
     .first();
 
   if (!user || !user.email_verified) {
+    return jsonResponse({ success: true, message: genericMessage });
+  }
+
+  if (!(await allowSend(env, "password_reset", { ip, email }, { ip: 10, email: 3 }))) {
     return jsonResponse({ success: true, message: genericMessage });
   }
 

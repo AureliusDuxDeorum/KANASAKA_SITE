@@ -8,6 +8,8 @@ import {
 import { getSecurityPhrase, setSecurityPhrase } from "../../lib/security-phrase.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
+import { publicError, errorStatus } from "../../lib/errors.js";
+
 export async function onRequestGet(context) {
   const { request, env } = context;
 
@@ -50,7 +52,7 @@ export async function onRequestPost(context) {
   try {
     phrase = await setSecurityPhrase(env, user.id, body.securityPhrase);
   } catch (err) {
-    return errorResponse(err.message || "Could not save security phrase.", 503);
+    return errorResponse(publicError(err, "Could not save security phrase."), errorStatus(err, 503));
   }
 
   await logAuthEvent(env, "security_phrase_updated", {

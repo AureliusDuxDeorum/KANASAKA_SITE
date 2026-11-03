@@ -8,6 +8,8 @@ import {
 import { disableEmail2fa, disableSms2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 
+import { publicError, errorStatus } from "../../../lib/errors.js";
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -50,6 +52,6 @@ export async function onRequestPost(context) {
       message: "Two-factor authentication disabled. Sign in again on each device.",
     });
   } catch (err) {
-    return errorResponse(err.message || "Could not disable two-factor authentication.", 401);
+    return errorResponse(publicError(err, "Could not disable two-factor authentication."), errorStatus(err, 401));
   }
 }

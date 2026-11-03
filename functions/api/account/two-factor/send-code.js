@@ -9,7 +9,9 @@ import {
   sendDisableEmailCode,
   sendDisableSmsCode,
 } from "../../../lib/two-factor.js";
-import { requireSameOrigin } from "../../../lib/security.js";
+import { requireSameOrigin, allowSend, clientIp } from "../../../lib/security.js";
+
+import { publicError, errorStatus } from "../../../lib/errors.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -20,6 +22,10 @@ export async function onRequestPost(context) {
   const user = await getSessionUser(request, env);
   if (!user) {
     return errorResponse("Log in to manage two-factor authentication.", 401);
+  }
+
+  if (!(await allowSend(env, "twofa_code", { ip: clientIp(request), userId: user.id }, { user: 5, ip: 20 }))) {
+    return errorResponse("Too many codes requested. Try again in a few minutes.", 429);
   }
 
   const body = await readJson(request);
@@ -55,6 +61,6 @@ export async function onRequestPost(context) {
       message: "We sent a verification code to " + result.emailMasked + ".",
     });
   } catch (err) {
-    return errorResponse(err.message || "Could not send verification code.", 400);
+    return errorResponse(publicError(err, "Could not send verification code."), errorStatus(err, 400));
   }
 }

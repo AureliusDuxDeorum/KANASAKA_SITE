@@ -47,7 +47,8 @@ export async function onRequestGet(context) {
       .all();
     rows = result.results || [];
   } catch (err) {
-    return errorResponse("Could not read users: " + (err.message || "unknown error"), 500);
+    console.error("Admin users read failed:", err);
+    return errorResponse("Could not read users. Check System status for details.", 500);
   }
 
   await logAuthEvent(env, "admin_user_list", { ip, email: actor, count: rows.length });

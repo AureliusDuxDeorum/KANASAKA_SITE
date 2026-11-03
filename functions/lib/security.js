@@ -2,6 +2,10 @@ import { errorResponse, jsonResponse, resolveSession } from "./auth.js";
 import { sendAdminLockoutEmail, sendLoginNotificationEmail } from "./email.js";
 import { isAdminUser } from "./roles.js";
 import { getSecurityPhrase } from "./security-phrase.js";
+import { timingSafeEqualString } from "./tokens.js";
+import { logEvent, tooManyRecentEvents } from "./throttle.js";
+
+export { countRecentEvents, tooManyRecentEvents, purgeOldEvents } from "./throttle.js";
 
 export function clientIp(request) {
   const cfIp = request.headers.get("CF-Connecting-IP");
@@ -64,15 +68,7 @@ export function requireSameOrigin(request, env) {
 }
 
 export async function logAuthEvent(env, eventType, meta = {}) {
-  if (!env.DB) return;
-
-  try {
-    await env.DB.prepare("INSERT INTO auth_events (event_type, meta) VALUES (?, ?)")
-      .bind(eventType, JSON.stringify(meta))
-      .run();
-  } catch {
-    // Migration may not be applied yet.
-  }
+  return logEvent(env, eventType, meta);
 }
 
 // Best-effort brute-force throttle for low-entropy codes (email verification,
@@ -80,22 +76,37 @@ export async function logAuthEvent(env, eventType, meta = {}) {
 // table/column. Fails open -- a throttle-check error never blocks a
 // legitimate attempt, it just skips the rate limit for that request.
 export async function tooManyRecentFailures(env, eventType, email, options = {}) {
-  const maxFailures = options.max || 8;
-  const windowMinutes = options.windowMinutes || 15;
+  return tooManyRecentEvents(env, eventType, "email", email, options);
+}
 
-  try {
-    const row = await env.DB.prepare(
-      `SELECT COUNT(*) AS c FROM auth_events
-       WHERE event_type = ?
-         AND json_extract(meta, '$.email') = ?
-         AND created_at > datetime('now', ?)`
-    )
-      .bind(eventType, email, `-${windowMinutes} minutes`)
-      .first();
-    return Boolean(row && Number(row.c) >= maxFailures);
-  } catch {
-    return false;
+// Send-throttle for anything that makes the server email/text someone
+// (password reset, verification resend, terms mail, 2FA codes). Without it
+// these endpoints are a free mail cannon: anyone can point them at an inbox
+// they don't own, burning the sender reputation and the provider quota.
+//
+// Limits apply per source IP and per target address. Only requests that are
+// allowed are recorded, so a blocked attacker cannot keep the window open and
+// lock the real owner out of their own reset flow indefinitely. Callers answer
+// a blocked request with the same generic success text as an allowed one, so
+// the throttle is not an account-existence oracle.
+export async function allowSend(env, kind, { ip, email, userId }, limits = {}) {
+  const windowMinutes = limits.windowMinutes || 15;
+  const type = kind + "_send";
+  const checks = [
+    ["ip", ip, limits.ip || 10],
+    ["email", email, limits.email || 3],
+    ["userId", userId, limits.user || 5],
+  ];
+
+  for (const [field, value, max] of checks) {
+    if (value === undefined || value === null || value === "") continue;
+    if (await tooManyRecentEvents(env, type, field, value, { max, windowMinutes })) {
+      return false;
+    }
   }
+
+  await logEvent(env, type, { ip, email, userId });
+  return true;
 }
 
 // Login notifications always go out for a successful sign-in (rare, and the
@@ -133,7 +144,7 @@ export function requireAdmin(request, env) {
 
   const header = request.headers.get("Authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (!token || token !== secret) {
+  if (!token || !timingSafeEqualString(token, secret)) {
     return errorResponse("Forbidden.", 403);
   }
 
@@ -155,7 +166,7 @@ export async function requireAdminAccess(request, env) {
   const secret = env.ADMIN_SECRET;
   const header = request.headers.get("Authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (secret && token && token === secret) {
+  if (secret && token && timingSafeEqualString(token, secret)) {
     return { user: null };
   }
 

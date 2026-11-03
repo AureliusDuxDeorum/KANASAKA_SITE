@@ -18,6 +18,8 @@ import {
 } from "../../lib/stripe.js";
 import { requireSameOrigin } from "../../lib/security.js";
 
+import { publicError, errorStatus } from "../../lib/errors.js";
+
 export async function onRequestPost(context) {
   const originError = requireSameOrigin(context.request, context.env);
   if (originError) {
@@ -68,6 +70,6 @@ export async function onRequestPost(context) {
 
     return jsonResponse({ url: session.url }, 200, sessionHeaders);
   } catch (error) {
-    return errorResponse(error.message || "Could not start checkout.", 502);
+    return errorResponse(publicError(error, "Could not start checkout."), errorStatus(error, 502));
   }
 }

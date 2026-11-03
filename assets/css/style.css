@@ -3558,3 +3558,100 @@ button,
 .user-catalogue .user-catalogue-user {
   font-family: Inter, system-ui, -apple-system, sans-serif;
 }
+
+/* Developer panel: System Status + Self-Test Suite. FAIL follows the red-
+   outline convention (gray fill, red outline), like admin cards and red
+   buttons elsewhere. */
+.diag-meta {
+  margin: 12px 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  min-height: 1.2em;
+}
+
+.diag-report {
+  margin-top: 12px;
+  border: 1px solid var(--color-border);
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.diag-group {
+  margin: 0;
+  padding: 10px 14px;
+  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.diag-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.diag-row:last-child {
+  border-bottom: none;
+}
+
+.diag-badge {
+  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.diag-label {
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.diag-time {
+  color: var(--color-text-subtle);
+  font-size: 12px;
+}
+
+.diag-detail {
+  grid-column: 2 / -1;
+  color: var(--color-text-muted);
+  word-break: break-word;
+}
+
+.diag-ok .diag-badge,
+.diag-pass .diag-badge {
+  color: var(--color-text);
+}
+
+.diag-warn .diag-badge {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.diag-fail {
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px #e5484d;
+}
+
+.diag-fail .diag-badge {
+  color: #e5484d;
+}
+
+@media (max-width: 520px) {
+  .diag-row {
+    grid-template-columns: 56px 1fr;
+  }
+  .diag-time {
+    display: none;
+  }
+}

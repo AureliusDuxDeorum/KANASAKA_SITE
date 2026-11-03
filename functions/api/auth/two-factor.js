@@ -10,6 +10,8 @@ import {
 import { verifyTwoFactorLogin } from "../../lib/two-factor.js";
 import { approxLocation, clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
 
+import { publicError, errorStatus } from "../../lib/errors.js";
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -68,6 +70,6 @@ export async function onRequestPost(context) {
         userId: err.userId,
       });
     }
-    return errorResponse(err.message || "Two-factor verification failed.", 401);
+    return errorResponse(publicError(err, "Two-factor verification failed."), errorStatus(err, 401));
   }
 }

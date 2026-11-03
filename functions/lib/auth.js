@@ -1,4 +1,5 @@
 import {
+  argon2Params,
   hashPasswordArgon2,
   isArgon2Hash,
   verifyPasswordArgon2,
@@ -186,6 +187,27 @@ async function verifyPasswordPbkdf2(password, stored) {
   return timingSafeEqual(hash, parsed.expected);
 }
 
+// Unknown-email logins used to return immediately while known ones spent an
+// Argon2 verification, so response time told an attacker which addresses have
+// accounts. Running the same verification against a throwaway hash for the
+// unknown case equalises the two. The dummy hash is created once per isolate.
+// Keyed by the active Argon2 parameters, so a change to ARGON2_* settings is
+// matched by the throwaway hash too (verification cost follows the parameters
+// embedded in the hash being checked).
+const dummyHashes = new Map();
+
+export async function burnPasswordCheck(password, env) {
+  const key = JSON.stringify(argon2Params(env));
+  if (!dummyHashes.has(key)) {
+    dummyHashes.set(key, hashPasswordArgon2("kanasaka-timing-equaliser", env).then(String));
+  }
+  try {
+    await verifyPasswordArgon2(String(password || "").slice(0, PASSWORD_MAX_LENGTH), await dummyHashes.get(key));
+  } catch {
+    // Result is irrelevant; only the time spent matters.
+  }
+}
+
 export function needsPasswordUpgrade(stored) {
   return !isArgon2Hash(stored);
 }
@@ -319,7 +341,7 @@ async function loadSessionUser(env, tokenHash, schema) {
        JOIN users u ON u.id = s.user_id
        LEFT JOIN user_avatars ua ON ua.user_id = u.id
        WHERE s.token_hash = ?
-         AND s.expires_at > datetime('now')`
+         AND datetime(s.expires_at) > datetime('now')`
     )
       .bind(String(tokenHash))
       .first();
@@ -335,7 +357,7 @@ async function loadSessionUser(env, tokenHash, schema) {
      JOIN users u ON u.id = s.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
      WHERE s.id = ?
-       AND s.expires_at > datetime('now')`
+       AND datetime(s.expires_at) > datetime('now')`
   )
     .bind(String(tokenHash))
     .first();
@@ -477,7 +499,7 @@ export async function consumeEmailToken(env, rawToken, type) {
        JOIN users u ON u.id = et.user_id
        WHERE et.token_hash = ?
          AND et.type = ?
-         AND et.expires_at > datetime('now')`
+         AND datetime(et.expires_at) > datetime('now')`
     )
       .bind(String(tokenHash), String(type))
       .first();
@@ -496,7 +518,7 @@ export async function consumeEmailToken(env, rawToken, type) {
      JOIN users u ON u.id = et.user_id
      WHERE et.id = ?
        AND et.type = ?
-       AND et.expires_at > datetime('now')`
+       AND datetime(et.expires_at) > datetime('now')`
   )
     .bind(String(tokenHash), String(type))
     .first();

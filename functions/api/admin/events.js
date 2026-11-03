@@ -41,7 +41,8 @@ export async function onRequestGet(context) {
       .all();
     events = result.results || [];
   } catch (err) {
-    return errorResponse("Could not read events: " + (err.message || "unknown error"), 500);
+    console.error("Admin events read failed:", err);
+    return errorResponse("Could not read events. Check System status for details.", 500);
   }
 
   await logAuthEvent(env, "admin_events_viewed", { ip, email: actor, limit });

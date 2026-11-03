@@ -997,8 +997,137 @@
     }
 
     initUserCatalogue(navBtn, panel, lookupForm);
+    initDiagnostics();
 
     loadEvents();
+  }
+
+  // System status + live self-tests. Both endpoints are audited and rate
+  // limited, so nothing loads until the collapsible is opened (status) or the
+  // button is pressed (tests). All text goes in via textContent.
+  function initDiagnostics() {
+    const statusSection = document.getElementById("settings-dev-status-section");
+    const statusBox = document.getElementById("settings-dev-status");
+    const statusMeta = document.getElementById("settings-dev-status-meta");
+    const statusRefresh = document.getElementById("settings-dev-status-refresh");
+    const testRun = document.getElementById("settings-dev-selftest-run");
+    const testBox = document.getElementById("settings-dev-selftest");
+    const testMeta = document.getElementById("settings-dev-selftest-meta");
+
+    const LABELS = { ok: "OK", warn: "WARN", fail: "FAIL", info: "INFO", manual: "MANUAL", pass: "PASS", skip: "SKIP" };
+
+    function row(status, label, detail, trailing) {
+      const el = document.createElement("div");
+      el.className = "diag-row diag-" + status;
+
+      const badge = document.createElement("span");
+      badge.className = "diag-badge";
+      badge.textContent = LABELS[status] || status.toUpperCase();
+
+      const name = document.createElement("span");
+      name.className = "diag-label";
+      name.textContent = label;
+
+      el.appendChild(badge);
+      el.appendChild(name);
+
+      if (trailing) {
+        const t = document.createElement("span");
+        t.className = "diag-time";
+        t.textContent = trailing;
+        el.appendChild(t);
+      }
+
+      if (detail) {
+        const d = document.createElement("span");
+        d.className = "diag-detail";
+        d.textContent = detail;
+        el.appendChild(d);
+      }
+      return el;
+    }
+
+    function summaryLine(parts) {
+      return parts
+        .filter(function (p) { return p[1] > 0 || p[0] === "fail"; })
+        .map(function (p) { return p[1] + " " + p[0]; })
+        .join("  ·  ");
+    }
+
+    async function loadStatus() {
+      if (!statusBox) return;
+      statusBox.textContent = "Loading...";
+      if (statusMeta) statusMeta.textContent = "";
+
+      try {
+        const { response, data } = await apiRequest("/api/admin/diagnostics", { method: "GET" });
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not load system status.");
+        }
+
+        statusBox.textContent = "";
+        (data.groups || []).forEach(function (group) {
+          const heading = document.createElement("h4");
+          heading.className = "diag-group";
+          heading.textContent = group.title;
+          statusBox.appendChild(heading);
+          (group.checks || []).forEach(function (c) {
+            statusBox.appendChild(row(c.status, c.label, c.detail));
+          });
+        });
+
+        if (statusMeta) {
+          const s = data.summary || {};
+          statusMeta.textContent =
+            summaryLine([["ok", s.ok || 0], ["warn", s.warn || 0], ["fail", s.fail || 0]]) +
+            "  ·  checked " + new Date(data.generatedAt).toLocaleTimeString();
+        }
+      } catch (error) {
+        statusBox.textContent = error.message || "Could not load system status.";
+      }
+    }
+
+    async function runTests() {
+      if (!testBox || !testRun) return;
+      testRun.disabled = true;
+      testBox.textContent = "Running...";
+      if (testMeta) testMeta.textContent = "";
+
+      try {
+        const { response, data } = await apiRequest("/api/admin/self-test", { method: "POST", body: "{}" });
+        if (!response.ok) {
+          throw new Error((data && data.error) || "Could not run the self-tests.");
+        }
+
+        testBox.textContent = "";
+        (data.results || []).forEach(function (r) {
+          testBox.appendChild(row(r.status, r.label, r.detail, r.ms + " ms"));
+        });
+
+        if (testMeta) {
+          const s = data.summary || {};
+          testMeta.textContent =
+            summaryLine([["pass", s.pass || 0], ["fail", s.fail || 0], ["skip", s.skip || 0]]) +
+            "  ·  " + (s.ms || 0) + " ms";
+        }
+      } catch (error) {
+        testBox.textContent = error.message || "Could not run the self-tests.";
+      } finally {
+        testRun.disabled = false;
+      }
+    }
+
+    let statusLoaded = false;
+    if (statusSection) {
+      statusSection.addEventListener("toggle", function () {
+        if (statusSection.open && !statusLoaded) {
+          statusLoaded = true;
+          loadStatus();
+        }
+      });
+    }
+    if (statusRefresh) statusRefresh.addEventListener("click", loadStatus);
+    if (testRun) testRun.addEventListener("click", runTests);
   }
 
   // Alphabetical, searchable, role-filterable list of every account. Loaded

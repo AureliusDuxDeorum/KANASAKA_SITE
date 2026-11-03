@@ -65,6 +65,21 @@ assets/js/hero-ascii.js     Home hero: ASCII field with the KS logo as its mask:
                             ambient field drifts underneath. No sitemap table. Frozen (rendered once) on
                             slow hardware or prefers-reduced-motion.
 main.js (mountPageMark)     Adds a quiet "//" (.page-mark) at the top of every page except the home page.
+functions/api/_middleware.js  Runs in front of every /api/* route: global same-origin (CSRF) check on all
+                            non-GET requests (Stripe webhook exempt: signature-authenticated) + security
+                            headers on API responses (_headers only covers static files).
+functions/lib/throttle.js   auth_events-based counters (by ip / email / userId), event logging, 90-day purge.
+functions/lib/errors.js     publicError(): what a caught error may tell the client (DB/provider details are
+                            replaced by a generic message and logged).
+functions/lib/diagnostics.js  Read-only System Status report (config present/missing, DB, schema, 24h activity).
+functions/lib/self-test.js  Live self-test checks shared by the dev panel (POST /api/admin/self-test).
+functions/api/admin/diagnostics.js, self-test.js  Admin+2FA gated, throttled, audited. Dev panel (Account >
+                            Developer) shows them as "System Status" and "Self-Test Suite".
+tests/                      npm test (node --test, no dependencies): real SQLite built from schema.sql +
+                            migrations behind a D1-shaped stub; covers auth, 2FA lockout, throttles, middleware,
+                            Stripe signatures, diagnostics, self-test and static CSP/policy guards.
+docs/SECURITY.md            Security overview: controls in place, findings fixed, manual checklist.
+.well-known/security.txt, robots.txt  Disclosure contact; keeps account/auth/api paths out of indexes.
 scripts/generate_pages.py   Static HTML page generator
 scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
 scripts/publish-ks-link-update.mjs  Upload a KS_Link installer/manifest to R2

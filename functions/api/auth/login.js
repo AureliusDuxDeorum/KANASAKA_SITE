@@ -12,17 +12,22 @@ import {
   upgradePasswordHash,
   validateEmail,
   verifyPassword,
+  burnPasswordCheck,
 } from "../../lib/auth.js";
 import { createTwoFactorChallenge, maskEmail, maskPhone } from "../../lib/two-factor.js";
 import { smsConfigured } from "../../lib/sms.js";
 import {
   approxLocation,
   clientIp,
+  tooManyRecentEvents,
+  purgeOldEvents,
   logAuthEvent,
   notifyLogin,
   requireSameOrigin,
   tooManyRecentFailures,
 } from "../../lib/security.js";
+
+import { publicError, errorStatus } from "../../lib/errors.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -50,6 +55,13 @@ export async function onRequestPost(context) {
     return errorResponse("Too many failed login attempts. Please try again later.", 429);
   }
 
+  // Per source address as well as per account: credential stuffing walks a
+  // list of different emails from one place, which the per-email counter above
+  // never sees. Generous enough for a shared office/campus address.
+  if (await tooManyRecentEvents(env, "login_failed", "ip", ip, { max: 30, windowMinutes: 15 })) {
+    return errorResponse("Too many failed login attempts. Please try again later.", 429);
+  }
+
   if (!validateEmail(email) || passwordError) {
     await logAuthEvent(env, "login_failed", { ip, email, reason: "invalid_input" });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
@@ -67,6 +79,7 @@ export async function onRequestPost(context) {
     .first();
 
   if (!user) {
+    await burnPasswordCheck(password, env);
     await logAuthEvent(env, "login_failed", { ip, email, reason: "unknown_user" });
     return errorResponse(LOGIN_FAILURE_MESSAGE, 401);
   }
@@ -105,6 +118,13 @@ export async function onRequestPost(context) {
       return errorResponse("Two-factor authentication is misconfigured. Contact support.", 503);
     }
 
+    // Each challenge emails/texts a code. A password-holder repeating the
+    // login to bury the owner in codes (or to farm fresh guesses at a new
+    // code) is capped per account.
+    if (await tooManyRecentEvents(env, "login_2fa_required", "userId", user.id, { max: 8, windowMinutes: 15 })) {
+      return errorResponse("Too many sign-in attempts. Please try again in a few minutes.", 429);
+    }
+
     try {
       const challenge = await createTwoFactorChallenge(env, user.id, remember);
       await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
@@ -136,13 +156,15 @@ export async function onRequestPost(context) {
         location,
         userId: user.id,
       });
-      return errorResponse(err.message || "Could not send verification code.", 503);
+      return errorResponse(publicError(err, "Could not send verification code."), errorStatus(err, 503));
     }
   }
 
   await deleteAllUserSessions(env, user.id);
   const session = await createSession(env, user.id, remember);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
+  // Retention housekeeping (no cron here): occasionally trim old audit rows.
+  if (Math.random() < 0.02) await purgeOldEvents(env);
   await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", location, userId: user.id });
 
   return jsonResponse(sessionPayload(user, env), 200, {

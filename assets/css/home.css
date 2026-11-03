@@ -1,0 +1,164 @@
+/* Home hero: generative ASCII field (hero-ascii.js) replacing the flat
+   K/S wordmark. Scoped to this page only — header/nav/footer untouched. */
+.hero-ascii {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  padding: 40px clamp(20px, 4vw, 64px);
+  background: var(--color-base);
+  overflow: hidden;
+  font-family: ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace;
+}
+.hero-ascii * { box-sizing: border-box; }
+.hero-ascii::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 22vh;
+  background: linear-gradient(to bottom, transparent, var(--color-base));
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ha-field-wrap {
+  position: absolute;
+  inset: 40px clamp(20px, 4vw, 64px);
+  z-index: 1;
+  pointer-events: none;
+  /* transitional void at the window edges instead of anything tied to
+     the letters -- the field simply dissolves before it reaches the
+     edge of the viewport. */
+  -webkit-mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
+  mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
+}
+#ha-field {
+  white-space: pre;
+  color: var(--color-text-muted);
+  margin: 0;
+  user-select: none;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+/* Products: endless horizontal strip -- each product name next to a
+   picture of its UI. The group is duplicated (second copy aria-hidden)
+   and the track moves by exactly one group's width, so the loop is
+   seamless. It drifts on its own; while the mouse is over it the wheel
+   drives it instead (product-showcase.js). Swap /assets/images/products/preview.webp per product
+   once real screenshots exist. */
+.product-showcase {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+}
+.showcase {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+.showcase-track {
+  display: flex;
+  width: max-content;
+  animation: showcase-scroll 70s linear infinite;
+}
+.showcase:hover .showcase-track,
+.showcase:focus-within .showcase-track {
+  animation-play-state: paused;
+}
+.showcase-group {
+  display: flex;
+  align-items: center;
+  gap: clamp(40px, 6vw, 96px);
+  margin: 0;
+  padding: 0 clamp(40px, 6vw, 96px) 0 0;
+  list-style: none;
+}
+.showcase-item {
+  flex-shrink: 0;
+}
+/* Whole name + picture is the hit area. Nothing changes visually on
+   hover -- only the cursor, and only where there is a page to go to. */
+.showcase-hit {
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 3vw, 48px);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+a.showcase-hit {
+  cursor: pointer;
+}
+.showcase-name {
+  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(34px, 5vw, 76px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.showcase-media {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.showcase-shot {
+  display: block;
+  height: clamp(170px, 22vw, 340px);
+  width: auto;
+}
+/* Dimmed with a semi-transparent gray veil and labelled. Drop the
+   .showcase-soon span from a product once it is ready to show undimmed. */
+.showcase-soon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 12, 12, 0.86);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(16px, 2.2vw, 34px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+}
+@keyframes showcase-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+/* product-showcase.js takes over the motion (autoplay + wheel control);
+   the CSS animation above is only the no-script fallback. */
+.showcase--js .showcase-track {
+  animation: none;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .showcase { overflow-x: auto; }
+  .showcase-track { animation: none; }
+  .showcase-group[aria-hidden="true"] { display: none; }
+}
+
+/* ASCII hero character tiers (hero-ascii.js emits these classes; the page CSP
+   forbids inline style attributes). a = ambient field, l = logo letters. */
+.ha-a1 { opacity: 0.36; color: inherit; }
+.ha-a2 { opacity: 0.46; color: inherit; }
+.ha-a3 { opacity: 0.56; color: inherit; }
+.ha-a4 { opacity: 0.66; color: inherit; }
+.ha-l0 { opacity: 0.68; color: var(--color-text); }
+.ha-l1 { opacity: 0.72; color: var(--color-text); }
+.ha-l2 { opacity: 0.75; color: var(--color-text); }
+.ha-l3 { opacity: 0.79; color: var(--color-text); }
+.ha-l4 { opacity: 0.82; color: var(--color-text); }
+.ha-l5 { opacity: 0.86; color: var(--color-text); }
+.ha-l6 { opacity: 0.89; color: var(--color-text); }
+.ha-l7 { opacity: 0.93; color: var(--color-text); }
+.ha-l8 { opacity: 0.96; color: var(--color-text); }
+.ha-l9 { opacity: 1.00; color: var(--color-text); }

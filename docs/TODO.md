@@ -10,7 +10,7 @@ Items to pick up when ready. Security backend code for 2FA remains in the repo b
   - Re-enable 2FA UI in settings + login (currently removed)
   - Test with `node scripts/test-twilio-sms.mjs +49...`
 
-- [ ] **WAF rate limits** — apply rules from `docs/CLOUDFLARE_WAF.md` on kanasaka.com
+- [ ] **WAF rate limits** — apply rules from `docs/CLOUDFLARE_WAF.md` on kanasaka.com (app-level limits now exist too, see `docs/SECURITY.md`)
 
 - [ ] **R2 installer downloads** — enable R2 bucket, upload installers, confirm `INSTALLERS` binding (see `docs/R2_INSTALLERS.md`)
 

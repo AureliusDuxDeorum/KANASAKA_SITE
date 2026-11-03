@@ -7,6 +7,8 @@ import {
 import { enableEmail2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 
+import { publicError, errorStatus } from "../../../lib/errors.js";
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -38,6 +40,6 @@ export async function onRequestPost(context) {
       message: "Two-factor authentication is now enabled for " + result.emailMasked + ".",
     });
   } catch (err) {
-    return errorResponse(err.message || "Could not enable two-factor authentication.", 400);
+    return errorResponse(publicError(err, "Could not enable two-factor authentication."), errorStatus(err, 400));
   }
 }

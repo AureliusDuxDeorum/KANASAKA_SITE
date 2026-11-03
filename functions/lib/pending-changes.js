@@ -79,7 +79,7 @@ export async function applyDuePendingRoleChanges(env, userId) {
 
   const row = await env.DB.prepare(
     `SELECT id, new_role FROM pending_role_changes
-     WHERE user_id = ? AND effective_at <= datetime('now')`
+     WHERE user_id = ? AND datetime(effective_at) <= datetime('now')`
   )
     .bind(userId)
     .first();

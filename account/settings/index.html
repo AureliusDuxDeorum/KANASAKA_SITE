@@ -13,11 +13,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=135">
+  <link rel="stylesheet" href="/assets/css/style.css?v=136">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=93">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
-  <script defer src="/assets/js/auth.js?v=99"></script>
-  <script defer src="/assets/js/main.js?v=121"></script>
+  <script defer src="/assets/js/auth.js?v=100"></script>
+  <script defer src="/assets/js/main.js?v=122"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -451,6 +451,22 @@
                 </div>
                 <button class="button secondary" type="submit">Send Policy Update</button>
               </form>
+            </details>
+
+            <details class="settings-section settings-collapsible" id="settings-dev-status-section">
+              <summary><h3 class="settings-subsection-title">System Status</h3></summary>
+              <p class="settings-panel-intro">Configuration, database and recent-activity checks. Secrets are only ever reported as set or missing.</p>
+              <button id="settings-dev-status-refresh" class="button secondary" type="button">Refresh</button>
+              <p id="settings-dev-status-meta" class="diag-meta" aria-live="polite"></p>
+              <div id="settings-dev-status" class="diag-report"></div>
+            </details>
+
+            <details class="settings-section settings-collapsible" id="settings-dev-selftest-section">
+              <summary><h3 class="settings-subsection-title">Self-Test Suite</h3></summary>
+              <p class="settings-panel-intro">Runs live security checks against this deployment: hashing, cookies, same-origin rules, webhook signatures, a database round trip, rate-limit counters and the headers served by this site. Nothing here touches real accounts.</p>
+              <button id="settings-dev-selftest-run" class="button secondary" type="button">Run self-tests</button>
+              <p id="settings-dev-selftest-meta" class="diag-meta" aria-live="polite"></p>
+              <div id="settings-dev-selftest" class="diag-report"></div>
             </details>
 
             <details class="settings-section settings-collapsible">

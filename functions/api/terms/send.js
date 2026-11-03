@@ -6,7 +6,7 @@ import {
   validateEmail,
 } from "../../lib/auth.js";
 import { sendTermsEmail } from "../../lib/email.js";
-import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import { allowSend, clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 
 const SUCCESS_MESSAGE =
   "If the address is valid, the full Terms of Service will arrive shortly.";
@@ -26,6 +26,10 @@ export async function onRequestPost(context) {
   const ip = clientIp(request);
 
   if (!validateEmail(email)) {
+    return jsonResponse({ success: true, message: SUCCESS_MESSAGE });
+  }
+
+  if (!(await allowSend(env, "terms", { ip, email }, { ip: 5, email: 2, windowMinutes: 60 }))) {
     return jsonResponse({ success: true, message: SUCCESS_MESSAGE });
   }
 

@@ -130,19 +130,17 @@
   }
 
   // Every run's opening <span> tag only ever depends on (isLetter, tier) --
-  // a fixed set of 10 letter tiers + 4 ambient tiers -- so the opacity/color
-  // string can be built once instead of toFixed()'d and concatenated fresh
-  // for every run, every frame. Index: ambient tiers at 0-9, letter tiers
+  // a fixed set of 10 letter tiers + 4 ambient tiers -- so the tag can be
+  // built once instead of concatenated fresh for every run, every frame. The
+  // tiers are CSS classes (home.css): the site CSP forbids inline style
+  // attributes. Index: ambient tiers at 0-9, letter tiers
   // (offset +100 like the render loop's `key`) at 100-109.
   const SPAN_OPEN = new Array(210);
   for (let tier = 1; tier <= 4; tier++) {
-    const frac = (tier - 1) / 3;
-    SPAN_OPEN[tier] = '<span style="opacity:' + (0.36 + frac * 0.3).toFixed(2) + ';color:inherit">';
+    SPAN_OPEN[tier] = '<span class="ha-a' + tier + '">';
   }
   for (let tier = 0; tier < RAMP.length; tier++) {
-    const frac = tier / (RAMP.length - 1);
-    SPAN_OPEN[100 + tier] =
-      '<span style="opacity:' + (0.68 + frac * 0.32).toFixed(2) + ';color:var(--color-text)">';
+    SPAN_OPEN[100 + tier] = '<span class="ha-l' + tier + '">';
   }
 
   function measureCell(el) {

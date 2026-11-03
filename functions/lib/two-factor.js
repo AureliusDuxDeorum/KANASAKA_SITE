@@ -3,6 +3,7 @@ import { sendVerificationSms } from "./sms.js";
 import { sendTwoFactorCodeEmail } from "./email.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 import { twofaChallengesHaveRememberColumn } from "./schema.js";
+import { logEvent, tooManyRecentEvents } from "./throttle.js";
 
 function maskEmail(email) {
   const [local, domain] = String(email || "").split("@");
@@ -13,6 +14,36 @@ function maskEmail(email) {
 
 const OTP_MINUTES = 5;
 const CHALLENGE_MINUTES = 5;
+
+// A 6-digit code has only a million possibilities, so guessing has to be
+// capped: after OTP_MAX_FAILURES wrong codes inside the code's own lifetime
+// every outstanding code and login challenge for the account is destroyed
+// (a fresh password login is needed), and further attempts are refused until
+// the window passes. Counted per account, across login/setup/disable.
+export const OTP_MAX_FAILURES = 5;
+export const TOO_MANY_CODES_MESSAGE = "Too many incorrect codes. Request a new code in a few minutes.";
+
+function tooManyAttemptsError(userId) {
+  const err = new Error(TOO_MANY_CODES_MESSAGE);
+  err.status = 429;
+  err.userId = userId;
+  return err;
+}
+
+async function otpLockedOut(env, userId) {
+  return tooManyRecentEvents(env, "otp_failed", "userId", userId, {
+    max: OTP_MAX_FAILURES,
+    windowMinutes: OTP_MINUTES,
+  });
+}
+
+async function recordOtpFailure(env, userId, purpose) {
+  await logEvent(env, "otp_failed", { userId, purpose });
+  if (await otpLockedOut(env, userId)) {
+    await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
+    await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
+  }
+}
 
 function normalizeSmsCode(code) {
   return String(code || "").replace(/\s+/g, "");
@@ -39,8 +70,13 @@ async function storeSmsOtp(env, userId, purpose, code) {
 }
 
 async function verifySmsOtp(env, userId, purpose, code) {
+  if (await otpLockedOut(env, userId)) {
+    throw tooManyAttemptsError(userId);
+  }
+
   const normalized = normalizeSmsCode(code);
   if (!/^\d{6}$/.test(normalized)) {
+    await recordOtpFailure(env, userId, purpose);
     return false;
   }
 
@@ -48,12 +84,13 @@ async function verifySmsOtp(env, userId, purpose, code) {
   const row = await env.DB.prepare(
     `SELECT id FROM sms_otp_codes
      WHERE user_id = ? AND purpose = ? AND code_hash = ?
-       AND expires_at > datetime('now')`
+       AND datetime(expires_at) > datetime('now')`
   )
     .bind(userId, purpose, codeHash)
     .first();
 
   if (!row) {
+    await recordOtpFailure(env, userId, purpose);
     return false;
   }
 
@@ -108,7 +145,10 @@ async function verifyBackupCode(env, userId, rawCode) {
     .bind(userId, hash)
     .first();
 
-  if (!row) return false;
+  if (!row) {
+    await recordOtpFailure(env, userId, "backup");
+    return false;
+  }
 
   await env.DB.prepare("UPDATE twofa_backup_codes SET used_at = datetime('now') WHERE id = ?")
     .bind(row.id)
@@ -427,7 +467,7 @@ async function loadChallengeUser(env, rawChallenge) {
      JOIN users u ON u.id = c.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
      WHERE c.challenge_hash = ?
-       AND c.expires_at > datetime('now')
+       AND datetime(c.expires_at) > datetime('now')
        AND u.totp_enabled = 1`
   )
     .bind(challengeHash)
@@ -448,9 +488,24 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
     throw new Error("Two-factor challenge expired. Sign in again.");
   }
 
-  const verified =
-    (await verifySmsOtp(env, row.user_id, "login", code)) ||
-    (await verifyBackupCode(env, row.user_id, code));
+  let verified = false;
+  try {
+    // 6 digits is the emailed/texted code; anything else can only be a backup
+    // code. Routing on the format means one entry is one guess, not two.
+    if (/^\d{6}$/.test(normalizeSmsCode(code))) {
+      verified = await verifySmsOtp(env, row.user_id, "login", code);
+    } else {
+      if (await otpLockedOut(env, row.user_id)) {
+        throw tooManyAttemptsError(row.user_id);
+      }
+      verified = await verifyBackupCode(env, row.user_id, code);
+    }
+  } catch (err) {
+    err.userEmail = row.email;
+    err.userId = row.user_id;
+    throw err;
+  }
+
   if (!verified) {
     const err = new Error("Invalid or expired verification code.");
     err.userEmail = row.email;
