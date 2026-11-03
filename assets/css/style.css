@@ -3401,7 +3401,7 @@ body.tos-open {
 .hud-v.hud-page {
   position: fixed;
   left: 10px;
-  top: 104px;
+  top: 140px;
   z-index: 1;
   transform: rotate(180deg);
 }
@@ -3460,8 +3460,9 @@ body.tos-open {
 }
 
 /* ── Page mark ──
-   A quiet "//" at the top of every page except the home page (main.js,
-   mountPageMark). Absolutely positioned, so it never shifts the layout. */
+   A quiet "//" in the top-left corner of every page except the home page
+   (main.js, mountPageMark). Absolutely positioned, so it never shifts the
+   layout. The fixed vertical page code on the left edge starts below it. */
 body.has-page-mark main {
   position: relative;
 }
@@ -3469,9 +3470,8 @@ body.has-page-mark main {
 .page-mark {
   position: absolute;
   top: 14px;
-  left: 50%;
+  left: 18px;
   z-index: 1;
-  transform: translateX(-50%);
   font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
   font-weight: 600;
   font-size: 28px;
