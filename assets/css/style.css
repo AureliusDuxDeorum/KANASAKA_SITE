@@ -175,6 +175,49 @@ main {
   cursor: pointer;
 }
 
+/* The menu button is three stacked bars of equal length, like the character
+   三. While the menu is open the bars turn into a cross. */
+.nav-toggle {
+  padding: 14px 10px;
+  line-height: 0;
+}
+
+.nav-toggle-bars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 24px;
+}
+
+.nav-toggle-bars span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: currentColor;
+  transition:
+    transform 260ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    width 260ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 160ms ease;
+}
+
+.nav-toggle.is-open .nav-toggle-bars span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-toggle.is-open .nav-toggle-bars span:nth-child(2) {
+  width: 0;
+  opacity: 0;
+}
+
+.nav-toggle.is-open .nav-toggle-bars span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.nav-toggle:hover {
+  text-decoration: none;
+}
+
 .site-nav {
   display: flex;
   align-items: center;

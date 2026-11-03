@@ -293,14 +293,18 @@
     const navToggle = document.createElement("button");
     navToggle.type = "button";
     navToggle.className = "nav-toggle";
-    navToggle.textContent = "Menu";
-    navToggle.setAttribute("aria-label", "Toggle navigation menu");
+    // three stacked bars, like the character 三 (see .nav-toggle-bars in style.css)
+    navToggle.innerHTML =
+      '<span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>';
+    navToggle.setAttribute("aria-label", "Open navigation menu");
+    navToggle.setAttribute("aria-expanded", "false");
 
     const nav = buildNav();
 
     navToggle.addEventListener("click", function () {
       const open = nav.classList.toggle("open");
-      navToggle.textContent = open ? "Close" : "Menu";
+      navToggle.classList.toggle("is-open", open);
+      navToggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
       navToggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
 
