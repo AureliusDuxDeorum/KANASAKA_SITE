@@ -2,14 +2,20 @@
   const RAMP = " .:-=+*#%@";
   const MASK_SCALE = 6;
 
-  // The vertical KS logo (assets/logo/ks-vertical.svg) as polygons in its own
-  // units: first loop is the outline, the rest are the holes. Drawn with the
-  // even-odd rule, so nothing else needs to know which is which.
-  const LOGO_WIDTH = 762.05;
-  const LOGO_HEIGHT = 1523.4;
-  // How much of the hero field's height the logo takes up, and where its
-  // vertical centre sits (as fractions of that height).
-  const LOGO_SPAN = 0.78;
+  // The KS logos (assets/logo/ks-vertical.svg, ks-horizontal.svg) as polygons
+  // in their own units: first loop is the outline, the rest are the holes.
+  // Drawn with the even-odd rule, so nothing else needs to know which is which.
+  //
+  // Phones (< PHONE_MAX px wide) get the vertical mark, everything wider --
+  // tablets in either orientation and desktop -- gets the horizontal one.
+  const PHONE_MAX = 768;
+
+  // How much of the hero field the mark takes up, and where its vertical
+  // centre sits (as a fraction of the field's height). The vertical mark is
+  // sized by height, the horizontal one by width.
+  const VERTICAL_SPAN = 0.78; // of field height
+  const HORIZONTAL_SPAN = 0.62; // of field width
+  const HORIZONTAL_SPAN_TALL = 0.76; // same, when the field is taller than wide (tablet portrait)
   const LOGO_CENTER_Y = 0.474;
 
   // Character flipping (like a departure board): every so often a core logo
@@ -23,20 +29,38 @@
   const FLIP_MIN_PERIOD = 2.4; // seconds between one cell's flips
   const FLIP_MAX_PERIOD = 7.5;
   const FLIP_MIN_COVERAGE = 0.6; // only cells at least this covered by the logo
-  const LOGO_LOOPS = [
-    [[0, 0], [101.5, 0], [101.5, 514.75], [615.98, 0], [762.05, 0], [381.05, 380.95], [460.32, 460.3], [762.05, 158.6], [762.05, 304.45], [533.23, 533.2], [762.05, 761.9], [762.05, 863.4], [203.1, 863.4], [101.5, 964.95], [101.5, 1096.65], [762.05, 1096.65], [762.05, 1370.83], [609.6, 1523.4], [0, 1523.4], [0, 1422.02], [565.35, 1422.02], [660.25, 1326.95], [660.25, 1198.28], [0, 1198.28]],
-    [[307.67, 453.71], [387.75, 533.2], [101.5, 819.22], [101.5, 660.32]],
-    [[460.32, 605.63], [615.98, 761.9], [307.67, 761.9]],
-  ];
 
-  // Fills the logo into ctx, centred on x = 0 with its top edge at topY and
+  const LOGO_VERTICAL = {
+    name: "KS_V",
+    ratio: "1:2",
+    w: 762.05,
+    h: 1523.4,
+    loops: [
+      [[0, 0], [101.5, 0], [101.5, 514.75], [615.98, 0], [762.05, 0], [381.05, 380.95], [460.32, 460.3], [762.05, 158.6], [762.05, 304.45], [533.23, 533.2], [762.05, 761.9], [762.05, 863.4], [203.1, 863.4], [101.5, 964.95], [101.5, 1096.65], [762.05, 1096.65], [762.05, 1370.83], [609.6, 1523.4], [0, 1523.4], [0, 1422.02], [565.35, 1422.02], [660.25, 1326.95], [660.25, 1198.28], [0, 1198.28]],
+      [[307.67, 453.71], [387.75, 533.2], [101.5, 819.22], [101.5, 660.32]],
+      [[460.32, 605.63], [615.98, 761.9], [307.67, 761.9]],
+    ],
+  };
+  const LOGO_HORIZONTAL = {
+    name: "KS_H",
+    ratio: "2:1",
+    w: 1523.6,
+    h: 761.85,
+    loops: [
+      [[0, 0], [101.6, 0], [101.6, 514.4], [615.98, 0], [761.75, 0], [380.73, 380.7], [460.22, 460.1], [920.35, 0], [1523.6, 0], [1523.6, 101.8], [964.6, 101.8], [863.1, 203.08], [863.1, 334.88], [1523.6, 334.88], [1523.6, 606.05], [1371.35, 761.85], [615.98, 761.85], [460.22, 606.05], [307.35, 761.85], [0, 761.85]],
+      [[761.75, 304.45], [761.75, 436.43], [1421.9, 436.43], [1421.9, 565.2], [1326.98, 660.12], [659.85, 660.12], [533.25, 533]],
+      [[307.35, 453.7], [387.48, 533], [260.35, 660.12], [101.6, 660.12]],
+    ],
+  };
+
+  // Fills `logo` into ctx, centred on x = 0 with its top edge at topY and
   // `heightPx` tall. The ctx is expected to already carry the horizontal
   // stretch that compensates for tall character cells.
-  function drawLogo(ctx, topY, heightPx) {
-    const scale = heightPx / LOGO_HEIGHT;
-    const offsetX = -(LOGO_WIDTH * scale) / 2;
+  function drawLogo(ctx, logo, topY, heightPx) {
+    const scale = heightPx / logo.h;
+    const offsetX = -(logo.w * scale) / 2;
     ctx.beginPath();
-    LOGO_LOOPS.forEach(function (loop) {
+    logo.loops.forEach(function (loop) {
       loop.forEach(function (point, i) {
         const px = point[0] * scale + offsetX;
         const py = point[1] * scale + topY;
@@ -151,6 +175,8 @@
     let cellGrain = null;
     let cellW = 5;
     let cellH = 8;
+    let activeLogo = LOGO_VERTICAL;
+    let logoSpan = VERTICAL_SPAN;
     // Set by the capability probe below, right after the first real
     // measure() -- read from syncRunning() too, so hardware that's
     // already been judged too slow for continuous animation can't have
@@ -171,16 +197,25 @@
       mctx.fillRect(0, 0, mw, mh);
       mctx.fillStyle = "#fff";
 
-      // Centred on the window's true horizontal midpoint (not the field area
-      // to the right of the nav columns). The logo keeps its true 1:2 shape:
-      // character cells are much taller than wide (cellH >> cellW), so the
-      // x axis is stretched by cellH / cellW to compensate.
-      const logoHeight = mh * LOGO_SPAN;
+      // Centred on the field's horizontal midpoint. The logo keeps its true
+      // proportions: character cells are much taller than wide (cellH >> cellW),
+      // so the x axis is stretched by cellH / cellW to compensate. One drawing
+      // unit is therefore cellH / MASK_SCALE screen pixels in both directions.
+      activeLogo = window.innerWidth < PHONE_MAX ? LOGO_VERTICAL : LOGO_HORIZONTAL;
+      let logoHeight;
+      if (activeLogo === LOGO_VERTICAL) {
+        logoSpan = VERTICAL_SPAN;
+        logoHeight = mh * logoSpan;
+      } else {
+        logoSpan = rows * cellH > cols * cellW ? HORIZONTAL_SPAN_TALL : HORIZONTAL_SPAN;
+        const widthUnits = ((cols * cellW) / cellH) * MASK_SCALE * logoSpan;
+        logoHeight = widthUnits * (activeLogo.h / activeLogo.w);
+      }
       const logoTop = mh * LOGO_CENTER_Y - logoHeight / 2;
       mctx.save();
       mctx.translate(mw / 2, 0);
       mctx.scale(cellH / cellW, 1);
-      drawLogo(mctx, logoTop, logoHeight);
+      drawLogo(mctx, activeLogo, logoTop, logoHeight);
       mctx.restore();
 
       const data = mctx.getImageData(0, 0, mw, mh).data;
@@ -221,6 +256,8 @@
       cols = Math.floor(wrapRect.width / cellW);
       rows = Math.floor(wrapRect.height / cellH);
 
+      buildLetterMask();
+
       const hudH = document.getElementById("ha-hud-h");
       const hudV = document.getElementById("ha-hud-v");
       if (hudH) {
@@ -229,10 +266,8 @@
       }
       if (hudV) {
         hudV.textContent =
-          "//MASK KS_V 1:2  //SPAN " + Math.round(LOGO_SPAN * 100) + "%  //FLIP HEX " + FLIP_STEP_MS + "MS";
+          "//MASK " + activeLogo.name + " " + activeLogo.ratio + "  //SPAN " + Math.round(logoSpan * 100) + "%  //FLIP HEX " + FLIP_STEP_MS + "MS";
       }
-
-      buildLetterMask();
     }
 
     window.addEventListener("resize", measure);

@@ -57,7 +57,9 @@ assets/js/hud.js            Quiet console-style labels: footer line (build, them
                             within the section, theme letter (d/l/a), layout class (01 phone <768, 02 tablet
                             <1024, 03 laptop <1700, 04 desktop). The home hero adds its own grid/mask
                             readout (hero-ascii.js). All values are live or from the build, none invented.
-assets/js/hero-ascii.js     Home hero: ASCII field with the vertical KS logo as its mask. Logo cells
+assets/js/hero-ascii.js     Home hero: ASCII field with the KS logo as its mask: horizontal
+                            logo (2:1) at >=768px wide (desktop, tablet portrait + landscape), vertical
+                            logo (1:2) on phones (<768px); re-picked on resize/rotation. Logo cells
                             "flip" through random hex digits (departure-board style, per-cell random
                             period/offset, core cells only) and settle back on their own character; the
                             ambient field drifts underneath. No sitemap table. Frozen (rendered once) on
