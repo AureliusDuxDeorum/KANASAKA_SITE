@@ -9,9 +9,20 @@
   const LOGO_HEIGHT = 1523.4;
   // How much of the hero field's height the logo takes up, and where its
   // vertical centre sits (as fractions of that height).
-  const SHIMMER_RATE = 0.0127; // radians per pixel along each axis (~350px wavelength on the diagonal)
   const LOGO_SPAN = 0.78;
   const LOGO_CENTER_Y = 0.474;
+
+  // Character flipping (like a departure board): every so often a core logo
+  // cell flips through a few random hex digits, then settles back on its own
+  // character. Each cell has its own period and offset, so flips are scattered
+  // and never sweep across the mark in a wave. Edge cells never flip, which
+  // keeps the silhouette crisp.
+  const FLIP_CHARS = "0123456789ABCDEF";
+  const FLIP_STEP_MS = 55; // how long each flipped character stays
+  const FLIP_STEPS = 5; // characters shown per flip
+  const FLIP_MIN_PERIOD = 2.4; // seconds between one cell's flips
+  const FLIP_MAX_PERIOD = 7.5;
+  const FLIP_MIN_COVERAGE = 0.6; // only cells at least this covered by the logo
   const LOGO_LOOPS = [
     [[0, 0], [101.5, 0], [101.5, 514.75], [615.98, 0], [762.05, 0], [381.05, 380.95], [460.32, 460.3], [762.05, 158.6], [762.05, 304.45], [533.23, 533.2], [762.05, 761.9], [762.05, 863.4], [203.1, 863.4], [101.5, 964.95], [101.5, 1096.65], [762.05, 1096.65], [762.05, 1370.83], [609.6, 1523.4], [0, 1523.4], [0, 1422.02], [565.35, 1422.02], [660.25, 1326.95], [660.25, 1198.28], [0, 1198.28]],
     [[307.67, 453.71], [387.75, 533.2], [101.5, 819.22], [101.5, 660.32]],
@@ -94,40 +105,6 @@
     return v;
   }
 
-  const COLUMNS = [
-    {
-      head: null,
-      lines: [
-        { t: "KANASAKA", cls: "ha-brand" },
-      ],
-    },
-    {
-      head: "Products",
-      lines: [
-        { t: "KS_Link", cls: "ha-item", href: "/products/ks-link/" },
-      ],
-    },
-    {
-      head: "Company",
-      lines: [
-        { t: "About", cls: "ha-item", href: "/company/about/" },
-        { t: "Vision", cls: "ha-item", href: "/company/vision/" },
-        { t: "Leadership", cls: "ha-item", href: "/company/leadership/" },
-        { t: "News", cls: "ha-item", href: "/company/news/" },
-        { t: "Careers", cls: "ha-item", href: "/company/careers/" },
-      ],
-    },
-    {
-      head: "Developers",
-      lines: [
-        { t: "API", cls: "ha-item", href: "/developers/api/" },
-        { t: "SDK", cls: "ha-item", href: "/developers/sdk/" },
-        { t: "GitHub", cls: "ha-item", href: "/developers/github/" },
-        { t: "Docs", cls: "ha-item", href: "/developers/documentation/" },
-      ],
-    },
-  ];
-
   // Every run's opening <span> tag only ever depends on (isLetter, tier) --
   // a fixed set of 10 letter tiers + 4 ambient tiers -- so the opacity/color
   // string can be built once instead of toFixed()'d and concatenated fresh
@@ -142,36 +119,6 @@
     const frac = tier / (RAMP.length - 1);
     SPAN_OPEN[100 + tier] =
       '<span style="opacity:' + (0.68 + frac * 0.32).toFixed(2) + ';color:var(--color-text)">';
-  }
-
-  function canSeeGated(id) {
-    return (
-      window.KanasakaAuth &&
-      window.KanasakaAuth.canSeeAccountGated &&
-      window.KanasakaAuth.canSeeAccountGated(id)
-    );
-  }
-
-  function buildColumns(colsEl) {
-    COLUMNS.forEach(function (col) {
-      const div = document.createElement("div");
-      div.className = "ha-col";
-      const rows = [];
-      if (col.head) {
-        rows.push('<span class="ha-head">' + col.head + "</span>");
-        rows.push("");
-      }
-      col.lines.forEach(function (l) {
-        if (l.gated && !canSeeGated(l.gated)) return;
-        if (l.href) {
-          rows.push('<a class="' + l.cls + '" href="' + l.href + '">' + l.t + "</a>");
-        } else {
-          rows.push('<span class="' + l.cls + '">' + l.t + "</span>");
-        }
-      });
-      div.innerHTML = rows.join("\n");
-      colsEl.appendChild(div);
-    });
   }
 
   function measureCell(el) {
@@ -189,20 +136,19 @@
 
   function init() {
     const hero = document.getElementById("hero-ascii");
-    const colsEl = document.getElementById("ha-cols");
     const fieldEl = document.getElementById("ha-field");
     const fieldWrap = document.querySelector(".ha-field-wrap");
-    if (!hero || !colsEl || !fieldEl || !fieldWrap) return;
-
-    buildColumns(colsEl);
+    if (!hero || !fieldEl || !fieldWrap) return;
 
     const reduced = prefersReducedMotion();
 
     let cols = 0;
     let rows = 0;
-    let contentColsWidth = 0;
-    let startCol = 0;
     let letterMask = null;
+    // per-cell flip schedule and static grain (see FLIP_* above)
+    let flipPeriod = null;
+    let flipOffset = null;
+    let cellGrain = null;
     let cellW = 5;
     let cellH = 8;
     // Set by the capability probe below, right after the first real
@@ -253,12 +199,18 @@
         }
       }
       letterMask = mask;
-    }
 
-    // The sitemap table is decoration. If it would run into the logo (any
-    // layout narrower than a wide desktop), drop it and give the field the
-    // whole width instead of letting the two collide.
-    const TABLE_LOGO_GAP = 160;
+      if (!flipPeriod || flipPeriod.length !== cols * rows) {
+        flipPeriod = new Float32Array(cols * rows);
+        flipOffset = new Float32Array(cols * rows);
+        cellGrain = new Float32Array(cols * rows);
+        for (let i = 0; i < flipPeriod.length; i++) {
+          flipPeriod[i] = FLIP_MIN_PERIOD + Math.random() * (FLIP_MAX_PERIOD - FLIP_MIN_PERIOD);
+          flipOffset[i] = Math.random() * flipPeriod[i];
+          cellGrain[i] = Math.random();
+        }
+      }
+    }
 
     function measure() {
       const cell = measureCell(fieldEl);
@@ -269,13 +221,6 @@
       cols = Math.floor(wrapRect.width / cellW);
       rows = Math.floor(wrapRect.height / cellH);
 
-      hero.classList.remove("ha-no-cols");
-      const logoWidthPx = (rows * LOGO_SPAN * cellH * LOGO_WIDTH) / LOGO_HEIGHT;
-      const logoLeft = wrapRect.left + wrapRect.width / 2 - logoWidthPx / 2;
-      if (colsEl.getBoundingClientRect().right + TABLE_LOGO_GAP > logoLeft) {
-        hero.classList.add("ha-no-cols");
-      }
-
       const hudH = document.getElementById("ha-hud-h");
       const hudV = document.getElementById("ha-hud-v");
       if (hudH) {
@@ -283,12 +228,10 @@
           "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
       }
       if (hudV) {
-        hudV.textContent = "//MASK KS_V 1:2  //SPAN " + Math.round(LOGO_SPAN * 100) + "%  //WAVE 45DEG";
+        hudV.textContent =
+          "//MASK KS_V 1:2  //SPAN " + Math.round(LOGO_SPAN * 100) + "%  //FLIP HEX " + FLIP_STEP_MS + "MS";
       }
 
-      const colsRect = colsEl.getBoundingClientRect();
-      contentColsWidth = colsRect.width + 24;
-      startCol = Math.ceil(contentColsWidth / cellW) + 2;
       buildLetterMask();
     }
 
@@ -312,22 +255,12 @@
       // them for every one of the thousands of cells was pure waste.
       const driftX = reduced ? 0 : t * 0.025;
       const driftY = reduced ? 0 : t * 0.016;
-      const shimmerT = reduced ? 0 : t * 0.5;
-      // The shimmer wave runs at exactly 45deg on screen, matching the
-      // logo's diagonals. Its phase is in real pixels (cell size x a fixed
-      // rate per axis) rather than per character cell: cells are about twice
-      // as tall as wide, and how much so depends on the visitor's monospace
-      // font, so a per-cell phase tilts the wave differently on every machine.
-      const shimmerPhaseX = cellW * SHIMMER_RATE;
-      const shimmerPhaseY = cellH * SHIMMER_RATE;
-
       for (let y = 0; y < rows; y++) {
         let runChar = "";
         let runKey = null;
         const runs = [];
         const ny = y * 0.16 - driftY;
         const rowMaskOffset = y * cols;
-        const rowShimmerPhase = y * shimmerPhaseY - shimmerT;
 
         for (let x = 0; x < cols; x++) {
           const nx = x * 0.09 + driftX;
@@ -336,14 +269,23 @@
           const m = letterMask ? letterMask[rowMaskOffset + x] : 0;
           const isLetter = m > 0.1;
 
+          let flipChar = "";
           if (isLetter) {
-            // the letters run their own local shimmer -- a slow, broad
-            // breathing across the mark's own coordinates on its own clock
-            // -- instead of inheriting the ambient field's drift. Kept
-            // deliberately gentle: a quiet ambient quality, not a sweep.
-            const shimmer = Math.sin(x * shimmerPhaseX + rowShimmerPhase) * 0.5 + 0.5;
-            const base = m * (0.82 + shimmer * 0.13);
+            // static grain: each cell sits a little differently in the dense
+            // end of the ramp, so the mark reads as textured, not flat
+            const idx = rowMaskOffset + x;
+            const base = m * (0.84 + (cellGrain ? cellGrain[idx] : 0.5) * 0.11);
             v = Math.max(v, base);
+
+            if (!reduced && flipPeriod && m > FLIP_MIN_COVERAGE) {
+              const local = t + flipOffset[idx];
+              const cycle = Math.floor(local / flipPeriod[idx]);
+              const step = Math.floor(((local - cycle * flipPeriod[idx]) * 1000) / FLIP_STEP_MS);
+              if (step < FLIP_STEPS) {
+                const h = (Math.imul(idx, 73856093) ^ Math.imul(step + 1, 19349663) ^ Math.imul(cycle + 1, 83492791)) >>> 0;
+                flipChar = FLIP_CHARS.charAt(h % FLIP_CHARS.length);
+              }
+            }
           }
           v = Math.max(0, Math.min(1, v));
 
@@ -351,8 +293,8 @@
           // reads as an even, subtle texture instead of high-contrast
           // speckling; letters alone get to use the full ramp.
           const tier = isLetter ? Math.floor(v * (RAMP.length - 1)) : 1 + Math.floor(v * 4);
-          const ch = RAMP[tier];
-          const key = tier + (isLetter ? 100 : 0);
+          const ch = flipChar || RAMP[tier];
+          const key = flipChar ? 109 : tier + (isLetter ? 100 : 0);
 
           if (key !== runKey) {
             if (runChar) runs.push(runKey, runChar);

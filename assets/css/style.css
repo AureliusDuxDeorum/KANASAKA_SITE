@@ -1906,7 +1906,7 @@ body.auth-modal-open > #site-footer {
   width: 100%;
   max-width: 1040px;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 284px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
 }
@@ -1960,6 +1960,9 @@ body.auth-modal-open > #site-footer {
 
 .settings-nav-item {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   padding: 14px 16px 14px 20px;
   border: 1px solid transparent;
@@ -1977,6 +1980,18 @@ body.auth-modal-open > #site-footer {
     color 240ms ease,
     background-color 280ms var(--auth-ease),
     border-color 240ms ease;
+}
+
+/* minimalist angular line icons in front of each section name */
+.settings-nav-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 
 .settings-nav-item::before {
@@ -3440,6 +3455,36 @@ body.tos-open {
 
 @media print {
   .hud {
+    display: none !important;
+  }
+}
+
+/* ── Page mark ──
+   A quiet "//" at the top of every page except the home page (main.js,
+   mountPageMark). Absolutely positioned, so it never shifts the layout. */
+body.has-page-mark main {
+  position: relative;
+}
+
+.page-mark {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--hud-color);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media print {
+  .page-mark {
     display: none !important;
   }
 }

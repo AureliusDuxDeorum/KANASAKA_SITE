@@ -372,6 +372,21 @@
     (document.querySelector("main") || document.body).appendChild(buildAmbientRail("right"));
   }
 
+  function mountPageMark() {
+    const main = document.querySelector("main");
+    if (!main || document.getElementById("hero-ascii") || main.querySelector(".page-mark")) {
+      return;
+    }
+
+    const mark = document.createElement("div");
+    mark.className = "page-mark";
+    mark.setAttribute("aria-hidden", "true");
+    mark.textContent = "//";
+    document.body.classList.add("has-page-mark");
+    // appended, not prepended: sections are styled by :first-child / nth-child
+    main.appendChild(mark);
+  }
+
   function mountLayout() {
     const headerSlot = document.getElementById("site-header");
     const footerSlot = document.getElementById("site-footer");
@@ -385,6 +400,7 @@
     }
 
     mountAmbientRails();
+    mountPageMark();
   }
 
   window.KanasakaLayout = {
@@ -447,7 +463,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=91").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=92").then(resolve);
     });
   }
 

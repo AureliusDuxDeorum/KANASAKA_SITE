@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=130">
+  <link rel="stylesheet" href="/assets/css/style.css?v=132">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=93">
   <style>
     /* Home hero: generative ASCII field (hero-ascii.js) replacing the flat
@@ -37,61 +37,6 @@
       background: linear-gradient(to bottom, transparent, var(--color-base));
       z-index: 3;
       pointer-events: none;
-    }
-
-    .ha-cols {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      align-items: flex-start;
-      gap: 26px;
-      flex-shrink: 0;
-      padding-top: 4px;
-      font-size: 13px;
-      line-height: 23px;
-    }
-    .ha-cols::before {
-      content: "";
-      position: absolute;
-      inset: -24px -56px -24px -24px;
-      background: linear-gradient(to right, var(--color-base) 68%, transparent 100%);
-      z-index: -1;
-      pointer-events: none;
-    }
-    .ha-col {
-      padding-right: 26px;
-      border-right: 1px solid var(--color-border);
-      white-space: pre;
-    }
-    .ha-col:last-child { border-right: none; padding-right: 0; }
-    .ha-col .ha-head { color: #555555; letter-spacing: 0.02em; }
-    .ha-col a.ha-item {
-      color: #444444;
-      text-decoration: none;
-      transition: color 120ms ease;
-    }
-    .ha-col a.ha-item:hover,
-    .ha-col a.ha-item:focus-visible {
-      color: var(--color-text-muted);
-    }
-    .ha-col .ha-brand { color: #6e6e6e; font-family: "Tektur", monospace; letter-spacing: 0.04em; }
-
-    /* the column sitemap doesn't shrink/wrap and eats too much width on
-       narrow screens, pushing the K/S mark (centered on the true window
-       midpoint) to land underneath it. It's also not very usable at 13px
-       monospace on a phone regardless -- simplest fix is to drop it and
-       let the mark have the full width to itself. */
-    @media (max-width: 760px) {
-      .ha-cols,
-      .ha-cols::before {
-        display: none;
-      }
-    }
-
-    /* Set by hero-ascii.js when the table would collide with the logo. */
-    .hero-ascii.ha-no-cols .ha-cols,
-    .hero-ascii.ha-no-cols .ha-cols::before {
-      display: none;
     }
 
     .ha-field-wrap {
@@ -221,7 +166,7 @@
   </style>
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=99"></script>
-  <script defer src="/assets/js/main.js?v=117"></script>
+  <script defer src="/assets/js/main.js?v=119"></script>
   <script defer src="/assets/js/product-showcase.js?v=2"></script>
 </head>
 <body>
@@ -233,7 +178,6 @@
 
   <section class="hero-ascii" id="hero-ascii">
     <h1 class="visually-hidden">KANASAKA</h1>
-    <div class="ha-cols" id="ha-cols"></div>
     <div class="ha-field-wrap"><pre id="ha-field"></pre></div>
     <div class="hud hud-hero-h" id="ha-hud-h" aria-hidden="true"></div>
     <div class="hud hud-v hud-hero-v" id="ha-hud-v" aria-hidden="true"></div>
