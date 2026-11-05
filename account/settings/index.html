@@ -15,12 +15,13 @@
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/tokens.css?v=6">
-  <link rel="stylesheet" href="/assets/css/style.css?v=142">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=98">
-  <link rel="stylesheet" href="/assets/css/components.css?v=10">
+  <link rel="stylesheet" href="/assets/css/style.css?v=145">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=99">
+  <link rel="stylesheet" href="/assets/css/components.css?v=12">
+  <link rel="stylesheet" href="/assets/css/motion.css?v=3">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
-  <script defer src="/assets/js/auth.js?v=100"></script>
-  <script defer src="/assets/js/main.js?v=126"></script>
+  <script defer src="/assets/js/auth.js?v=101"></script>
+  <script defer src="/assets/js/main.js?v=128"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -135,6 +136,24 @@
               <button type="button" class="theme-option" data-theme-option="accent">
                 <span class="theme-option-label">Accent Mode</span>
                 <span class="theme-option-preview theme-preview-accent"></span>
+              </button>
+            </div>
+
+            <h3 class="settings-subsection-title settings-motion-title">Motion</h3>
+            <p class="settings-panel-intro">Animation scales with the theme: minimal in Light, standard in Dark, full in Accent. If your device is set to reduce motion, the site is always static.</p>
+
+            <div class="theme-picker motion-picker" role="group" aria-label="Motion">
+              <button type="button" class="theme-option" data-motion-option="auto">
+                <span class="theme-option-label">Automatic</span>
+              </button>
+              <button type="button" class="theme-option" data-motion-option="full">
+                <span class="theme-option-label">Full</span>
+              </button>
+              <button type="button" class="theme-option" data-motion-option="reduced">
+                <span class="theme-option-label">Reduced</span>
+              </button>
+              <button type="button" class="theme-option" data-motion-option="off">
+                <span class="theme-option-label">Off</span>
               </button>
             </div>
           </section>

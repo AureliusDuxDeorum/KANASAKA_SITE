@@ -1,0 +1,355 @@
+/* ── KANASAKA motion ──────────────────────────────────────────────────────
+   Every effect is gated by two attributes that assets/js/motion.js sets on
+   <html> (see docs/DESIGN.md > Motion):
+
+     data-motion = full | reduced | off     what the person / device allows
+     data-fx     = 0 | 1 | 2                cyber intensity (light 0, dark 1, accent 2)
+
+   With data-motion="off" (OS reduce-motion, or the user's choice) nothing
+   below applies and the page is fully static. Only transform and opacity are
+   animated continuously (compositor); clip-path is used for one-shot wipes.
+   Loaded last, after components.css.                                         */
+
+/* ── Reveal choreography ──────────────────────────────────────────────────
+   Items are hidden only after motion.js has marked them (html.fx-ready) and
+   only until they scroll into view; without JS nothing is ever hidden. */
+
+html.fx-ready:not([data-motion="off"]) [data-reveal]:not(.section):not(.page-section):not(.is-in) {
+  opacity: 0;
+}
+
+html:not([data-motion="off"]) [data-reveal]:not(.section):not(.page-section) {
+  transition: opacity 260ms var(--ease) calc(var(--i, 0) * 40ms);
+}
+
+html[data-motion="full"][data-fx="1"] [data-reveal]:not(.section):not(.page-section),
+html[data-motion="full"][data-fx="2"] [data-reveal]:not(.section):not(.page-section) {
+  transition:
+    opacity var(--duration-base) var(--ease) calc(var(--i, 0) * 60ms),
+    transform var(--duration-base) var(--ease) calc(var(--i, 0) * 60ms);
+}
+
+html.fx-ready[data-motion="full"][data-fx="1"] [data-reveal]:not(.section):not(.page-section):not(.is-in),
+html.fx-ready[data-motion="full"][data-fx="2"] [data-reveal]:not(.section):not(.page-section):not(.is-in) {
+  transform: translateY(8px);
+}
+
+/* a section's top rule draws itself left to right */
+html[data-motion="full"][data-fx="1"] .section[data-reveal],
+html[data-motion="full"][data-fx="2"] .section[data-reveal] {
+  border-top-color: transparent;
+}
+
+html[data-motion="full"][data-fx="1"] .section[data-reveal]::before,
+html[data-motion="full"][data-fx="2"] .section[data-reveal]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--border-width);
+  background: var(--color-border);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 700ms var(--ease);
+}
+
+html[data-motion="full"][data-fx="1"] .section[data-reveal].is-in::before,
+html[data-motion="full"][data-fx="2"] .section[data-reveal].is-in::before {
+  transform: scaleX(1);
+}
+
+/* the first section on a page has no rule above it */
+html[data-motion="full"] .page-header + .section[data-reveal]::before {
+  display: none;
+}
+
+/* ── Bracket reticle (cards, callouts, CTA bands, product media) ──────────
+   Four corner ticks drawn with gradients on one pseudo-element. Shown static
+   everywhere; they draw in on reveal (fx>=1) and "lock" tighter on hover. */
+
+.card,
+.cta-band,
+.callout,
+.showcase-media {
+  position: relative;
+}
+
+.card::before,
+.cta-band::before,
+.callout::before,
+.showcase-media::before {
+  --tick: var(--color-text-subtle);
+  --len: 10px;
+  content: "";
+  position: absolute;
+  inset: 6px;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--tick), var(--tick)) top left / var(--len) 1px no-repeat,
+    linear-gradient(var(--tick), var(--tick)) top left / 1px var(--len) no-repeat,
+    linear-gradient(var(--tick), var(--tick)) top right / var(--len) 1px no-repeat,
+    linear-gradient(var(--tick), var(--tick)) top right / 1px var(--len) no-repeat,
+    linear-gradient(var(--tick), var(--tick)) bottom left / var(--len) 1px no-repeat,
+    linear-gradient(var(--tick), var(--tick)) bottom left / 1px var(--len) no-repeat,
+    linear-gradient(var(--tick), var(--tick)) bottom right / var(--len) 1px no-repeat,
+    linear-gradient(var(--tick), var(--tick)) bottom right / 1px var(--len) no-repeat;
+  opacity: 0.8;
+}
+
+html[data-motion="full"][data-fx="1"] .card::before,
+html[data-motion="full"][data-fx="1"] .cta-band::before,
+html[data-motion="full"][data-fx="1"] .callout::before,
+html[data-motion="full"][data-fx="1"] .showcase-media::before,
+html[data-motion="full"][data-fx="2"] .card::before,
+html[data-motion="full"][data-fx="2"] .cta-band::before,
+html[data-motion="full"][data-fx="2"] .callout::before,
+html[data-motion="full"][data-fx="2"] .showcase-media::before {
+  transition:
+    transform var(--duration-base) var(--ease),
+    opacity var(--duration-base) var(--ease);
+}
+
+/* draw in: start oversized and faint, settle when the item is revealed */
+html.fx-ready[data-motion="full"][data-fx="1"] .card[data-reveal]:not(.is-in)::before,
+html.fx-ready[data-motion="full"][data-fx="1"] .cta-band[data-reveal]:not(.is-in)::before,
+html.fx-ready[data-motion="full"][data-fx="1"] .callout[data-reveal]:not(.is-in)::before,
+html.fx-ready[data-motion="full"][data-fx="2"] .card[data-reveal]:not(.is-in)::before,
+html.fx-ready[data-motion="full"][data-fx="2"] .cta-band[data-reveal]:not(.is-in)::before,
+html.fx-ready[data-motion="full"][data-fx="2"] .callout[data-reveal]:not(.is-in)::before {
+  transform: scale(1.04);
+  opacity: 0;
+}
+
+/* lock on hover */
+html[data-motion="full"][data-fx="1"] .card:hover::before,
+html[data-motion="full"][data-fx="1"] .cta-band:hover::before,
+html[data-motion="full"][data-fx="1"] .callout:hover::before,
+html[data-motion="full"][data-fx="2"] .card:hover::before,
+html[data-motion="full"][data-fx="2"] .cta-band:hover::before,
+html[data-motion="full"][data-fx="2"] .callout:hover::before {
+  --tick: var(--color-text);
+  transform: scale(0.985);
+  opacity: 1;
+}
+
+/* ── Text-button brackets: [ LABEL ] ───────────────────────────────────────
+   Buttons are just their word, so the brackets slide in from the sides on
+   hover / keyboard focus instead of an underline. */
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled]),
+html[data-motion="full"][data-fx="2"] .button:not([disabled]) {
+  position: relative;
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled])::before,
+html[data-motion="full"][data-fx="1"] .button:not([disabled])::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled])::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled])::after {
+  display: block;
+  position: absolute;
+  top: 50%;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--duration-fast) var(--ease),
+    opacity var(--duration-fast) var(--ease);
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled])::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled])::before {
+  content: "[";
+  left: calc(var(--button-pad-x) - 12px);
+  transform: translate(-6px, -50%);
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled])::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled])::after {
+  content: "]";
+  right: calc(var(--button-pad-x) - 12px);
+  transform: translate(6px, -50%);
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):hover::before,
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):hover::after,
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):focus-visible::before,
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):focus-visible::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):hover::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):hover::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):focus-visible::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):focus-visible::after {
+  opacity: 1;
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):hover::before,
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):focus-visible::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):hover::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):focus-visible::before {
+  transform: translate(0, -50%);
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):hover::after,
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):focus-visible::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):hover::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):focus-visible::after {
+  transform: translate(0, -50%);
+}
+
+/* the brackets replace the underline */
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):hover,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):hover {
+  text-decoration: none;
+}
+
+html[data-motion="full"] .button:not([disabled]):active {
+  transform: translateY(1px);
+  transition-duration: 80ms;
+}
+
+/* ── Nav: sliding indicator + stepped dropdown ──────────────────────────── */
+
+@media (min-width: 1101px) {
+  .site-nav.has-indicator {
+    position: relative;
+  }
+
+  /* the indicator is the underline now */
+  .site-nav.has-indicator > .nav-item > .nav-link:hover,
+  .site-nav.has-indicator > .nav-item > .nav-link.active {
+    text-decoration: none;
+  }
+
+  .nav-indicator {
+    position: absolute;
+    left: 0;
+    bottom: 6px;
+    width: 1px;
+    height: 1px;
+    background: var(--color-text);
+    opacity: 0;
+    transform: translateX(var(--x, 0px)) scaleX(var(--w, 1));
+    transform-origin: 0 50%;
+    pointer-events: none;
+  }
+
+  .nav-indicator.is-on {
+    opacity: 1;
+  }
+
+  html[data-motion="full"] .nav-indicator {
+    transition:
+      transform 260ms var(--ease),
+      opacity var(--duration-fast) var(--ease);
+  }
+
+  html[data-motion="full"][data-fx="1"] .nav-dropdown,
+  html[data-motion="full"][data-fx="2"] .nav-dropdown {
+    clip-path: inset(0 0 100% 0);
+    transition:
+      opacity var(--duration-fast) var(--ease-smooth),
+      transform var(--duration-base) var(--ease),
+      visibility var(--duration-fast),
+      clip-path 150ms steps(5, end);
+  }
+
+  html[data-motion="full"][data-fx="1"] .nav-item:hover .nav-dropdown,
+  html[data-motion="full"][data-fx="1"] .nav-item:focus-within .nav-dropdown,
+  html[data-motion="full"][data-fx="2"] .nav-item:hover .nav-dropdown,
+  html[data-motion="full"][data-fx="2"] .nav-item:focus-within .nav-dropdown {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ── Scroll progress (scroll-driven; a no-op where unsupported) ─────────── */
+
+.scroll-progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  html:not([data-motion="off"]) .scroll-progress {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 300;
+    background: var(--color-focus);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    pointer-events: none;
+    animation: scroll-progress linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+@keyframes scroll-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Data rows, badges ──────────────────────────────────────────────────── */
+
+.data-table tbody tr:hover {
+  background: var(--color-surface);
+}
+
+.data-table tbody tr:hover > th:first-child {
+  box-shadow: inset 2px 0 0 var(--color-text);
+}
+
+html[data-motion="full"][data-fx="1"] .badge--alpha::before,
+html[data-motion="full"][data-fx="2"] .badge--alpha::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  vertical-align: 1px;
+  background: currentColor;
+  animation: status-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── Theme change: a short stepped wipe (View Transitions) ──────────────── */
+
+html.vt-wipe::view-transition-old(root) {
+  animation: none;
+}
+
+html.vt-wipe::view-transition-new(root) {
+  animation: ks-wipe 280ms steps(14, end) both;
+}
+
+@keyframes ks-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}

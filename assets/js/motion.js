@@ -1,0 +1,375 @@
+(function () {
+  "use strict";
+
+  // KANASAKA motion layer (see docs/DESIGN.md > Motion).
+  //
+  // Everything animated on the site is gated here, in one place:
+  //
+  //   html[data-motion]  full | reduced | off      (what the person/device allows)
+  //   html[data-fx]      0 | 1 | 2                 (how much cyber: theme-scaled)
+  //
+  //   motion  OS "reduce motion" => off, always. Otherwise the saved choice
+  //           (Account > Customization, or the console): auto | full | reduced | off.
+  //           "auto" = full, except weak touch devices / data-saver => reduced.
+  //   fx      light 0 (minimal), dark 1 (standard), accent 2 (full cybercore);
+  //           reduced and off force 0.
+  //
+  // CSS reads those two attributes; with motion "off" the page is completely
+  // static and nothing here runs. JS effects share one rAF loop (raf()) and
+  // never run while the tab is hidden.
+
+  var PREF_KEY = "kanasaka-motion";
+  var PREFS = ["auto", "full", "reduced", "off"];
+  var root = document.documentElement;
+  var listeners = [];
+  var state = { motion: "full", fx: 1 };
+
+  function safeGet(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function safeSet(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      // storage blocked: the choice just does not persist
+    }
+  }
+
+  function getPref() {
+    var pref = safeGet(PREF_KEY);
+    return PREFS.indexOf(pref) === -1 ? "auto" : pref;
+  }
+
+  function osReduced() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function weakDevice() {
+    var connection = navigator.connection;
+    if (connection && connection.saveData) return true;
+    var weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+    return weak && window.matchMedia("(pointer: coarse)").matches;
+  }
+
+  function themeFx() {
+    var theme = root.getAttribute("data-theme");
+    return theme === "accent" ? 2 : theme === "light" ? 0 : 1;
+  }
+
+  function compute() {
+    var pref = getPref();
+    var motion;
+    if (osReduced()) motion = "off";
+    else if (pref === "auto") motion = weakDevice() ? "reduced" : "full";
+    else motion = pref;
+
+    var fx = motion === "full" ? themeFx() : 0;
+    return { motion: motion, fx: fx };
+  }
+
+  function apply() {
+    var next = compute();
+    var changed = next.motion !== state.motion || next.fx !== state.fx;
+    state = next;
+    root.setAttribute("data-motion", state.motion);
+    root.setAttribute("data-fx", String(state.fx));
+    if (changed) {
+      listeners.slice().forEach(function (cb) {
+        try {
+          cb(state);
+        } catch (e) {
+          // a broken listener must not break the others
+        }
+      });
+    }
+  }
+
+  // ── shared rAF loop ────────────────────────────────────────────────────
+  var tasks = [];
+  var rafId = 0;
+
+  function tick(now) {
+    rafId = 0;
+    var keep = [];
+    for (var i = 0; i < tasks.length; i++) {
+      var more = false;
+      try {
+        more = tasks[i](now);
+      } catch (e) {
+        more = false;
+      }
+      if (more) keep.push(tasks[i]);
+    }
+    tasks = keep;
+    if (tasks.length && !document.hidden) rafId = window.requestAnimationFrame(tick);
+  }
+
+  // cb(now) returns true to be called again next frame
+  function raf(cb) {
+    tasks.push(cb);
+    if (!rafId && !document.hidden) rafId = window.requestAnimationFrame(tick);
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && tasks.length && !rafId) rafId = window.requestAnimationFrame(tick);
+  });
+
+  // ── decode: hex scramble that resolves into the real text ───────────────
+  var GLYPHS = "0123456789ABCDEF";
+  var DECODE_MS = 520;
+
+  function decode(el) {
+    if (!el || el.hasAttribute("data-decoded") || el.children.length) return;
+    var text = el.textContent;
+    if (!text || !text.trim()) return;
+    el.setAttribute("data-decoded", "");
+
+    // keep the box stable while the glyphs change width
+    var rect = el.getBoundingClientRect();
+    el.style.minHeight = rect.height + "px";
+
+    // real text stays in the DOM for assistive tech; the animation is aria-hidden
+    var real = document.createElement("span");
+    real.className = "visually-hidden";
+    real.textContent = text;
+    var shown = document.createElement("span");
+    shown.setAttribute("aria-hidden", "true");
+    el.textContent = "";
+    el.appendChild(real);
+    el.appendChild(shown);
+
+    var length = text.length;
+    var lock = [];
+    for (var i = 0; i < length; i++) lock.push(0.15 + (i / length) * 0.65 + Math.random() * 0.2);
+    var start = performance.now();
+    var frame = 0;
+
+    raf(function (now) {
+      var t = (now - start) / DECODE_MS;
+      frame += 1;
+      if (t >= 1) {
+        el.textContent = text;
+        el.style.minHeight = "";
+        return false;
+      }
+      if (frame % 2 === 0) return true; // ~30 updates/s is plenty
+      var out = "";
+      for (var j = 0; j < length; j++) {
+        var ch = text.charAt(j);
+        out += ch === " " || t >= lock[j] ? ch : GLYPHS.charAt((Math.random() * GLYPHS.length) | 0);
+      }
+      shown.textContent = out;
+      return true;
+    });
+  }
+
+  // ── reveal choreography ────────────────────────────────────────────────
+  // Sections draw their top hairline; the items inside fade/rise in a short
+  // stagger. Content already in view at load is revealed immediately (no
+  // hide-then-show flash); the rest on scroll. No IntersectionObserver => no
+  // hiding at all.
+  var SECTION_SEL = "main .section, main .page-section";
+  var ITEM_SEL = [
+    ".page-header .breadcrumb",
+    ".page-header h1",
+    ".page-header .page-lead",
+    ".page-header .page-actions",
+    ".section-header",
+    ".feature",
+    ".card",
+    ".cta-band",
+    ".callout",
+    ".spec-list",
+    ".data-table tbody tr",
+    ".prose > *",
+    ".statement",
+    ".statement-note",
+  ].join(", ");
+  var DECODE_FX1 = ".page-header h1";
+  var DECODE_FX2 = ".page-header h1, .statement, .section-header h2";
+
+  var revealIo = null;
+  var mounted = false;
+
+  function reveal(el) {
+    el.classList.add("is-in");
+    var sel = state.fx >= 2 ? DECODE_FX2 : state.fx === 1 ? DECODE_FX1 : "";
+    if (state.motion === "full" && sel) {
+      var targets = el.matches(sel) ? [el] : [];
+      if (el.matches(".section-header") && state.fx >= 2) {
+        var h = el.querySelector("h2");
+        if (h) targets.push(h);
+      }
+      targets.forEach(decode);
+    }
+  }
+
+  function mountReveal() {
+    if (mounted || state.motion === "off") return;
+    mounted = true;
+
+    var nodes = Array.prototype.slice.call(document.querySelectorAll(SECTION_SEL + ", " + ITEM_SEL));
+    var vh = window.innerHeight || 800;
+    var counters = new Map();
+
+    nodes.forEach(function (node) {
+      var parent = node.parentElement;
+      var index = counters.get(parent) || 0;
+      counters.set(parent, index + 1);
+      node.setAttribute("data-reveal", "");
+      node.style.setProperty("--i", String(Math.min(index, 6)));
+    });
+
+    if (!("IntersectionObserver" in window)) {
+      nodes.forEach(function (n) {
+        n.classList.add("is-in");
+      });
+      return;
+    }
+
+    revealIo = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            reveal(entry.target);
+            revealIo.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+    );
+
+    nodes.forEach(function (node) {
+      var r = node.getBoundingClientRect();
+      if (r.top < vh * 0.92) reveal(node);
+      else revealIo.observe(node);
+    });
+
+    root.classList.add("fx-ready");
+  }
+
+  // ── nav indicator: one underline that slides between the top-level links ──
+  var navCleanup = null;
+
+  function mountNavIndicator() {
+    var nav = document.querySelector(".site-nav");
+    if (!nav || nav.querySelector(".nav-indicator") || state.motion === "off") return;
+
+    var indicator = document.createElement("span");
+    indicator.className = "nav-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    nav.appendChild(indicator);
+    nav.classList.add("has-indicator");
+
+    function links() {
+      return nav.querySelectorAll(":scope > .nav-item > .nav-link");
+    }
+
+    function place(link) {
+      if (!link || window.innerWidth <= 1100) {
+        indicator.classList.remove("is-on");
+        return;
+      }
+      var navRect = nav.getBoundingClientRect();
+      var rect = link.getBoundingClientRect();
+      var padding = 14; // .nav-link horizontal padding: underline spans the word
+      indicator.style.setProperty("--x", rect.left - navRect.left + padding + "px");
+      indicator.style.setProperty("--w", String(Math.max(1, rect.width - padding * 2)));
+      indicator.classList.add("is-on");
+    }
+
+    function home() {
+      place(nav.querySelector(":scope > .nav-item > .nav-link.active"));
+    }
+
+    links().forEach(function (link) {
+      link.addEventListener("pointerenter", function () {
+        place(link);
+      });
+      link.addEventListener("focus", function () {
+        place(link);
+      });
+    });
+    nav.addEventListener("pointerleave", home);
+    nav.addEventListener("focusout", function () {
+      window.setTimeout(function () {
+        if (!nav.contains(document.activeElement)) home();
+      }, 0);
+    });
+    window.addEventListener("resize", home);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(home);
+    home();
+
+    navCleanup = function () {
+      indicator.remove();
+      nav.classList.remove("has-indicator");
+    };
+  }
+
+  // ── scroll progress hairline (CSS scroll-driven animation, no JS per frame) ──
+  function mountScrollProgress() {
+    if (document.querySelector(".scroll-progress") || state.motion === "off") return;
+    var bar = document.createElement("div");
+    bar.className = "scroll-progress";
+    bar.setAttribute("aria-hidden", "true");
+    document.body.appendChild(bar);
+  }
+
+  // ── theme / state changes with a short wipe (View Transitions where available) ──
+  function transition(change) {
+    if (
+      state.motion === "full" &&
+      state.fx >= 1 &&
+      typeof document.startViewTransition === "function"
+    ) {
+      root.classList.add("vt-wipe");
+      var vt = document.startViewTransition(function () {
+        change();
+      });
+      var done = function () {
+        root.classList.remove("vt-wipe");
+      };
+      vt.finished.then(done, done);
+      return;
+    }
+    change();
+  }
+
+  function mount() {
+    mountReveal();
+    mountNavIndicator();
+    mountScrollProgress();
+  }
+
+  // re-evaluate when the theme (fx tier) or OS setting changes
+  new MutationObserver(apply).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  var osQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (osQuery.addEventListener) osQuery.addEventListener("change", apply);
+
+  apply();
+
+  window.KanasakaMotion = {
+    level: function () {
+      return { motion: state.motion, fx: state.fx, pref: getPref() };
+    },
+    getPref: getPref,
+    setPref: function (pref) {
+      if (PREFS.indexOf(pref) === -1) return;
+      safeSet(PREF_KEY, pref);
+      apply();
+      if (state.motion !== "off") mount();
+    },
+    onChange: function (cb) {
+      listeners.push(cb);
+    },
+    raf: raf,
+    decode: decode,
+    transition: transition,
+    mount: mount,
+  };
+})();

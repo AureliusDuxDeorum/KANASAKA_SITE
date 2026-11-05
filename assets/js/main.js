@@ -113,6 +113,12 @@
     if (theme !== "dark" && theme !== "light" && theme !== "accent") {
       return;
     }
+    if (window.KanasakaMotion && getTheme() !== theme) {
+      window.KanasakaMotion.transition(function () {
+        applyTheme(theme);
+      });
+      return;
+    }
     applyTheme(theme);
   }
 
@@ -258,7 +264,7 @@
       });
 
       trigger.addEventListener("click", function (event) {
-        if (window.innerWidth <= 1024) {
+        if (window.innerWidth <= 1100) {
           event.preventDefault();
           const expanded = item.classList.toggle("expanded");
           trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -462,6 +468,17 @@
     });
   }
 
+  function loadMotion() {
+    return new Promise(function (resolve) {
+      if (window.KanasakaMotion) {
+        resolve();
+        return;
+      }
+
+      loadScript("/assets/js/motion.js?v=2").then(resolve);
+    });
+  }
+
   function loadHud() {
     if (window.__ksHudLoaded) return;
     window.__ksHudLoaded = true;
@@ -539,6 +556,7 @@
   async function boot() {
     initTheme();
     initCookieConsent();
+    await loadMotion();
 
     if (window.KanasakaAuth) {
       await window.KanasakaAuth.initSession();
@@ -549,6 +567,7 @@
 
     window.requestAnimationFrame(function () {
       document.body.classList.add("is-site-ready");
+      if (window.KanasakaMotion) window.KanasakaMotion.mount();
     });
 
     if (window.KanasakaAuth) {

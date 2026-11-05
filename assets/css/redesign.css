@@ -74,7 +74,7 @@ body::before {
   opacity: 0.55;
 }
 
-@keyframes section-rise {
+@keyframes dialog-rise {
   from {
     opacity: 0;
     transform: translateY(22px);
@@ -96,22 +96,6 @@ body::before {
     opacity: 1;
     transform: scaleX(1);
   }
-}
-
-body.is-site-ready main > section:not(:first-child) {
-  animation: section-rise var(--duration-slow) var(--ease-out) both;
-}
-
-body.is-site-ready main > section:not(:first-child):nth-child(2) {
-  animation-delay: 40ms;
-}
-
-body.is-site-ready main > section:not(:first-child):nth-child(3) {
-  animation-delay: 80ms;
-}
-
-body.is-site-ready main > section:not(:first-child):nth-child(4) {
-  animation-delay: 120ms;
 }
 
 /* ── Header / nav glass ── */
@@ -547,7 +531,7 @@ h1 {
 }
 
 .tos-overlay.is-visible .tos-dialog {
-  animation: section-rise var(--duration-med) var(--ease-out);
+  animation: dialog-rise var(--duration-base) var(--ease-out);
 }
 
 /* ── Auth pages (enhance existing motion) ── */
@@ -568,7 +552,6 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.is-site-ready main > section:not(:first-child),
   .hero::after,
   .hero-lead,
   .tos-overlay.is-visible .tos-dialog {

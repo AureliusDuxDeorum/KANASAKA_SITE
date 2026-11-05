@@ -1600,6 +1600,7 @@
     }
 
     initThemePicker();
+    initMotionPicker();
 
     avatarInput.addEventListener("change", async function () {
       const file = avatarInput.files && avatarInput.files[0];
@@ -2210,6 +2211,28 @@
         window.KanasakaTheme.setTheme(theme);
       });
     });
+  }
+
+  function initMotionPicker() {
+    const buttons = document.querySelectorAll("[data-motion-option]");
+    if (!buttons.length || !window.KanasakaMotion) return;
+
+    function sync() {
+      const pref = window.KanasakaMotion.getPref();
+      buttons.forEach(function (button) {
+        const selected = button.getAttribute("data-motion-option") === pref;
+        button.classList.toggle("is-selected", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+    }
+
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        window.KanasakaMotion.setPref(button.getAttribute("data-motion-option"));
+        sync();
+      });
+    });
+    sync();
   }
 
   function initProtectedPages() {

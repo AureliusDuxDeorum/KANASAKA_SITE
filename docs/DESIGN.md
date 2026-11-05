@@ -45,6 +45,17 @@ The nav and footer (`NAV`, `FOOTER_COLUMNS` in `assets/js/main.js`) list **only 
 
 Current nav: Products (KS_Link, Technical overview) · Downloads · Security · Company (About, Contact) · Legal. Each dropdown label is a real link to a small overview page (`/products/`, `/company/`, `/legal/`): clicking it navigates on desktop, hover/focus opens the list; on phones the label expands the list and an "<Section> overview" row links to the page.
 
+## Motion
+
+Everything animated is gated in one place, `assets/js/motion.js` + `assets/css/motion.css`, by two attributes on `<html>`:
+
+- `data-motion` = `full | reduced | off`: what the person/device allows. The OS "reduce motion" setting always forces `off`; otherwise the saved choice (Account > Customization > Motion: Automatic / Full / Reduced / Off); Automatic = full, except data-saver and weak touch devices = reduced.
+- `data-fx` = `0 | 1 | 2`: cyber intensity scaled by theme (light 0, dark 1, accent 2; reduced/off force 0).
+
+With `off` the page is completely static and no motion code runs. Rules: animate only `transform`/`opacity` continuously; one-shot wipes may use `clip-path`; effects pause offscreen / in hidden tabs; JS effects share one rAF loop (`KanasakaMotion.raf`); no inline styles (classes + `style.setProperty`). Tests lint keyframe properties and require every animation in `motion.css` to be gated by `data-motion`.
+
+Effects today (phase 1): reveal choreography (sections draw their top rule, items rise in a stagger), hex-scramble decode of page headings, bracket reticles on cards / callouts / CTA bands, `[ LABEL ]` button brackets, a sliding nav indicator + stepped dropdown, scroll-progress hairline, status pulse on Alpha tags, theme-change wipe (View Transitions).
+
 ## Voice
 
 Plain, specific, third person. Sentence-case headings, no hype. Claims must match what the product does today (source of truth: `legal/products`, privacy, terms). Alpha status is stated once, in a callout.

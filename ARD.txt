@@ -77,6 +77,11 @@ assets/css/tokens.css       Design tokens (type scale, tracking, space, radius, 
 assets/css/components.css   Reusable components: page header, breadcrumb, section header, feature list, spec
                             list, badge, callout, card (chamfer), data table, CTA band, prose, footer columns.
 assets/fonts/               Inter (variable, latin, SIL OFL: Inter-OFL.txt) + Tektur SemiBold.
+assets/js/motion.js         Motion gate (data-motion / data-fx on <html>), shared rAF loop, reveal choreography,
+                            heading decode, nav indicator, scroll-progress element, theme-change wipe.
+                            Loaded by main.js. API: window.KanasakaMotion. User setting: localStorage
+                            kanasaka-motion (auto | full | reduced | off), Account > Customization.
+assets/css/motion.css       All effects, each gated by html[data-motion] / html[data-fx]. Loaded last.
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.
 main.js (NAV, FOOTER_COLUMNS)  Nav and footer list only pages that exist; unfinished pages are noindex and
                             use the "In development" template. (The old scripts/generate_pages.py skeleton

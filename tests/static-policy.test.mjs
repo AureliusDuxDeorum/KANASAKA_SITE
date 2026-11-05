@@ -229,3 +229,42 @@ test("unreleased product areas are not advertised anywhere public", () => {
     assert.ok(!/robotic|bio-?tech/i.test(read(file)), file + " mentions an unreleased product area");
   }
 });
+
+// ── motion guards (docs/DESIGN.md > Motion) ──────────────────────────────
+
+test("every page loads motion.css after components.css, and main.js loads the motion layer", () => {
+  for (const file of html) {
+    const text = read(file);
+    const a = text.indexOf("/assets/css/components.css");
+    const b = text.indexOf("/assets/css/motion.css");
+    assert.ok(a > -1 && b > a, file + ": motion.css must follow components.css");
+  }
+  assert.ok(read("assets/js/main.js").includes("/assets/js/motion.js"), "main.js must load motion.js");
+});
+
+test("keyframes only animate cheap properties", () => {
+  const forbidden = /(^|[;{\s])(filter|backdrop-filter|box-shadow|width|height|top|left|right|bottom|margin[a-z-]*|padding[a-z-]*|font-size|letter-spacing)\s*:/;
+  for (const file of css) {
+    for (const m of read(file).matchAll(/@keyframes\s+([\w-]+)\s*\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}/g)) {
+      assert.ok(!forbidden.test(m[2]), file + ": @keyframes " + m[1] + " animates a layout/paint-heavy property");
+    }
+  }
+});
+
+test("motion.css animations are all gated by the data-motion attribute", () => {
+  const text = read("assets/css/motion.css");
+  for (const m of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const [, selector, body] = m;
+    if (selector.includes("@keyframes") || /^\s*(from|to|\d+%|0%,)/.test(selector.trim())) continue;
+    if (/animation(-name)?\s*:/.test(body) && !/animation(-name)?\s*:\s*none/.test(body)) {
+      assert.ok(/data-motion|vt-wipe/.test(selector), "ungated animation in motion.css: " + selector.trim().slice(0, 80));
+    }
+  }
+});
+
+test("infinite animations outside motion.css have a reduced-motion branch in the same file", () => {
+  for (const file of css.filter((f) => !f.endsWith("motion.css"))) {
+    const text = read(file);
+    if (/infinite/.test(text)) assert.ok(/prefers-reduced-motion/.test(text), file + " has an infinite animation but no prefers-reduced-motion rule");
+  }
+});
