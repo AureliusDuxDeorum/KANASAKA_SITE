@@ -125,7 +125,7 @@ test("status: reads are throttled", async () => {
 
 // --- live self-test -------------------------------------------------------
 
-function siteFetch({ csp = "default-src 'self'; script-src 'self'; frame-ancestors 'none'", apiNosniff = true, csrf = 403, admin = 403 } = {}) {
+function siteFetch({ csp = "default-src 'self'; script-src 'self'; frame-ancestors 'none'", apiNosniff = true, csrf = 403, admin = 403, exposeRepo = false } = {}) {
   return async (url, init = {}) => {
     const { pathname } = new URL(url);
     const headers = new Headers();
@@ -135,6 +135,9 @@ function siteFetch({ csp = "default-src 'self'; script-src 'self'; frame-ancesto
       headers.set("strict-transport-security", "max-age=31536000");
       headers.set("x-frame-options", "DENY");
       return new Response("<html></html>", { status: 200, headers });
+    }
+    if (/^\/(schema\.sql|wrangler\.toml|package\.json|docs\/|migrations\/|functions\/|tests\/)/.test(pathname)) {
+      return new Response(exposeRepo ? "secret" : "Not found", { status: exposeRepo ? 200 : 404 });
     }
     if (pathname.startsWith("/api/admin/")) return new Response("{}", { status: admin });
     if (init.method === "POST") return new Response("{}", { status: csrf });
@@ -152,7 +155,7 @@ test("self-test: a healthy deployment passes every check it can run", async () =
   const failed = report.results.filter((r) => r.status === "fail");
   assert.deepEqual(failed, []);
   assert.equal(report.summary.fail, 0);
-  assert.ok(report.summary.pass >= 12, "ran " + report.summary.pass);
+  assert.ok(report.summary.pass >= 13, "ran " + report.summary.pass);
   assert.equal(byId(report)["stripe-signature"].status, "pass");
   assert.equal(byId(report)["argon2"].status, "pass");
 });
@@ -180,6 +183,10 @@ test("self-test: catches a missing CSP, missing API headers, open CSRF and open 
   for (const id of ["http-static-headers", "http-api-headers", "http-csrf", "http-admin-gate"]) {
     assert.equal(r[id].status, "fail", id);
   }
+
+  const leaky = await runSelfTests(env, { origin: ORIGIN, fetchImpl: siteFetch({ exposeRepo: true }) });
+  assert.equal(byId(leaky)["http-repo-files"].status, "fail");
+  assert.match(byId(leaky)["http-repo-files"].detail, /schema\.sql/);
 
   const unsafe = await runSelfTests(env, { origin: ORIGIN, fetchImpl: siteFetch({ csp: "script-src 'self' 'unsafe-inline'" }) });
   assert.equal(byId(unsafe)["http-static-headers"].status, "fail");

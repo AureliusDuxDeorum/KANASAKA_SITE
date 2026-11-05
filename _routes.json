@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "include": [
+    "/api/*",
+    "/functions/*",
+    "/migrations/*",
+    "/docs/*",
+    "/tests/*",
+    "/scripts/*",
+    "/.github/*",
+    "/schema.sql",
+    "/wrangler.toml",
+    "/package.json",
+    "/package-lock.json",
+    "/ARD.txt",
+    "/.gitignore",
+    "/.node-version",
+    "/_routes.json"
+  ],
+  "exclude": []
+}

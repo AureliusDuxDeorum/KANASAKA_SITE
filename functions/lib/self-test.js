@@ -230,6 +230,29 @@ export function buildTests({ env, origin, fetchImpl }) {
       },
     },
     {
+      id: "http-repo-files",
+      label: "Repository files are not served",
+      run: async () => {
+        const paths = [
+          "/schema.sql",
+          "/wrangler.toml",
+          "/package.json",
+          "/docs/SECURITY.md",
+          "/migrations/003_profile.sql",
+          "/functions/lib/auth.js",
+          "/tests/helpers.mjs",
+        ];
+        const exposed = [];
+        for (const path of paths) {
+          const res = await get(path).catch(() => null);
+          if (!res) throw new Skip("Could not reach own origin.");
+          if (res.status >= 200 && res.status < 300) exposed.push(path);
+        }
+        assert(exposed.length === 0, "Publicly readable: " + exposed.join(", ") + ".");
+        return paths.length + " source/config paths answer 404.";
+      },
+    },
+    {
       id: "http-api-headers",
       label: "API responses send the security headers",
       run: async () => {
@@ -285,7 +308,7 @@ export async function runSelfTests(env, { origin, fetchImpl } = {}) {
       } else {
         // Assertion messages are written for this panel and are safe to show;
         // anything else is logged and summarised.
-        const message = err && err.message && !/D1_|SQL/i.test(err.message) ? err.message : "Unexpected error -- see Cloudflare logs.";
+        const message = err && err.message && !/D1_|SQLITE|\bSQL (error|logic|syntax)/i.test(err.message) ? err.message : "Unexpected error -- see Cloudflare logs.";
         if (!(err && err.message)) console.error("Self-test error:", err);
         results.push({ id: test.id, label: test.label, status: "fail", ms: Date.now() - t0, detail: message });
       }
