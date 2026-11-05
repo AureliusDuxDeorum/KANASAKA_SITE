@@ -59,9 +59,9 @@
   --color-accent: #111111;
 }
 
-/* Accent theme: the dark theme with near-black neutrals and the KS purple used
-   sparingly (button/badge fills, the page glow, the side wordmark). Borders,
-   text and surfaces stay neutral. */
+/* Accent theme: the dark theme with near-black neutrals. The KS purple is used
+   in very few places (the Alpha tag, and a dim tint for focus rings and selected
+   states); borders, text, surfaces, glow and the side wordmark stay neutral. */
 [data-theme="accent"] {
   --color-base: #060509;
   --color-middle: #121016;
@@ -1217,9 +1217,9 @@ h1 {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--color-focus) 35%,
+    var(--color-accent) 35%,
     var(--color-text) 50%,
-    var(--color-focus) 65%,
+    var(--color-accent) 65%,
     transparent 100%
   );
   opacity: 0.85;
@@ -3147,7 +3147,7 @@ body.tos-open {
   }
 
   [data-theme="accent"] .kanasaka-rail {
-    color: rgba(62, 9, 88, 0.6);
+    color: rgba(255, 255, 255, 0.06);
   }
 }
 

@@ -50,8 +50,7 @@
   --strip-accent: rgba(255, 255, 255, 0.1);
   --strip-accent-bright: rgba(255, 255, 255, 0.22);
   --grid-line: rgba(255, 255, 255, 0.04);
-  /* the one soft purple moment: a glow at the top of the page */
-  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(62, 9, 88, 0.4), transparent 68%);
+  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(255, 255, 255, 0.05), transparent 68%);
 }
 
 body {

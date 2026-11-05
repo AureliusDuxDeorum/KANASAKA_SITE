@@ -82,6 +82,6 @@
 }
 
 [data-theme="accent"] {
-  /* a tint of the KS purple light enough to see on near-black (>= 3:1) */
-  --color-focus: #b585d6;
+  /* a dim tint of the KS purple, just visible enough on near-black (3.4:1) for rings and selected states */
+  --color-focus: #7d4f9f;
 }
