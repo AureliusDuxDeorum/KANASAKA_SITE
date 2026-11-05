@@ -37,13 +37,12 @@
   const FLIP_MIN_COVERAGE = 0.6; // only cells at least this covered by the logo
 
   // Extras gated by the motion layer (html[data-motion] / html[data-fx]; see
-  // assets/js/motion.js): fx >= 1 adds the scan band and pointer interference
+  // assets/js/motion.js): fx >= 1 adds the scan band
   // (Dark and Light), fx 2 (Accent) adds the glitch "tear". All of it is
   // arithmetic inside the existing per-cell loop: no extra DOM, no extra loop.
   const BAND_PERIOD = 7; // seconds between scan-band sweeps
   const BAND_SWEEP = 2.4; // seconds one sweep takes
   const BAND_HEIGHT = 3; // rows of falloff either side of the band centre
-  const POINTER_RADIUS = 150; // px
   const TEAR_MS = 120;
 
   const LOGO_VERTICAL = {
@@ -213,14 +212,6 @@
     // say). See the probe itself for what decides this.
     let forceStatic = false;
 
-    // pointer interference (desktop, fine pointer): page coordinates, so no
-    // layout reads happen while rendering
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
-    const pointer = { inside: false, pageX: 0, pageY: 0, strength: 0 };
-    let wrapPageLeft = 0;
-    let wrapPageTop = 0;
-    let baseHudH = "";
-    let hudPointerShown = false;
     // accent tear
     let nextTearAt = 8 + Math.random() * 6;
     let tearUntil = 0;
@@ -296,8 +287,6 @@
       cellH = cell.h || cellH;
 
       const wrapRect = fieldWrap.getBoundingClientRect();
-      wrapPageLeft = wrapRect.left + window.scrollX;
-      wrapPageTop = wrapRect.top + window.scrollY;
       cols = Math.floor(wrapRect.width / cellW);
       rows = Math.floor(wrapRect.height / cellH);
 
@@ -305,8 +294,7 @@
 
       const hudV = document.getElementById("ha-hud-v");
       if (hudH) {
-        baseHudH = "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
-        hudH.textContent = baseHudH;
+        hudH.textContent = "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
       }
       if (hudV) {
         hudV.textContent =
@@ -344,18 +332,6 @@
         if (phase < 1) bandRow = phase * (rows + BAND_HEIGHT * 2) - BAND_HEIGHT;
       }
 
-      // pointer interference: ripple around the cursor inside a small window
-      pointer.strength += ((fxLvl >= 1 && pointer.inside ? 1 : 0) - pointer.strength) * 0.4;
-      const ptrOn = pointer.strength > 0.02;
-      const pcx = (pointer.pageX - wrapPageLeft) / cellW;
-      const pcy = (pointer.pageY - wrapPageTop) / cellH;
-      const rx = Math.ceil(POINTER_RADIUS / cellW) + 1;
-      const ry = Math.ceil(POINTER_RADIUS / cellH) + 1;
-      const px0 = Math.floor(pcx) - rx;
-      const px1 = Math.floor(pcx) + rx;
-      const py0 = Math.floor(pcy) - ry;
-      const py1 = Math.floor(pcy) + ry;
-
       // accent only: now and then a few rows shear sideways for 120 ms
       if (fxLvl >= 2) {
         if (t >= nextTearAt && tearUntil === 0) {
@@ -371,17 +347,6 @@
         tearUntil = 0;
       }
 
-      if (hudH) {
-        if (fxLvl >= 2 && ptrOn) {
-          hudH.textContent =
-            baseHudH + "  //PTR " + String(Math.max(0, Math.round(pcx))).padStart(3, "0") + "," + String(Math.max(0, Math.round(pcy))).padStart(3, "0");
-          hudPointerShown = true;
-        } else if (hudPointerShown) {
-          hudH.textContent = baseHudH;
-          hudPointerShown = false;
-        }
-      }
-
       for (let y = 0; y < rows; y++) {
         let runChar = "";
         let runKey = null;
@@ -390,7 +355,6 @@
         const rowMaskOffset = y * cols;
         const shift = tearUntil && y >= tearY0 && y < tearY1 ? tearShift : 0;
         const bandBoost = bandRow > -99 ? Math.max(0, 1 - Math.abs(y - bandRow) / BAND_HEIGHT) : 0;
-        const rowNearPointer = ptrOn && y >= py0 && y <= py1;
 
         for (let x = 0; x < cols; x++) {
           const nx = x * 0.09 + driftX;
@@ -419,14 +383,6 @@
             }
           }
           if (bandBoost) v += bandBoost * 0.42;
-          if (rowNearPointer && x >= px0 && x <= px1) {
-            const dx = (x - pcx) * cellW;
-            const dy = (y - pcy) * cellH;
-            const d = Math.sqrt(dx * dx + dy * dy);
-            if (d < POINTER_RADIUS) {
-              v += Math.sin(d * 0.11 - t * 8) * 0.5 * (1 - d / POINTER_RADIUS) * pointer.strength;
-            }
-          }
           v = Math.max(0, Math.min(1, v));
 
           // ambient cells stay within a narrow mid-density band so the field
@@ -544,44 +500,6 @@
       tabVisible = !document.hidden;
       syncRunning();
     });
-
-    if (finePointer) {
-      hero.addEventListener("pointerenter", function (event) {
-        if (event.pointerType !== "mouse") return;
-        const rect = fieldWrap.getBoundingClientRect();
-        wrapPageLeft = rect.left + window.scrollX;
-        wrapPageTop = rect.top + window.scrollY;
-        pointer.inside = true;
-      });
-      hero.addEventListener("pointermove", function (event) {
-        if (event.pointerType !== "mouse") return;
-        pointer.pageX = event.pageX;
-        pointer.pageY = event.pageY;
-      });
-      hero.addEventListener("pointerleave", function () {
-        pointer.inside = false;
-      });
-    }
-
-    // tablets / phones: a tap sends the same ripple out from the touch point
-    let tapTimer = 0;
-    hero.addEventListener(
-      "pointerdown",
-      function (event) {
-        if (event.pointerType === "mouse") return;
-        const rect = fieldWrap.getBoundingClientRect();
-        wrapPageLeft = rect.left + window.scrollX;
-        wrapPageTop = rect.top + window.scrollY;
-        pointer.pageX = event.pageX;
-        pointer.pageY = event.pageY;
-        pointer.inside = true;
-        window.clearTimeout(tapTimer);
-        tapTimer = window.setTimeout(function () {
-          pointer.inside = false;
-        }, 1100);
-      },
-      { passive: true }
-    );
 
     // the in-app Motion setting / OS setting changed while the page is open
     if (window.KanasakaMotion) {

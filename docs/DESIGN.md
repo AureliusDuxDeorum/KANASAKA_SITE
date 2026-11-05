@@ -63,9 +63,9 @@ With `off` the page is completely static and no motion code runs. Rules: animate
 | Scroll-progress hairline, status pulse on Alpha tags, theme-change wipe | yes | |
 | Page transitions (cross-document View Transitions, stepped wipe) | yes | + 1-frame tear |
 | Boot sequence (first view per session; true values; any key skips) | yes | lines arrive corrupted, then resolve |
-| Live HUD (UTC clock, session timer, viewport, NET state, motion level) | yes | page code ticks on load; pointer readout over the hero |
+| Live HUD (UTC clock, session timer, viewport, NET state, motion level) | yes | page code ticks on load |
 | KS_Site terminal (`//` in the header, Ctrl/Cmd+K, `/`) | yes | glitch on open/error; the `//` carries a blinking cursor |
-| Hero: scan band, pointer interference (fine pointer) | yes | tear bursts every 12-20 s |
+| Hero: scan band | yes | tear bursts every 12-20 s |
 | Grid floor (home), scan sweep (content pages), scanlines | yes | |
 | Pointer light on cards/CTAs/features, product-strip hover (decode, reticle, scanlines) | yes | "COMING SOON" flicker |
 
@@ -73,7 +73,7 @@ The **KS_Site terminal** (`assets/js/console.js`, `assets/css/console.css`) open
 
 ### Cadence
 
-The ASCII hero deliberately ticks at **15 Hz** (`TICK_MS` = 66 ms, the same on every device): it rewrites the field once per tick and every moving part steps on that tick (noise drift, hex flips, scan band, pointer ripple, tear), and the text scramble in `motion.js` shares it (`KanasakaMotion.tickMs`). It reads as a terminal clock next to the display-rate, compositor-driven UI (strip, reveals, nav, sweeps). There is no adaptive rate: a device that cannot keep the tick (capability probe > half a tick, or a rolling average > 90 % of it, measured through layout and paint) drops once to a fixed 7.5 Hz tick, and if that is too much it shows the field still. It never wanders between rates.
+The ASCII hero deliberately ticks at **15 Hz** (`TICK_MS` = 66 ms, the same on every device): it rewrites the field once per tick and every moving part steps on that tick (noise drift, hex flips, scan band, tear), and the text scramble in `motion.js` shares it (`KanasakaMotion.tickMs`). It reads as a terminal clock next to the display-rate, compositor-driven UI (strip, reveals, nav, sweeps). There is no adaptive rate: a device that cannot keep the tick (capability probe > half a tick, or a rolling average > 90 % of it, measured through layout and paint) drops once to a fixed 7.5 Hz tick, and if that is too much it shows the field still. It never wanders between rates.
 
 ## Voice
 
