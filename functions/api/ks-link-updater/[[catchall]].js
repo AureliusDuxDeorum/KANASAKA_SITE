@@ -35,6 +35,17 @@ export async function onRequestGet(context) {
   }
 
   if (slug === "latest.json") {
+    // The app appends ?target={{target}} (tauri.conf.json's endpoint), so a
+    // Linux/macOS/Android client can be told "nothing for you" with a 204 --
+    // which the updater plugin reads as "up to date" -- instead of getting a
+    // manifest with no entry for its platform, which it reports as the
+    // error "platform linux-x86_64 not found". Clients without the param
+    // (every 0.2.x/0.3.0 build) still get the manifest exactly as before.
+    const target = new URL(request.url).searchParams.get("target");
+    if (target && target !== "windows") {
+      return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+    }
+
     const object = await env.INSTALLERS.get(MANIFEST_KEY);
     if (!object) {
       return errorResponse("No update manifest published yet.", 404);
