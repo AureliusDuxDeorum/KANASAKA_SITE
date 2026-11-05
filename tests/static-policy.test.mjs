@@ -59,7 +59,7 @@ test("_headers: baseline security headers", () => {
 test("pages contain nothing the CSP would block: no inline scripts, handlers, <style> or style=", () => {
   for (const file of html) {
     const text = read(file);
-    assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>\s*\S/i.test(text), file + ": inline <script>");
+    assert.ok(!/<script(?![^>]*\bsrc=)(?![^>]*type="application\/ld\+json")[^>]*>\s*\S/i.test(text), file + ": inline <script>");
     assert.ok(!/\son[a-z]+\s*=\s*["']/i.test(text), file + ": inline event handler");
     assert.ok(!/<style[\s>]/i.test(text), file + ": <style> block");
     assert.ok(!/\sstyle\s*=/i.test(text), file + ": style attribute");
