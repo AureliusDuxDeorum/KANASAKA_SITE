@@ -507,7 +507,7 @@
   function loadConsole() {
     if (window.KanasakaConsole || window.__ksConsoleLoading) return;
     window.__ksConsoleLoading = true;
-    loadScript("/assets/js/console.js?v=3");
+    loadScript("/assets/js/console.js?v=5");
   }
 
   function loadHud() {

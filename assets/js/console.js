@@ -20,7 +20,6 @@
   var cwd = []; // path segments below the root
   var history = [];
   var historyIndex = 0;
-  var tabState = null;
   var inertIds = ["site-header", "main-content", "site-footer"];
 
   function motion() {
@@ -189,7 +188,6 @@
 
   function error(text) {
     print(text, "error");
-    if (motion()) motion().glitch(term, 160);
   }
 
   // ── commands ────────────────────────────────────────────────────────────
@@ -441,44 +439,332 @@
     }
     error("'" + text.split(/\s+/)[0] + "' is not recognized as an internal or external command,");
     print("operable program or batch file.", "error");
+    var guess = didYouMean(tree, name);
+    if (guess) print("Did you mean: " + guess + "?");
   }
 
-  // ── Tab completion (commands, then entries of the target directory) ──────
-  function complete() {
-    var value = input.value;
-    var tree = buildTree();
-    var parts = value.split(/\s+/);
-
-    if (!tabState || tabState.base !== value) {
-      var pool;
-      var head;
-      if (parts.length <= 1) {
-        pool = Object.keys(COMMANDS).filter(function (c) {
-          return c !== "?";
-        });
-        head = "";
-      } else {
-        var rawPath = parts.slice(1).join(" ");
-        var cut = Math.max(rawPath.lastIndexOf("\\"), rawPath.lastIndexOf("/"));
-        var dirPart = cut === -1 ? "" : rawPath.slice(0, cut + 1);
-        var found = resolve(tree, dirPart || ".");
-        pool = found ? Object.keys(found.node.children) : [];
-        head = parts[0] + " " + dirPart;
-        parts = [parts[0], rawPath.slice(cut + 1)];
+  // closest command or page name (edit distance <= 2), for typos
+  function didYouMean(tree, word) {
+    var names = Object.keys(COMMANDS).filter(function (c) {
+      return c !== "?";
+    });
+    pageItems(tree).forEach(function (item) {
+      names.push(item.href === "/" ? "home" : item.href.split("/").filter(Boolean).pop());
+    });
+    var best = null;
+    var bestDistance = 3;
+    names.forEach(function (candidate) {
+      var d = distance(word, candidate);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = candidate;
       }
-      var fragment = (parts.length <= 1 ? parts[0] : parts[1]).toLowerCase();
-      var matches = pool
-        .filter(function (item) {
-          return item.indexOf(fragment) === 0;
-        })
-        .sort();
-      tabState = { base: null, head: head, matches: matches, index: -1 };
+    });
+    return best;
+  }
+
+  function distance(a, b) {
+    var prev = [];
+    for (var j = 0; j <= b.length; j++) prev.push(j);
+    for (var i = 1; i <= a.length; i++) {
+      var row = [i];
+      for (var k = 1; k <= b.length; k++) {
+        row.push(Math.min(prev[k] + 1, row[k - 1] + 1, prev[k - 1] + (a.charAt(i - 1) === b.charAt(k - 1) ? 0 : 1)));
+      }
+      prev = row;
+    }
+    return prev[b.length];
+  }
+
+  // ── recommendations / suggestions ────────────────────────────────────────
+  // The terminal is really a search bar, so it suggests as you type. With an
+  // empty prompt it recommends: things you ran recently, pages related to the
+  // one you are on, then the usual starting points.
+  var RELATED = {
+    "/": ["/products/ks-link/", "/downloads/", "/legal/security/"],
+    "/products/": ["/products/ks-link/", "/downloads/", "/legal/products/"],
+    "/products/ks-link/": ["/downloads/", "/legal/security/", "/legal/products/"],
+    "/downloads/": ["/products/ks-link/", "/legal/security/", "/legal/privacy/"],
+    "/legal/security/": ["/legal/privacy/", "/products/ks-link/", "/support/contact/"],
+    "/legal/": ["/legal/privacy/", "/legal/terms/", "/legal/impressum/"],
+    "/company/": ["/company/about/", "/support/contact/", "/legal/security/"],
+    "/company/about/": ["/products/ks-link/", "/support/contact/", "/legal/impressum/"],
+    "/support/contact/": ["/company/about/", "/legal/security/", "/products/ks-link/"],
+  };
+  var STARTERS = ["/products/ks-link/", "/downloads/", "/legal/security/", "/company/about/", "/support/contact/"];
+  var COMMAND_ITEMS = [
+    ["theme dark", "Switch to the dark theme"],
+    ["theme light", "Switch to the light theme"],
+    ["theme accent", "Switch to the accent theme"],
+    ["motion auto", "Animation: automatic"],
+    ["motion full", "Animation: full"],
+    ["motion reduced", "Animation: reduced"],
+    ["motion off", "Animation: off"],
+    ["login", "Sign in"],
+    ["register", "Create an account"],
+    ["account", "Account settings"],
+    ["tree", "Show the site structure"],
+    ["dir", "List this directory"],
+    ["help", "List commands"],
+    ["cls", "Clear the screen"],
+    ["ver", "Show the version"],
+    ["whoami", "Who is signed in"],
+    ["exit", "Close the terminal"],
+  ];
+
+  var suggestions = [];
+  var selected = -1;
+  var suggestTitle = "";
+  var listEl = null;
+  var titleEl = null;
+
+  function pageItems(tree) {
+    return pages().map(function (page) {
+      var segments = page.href.split("/").filter(Boolean);
+      return {
+        kind: "page",
+        label: page.label,
+        hint: page.href === "/" ? "\\" : "\\" + segments.join("\\"),
+        key: (page.label + " " + segments.join(" ") + " " + page.href).toLowerCase(),
+        fill: "start \\" + segments.join("\\"),
+        href: page.href,
+        complete: true,
+      };
+    });
+  }
+
+  function commandItems() {
+    return COMMAND_ITEMS.map(function (row) {
+      var word = row[0];
+      return {
+        kind: "command",
+        label: word,
+        hint: row[1],
+        key: (word + " " + row[1]).toLowerCase(),
+        fill: word,
+        complete: true,
+      };
+    });
+  }
+
+  function here() {
+    return window.location.pathname.replace(/\/?$/, "/");
+  }
+
+  function relatedHrefs() {
+    var current = here();
+    var list = (RELATED[current] || []).slice();
+    var section = current.split("/").filter(Boolean)[0];
+    if (section) {
+      pages().forEach(function (page) {
+        if (page.href !== current && page.href.split("/").filter(Boolean)[0] === section && list.indexOf(page.href) === -1) list.push(page.href);
+      });
+    }
+    STARTERS.forEach(function (href) {
+      if (list.indexOf(href) === -1) list.push(href);
+    });
+    return list.filter(function (href) {
+      return href !== current;
+    });
+  }
+
+  function recommend(tree) {
+    var items = [];
+    var seen = {};
+    var all = pageItems(tree);
+
+    history
+      .slice()
+      .reverse()
+      .forEach(function (line) {
+        var key = line.trim().toLowerCase();
+        if (!key || seen[key] || /^(cls|exit|help|clear)$/.test(key) || items.length >= 2) return;
+        seen[key] = true;
+        items.push({ kind: "recent", label: line.trim(), hint: "recent", fill: line.trim(), complete: true });
+      });
+
+    relatedHrefs().forEach(function (href) {
+      all.forEach(function (item) {
+        if (item.href === href && !seen[item.fill] && items.length < 6) {
+          seen[item.fill] = true;
+          items.push(item);
+        }
+      });
+    });
+    return items;
+  }
+
+  // ranks how well an item matches what was typed; -1 = no match.
+  // prefix of the label > prefix of any word > substring > loose letters (label only)
+  function scoreItem(query, item) {
+    var label = item.label.toLowerCase();
+    var text = item.key || label;
+    if (label.indexOf(query) === 0) return 0;
+    if ((" " + text).indexOf(" " + query) !== -1) return 5;
+    var at = label.indexOf(query);
+    if (at !== -1) return 10 + at;
+    at = text.indexOf(query);
+    if (at !== -1) return 20 + at;
+    if (query.length < 3) return -1;
+    var pos = 0;
+    var gaps = 0;
+    for (var i = 0; i < query.length; i++) {
+      var found = label.indexOf(query.charAt(i), pos);
+      if (found === -1) return -1;
+      gaps += found - pos;
+      pos = found + 1;
+    }
+    return 60 + gaps;
+  }
+
+  function compute() {
+    var tree = buildTree();
+    var raw = input.value;
+    var text = raw.trim().toLowerCase();
+
+    if (!text) {
+      suggestTitle = "Recommended";
+      return recommend(tree);
     }
 
-    if (!tabState.matches.length) return;
-    tabState.index = (tabState.index + 1) % tabState.matches.length;
-    input.value = tabState.head + tabState.matches[tabState.index];
-    tabState.base = input.value;
+    suggestTitle = "Suggestions";
+    var pool;
+    var query = text;
+
+    // arguments: only offer what fits the command being typed
+    var argMatch = /^(cd|chdir|dir|tree)\s+(.*)$/i.exec(raw.replace(/^\s+/, ""));
+    var startMatch = /^(start|open)\s+(.*)$/i.exec(raw.replace(/^\s+/, ""));
+    var themeMatch = /^(theme|motion)\s+(.*)$/i.exec(raw.replace(/^\s+/, ""));
+    if (argMatch) {
+      var base = argMatch[2];
+      var cut = Math.max(base.lastIndexOf("\\"), base.lastIndexOf("/"));
+      var dirPart = cut === -1 ? "" : base.slice(0, cut + 1);
+      var found = resolve(tree, dirPart || ".");
+      query = base.slice(cut + 1).toLowerCase();
+      pool = found
+        ? entries(found.node)
+            .filter(function (child) {
+              return isDir(child);
+            })
+            .map(function (child) {
+              return {
+                kind: "dir",
+                label: child.name,
+                hint: child.label || "directory",
+                key: child.name + " " + (child.label || ""),
+                fill: argMatch[1].toLowerCase() + " " + dirPart + child.name,
+                complete: true,
+              };
+            })
+        : [];
+    } else if (themeMatch) {
+      query = themeMatch[2].toLowerCase();
+      pool = commandItems().filter(function (item) {
+        return item.fill.indexOf(themeMatch[1].toLowerCase() + " ") === 0;
+      });
+    } else if (startMatch) {
+      query = startMatch[2].toLowerCase();
+      pool = pageItems(tree);
+    } else {
+      pool = pageItems(tree).concat(commandItems());
+    }
+
+    var current = here();
+    var related = relatedHrefs();
+    var ranked = [];
+    pool.forEach(function (item) {
+      var s = query ? scoreItem(query, item) : 0;
+      if (s < 0) return;
+      // a little context: related pages and things you ran before rank higher
+      if (item.href && related.indexOf(item.href) !== -1) s -= 3;
+      if (item.href === current) s += 8;
+      if (history.indexOf(item.fill) !== -1) s -= 4;
+      ranked.push({ item: item, score: s });
+    });
+    ranked.sort(function (a, b) {
+      return a.score - b.score;
+    });
+    return ranked.slice(0, 6).map(function (r) {
+      return r.item;
+    });
+  }
+
+  function renderSuggestions() {
+    suggestions = compute();
+    if (selected >= suggestions.length) selected = suggestions.length - 1;
+    titleEl.textContent = suggestions.length ? suggestTitle : "No matches";
+    listEl.textContent = "";
+    suggestions.forEach(function (item, index) {
+      var li = document.createElement("li");
+      li.id = "term-opt-" + index;
+      li.className = "term-option" + (index === selected ? " is-selected" : "");
+      li.setAttribute("role", "option");
+      li.setAttribute("aria-selected", index === selected ? "true" : "false");
+
+      var label = document.createElement("span");
+      label.className = "term-option-label";
+      label.textContent = item.label;
+      var hint = document.createElement("span");
+      hint.className = "term-option-hint";
+      hint.textContent = item.hint;
+      li.appendChild(label);
+      li.appendChild(hint);
+
+      li.addEventListener("pointermove", function () {
+        if (selected !== index) {
+          selected = index;
+          markSelected();
+        }
+      });
+      li.addEventListener("click", function () {
+        accept(item, true);
+      });
+      listEl.appendChild(li);
+    });
+    input.setAttribute("aria-activedescendant", selected >= 0 ? "term-opt-" + selected : "");
+  }
+
+  function markSelected() {
+    Array.prototype.forEach.call(listEl.children, function (li, index) {
+      var on = index === selected;
+      li.classList.toggle("is-selected", on);
+      li.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    input.setAttribute("aria-activedescendant", selected >= 0 ? "term-opt-" + selected : "");
+  }
+
+  // run = true: execute the suggestion; false: only put it in the prompt
+  function accept(item, run) {
+    if (run && item.complete) {
+      submit(item.fill);
+      return;
+    }
+    input.value = item.fill + (item.complete ? "" : " ");
+    selected = -1;
+    renderSuggestions();
+    input.focus();
+  }
+
+  function submit(line) {
+    input.value = "";
+    selected = -1;
+    if (line.trim()) {
+      history.push(line);
+      historyIndex = history.length;
+    }
+    execute(line);
+    promptEl.textContent = promptText();
+    scrollDown();
+    renderSuggestions();
+  }
+
+  // ── Tab completion: take the highlighted (or first) suggestion ───────────
+  function complete() {
+    if (!suggestions.length) return;
+    var item = suggestions[selected >= 0 ? selected : 0];
+    input.value = item.fill;
+    selected = -1;
+    renderSuggestions();
   }
 
   // ── window ──────────────────────────────────────────────────────────────
@@ -506,10 +792,6 @@
 
     var bar = document.createElement("div");
     bar.className = "term-bar";
-    var icon = document.createElement("span");
-    icon.className = "term-icon";
-    icon.setAttribute("aria-hidden", "true");
-    icon.textContent = ">_";
     var title = document.createElement("span");
     title.className = "term-title";
     title.textContent = "KS_Site";
@@ -523,7 +805,6 @@
       })
     );
     controls.appendChild(button("×", "term-btn--close", "Close terminal", close));
-    bar.appendChild(icon);
     bar.appendChild(title);
     bar.appendChild(controls);
 
@@ -542,13 +823,30 @@
     input.autocomplete = "off";
     input.spellcheck = false;
     input.setAttribute("autocapitalize", "off");
-    input.setAttribute("aria-label", "Command");
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-label", "Command or page");
+    input.setAttribute("aria-expanded", "true");
+    input.setAttribute("aria-controls", "term-list");
+    input.setAttribute("aria-autocomplete", "list");
     row.appendChild(promptEl);
     row.appendChild(input);
     screen.appendChild(row);
 
+    var suggest = document.createElement("div");
+    suggest.className = "term-suggest";
+    titleEl = document.createElement("div");
+    titleEl.className = "term-suggest-title";
+    listEl = document.createElement("ul");
+    listEl.className = "term-list";
+    listEl.id = "term-list";
+    listEl.setAttribute("role", "listbox");
+    listEl.setAttribute("aria-label", "Suggestions");
+    suggest.appendChild(titleEl);
+    suggest.appendChild(listEl);
+
     term.appendChild(bar);
     term.appendChild(screen);
+    term.appendChild(suggest);
     overlay.appendChild(term);
     document.body.appendChild(overlay);
 
@@ -559,50 +857,52 @@
       if (!window.getSelection || window.getSelection().toString() === "") input.focus();
     });
 
+    input.addEventListener("input", function () {
+      selected = -1;
+      renderSuggestions();
+    });
+
     input.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
+      var key = event.key;
+      if (key === "Enter") {
         event.preventDefault();
-        var line = input.value;
-        input.value = "";
-        tabState = null;
-        if (line.trim()) {
-          history.push(line);
-          historyIndex = history.length;
-        }
-        execute(line);
-        promptEl.textContent = promptText();
-        scrollDown();
-      } else if (event.key === "Tab") {
+        if (selected >= 0 && suggestions[selected]) accept(suggestions[selected], true);
+        else submit(input.value);
+      } else if (key === "Tab") {
         event.preventDefault();
         complete();
-      } else if (event.key === "ArrowUp") {
+      } else if (key === "ArrowDown") {
         event.preventDefault();
-        if (historyIndex > 0) {
+        if (suggestions.length) {
+          selected = (selected + 1) % suggestions.length;
+          markSelected();
+        }
+      } else if (key === "ArrowUp") {
+        event.preventDefault();
+        if (selected > 0) {
+          selected -= 1;
+          markSelected();
+        } else if (selected === 0) {
+          selected = -1;
+          markSelected();
+        } else if (historyIndex > 0) {
+          // like cmd: Up with nothing highlighted walks the history
           historyIndex -= 1;
           input.value = history[historyIndex];
+          renderSuggestions();
         }
-      } else if (event.key === "ArrowDown") {
-        event.preventDefault();
-        if (historyIndex < history.length - 1) {
-          historyIndex += 1;
-          input.value = history[historyIndex];
-        } else {
-          historyIndex = history.length;
-          input.value = "";
-        }
-      } else if (event.key === "Escape") {
+      } else if (key === "Escape") {
         event.preventDefault();
         close();
-      } else if ((event.ctrlKey || event.metaKey) && (event.key === "l" || event.key === "L")) {
+      } else if ((event.ctrlKey || event.metaKey) && (key === "l" || key === "L")) {
         event.preventDefault();
         clearScreen();
-      } else if (event.ctrlKey && (event.key === "c" || event.key === "C") && window.getSelection().toString() === "") {
+      } else if (event.ctrlKey && (key === "c" || key === "C") && window.getSelection().toString() === "") {
         event.preventDefault();
         print(promptText() + input.value + "^C");
         input.value = "";
         scrollDown();
-      } else {
-        tabState = null;
+        renderSuggestions();
       }
     });
 
@@ -626,11 +926,12 @@
     overlay.hidden = false;
     setInert(true);
     promptEl.textContent = promptText();
+    selected = -1;
+    renderSuggestions();
     window.requestAnimationFrame(function () {
       overlay.classList.add("is-open");
       input.focus();
       scrollDown();
-      if (motion()) motion().glitch(term, 140);
     });
   }
 
