@@ -25,13 +25,13 @@ html:not([data-motion="off"]) [data-reveal]:not(.section):not(.page-section) {
 html[data-motion="full"][data-fx="1"] [data-reveal]:not(.section):not(.page-section),
 html[data-motion="full"][data-fx="2"] [data-reveal]:not(.section):not(.page-section) {
   transition:
-    opacity var(--duration-base) var(--ease) calc(var(--i, 0) * 60ms),
-    transform var(--duration-base) var(--ease) calc(var(--i, 0) * 60ms);
+    opacity 560ms var(--ease) calc(var(--i, 0) * 90ms),
+    transform 560ms var(--ease) calc(var(--i, 0) * 90ms);
 }
 
 html.fx-ready[data-motion="full"][data-fx="1"] [data-reveal]:not(.section):not(.page-section):not(.is-in),
 html.fx-ready[data-motion="full"][data-fx="2"] [data-reveal]:not(.section):not(.page-section):not(.is-in) {
-  transform: translateY(8px);
+  transform: translateY(18px);
 }
 
 /* a section's top rule draws itself left to right */
@@ -48,10 +48,10 @@ html[data-motion="full"][data-fx="2"] .section[data-reveal]::before {
   left: 0;
   right: 0;
   height: var(--border-width);
-  background: var(--color-border);
+  background: var(--color-border-light);
   transform: scaleX(0);
   transform-origin: 0 50%;
-  transition: transform 700ms var(--ease);
+  transition: transform 1000ms var(--ease);
 }
 
 html[data-motion="full"][data-fx="1"] .section[data-reveal].is-in::before,
@@ -79,8 +79,8 @@ html[data-motion="full"] .page-header + .section[data-reveal]::before {
 .cta-band::before,
 .callout::before,
 .showcase-media::before {
-  --tick: var(--color-text-subtle);
-  --len: 10px;
+  --tick: var(--color-text-muted);
+  --len: 14px;
   content: "";
   position: absolute;
   inset: 6px;
@@ -107,8 +107,8 @@ html[data-motion="full"][data-fx="2"] .cta-band::before,
 html[data-motion="full"][data-fx="2"] .callout::before,
 html[data-motion="full"][data-fx="2"] .showcase-media::before {
   transition:
-    transform var(--duration-base) var(--ease),
-    opacity var(--duration-base) var(--ease);
+    transform 600ms var(--ease),
+    opacity 600ms var(--ease);
 }
 
 /* draw in: start oversized and faint, settle when the item is revealed */
@@ -118,7 +118,7 @@ html.fx-ready[data-motion="full"][data-fx="1"] .callout[data-reveal]:not(.is-in)
 html.fx-ready[data-motion="full"][data-fx="2"] .card[data-reveal]:not(.is-in)::before,
 html.fx-ready[data-motion="full"][data-fx="2"] .cta-band[data-reveal]:not(.is-in)::before,
 html.fx-ready[data-motion="full"][data-fx="2"] .callout[data-reveal]:not(.is-in)::before {
-  transform: scale(1.04);
+  transform: scale(1.1);
   opacity: 0;
 }
 
@@ -320,13 +320,13 @@ html[data-motion="full"][data-fx="2"] .badge--alpha::before {
   margin-right: 6px;
   vertical-align: 1px;
   background: currentColor;
-  animation: status-pulse 2.4s ease-in-out infinite;
+  animation: status-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes status-pulse {
   0%,
   100% {
-    opacity: 0.35;
+    opacity: 0.15;
   }
 
   50% {
@@ -341,7 +341,7 @@ html.vt-wipe::view-transition-old(root) {
 }
 
 html.vt-wipe::view-transition-new(root) {
-  animation: ks-wipe 280ms steps(14, end) both;
+  animation: ks-wipe 380ms steps(18, end) both;
 }
 
 @keyframes ks-wipe {
@@ -470,12 +470,12 @@ html[data-motion="full"]::view-transition-old(root) {
 }
 
 html[data-motion="full"]::view-transition-new(root) {
-  animation: ks-wipe 240ms steps(12, end) both;
+  animation: ks-wipe 340ms steps(16, end) both;
 }
 
 html[data-motion="full"][data-fx="2"]::view-transition-new(root) {
   animation:
-    ks-wipe 240ms steps(12, end) both,
+    ks-wipe 340ms steps(16, end) both,
     ks-glitch 140ms steps(1, end) 1 120ms;
 }
 
@@ -492,23 +492,23 @@ html:not([data-motion="full"])::view-transition-new(root) {
    hero exists). */
 
 :root {
-  --floor-line: rgba(255, 255, 255, 0.08);
-  --sweep-trail: rgba(255, 255, 255, 0.035);
-  --sweep-line: rgba(255, 255, 255, 0.12);
-  --scanline: rgba(255, 255, 255, 0.022);
-  --light-spot: rgba(255, 255, 255, 0.06);
+  --floor-line: rgba(255, 255, 255, 0.14);
+  --sweep-trail: rgba(255, 255, 255, 0.07);
+  --sweep-line: rgba(255, 255, 255, 0.24);
+  --scanline: rgba(255, 255, 255, 0.04);
+  --light-spot: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] {
-  --floor-line: rgba(0, 0, 0, 0.08);
-  --sweep-trail: rgba(0, 0, 0, 0.03);
-  --sweep-line: rgba(0, 0, 0, 0.1);
-  --scanline: rgba(0, 0, 0, 0.028);
-  --light-spot: rgba(0, 0, 0, 0.05);
+  --floor-line: rgba(0, 0, 0, 0.14);
+  --sweep-trail: rgba(0, 0, 0, 0.06);
+  --sweep-line: rgba(0, 0, 0, 0.2);
+  --scanline: rgba(0, 0, 0, 0.05);
+  --light-spot: rgba(0, 0, 0, 0.09);
 }
 
 [data-theme="accent"] {
-  --sweep-line: rgba(125, 79, 159, 0.45);
+  --sweep-line: rgba(125, 79, 159, 0.6);
 }
 
 /* perspective grid floor under the home hero */
@@ -545,7 +545,7 @@ html[data-motion="full"] .hero-floor::before {
     linear-gradient(var(--floor-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--floor-line) 1px, transparent 1px);
   background-size: 56px 56px;
-  animation: floor-scroll 5s linear infinite;
+  animation: floor-scroll 3.6s linear infinite;
 }
 
 html[data-motion="full"] .hero-floor::after {
@@ -584,7 +584,7 @@ html[data-motion="full"][data-fx="2"] .scan-sweep {
   background: linear-gradient(to bottom, transparent, var(--sweep-trail));
   border-bottom: var(--border-width) solid var(--sweep-line);
   transform: translateY(-140px);
-  animation: ks-sweep 16s linear infinite;
+  animation: ks-sweep 11s linear infinite;
 }
 
 @keyframes ks-sweep {
@@ -678,4 +678,25 @@ html[data-motion="full"] .terminal-link::after {
   50% {
     opacity: 0.2;
   }
+}
+
+/* ── Touch parity: no hover on tablets and phones, so a press does the same job ── */
+
+html[data-motion="full"][data-fx="1"] .card:active::before,
+html[data-motion="full"][data-fx="1"] .cta-band:active::before,
+html[data-motion="full"][data-fx="1"] .callout:active::before,
+html[data-motion="full"][data-fx="2"] .card:active::before,
+html[data-motion="full"][data-fx="2"] .cta-band:active::before,
+html[data-motion="full"][data-fx="2"] .callout:active::before {
+  --tick: var(--color-text);
+  transform: scale(0.97);
+  opacity: 1;
+}
+
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):active::before,
+html[data-motion="full"][data-fx="1"] .button:not([disabled]):active::after,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):active::before,
+html[data-motion="full"][data-fx="2"] .button:not([disabled]):active::after {
+  opacity: 1;
+  transform: translate(0, -50%);
 }

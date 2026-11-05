@@ -500,14 +500,14 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=6").then(resolve);
+      loadScript("/assets/js/motion.js?v=7").then(resolve);
     });
   }
 
   function loadConsole() {
     if (window.KanasakaConsole || window.__ksConsoleLoading) return;
     window.__ksConsoleLoading = true;
-    loadScript("/assets/js/console.js?v=5");
+    loadScript("/assets/js/console.js?v=6");
   }
 
   function loadHud() {
@@ -550,7 +550,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=98").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=99").then(resolve);
     });
   }
 
@@ -587,7 +587,7 @@
   function loadBoot() {
     if (window.__ksBootLoading) return;
     window.__ksBootLoading = true;
-    loadScript("/assets/js/boot.js?v=1");
+    loadScript("/assets/js/boot.js?v=2");
   }
 
   async function boot() {

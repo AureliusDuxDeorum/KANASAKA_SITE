@@ -34,10 +34,10 @@
   // assets/js/motion.js): fx >= 1 adds the scan band and pointer interference
   // (Dark and Light), fx 2 (Accent) adds the glitch "tear". All of it is
   // arithmetic inside the existing per-cell loop: no extra DOM, no extra loop.
-  const BAND_PERIOD = 9; // seconds between scan-band sweeps
+  const BAND_PERIOD = 7; // seconds between scan-band sweeps
   const BAND_SWEEP = 2.4; // seconds one sweep takes
   const BAND_HEIGHT = 3; // rows of falloff either side of the band centre
-  const POINTER_RADIUS = 120; // px
+  const POINTER_RADIUS = 150; // px
   const TEAR_MS = 120;
 
   const LOGO_VERTICAL = {
@@ -412,13 +412,13 @@
               }
             }
           }
-          if (bandBoost) v += bandBoost * 0.28;
+          if (bandBoost) v += bandBoost * 0.42;
           if (rowNearPointer && x >= px0 && x <= px1) {
             const dx = (x - pcx) * cellW;
             const dy = (y - pcy) * cellH;
             const d = Math.sqrt(dx * dx + dy * dy);
             if (d < POINTER_RADIUS) {
-              v += Math.sin(d * 0.11 - t * 8) * 0.32 * (1 - d / POINTER_RADIUS) * pointer.strength;
+              v += Math.sin(d * 0.11 - t * 8) * 0.5 * (1 - d / POINTER_RADIUS) * pointer.strength;
             }
           }
           v = Math.max(0, Math.min(1, v));
@@ -535,6 +535,26 @@
         pointer.inside = false;
       });
     }
+
+    // tablets / phones: a tap sends the same ripple out from the touch point
+    let tapTimer = 0;
+    hero.addEventListener(
+      "pointerdown",
+      function (event) {
+        if (event.pointerType === "mouse") return;
+        const rect = fieldWrap.getBoundingClientRect();
+        wrapPageLeft = rect.left + window.scrollX;
+        wrapPageTop = rect.top + window.scrollY;
+        pointer.pageX = event.pageX;
+        pointer.pageY = event.pageY;
+        pointer.inside = true;
+        window.clearTimeout(tapTimer);
+        tapTimer = window.setTimeout(function () {
+          pointer.inside = false;
+        }, 1100);
+      },
+      { passive: true }
+    );
 
     // the in-app Motion setting / OS setting changed while the page is open
     if (window.KanasakaMotion) {

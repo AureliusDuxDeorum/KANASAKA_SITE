@@ -26,6 +26,18 @@
     return window.KanasakaMotion || null;
   }
 
+  // pages under /account/ need an account; guests get a heads-up next to them
+  var ACCOUNT_NOTE = "Account necessary";
+
+  function isGuest() {
+    var session = window.KanasakaAuth && window.KanasakaAuth.getSession ? window.KanasakaAuth.getSession() : null;
+    return !(session && session.authenticated);
+  }
+
+  function needsAccount(href) {
+    return /^\/account\//.test(href || "");
+  }
+
   // ── the site as a file system ────────────────────────────────────────────
   function pages() {
     var source = window.KanasakaNav || { nav: [], footer: [] };
@@ -193,6 +205,7 @@
   // ── commands ────────────────────────────────────────────────────────────
   var HELP = [
     ["CD", "Displays the name of or changes the current directory."],
+    ["BOOT", "Replays the boot sequence."],
     ["CLS", "Clears the screen."],
     ["DATE", "Displays the current date (UTC)."],
     ["DIR", "Displays a list of pages and directories."],
@@ -236,6 +249,7 @@
       error("There is no page at " + pathOf(found.segments) + ".");
       return;
     }
+    if (needsAccount(found.node.href) && isGuest()) print(ACCOUNT_NOTE + ": you will be asked to sign in.");
     print("Starting " + found.node.label + " (" + found.node.href + ")...");
     window.location.href = found.node.href;
   }
@@ -303,7 +317,8 @@
         var dir = isDir(child);
         if (dir) dirs += 1;
         else pagesCount += 1;
-        print(pad(dir ? "<DIR>" : "<PAGE>", 9) + pad(child.name, 20) + (child.label || ""));
+        var note = child.href && needsAccount(child.href) && isGuest() ? "  (" + ACCOUNT_NOTE.toLowerCase() + ")" : "";
+        print(pad(dir ? "<DIR>" : "<PAGE>", 9) + pad(child.name, 20) + (child.label || "") + note);
       });
       print("");
       print(pad("", 9) + pagesCount + " page(s)");
@@ -336,6 +351,19 @@
 
     cls: function () {
       clearScreen();
+    },
+
+    boot: function () {
+      if (!window.KanasakaBoot) {
+        error("The boot sequence is not available on this page.");
+        return;
+      }
+      if (document.documentElement.getAttribute("data-motion") !== "full") {
+        error("Animation is not set to full. Run MOTION full first.");
+        return;
+      }
+      close();
+      window.setTimeout(window.KanasakaBoot.play, 180);
     },
 
     exit: function () {
@@ -503,6 +531,7 @@
     ["login", "Sign in"],
     ["register", "Create an account"],
     ["account", "Account settings"],
+    ["boot", "Replay the boot sequence"],
     ["tree", "Show the site structure"],
     ["dir", "List this directory"],
     ["help", "List commands"],
@@ -524,7 +553,12 @@
       return {
         kind: "page",
         label: page.label,
-        hint: page.href === "/" ? "\\" : "\\" + segments.join("\\"),
+        hint:
+          needsAccount(page.href) && isGuest()
+            ? ACCOUNT_NOTE
+            : page.href === "/"
+            ? "\\"
+            : "\\" + segments.join("\\"),
         key: (page.label + " " + segments.join(" ") + " " + page.href).toLowerCase(),
         fill: "start \\" + segments.join("\\"),
         href: page.href,
@@ -539,7 +573,7 @@
       return {
         kind: "command",
         label: word,
-        hint: row[1],
+        hint: word === "account" && isGuest() ? ACCOUNT_NOTE : row[1],
         key: (word + " " + row[1]).toLowerCase(),
         fill: word,
         complete: true,
@@ -650,7 +684,7 @@
               return {
                 kind: "dir",
                 label: child.name,
-                hint: child.label || "directory",
+                hint: child.name === "account" && isGuest() ? ACCOUNT_NOTE : child.label || "directory",
                 key: child.name + " " + (child.label || ""),
                 fill: argMatch[1].toLowerCase() + " " + dirPart + child.name,
                 complete: true,

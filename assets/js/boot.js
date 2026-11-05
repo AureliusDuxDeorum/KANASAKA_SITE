@@ -45,10 +45,11 @@
     return chars.join("");
   }
 
-  function start() {
+  function start(force) {
     var root = document.documentElement;
     var fx = Number(root.getAttribute("data-fx") || 0);
-    if (root.getAttribute("data-motion") !== "full" || fx < 1 || seen()) return;
+    if (root.getAttribute("data-motion") !== "full" || fx < 1 || (force !== true && seen())) return;
+    if (document.querySelector(".ks-boot")) return;
     markSeen();
 
     var overlay = document.createElement("div");
@@ -161,6 +162,15 @@
     }, SHOW_MS);
   }
 
+  // the terminal's BOOT command replays it on demand
+  window.KanasakaBoot = {
+    play: function () {
+      start(true);
+    },
+  };
+
   if (document.body) start();
-  else document.addEventListener("DOMContentLoaded", start);
+  else document.addEventListener("DOMContentLoaded", function () {
+    start();
+  });
 })();

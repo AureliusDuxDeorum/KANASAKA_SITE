@@ -10,7 +10,10 @@
   //
   //   motion  OS "reduce motion" => off, always. Otherwise the saved choice
   //           (Account > Customization, or the console): auto | full | reduced | off.
-  //           "auto" = full, except weak touch devices / data-saver => reduced.
+  //           "auto" = full, except when the device asks to save data => reduced.
+  //           (Core count / memory are deliberately not used: tablets and phones
+  //           report small numbers while being plenty fast, and everything here
+  //           is compositor-only. Anyone can still pick Reduced themselves.)
   //   fx      1 = every animation (Dark and Light), 2 = the same plus the glitch
   //           effects (Accent only); reduced and off force 0.
   //
@@ -49,11 +52,9 @@
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  function weakDevice() {
+  function saveData() {
     var connection = navigator.connection;
-    if (connection && connection.saveData) return true;
-    var weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
-    return weak && window.matchMedia("(pointer: coarse)").matches;
+    return Boolean(connection && connection.saveData);
   }
 
   function themeFx() {
@@ -65,7 +66,7 @@
     var pref = getPref();
     var motion;
     if (osReduced()) motion = "off";
-    else if (pref === "auto") motion = weakDevice() ? "reduced" : "full";
+    else if (pref === "auto") motion = saveData() ? "reduced" : "full";
     else motion = pref;
 
     var fx = motion === "full" ? themeFx() : 0;
@@ -121,7 +122,7 @@
 
   // ── decode: hex scramble that resolves into the real text ───────────────
   var GLYPHS = "0123456789ABCDEF";
-  var DECODE_MS = 520;
+  var DECODE_MS = 720;
 
   function decode(el, force, lockWidth) {
     if (!el || (el.hasAttribute("data-decoded") && !force) || el.children.length) return;
@@ -199,7 +200,7 @@
     ".statement",
     ".statement-note",
   ].join(", ");
-  var DECODE_SEL = ".page-header h1, .statement, .section-header h2, .cta-band h2";
+  var DECODE_SEL = ".page-header h1, .statement, .section-header h2, .cta-band h2, .feature h3, .callout h3";
 
   var revealIo = null;
   var mounted = false;
@@ -213,6 +214,10 @@
     if (el.matches(".section-header, .cta-band")) {
       var heading = el.querySelector("h2");
       if (heading) targets.push(heading);
+    }
+    if (el.matches(".callout")) {
+      var small = el.querySelector("h3");
+      if (small) targets.push(small);
     }
     targets.forEach(function (target) {
       decode(target);
@@ -438,6 +443,25 @@
         current = null;
       });
     }
+
+    // touch: a press lights the spot where the finger lands, then it fades
+    document.addEventListener(
+      "pointerdown",
+      function (event) {
+        if (state.motion !== "full" || event.pointerType !== "touch") return;
+        var target = event.target.closest ? event.target.closest(".card, .cta-band, .callout, .feature") : null;
+        if (!target) return;
+        target.classList.add("pl-on");
+        var rect = target.getBoundingClientRect();
+        target.style.setProperty("--mx", event.clientX - rect.left + "px");
+        target.style.setProperty("--my", event.clientY - rect.top + "px");
+        target.classList.add("is-lit");
+        window.setTimeout(function () {
+          target.classList.remove("is-lit");
+        }, 600);
+      },
+      { passive: true }
+    );
 
     // product strip: hovering a linked product decodes its name
     document.addEventListener("pointerover", function (event) {

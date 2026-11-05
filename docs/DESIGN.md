@@ -49,7 +49,7 @@ Current nav: Products (KS_Link, Technical overview) · Downloads · Security · 
 
 Everything animated is gated in one place, `assets/js/motion.js` + `assets/css/motion.css` (and `assets/js/motion-boot.js`, a tiny synchronous script that sets the same attributes before the first paint), by two attributes on `<html>`:
 
-- `data-motion` = `full | reduced | off`: what the person/device allows. The OS "reduce motion" setting always forces `off`; otherwise the saved choice (Account > Customization > Motion: Automatic / Full / Reduced / Off, or the console); Automatic = full, except data-saver and weak touch devices = reduced.
+- `data-motion` = `full | reduced | off`: what the person/device allows. The OS "reduce motion" setting always forces `off`; otherwise the saved choice (Account > Customization > Motion: Automatic / Full / Reduced / Off, or the console); Automatic = full, except when data saver is on (core count/memory are not used: tablets and phones report small numbers while being fast, and every effect is compositor-only).
 - `data-fx` = `0 | 1 | 2`: `1` = every animation (Dark **and** Light), `2` = the same plus the **glitch** effects (Accent only); reduced/off force `0`.
 
 With `off` the page is completely static and no motion code runs. Rules: animate only `transform`/`opacity` continuously; one-shot wipes may use `clip-path`; effects pause offscreen / in hidden tabs; JS effects share one rAF loop (`KanasakaMotion.raf`); no inline styles (classes + `style.setProperty`); at most two continuous effects visible at once (home: ASCII hero + grid floor; content pages: scan sweep). Tests lint keyframe properties, require every animation in `motion.css` to be gated by `data-motion`, and require every glitch rule to be keyed to `data-fx="2"`.

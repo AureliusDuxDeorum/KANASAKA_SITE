@@ -18,10 +18,7 @@
     if (["auto", "full", "reduced", "off"].indexOf(pref) === -1) pref = "auto";
 
     var connection = navigator.connection;
-    var weak =
-      (connection && connection.saveData) ||
-      (((navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) &&
-        window.matchMedia("(pointer: coarse)").matches);
+    var weak = Boolean(connection && connection.saveData); // data saver only (see motion.js)
 
     var motion;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) motion = "off";
