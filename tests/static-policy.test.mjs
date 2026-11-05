@@ -154,7 +154,7 @@ function pageFile(href) {
 }
 
 test("navigation and footer only link to real, indexable pages", () => {
-  const main = read("assets/js/main.js");
+  const main = read("assets/js/shell.js");
   const hrefs = [...new Set([...main.matchAll(/href:\s*"(\/[^"#]*)/g)].map((m) => m[1]))];
   assert.ok(hrefs.length >= 8, "found the nav/footer links");
   for (const href of hrefs) {

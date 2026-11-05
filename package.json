@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/pages-build.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "stamp": "node scripts/stamp-version.mjs",
     "test": "node --import ./tests/register.mjs --no-warnings --test-reporter=spec --test \"tests/*.test.mjs\""
   }
