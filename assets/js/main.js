@@ -500,7 +500,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=7").then(resolve);
+      loadScript("/assets/js/motion.js?v=8").then(resolve);
     });
   }
 
@@ -550,7 +550,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=99").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=103").then(resolve);
     });
   }
 

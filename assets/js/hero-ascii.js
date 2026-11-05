@@ -24,7 +24,13 @@
   // and never sweep across the mark in a wave. Edge cells never flip, which
   // keeps the silhouette crisp.
   const FLIP_CHARS = "0123456789ABCDEF";
-  const FLIP_STEP_MS = 55; // how long each flipped character stays
+  // The field updates on one fixed tick (about 15 Hz), the same on every device:
+  // a deliberate terminal-clock cadence next to the 60 fps UI, instead of a rate
+  // that used to drift between 10 and 30 fps with the device. Everything in the
+  // field (noise drift, hex flips, scan band, ripple, tear) steps on this tick,
+  // and the text scramble in motion.js uses the same one.
+  const TICK_MS = (window.KanasakaMotion && window.KanasakaMotion.tickMs) || 66;
+  const FLIP_STEP_MS = TICK_MS; // how long each flipped character stays (one tick)
   const FLIP_STEPS = 5; // characters shown per flip
   const FLIP_MIN_PERIOD = 2.4; // seconds between one cell's flips
   const FLIP_MAX_PERIOD = 7.5;
@@ -304,7 +310,7 @@
       }
       if (hudV) {
         hudV.textContent =
-          "//MASK " + activeLogo.name + " " + activeLogo.ratio + "  //SPAN " + Math.round(logoSpan * 100) + "%  //FLIP HEX " + FLIP_STEP_MS + "MS";
+          "//MASK " + activeLogo.name + " " + activeLogo.ratio + "  //SPAN " + Math.round(logoSpan * 100) + "%  //TICK " + Math.round(1000 / TICK_MS) + "HZ  //FLIP HEX " + FLIP_STEP_MS + "MS";
       }
     }
 
@@ -339,7 +345,7 @@
       }
 
       // pointer interference: ripple around the cursor inside a small window
-      pointer.strength += ((fxLvl >= 1 && pointer.inside ? 1 : 0) - pointer.strength) * 0.25;
+      pointer.strength += ((fxLvl >= 1 && pointer.inside ? 1 : 0) - pointer.strength) * 0.4;
       const ptrOn = pointer.strength > 0.02;
       const pcx = (pointer.pageX - wrapPageLeft) / cellW;
       const pcy = (pointer.pageY - wrapPageTop) / cellH;
@@ -450,31 +456,52 @@
       fieldEl.innerHTML = lines.join("\n");
     }
 
-    let frameCount = 0;
-    // Adaptive throttle: start at ~30fps (render every 2nd rAF tick) and
-    // back off further if actual render() cost runs high, so slow hardware
-    // settles into a lower update rate instead of pegging the main thread.
-    // The noise drift is slow enough that even 10fps reads as smooth, so
-    // this never changes what's on screen, only how often it's redrawn.
-    let renderEvery = 2;
-    let slowFrameStreak = 0;
+    // Fixed tick instead of an adaptive rate: render when the tick index changes
+    // and hand render() the quantized time, so every moving part steps in
+    // lock-step and a stalled frame never makes the field catch up in a burst.
+    //
+    // Cost guard: the time from starting a render to the next animation frame
+    // includes the browser's layout and paint of the rewritten field, which is
+    // most of the real cost. If its rolling average exceeds 90 % of the tick the
+    // field drops ONCE to a half-rate tick (still fixed, still deliberate), and if
+    // that is too much as well it stops on its current frame, like the capability
+    // probe below does up front. It never wanders between rates.
+    let tickMs = TICK_MS;
+    let lastTick = -1;
+    let renderedAt = 0;
+    let costSum = 0;
+    let costCount = 0;
 
     function frame(now) {
       if (!running) return;
-      frameCount++;
-      if (frameCount % renderEvery === 0) {
-        const before = performance.now();
-        render(now);
-        const cost = performance.now() - before;
-        if (cost > 8) {
-          slowFrameStreak++;
-          if (slowFrameStreak >= 5 && renderEvery < 6) {
-            renderEvery++;
-            slowFrameStreak = 0;
+
+      if (renderedAt) {
+        costSum += now - renderedAt;
+        costCount += 1;
+        renderedAt = 0;
+        if (costCount >= 20) {
+          if (costSum / costCount > tickMs * 0.9) {
+            if (tickMs === TICK_MS) {
+              tickMs = TICK_MS * 2;
+              lastTick = -1;
+              const hudV = document.getElementById("ha-hud-v");
+              if (hudV) hudV.textContent = hudV.textContent.replace(/TICK \d+HZ/, "TICK " + Math.round(1000 / tickMs) + "HZ");
+            } else {
+              forceStatic = true;
+              running = false;
+              return;
+            }
           }
-        } else {
-          slowFrameStreak = 0;
+          costSum = 0;
+          costCount = 0;
         }
+      }
+
+      const tick = Math.floor((now - start) / tickMs);
+      if (tick !== lastTick) {
+        lastTick = tick;
+        renderedAt = performance.now();
+        render(start + tick * tickMs);
       }
       rafId = window.requestAnimationFrame(frame);
     }
@@ -584,15 +611,16 @@
     // warmup; each of the three calls already paints a real frame, so
     // hardware that fails the check is left with the same art already on
     // screen, just not animating, same as the prefers-reduced-motion path
-    // below. 16ms is one full 60fps frame budget -- past that, continuous
-    // animation (even throttled down) reads as stutter, not an ambient
-    // effect, so the honest answer is to render the same thing once.
+    // below. The budget is half a tick (about 33 ms): the field only has to
+    // finish well inside its fixed 66 ms tick, and past that the honest answer
+    // is to render the same thing once.
     if (!reduced && cols && rows) {
       render(performance.now());
       render(performance.now());
       const probeStart = performance.now();
       render(performance.now());
-      forceStatic = performance.now() - probeStart > 16;
+      void fieldEl.offsetHeight; // include the layout of the rewritten field
+      forceStatic = performance.now() - probeStart > TICK_MS / 2;
     }
 
     running = false;

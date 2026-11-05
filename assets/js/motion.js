@@ -123,6 +123,10 @@
   // ── decode: hex scramble that resolves into the real text ───────────────
   var GLYPHS = "0123456789ABCDEF";
   var DECODE_MS = 720;
+  // The site's text/ASCII effects step on one fixed tick (about 15 Hz); the hero
+  // field (hero-ascii.js) reads this value too. Everything else on the page is
+  // compositor-driven and runs at the display rate.
+  var TICK_MS = 66;
 
   function decode(el, force, lockWidth) {
     if (!el || (el.hasAttribute("data-decoded") && !force) || el.children.length) return;
@@ -153,11 +157,10 @@
     var lock = [];
     for (var i = 0; i < length; i++) lock.push(0.15 + (i / length) * 0.65 + Math.random() * 0.2);
     var start = performance.now();
-    var frame = 0;
+    var lastStep = -1e9;
 
     raf(function (now) {
       var t = (now - start) / DECODE_MS;
-      frame += 1;
       if (t >= 1) {
         el.textContent = text;
         el.style.minHeight = "";
@@ -167,7 +170,8 @@
         }
         return false;
       }
-      if (frame % 2 === 0) return true; // ~30 updates/s is plenty
+      if (now - lastStep < TICK_MS - 4) return true;
+      lastStep = now;
       var out = "";
       for (var j = 0; j < length; j++) {
         var ch = text.charAt(j);
@@ -550,6 +554,7 @@
       listeners.push(cb);
     },
     raf: raf,
+    tickMs: TICK_MS,
     decode: decode,
     glitch: glitch,
     isGlitchy: isGlitchy,

@@ -89,7 +89,8 @@ assets/js/console.js        KS_Site terminal (header "//", Ctrl/Cmd+K, "/"): cmd
                             (dir, cd, tree, start, cls, ver, ...), theme/motion commands; no network/storage.
 assets/css/console.css      Terminal window and the header "//" button.
 assets/js/hud.js            (also) live readouts: UTC, session timer, viewport, NET, motion level.
-assets/js/hero-ascii.js     (also) scan band + pointer interference (fx>=1), tear (fx 2).
+assets/js/hero-ascii.js     (also) scan band + pointer interference (fx>=1), tear (fx 2). Fixed 15 Hz tick (TICK_MS 66,
+                            shared with motion.js decode); no adaptive rate.
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.
 main.js (NAV, FOOTER_COLUMNS)  Nav and footer list only pages that exist; unfinished pages are noindex and
                             use the "In development" template. (The old scripts/generate_pages.py skeleton
