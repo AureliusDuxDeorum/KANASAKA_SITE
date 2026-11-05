@@ -1,11 +1,14 @@
 (function () {
   // Only pages that exist. A page joins the nav when it has real content (see
   // docs/DESIGN.md > Information architecture); unfinished pages keep their
-  // URL but stay out of the nav and the footer. A section with `href` is a
-  // plain link, one with `children` is a dropdown.
+  // URL but stay out of the nav and the footer. A section with `children` is a
+  // dropdown; its `href` is the section's overview page (clicking the label
+  // goes there on desktop; on phones the label expands the list instead). A
+  // section with only `href` is a plain link.
   const NAV = [
     {
       label: "Products",
+      href: "/products/",
       children: [
         { label: "KS_Link", href: "/products/ks-link/" },
         { label: "Technical overview", href: "/legal/products/" },
@@ -15,6 +18,7 @@
     { label: "Security", href: "/legal/security/" },
     {
       label: "Company",
+      href: "/company/",
       children: [
         { label: "About", href: "/company/about/" },
         { label: "Contact", href: "/support/contact/" },
@@ -22,6 +26,7 @@
     },
     {
       label: "Legal",
+      href: "/legal/",
       children: [
         { label: "Privacy", href: "/legal/privacy/" },
         { label: "Terms", href: "/legal/terms/" },
@@ -201,7 +206,7 @@
     nav.appendChild(wrapNavItem(homeLink));
 
     NAV.forEach(function (section) {
-      if (section.href) {
+      if (section.href && !section.children) {
         const direct = document.createElement("a");
         direct.className = "nav-link" + (isActive(section.href) ? " active" : "");
         direct.href = section.href;
@@ -213,16 +218,34 @@
       const item = document.createElement("div");
       item.className = "nav-item";
 
-      const trigger = document.createElement("button");
-      trigger.type = "button";
+      // The label is a real link to the section's overview page. Hover/focus
+      // opens the dropdown on desktop; on narrow screens the first tap expands
+      // the list instead of navigating.
+      const trigger = document.createElement(section.href ? "a" : "button");
+      if (section.href) {
+        trigger.href = section.href;
+      } else {
+        trigger.type = "button";
+      }
       trigger.className =
-        "nav-link" + (isInSection(section.children) ? " active" : "");
+        "nav-link" +
+        (isInSection(section.children) || (section.href && isActive(section.href)) ? " active" : "");
       trigger.textContent = section.label;
       trigger.setAttribute("aria-haspopup", "true");
       trigger.setAttribute("aria-expanded", "false");
 
       const dropdown = document.createElement("div");
       dropdown.className = "nav-dropdown";
+
+      if (section.href) {
+        // phones: the label only expands the list, so the overview gets its own row
+        const overview = document.createElement("a");
+        overview.className = "nav-dropdown-overview";
+        overview.href = section.href;
+        overview.textContent = section.label + " overview";
+        if (isActive(section.href)) overview.classList.add("active");
+        dropdown.appendChild(overview);
+      }
 
       section.children.filter(canSeeNavItem).forEach(function (child) {
         const link = document.createElement("a");
@@ -234,8 +257,9 @@
         dropdown.appendChild(link);
       });
 
-      trigger.addEventListener("click", function () {
+      trigger.addEventListener("click", function (event) {
         if (window.innerWidth <= 1024) {
+          event.preventDefault();
           const expanded = item.classList.toggle("expanded");
           trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
         }

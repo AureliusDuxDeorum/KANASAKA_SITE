@@ -558,3 +558,15 @@
 .feature h3 a:hover {
   text-decoration: underline;
 }
+
+/* "<Section> overview" row in the dropdown: only needed where the label itself
+   cannot navigate (phones / tablets use the tap-to-expand menu) */
+.nav-dropdown .nav-dropdown-overview {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .nav-dropdown .nav-dropdown-overview {
+    display: block;
+  }
+}

@@ -43,7 +43,7 @@ Direction: **disciplined deep-tech**. Keep the angular KS logo, Tektur and the b
 
 The nav and footer (`NAV`, `FOOTER_COLUMNS` in `assets/js/main.js`) list **only pages that exist**. A page enters the nav when it has real content; until then it keeps its URL, uses the *In development* template and stays `noindex`. The test suite checks this.
 
-Current nav: Products (KS_Link, Technical overview) · Downloads · Security · Company (About, Contact) · Legal.
+Current nav: Products (KS_Link, Technical overview) · Downloads · Security · Company (About, Contact) · Legal. Each dropdown label is a real link to a small overview page (`/products/`, `/company/`, `/legal/`): clicking it navigates on desktop, hover/focus opens the list; on phones the label expands the list and an "<Section> overview" row links to the page.
 
 ## Voice
 
