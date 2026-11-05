@@ -6,9 +6,15 @@
 // directly, by the relay's own request, not parsed/trusted by a client.
 import { jsonResponse } from "../../lib/auth.js";
 import { exchangeAuthorizationCode } from "../../lib/ks-link-oauth.js";
+import { requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  // Called server-to-server by KS_Link's relay, which sends no Origin header
+  // and so passes; what this refuses is a browser on another site calling it.
+  const originError = requireSameOrigin(request, env);
+  if (originError) return originError;
 
   if (!env.DB) {
     return jsonResponse({ error: "Not configured." }, 500);
