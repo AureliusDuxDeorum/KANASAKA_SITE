@@ -279,16 +279,6 @@
       nav.appendChild(item);
     });
 
-    // phones / tablets: the console is reachable from the menu (no keyboard shortcut there)
-    const consoleEntry = document.createElement("button");
-    consoleEntry.type = "button";
-    consoleEntry.className = "nav-console";
-    consoleEntry.textContent = "Console";
-    consoleEntry.addEventListener("click", function () {
-      if (window.KanasakaConsole) window.KanasakaConsole.open();
-    });
-    nav.appendChild(consoleEntry);
-
     return nav;
   }
 
@@ -318,15 +308,17 @@
     const actions = document.createElement("div");
     actions.className = "header-actions";
 
-    const consoleHint = document.createElement("button");
-    consoleHint.type = "button";
-    consoleHint.className = "console-hint";
-    consoleHint.textContent = "CTRL K";
-    consoleHint.setAttribute("aria-label", "Open command console");
-    consoleHint.addEventListener("click", function () {
+    // the "//" opens the KS_Site terminal (assets/js/console.js)
+    const terminalLink = document.createElement("button");
+    terminalLink.type = "button";
+    terminalLink.className = "terminal-link";
+    terminalLink.textContent = "//";
+    terminalLink.setAttribute("aria-label", "Open KS_Site terminal");
+    terminalLink.title = "KS_Site terminal (Ctrl+K)";
+    terminalLink.addEventListener("click", function () {
       if (window.KanasakaConsole) window.KanasakaConsole.open();
     });
-    actions.appendChild(consoleHint);
+    actions.appendChild(terminalLink);
 
     actions.appendChild(buildAuthControls());
 
@@ -515,13 +507,13 @@
   function loadConsole() {
     if (window.KanasakaConsole || window.__ksConsoleLoading) return;
     window.__ksConsoleLoading = true;
-    loadScript("/assets/js/console.js?v=1");
+    loadScript("/assets/js/console.js?v=3");
   }
 
   function loadHud() {
     if (window.__ksHudLoaded) return;
     window.__ksHudLoaded = true;
-    loadScript("/assets/js/hud.js?v=4");
+    loadScript("/assets/js/hud.js?v=5");
   }
 
   function loadLogoAnimation() {

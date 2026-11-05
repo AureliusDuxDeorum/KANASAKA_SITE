@@ -64,12 +64,12 @@ With `off` the page is completely static and no motion code runs. Rules: animate
 | Page transitions (cross-document View Transitions, stepped wipe) | yes | + 1-frame tear |
 | Boot sequence (first view per session; true values; any key skips) | yes | lines arrive corrupted, then resolve |
 | Live HUD (UTC clock, session timer, viewport, NET state, motion level) | yes | page code ticks on load; pointer readout over the hero |
-| Command console (Ctrl/Cmd+K or `/`; menu entry on phones) | yes | glitch on open/error |
+| KS_Site terminal (`//` in the header, Ctrl/Cmd+K, `/`) | yes | glitch on open/error; the `//` carries a blinking cursor |
 | Hero: scan band, pointer interference (fine pointer) | yes | tear bursts every 12-20 s |
 | Grid floor (home), scan sweep (content pages), scanlines | yes | |
 | Pointer light on cards/CTAs/features, product-strip hover (decode, reticle, scanlines) | yes | "COMING SOON" flicker |
 
-The command console (`assets/js/console.js`) only offers what the UI already offers (pages from the same `NAV`/`FOOTER_COLUMNS` as the header and footer, `theme ...`, `motion ...`, `login`, `register`, `account`, `help`, `clear`); no admin or API actions, no network, no storage. The header and footer are mounted before the session check (sign-in controls stay hidden until known), which is also what makes page transitions look right.
+The **KS_Site terminal** (`assets/js/console.js`, `assets/css/console.css`) opens from the boxed `//` in the header (or Ctrl/Cmd+K, or `/`). It is a cmd-style window (title bar "KS_Site", black screen, `KSS:\>` prompt) over the site's real pages, which form its file system (`KSS:\products\ks-link`, from the same `NAV`/`FOOTER_COLUMNS` as the header and footer). Commands follow cmd: `help`, `dir`/`ls`, `cd` (`cd..`, `cd \`), `tree`, `start`/`open` (or just type a page name; unique names resolve anywhere, like a PATH search), `cls`, `ver`, `date`, `time`, `echo`, `whoami`, `exit`, plus `theme`, `motion`, `login`, `register`, `account`. Tab completes, Up/Down walk the history, Ctrl+L clears, Esc closes. It only offers what the UI already offers: no admin or API actions, no network, no storage. The header and footer are mounted before the session check (sign-in controls stay hidden until known), which is also what makes page transitions look right.
 
 ## Voice
 

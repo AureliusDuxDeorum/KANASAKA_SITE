@@ -85,8 +85,9 @@ assets/css/motion.css       All effects, each gated by html[data-motion] / html[
 assets/js/motion-boot.js    Synchronous, tiny: sets data-theme / data-motion / data-fx before first paint (keep in
                             sync with motion.js compute()).
 assets/js/boot.js           First-visit-per-session boot sequence (true values, skippable). Skipped unless full.
-assets/js/console.js        Command console (Ctrl/Cmd+K, "/"): pages + theme/motion commands; no network/storage.
-assets/css/console.css      Console, header hint, mobile-menu entry.
+assets/js/console.js        KS_Site terminal (header "//", Ctrl/Cmd+K, "/"): cmd-style shell over the site's pages
+                            (dir, cd, tree, start, cls, ver, ...), theme/motion commands; no network/storage.
+assets/css/console.css      Terminal window and the header "//" button.
 assets/js/hud.js            (also) live readouts: UTC, session timer, viewport, NET, motion level.
 assets/js/hero-ascii.js     (also) scan band + pointer interference (fx>=1), tear (fx 2).
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.

@@ -1,6 +1,7 @@
-/* ── Command console (assets/js/console.js) ─────────────────────────────────
-   Terminal-styled palette. Entry motion is gated like everything else: only
-   html[data-motion="full"] animates it; otherwise it just appears. */
+/* ── KS_Site terminal (assets/js/console.js) ────────────────────────────────
+   A cmd-style window over the page: title bar, black screen, KSS:\> prompt.
+   The window stays black in every theme (like a real cmd window). Entry motion
+   is gated like everything else: only html[data-motion="full"] animates it. */
 
 .console-overlay {
   position: fixed;
@@ -9,7 +10,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 12vh var(--space-4) var(--space-4);
+  padding: 10vh var(--space-4) var(--space-4);
   background: rgba(0, 0, 0, 0.62);
 }
 
@@ -21,15 +22,19 @@
   background: rgba(255, 255, 255, 0.62);
 }
 
-.console-panel {
+.term {
   position: relative;
-  width: min(640px, 100%);
+  width: min(780px, 100%);
   overflow: hidden;
-  border: var(--border-width) solid var(--color-border-light);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-family: var(--font-mono);
+  border: var(--border-width) solid #3a3a3a;
+  background: #0c0c0c;
+  color: #cccccc;
+  font-family: Consolas, "Cascadia Mono", "SF Mono", Menlo, var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.term.is-max {
+  width: min(1180px, 100%);
 }
 
 html[data-motion="full"] .console-overlay {
@@ -41,24 +46,24 @@ html[data-motion="full"] .console-overlay.is-open {
   opacity: 1;
 }
 
-html[data-motion="full"] .console-overlay .console-panel {
+html[data-motion="full"] .console-overlay .term {
   transform: translateY(-8px);
   transition: transform 160ms var(--ease);
 }
 
-html[data-motion="full"] .console-overlay.is-open .console-panel {
+html[data-motion="full"] .console-overlay.is-open .term {
   transform: translateY(0);
 }
 
-/* one scan line crosses the panel as it opens */
-html[data-motion="full"] .console-overlay.is-open .console-panel::after {
+/* one scan line crosses the window as it opens */
+html[data-motion="full"] .console-overlay.is-open .term::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--color-focus);
+  background: #cccccc;
   opacity: 0;
   pointer-events: none;
   animation: console-scan 260ms steps(10, end) 1;
@@ -66,145 +71,145 @@ html[data-motion="full"] .console-overlay.is-open .console-panel::after {
 
 @keyframes console-scan {
   0% {
-    opacity: 0.9;
+    opacity: 0.6;
     transform: translateY(0);
   }
 
   100% {
     opacity: 0;
-    transform: translateY(240px);
+    transform: translateY(260px);
   }
 }
 
-.console-head {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-width) solid var(--color-border);
-  color: var(--color-text-subtle);
-  font-family: var(--font-display);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-wide);
-}
+/* title bar: icon, "KS_Site", minimise / maximise / close */
 
-.console-row {
+.term-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: var(--border-width) solid var(--color-border);
+  height: 32px;
+  padding-left: var(--space-3);
+  background: #1f1f1f;
+  border-bottom: var(--border-width) solid #333333;
+  color: #e6e6e6;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  user-select: none;
 }
 
-.console-prompt {
-  color: var(--color-focus);
+.term-icon {
+  margin-right: var(--space-2);
+  padding: 0 4px;
+  background: #cccccc;
+  color: #0c0c0c;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.term-title {
+  flex: 1;
+}
+
+.term-controls {
+  display: flex;
+  height: 100%;
+}
+
+.term-btn {
+  width: 46px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #e6e6e6;
+  font-family: var(--font-body);
   font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
 }
 
-.console-input {
+.term-btn:hover {
+  background: #333333;
+}
+
+.term-btn--close:hover {
+  background: #c42b1c;
+  color: #ffffff;
+}
+
+/* screen */
+
+.term-screen {
+  height: min(52vh, 420px);
+  padding: var(--space-3);
+  overflow-y: auto;
+  cursor: text;
+}
+
+.term.is-max .term-screen {
+  height: 66vh;
+}
+
+.term-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.term-row {
+  display: flex;
+  align-items: baseline;
+  line-height: 1.4;
+}
+
+.term-prompt {
+  white-space: pre;
+}
+
+.term-input {
   flex: 1;
   min-width: 0;
+  padding: 0;
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--color-text);
+  color: inherit;
   font: inherit;
-  font-size: var(--text-md);
-  caret-color: var(--color-focus);
+  caret-color: #cccccc;
+  caret-shape: block;
 }
 
-.console-list {
-  max-height: 46vh;
-  margin: 0;
-  padding: var(--space-2) 0;
-  overflow-y: auto;
-  list-style: none;
+.term ::selection {
+  background: #cccccc;
+  color: #0c0c0c;
 }
 
-.console-option {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-2) var(--space-4);
-  border-left: 2px solid transparent;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  cursor: pointer;
-}
+/* entry point: the "//" in the header */
 
-.console-option.is-selected {
-  border-left-color: var(--color-focus);
-  background: var(--color-middle);
-  color: var(--color-text);
-}
-
-.console-option-hint {
-  color: var(--color-text-subtle);
-  font-size: var(--text-xs);
-  white-space: nowrap;
-}
-
-.console-output {
-  padding: 0 var(--space-4);
-}
-
-.console-output:not(:empty) {
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
-  border-top: var(--border-width) solid var(--color-border);
-}
-
-.console-line {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-  line-height: 1.7;
-}
-
-.console-line--error {
-  color: var(--color-danger);
-}
-
-/* entry points: header hint (desktop) and the menu row (phones/tablets) */
-
-.console-hint {
-  display: none;
-  padding: var(--space-2) var(--space-3);
-  border: 0;
+.terminal-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border: var(--border-width) solid var(--color-border-light);
+  border-radius: var(--radius);
   background: transparent;
-  color: var(--color-text-subtle);
-  font-family: var(--font-display);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-wide);
-  cursor: pointer;
-}
-
-.console-hint:hover {
   color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease);
 }
 
-@media (min-width: 1280px) and (pointer: fine) {
-  .console-hint {
-    display: block;
-  }
+.terminal-link:hover,
+.terminal-link:focus-visible {
+  border-color: var(--color-text);
 }
 
-.nav-console {
-  display: none;
-}
-
-@media (max-width: 1100px) {
-  .nav-console {
-    display: block;
-    width: 100%;
-    padding: 10px 14px;
-    border: 0;
-    background: transparent;
-    color: var(--color-text-muted);
-    font-family: inherit;
-    font-size: var(--text-sm);
-    letter-spacing: var(--tracking-label);
-    text-align: left;
-    text-transform: uppercase;
-    cursor: pointer;
+@media (max-width: 560px) {
+  .terminal-link {
+    padding: 5px 9px;
+    font-size: var(--text-md);
   }
 }

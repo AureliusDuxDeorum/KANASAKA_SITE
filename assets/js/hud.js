@@ -287,6 +287,7 @@
       .then(function (data) {
         if (data) {
           meta = data;
+          window.KanasakaMeta = data;
           renderFooter();
         }
       })
