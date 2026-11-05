@@ -37,6 +37,10 @@
   var verticalEl = null;
   var footerEl = null;
   var scrollQueued = false;
+  // live readouts (real values only): updated by tickLive() once a second
+  var live = {};
+  var sessionStart = null;
+  var liveTimer = 0;
 
   function pad(value, size) {
     var s = String(value);
@@ -123,6 +127,61 @@
     if (verticalEl) verticalEl.querySelector(".hud-y").textContent = "Y" + pad(scrollPercent(), 3);
   }
 
+  function motionState() {
+    var el = document.documentElement;
+    return {
+      motion: (el.getAttribute("data-motion") || "full").toUpperCase(),
+      fx: el.getAttribute("data-fx") || "1",
+    };
+  }
+
+  function clock(seconds) {
+    var d = new Date();
+    var text = pad(d.getUTCHours(), 2) + ":" + pad(d.getUTCMinutes(), 2);
+    return seconds ? text + ":" + pad(d.getUTCSeconds(), 2) : text;
+  }
+
+  function sessionTime() {
+    if (sessionStart === null) {
+      var stored = null;
+      try {
+        stored = window.sessionStorage.getItem("kanasaka-session-start");
+      } catch (e) {
+        stored = null;
+      }
+      sessionStart = Number(stored) || Date.now();
+      try {
+        window.sessionStorage.setItem("kanasaka-session-start", String(sessionStart));
+      } catch (e) {
+        // storage blocked: the timer just starts at this page view
+      }
+    }
+    var total = Math.max(0, Math.floor((Date.now() - sessionStart) / 1000));
+    var h = Math.floor(total / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    return (h ? pad(h, 2) + ":" : "") + pad(m, 2) + ":" + pad(total % 60, 2);
+  }
+
+  // Once a second (once a minute when motion is off, so nothing ticks for
+  // people who asked for a still page). Text-only updates; fixed-width digits.
+  function tickLive() {
+    var ms = motionState();
+    var still = ms.motion === "OFF";
+    if (live.utc) live.utc.textContent = "UTC " + clock(!still);
+    if (live.session) live.session.textContent = "SESSION " + (still ? "--:--" : sessionTime());
+    if (live.vp) live.vp.textContent = "VP " + window.innerWidth + "x" + window.innerHeight;
+    if (live.net) live.net.textContent = "NET " + (navigator.onLine === false ? "OFFLINE" : "ONLINE");
+    if (live.motion) live.motion.textContent = "MOTION " + ms.motion + " FX" + ms.fx;
+  }
+
+  function startLive() {
+    if (liveTimer) window.clearInterval(liveTimer);
+    var still = motionState().motion === "OFF";
+    liveTimer = window.setInterval(function () {
+      if (!document.hidden) tickLive();
+    }, still ? 60000 : 1000);
+  }
+
   function renderFooter() {
     if (!footerEl) return;
     footerEl.textContent = "";
@@ -132,6 +191,18 @@
     if (meta && meta.built) footerEl.appendChild(span("hud-item", "BUILT " + meta.built));
     if (meta && meta.rev) footerEl.appendChild(span("hud-item", "REV " + meta.rev));
     footerEl.appendChild(span("hud-item", "THEME " + theme().toUpperCase()));
+
+    live = {
+      utc: span("hud-item hud-item--live hud-item--live-extra"),
+      session: span("hud-item hud-item--live hud-item--live-extra"),
+      vp: span("hud-item hud-item--live hud-item--live-extra"),
+      net: span("hud-item hud-item--live"),
+      motion: span("hud-item hud-item--live"),
+    };
+    ["utc", "session", "vp", "net", "motion"].forEach(function (key) {
+      footerEl.appendChild(live[key]);
+    });
+    tickLive();
 
     var styles = window.getComputedStyle(document.documentElement);
     SWATCHES.forEach(function (entry) {
@@ -172,12 +243,28 @@
     }
 
     renderAll();
+
+    // Accent: the page code ticks once when the page loads (no-op elsewhere)
+    if (window.KanasakaMotion && verticalEl) {
+      window.KanasakaMotion.glitch(verticalEl.querySelector(".hud-code"), 220);
+    }
   }
 
   function init() {
     build();
 
-    window.addEventListener("resize", renderAll);
+    window.addEventListener("resize", function () {
+      renderAll();
+    });
+    window.addEventListener("online", tickLive);
+    window.addEventListener("offline", tickLive);
+    startLive();
+    if (window.KanasakaMotion) {
+      window.KanasakaMotion.onChange(function () {
+        tickLive();
+        startLive();
+      });
+    }
     window.addEventListener(
       "scroll",
       function () {

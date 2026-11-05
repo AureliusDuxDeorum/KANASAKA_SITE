@@ -3599,3 +3599,14 @@ button,
 .settings-motion-title {
   margin-top: var(--space-12);
 }
+
+/* live HUD readouts: fixed-width digits so the line never jitters */
+.hud-item--live {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .hud-item--live-extra {
+    display: none;
+  }
+}

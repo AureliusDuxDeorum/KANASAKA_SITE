@@ -353,3 +353,49 @@ html.vt-wipe::view-transition-new(root) {
     clip-path: inset(0 0 0 0);
   }
 }
+
+/* ── Glitch (Accent only: data-fx="2") ─────────────────────────────────────
+   motion.js adds .is-glitch for ~140 ms (rate limited, see glitch()). The tear
+   is a two-step horizontal shift; bracket ticks flicker in opacity only. */
+
+html[data-motion="full"][data-fx="2"] .is-glitch {
+  animation: ks-glitch 140ms steps(1, end) 1;
+}
+
+html[data-motion="full"][data-fx="2"] .card.is-glitch::before,
+html[data-motion="full"][data-fx="2"] .cta-band.is-glitch::before,
+html[data-motion="full"][data-fx="2"] .callout.is-glitch::before {
+  animation: tick-flicker 160ms steps(1, end) 1;
+}
+
+@keyframes ks-glitch {
+  0% {
+    transform: translate(-2px, 0);
+  }
+
+  35% {
+    transform: translate(3px, 0);
+  }
+
+  70% {
+    transform: translate(-1px, 0);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes tick-flicker {
+  0% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.8;
+  }
+}

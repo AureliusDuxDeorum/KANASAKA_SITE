@@ -11,8 +11,8 @@
   //   motion  OS "reduce motion" => off, always. Otherwise the saved choice
   //           (Account > Customization, or the console): auto | full | reduced | off.
   //           "auto" = full, except weak touch devices / data-saver => reduced.
-  //   fx      light 0 (minimal), dark 1 (standard), accent 2 (full cybercore);
-  //           reduced and off force 0.
+  //   fx      1 = every animation (Dark and Light), 2 = the same plus the glitch
+  //           effects (Accent only); reduced and off force 0.
   //
   // CSS reads those two attributes; with motion "off" the page is completely
   // static and nothing here runs. JS effects share one rAF loop (raf()) and
@@ -58,7 +58,7 @@
 
   function themeFx() {
     var theme = root.getAttribute("data-theme");
-    return theme === "accent" ? 2 : theme === "light" ? 0 : 1;
+    return theme === "accent" ? 2 : 1;
   }
 
   function compute() {
@@ -123,8 +123,8 @@
   var GLYPHS = "0123456789ABCDEF";
   var DECODE_MS = 520;
 
-  function decode(el) {
-    if (!el || el.hasAttribute("data-decoded") || el.children.length) return;
+  function decode(el, force) {
+    if (!el || (el.hasAttribute("data-decoded") && !force) || el.children.length) return;
     var text = el.textContent;
     if (!text || !text.trim()) return;
     el.setAttribute("data-decoded", "");
@@ -190,23 +190,36 @@
     ".statement",
     ".statement-note",
   ].join(", ");
-  var DECODE_FX1 = ".page-header h1";
-  var DECODE_FX2 = ".page-header h1, .statement, .section-header h2";
+  var DECODE_SEL = ".page-header h1, .statement, .section-header h2, .cta-band h2";
 
   var revealIo = null;
   var mounted = false;
 
   function reveal(el) {
     el.classList.add("is-in");
-    var sel = state.fx >= 2 ? DECODE_FX2 : state.fx === 1 ? DECODE_FX1 : "";
-    if (state.motion === "full" && sel) {
-      var targets = el.matches(sel) ? [el] : [];
-      if (el.matches(".section-header") && state.fx >= 2) {
-        var h = el.querySelector("h2");
-        if (h) targets.push(h);
-      }
-      targets.forEach(decode);
+    if (state.motion !== "full" || state.fx < 1) return;
+
+    var targets = [];
+    if (el.matches(DECODE_SEL)) targets.push(el);
+    if (el.matches(".section-header, .cta-band")) {
+      var heading = el.querySelector("h2");
+      if (heading) targets.push(heading);
     }
+    targets.forEach(function (target) {
+      decode(target);
+      watchHeading(target);
+    });
+  }
+
+  // Accent only: hovering a decoded heading briefly re-scrambles it.
+  function watchHeading(el) {
+    if (el.hasAttribute("data-watch")) return;
+    el.setAttribute("data-watch", "");
+    el.addEventListener("pointerenter", function () {
+      if (state.fx >= 2 && state.motion === "full" && !el.querySelector("[aria-hidden]")) {
+        decode(el, true);
+      }
+    });
   }
 
   function mountReveal() {
@@ -340,10 +353,71 @@
     change();
   }
 
+  // ── glitch (Accent only) ────────────────────────────────────────────────
+  // A short class toggle that CSS turns into a 2-step horizontal tear. Rate
+  // limited per element (never more than ~2 flashes/s) and a no-op anywhere but
+  // fx 2.
+  var lastGlitch = new WeakMap();
+
+  function isGlitchy() {
+    return state.motion === "full" && state.fx >= 2;
+  }
+
+  function glitch(el, ms) {
+    if (!el || !isGlitchy()) return;
+    var now = performance.now();
+    if (now - (lastGlitch.get(el) || -1e9) < 500) return;
+    lastGlitch.set(el, now);
+    el.classList.add("is-glitch");
+    window.setTimeout(function () {
+      el.classList.remove("is-glitch");
+    }, ms || 140);
+  }
+
+  // ── accent glitch triggers ───────────────────────────────────────────────
+  var glitchMounted = false;
+
+  function mountGlitch() {
+    if (glitchMounted) return;
+    glitchMounted = true;
+
+    // hover: buttons, nav links and the logo tear for one beat
+    document.addEventListener("pointerover", function (event) {
+      if (!isGlitchy() || event.pointerType === "touch") return;
+      var target = event.target.closest && event.target.closest(".button, .nav-link, .site-logo");
+      if (target) glitch(target, 120);
+    });
+
+    // idle: every 7-12 s one visible bracketed element flickers its ticks
+    var visibleFrames = new Set();
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) visibleFrames.add(entry.target);
+          else visibleFrames.delete(entry.target);
+        });
+      });
+      document.querySelectorAll(".card, .cta-band, .callout").forEach(function (el) {
+        io.observe(el);
+      });
+    }
+
+    (function schedule() {
+      window.setTimeout(function () {
+        if (isGlitchy() && !document.hidden && visibleFrames.size) {
+          var list = Array.from(visibleFrames);
+          glitch(list[(Math.random() * list.length) | 0], 160);
+        }
+        schedule();
+      }, 7000 + Math.random() * 5000);
+    })();
+  }
+
   function mount() {
     mountReveal();
     mountNavIndicator();
     mountScrollProgress();
+    mountGlitch();
   }
 
   // re-evaluate when the theme (fx tier) or OS setting changes
@@ -369,6 +443,8 @@
     },
     raf: raf,
     decode: decode,
+    glitch: glitch,
+    isGlitchy: isGlitchy,
     transition: transition,
     mount: mount,
   };
