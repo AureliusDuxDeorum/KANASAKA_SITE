@@ -267,8 +267,6 @@
   }
 
   // ── nav indicator: one underline that slides between the top-level links ──
-  var navCleanup = null;
-
   function mountNavIndicator() {
     var nav = document.querySelector(".site-nav");
     if (!nav || nav.querySelector(".nav-indicator") || state.motion === "off") return;
@@ -318,10 +316,6 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(home);
     home();
 
-    navCleanup = function () {
-      indicator.remove();
-      nav.classList.remove("has-indicator");
-    };
   }
 
   // ── scroll progress hairline (CSS scroll-driven animation, no JS per frame) ──
@@ -447,5 +441,9 @@
     isGlitchy: isGlitchy,
     transition: transition,
     mount: mount,
+    // the header was rebuilt (sign-in state): attach the nav indicator again
+    remountNav: function () {
+      if (mounted) mountNavIndicator();
+    },
   };
 })();

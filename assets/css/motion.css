@@ -399,3 +399,88 @@ html[data-motion="full"][data-fx="2"] .callout.is-glitch::before {
     opacity: 0.8;
   }
 }
+
+/* ── Boot sequence (assets/js/boot.js; created only when motion is full) ── */
+
+.ks-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-base);
+  clip-path: inset(0 0 0 0);
+}
+
+.ks-boot-inner {
+  width: min(340px, 84vw);
+}
+
+.ks-boot-logo {
+  display: block;
+  width: 132px;
+  margin-bottom: var(--space-8);
+  fill: var(--color-text);
+  clip-path: inset(0 100% 0 0);
+}
+
+.ks-boot.is-on .ks-boot-logo {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 280ms steps(12, end);
+}
+
+.ks-boot-lines {
+  min-height: 7.5em;
+}
+
+.ks-boot-line {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+  letter-spacing: var(--tracking-label);
+  white-space: nowrap;
+}
+
+.ks-boot-line:first-child,
+.ks-boot-line:last-child {
+  color: var(--color-text);
+}
+
+.ks-boot.is-out {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 180ms steps(9, end);
+}
+
+/* ── Page transitions (cross-document View Transitions) ───────────────────
+   Chromium / Safari 18+. Elsewhere pages simply navigate. data-motion /
+   data-fx are already correct on the first frame (assets/js/motion-boot.js),
+   so the same gating works on the old and the new page. */
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+html[data-motion="full"]::view-transition-old(root) {
+  animation: none;
+}
+
+html[data-motion="full"]::view-transition-new(root) {
+  animation: ks-wipe 240ms steps(12, end) both;
+}
+
+html[data-motion="full"][data-fx="2"]::view-transition-new(root) {
+  animation:
+    ks-wipe 240ms steps(12, end) both,
+    ks-glitch 140ms steps(1, end) 1 120ms;
+}
+
+html:not([data-motion="full"])::view-transition-group(root),
+html:not([data-motion="full"])::view-transition-old(root),
+html:not([data-motion="full"])::view-transition-new(root) {
+  animation: none;
+}

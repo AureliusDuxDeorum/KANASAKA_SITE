@@ -3610,3 +3610,9 @@ button,
     display: none;
   }
 }
+
+/* while the session check is in flight the sign-in controls are not shown (they
+   would flip to the account link a moment later) */
+.site-header.is-auth-pending .header-auth {
+  visibility: hidden;
+}

@@ -299,10 +299,10 @@
     return item;
   }
 
-  function buildHeader() {
+  function buildHeader(authPending) {
     const header = document.createElement("header");
     header.id = "site-header";
-    header.className = "site-header";
+    header.className = "site-header" + (authPending ? " is-auth-pending" : "");
 
     const inner = document.createElement("div");
     inner.className = "site-header-inner";
@@ -455,12 +455,22 @@
     main.appendChild(mark);
   }
 
-  function mountLayout() {
+  // Rebuilds only the header (sign-in state changed). The footer is left alone
+  // because hud.js appends its readout line to it once.
+  function refreshHeader() {
+    const headerSlot = document.getElementById("site-header");
+    if (headerSlot) {
+      headerSlot.replaceWith(buildHeader(false));
+    }
+    if (window.KanasakaMotion) window.KanasakaMotion.remountNav();
+  }
+
+  function mountLayout(authPending) {
     const headerSlot = document.getElementById("site-header");
     const footerSlot = document.getElementById("site-footer");
 
     if (headerSlot) {
-      headerSlot.replaceWith(buildHeader());
+      headerSlot.replaceWith(buildHeader(authPending === true));
     }
 
     if (footerSlot) {
@@ -472,7 +482,7 @@
   }
 
   window.KanasakaLayout = {
-    remount: mountLayout,
+    remount: refreshHeader,
   };
 
   window.KanasakaTheme = {
@@ -498,7 +508,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=3").then(resolve);
+      loadScript("/assets/js/motion.js?v=4").then(resolve);
     });
   }
 
@@ -582,18 +592,34 @@
     document.body.appendChild(banner);
   }
 
+  function loadBoot() {
+    if (window.__ksBootLoading) return;
+    window.__ksBootLoading = true;
+    loadScript("/assets/js/boot.js?v=1");
+  }
+
   async function boot() {
     initTheme();
     initCookieConsent();
-    await loadMotion();
+
+    // Scripts that do not depend on the session start loading straight away.
+    const motionReady = loadMotion();
+    loadBoot();
+
+    // Header and footer first: the session check is a network call, and the
+    // page used to sit without its header until it came back. The sign-in
+    // controls stay hidden until the session is known, then the header is
+    // rebuilt once with the real state.
+    mountLayout(true);
+    loadHud();
+    loadConsole();
 
     if (window.KanasakaAuth) {
       await window.KanasakaAuth.initSession();
     }
 
-    mountLayout();
-    loadHud();
-    loadConsole();
+    refreshHeader();
+    await motionReady;
 
     window.requestAnimationFrame(function () {
       document.body.classList.add("is-site-ready");
