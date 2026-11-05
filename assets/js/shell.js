@@ -31,6 +31,15 @@
       href: "/company/",
       children: [
         { label: "About", href: "/company/about/" },
+        { label: "Changelog", href: "/changelog/" },
+      ],
+    },
+    {
+      label: "Support",
+      href: "/support/",
+      children: [
+        { label: "FAQ", href: "/support/faq/" },
+        { label: "System status", href: "/support/system-status/" },
         { label: "Contact", href: "/support/contact/" },
       ],
     },
@@ -62,6 +71,14 @@
       links: [
         { label: "About", href: "/company/about/" },
         { label: "Security", href: "/legal/security/" },
+        { label: "Changelog", href: "/changelog/" },
+      ],
+    },
+    {
+      title: "Support",
+      links: [
+        { label: "FAQ", href: "/support/faq/" },
+        { label: "System status", href: "/support/system-status/" },
         { label: "Contact", href: "/support/contact/" },
       ],
     },

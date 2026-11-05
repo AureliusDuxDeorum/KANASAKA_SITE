@@ -4,7 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Status | KANASAKA</title>
-  <meta name="robots" content="noindex">
+  <meta name="description" content="Live check of the KANASAKA website, account database and installer downloads. There is no uptime history.">
+  <!-- seo -->
+  <link rel="canonical" href="https://kanasaka.com/support/system-status/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KANASAKA">
+  <meta property="og:title" content="System Status | KANASAKA">
+  <meta property="og:description" content="Live check of the KANASAKA website, account database and installer downloads. There is no uptime history.">
+  <meta property="og:url" content="https://kanasaka.com/support/system-status/">
+  <meta property="og:image" content="https://kanasaka.com/assets/images/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="KANASAKA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="System Status | KANASAKA">
+  <meta name="twitter:description" content="Live check of the KANASAKA website, account database and installer downloads. There is no uptime history.">
+  <meta name="twitter:image" content="https://kanasaka.com/assets/images/og-default.png">
+  <!-- /seo -->
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -16,50 +32,82 @@
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/tokens.css?v=6">
-  <link rel="stylesheet" href="/assets/css/style.css?v=147">
+  <link rel="stylesheet" href="/assets/css/style.css?v=148">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=99">
-  <link rel="stylesheet" href="/assets/css/components.css?v=12">
-  <link rel="stylesheet" href="/assets/css/motion.css?v=11">
+  <link rel="stylesheet" href="/assets/css/components.css?v=14">
+  <link rel="stylesheet" href="/assets/css/motion.css?v=12">
   <link rel="stylesheet" href="/assets/css/console.css?v=3">
   <script src="/assets/js/motion-boot.js?v=2"></script>
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=101"></script>
-  <script defer src="/assets/js/shell.js?v=1"></script>
-  <script defer src="/assets/js/main.js?v=140"></script>
+  <script defer src="/assets/js/shell.js?v=2"></script>
+  <script defer src="/assets/js/main.js?v=142"></script>
+  <script defer src="/assets/js/status.js?v=1"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
 <!-- shell:header -->
-<header id="site-header" class="site-header is-auth-pending"><div class="site-header-inner"><a class="site-logo" href="/"><svg class="site-logo-ks" viewBox="0 0 1523.6 761.85" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M0,0 L101.6,0 L101.6,514.4 L615.98,0 L761.75,0 L380.73,380.7 L460.22,460.1 L920.35,0 L1523.6,0 L1523.6,101.8 L964.6,101.8 L863.1,203.08 L863.1,334.88 L1523.6,334.88 L1523.6,606.05 L1371.35,761.85 L615.98,761.85 L460.22,606.05 L307.35,761.85 L0,761.85 Z M761.75,304.45 L761.75,436.43 L1421.9,436.43 L1421.9,565.2 L1326.98,660.12 L659.85,660.12 L533.25,533 Z M307.35,453.7 L387.48,533 L260.35,660.12 L101.6,660.12 Z"/></svg><span class="site-logo-text">KANASAKA</span></a><nav class="site-nav" aria-label="Main navigation"><div class="nav-item"><a class="nav-link" href="/">Home</a></div><div class="nav-item"><a class="nav-link" href="/products/" aria-haspopup="true" aria-expanded="false">Products</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/products/">Products overview</a><a href="/products/ks-link/">KS_Link</a><a href="/legal/products/">Technical overview</a></div></div><div class="nav-item"><a class="nav-link" href="/downloads/">Downloads</a></div><div class="nav-item"><a class="nav-link" href="/legal/security/">Security</a></div><div class="nav-item"><a class="nav-link" href="/company/" aria-haspopup="true" aria-expanded="false">Company</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/company/">Company overview</a><a href="/company/about/">About</a><a href="/support/contact/">Contact</a></div></div><div class="nav-item"><a class="nav-link" href="/legal/" aria-haspopup="true" aria-expanded="false">Legal</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/legal/">Legal overview</a><a href="/legal/privacy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/refunds/">Refunds</a><a href="/legal/cookies/">Cookies</a><a href="/legal/impressum/">Impressum</a></div></div></nav><div class="header-actions"><button type="button" class="terminal-link" aria-label="Open KS_Site terminal" title="KS_Site terminal (Ctrl+K)">//</button><div class="header-auth"><a class="auth-link" href="/login/">Log In</a><a class="auth-link secondary" href="/register/">Register</a></div><button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-expanded="false"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span></button></div></div></header>
+<header id="site-header" class="site-header is-auth-pending"><div class="site-header-inner"><a class="site-logo" href="/"><svg class="site-logo-ks" viewBox="0 0 1523.6 761.85" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M0,0 L101.6,0 L101.6,514.4 L615.98,0 L761.75,0 L380.73,380.7 L460.22,460.1 L920.35,0 L1523.6,0 L1523.6,101.8 L964.6,101.8 L863.1,203.08 L863.1,334.88 L1523.6,334.88 L1523.6,606.05 L1371.35,761.85 L615.98,761.85 L460.22,606.05 L307.35,761.85 L0,761.85 Z M761.75,304.45 L761.75,436.43 L1421.9,436.43 L1421.9,565.2 L1326.98,660.12 L659.85,660.12 L533.25,533 Z M307.35,453.7 L387.48,533 L260.35,660.12 L101.6,660.12 Z"/></svg><span class="site-logo-text">KANASAKA</span></a><nav class="site-nav" aria-label="Main navigation"><div class="nav-item"><a class="nav-link" href="/">Home</a></div><div class="nav-item"><a class="nav-link" href="/products/" aria-haspopup="true" aria-expanded="false">Products</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/products/">Products overview</a><a href="/products/ks-link/">KS_Link</a><a href="/legal/products/">Technical overview</a></div></div><div class="nav-item"><a class="nav-link" href="/downloads/">Downloads</a></div><div class="nav-item"><a class="nav-link" href="/legal/security/">Security</a></div><div class="nav-item"><a class="nav-link" href="/company/" aria-haspopup="true" aria-expanded="false">Company</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/company/">Company overview</a><a href="/company/about/">About</a><a href="/changelog/">Changelog</a></div></div><div class="nav-item"><a class="nav-link active" href="/support/" aria-haspopup="true" aria-expanded="false">Support</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/support/">Support overview</a><a href="/support/faq/">FAQ</a><a class="active" href="/support/system-status/">System status</a><a href="/support/contact/">Contact</a></div></div><div class="nav-item"><a class="nav-link" href="/legal/" aria-haspopup="true" aria-expanded="false">Legal</a><div class="nav-dropdown"><a class="nav-dropdown-overview" href="/legal/">Legal overview</a><a href="/legal/privacy/">Privacy</a><a href="/legal/terms/">Terms</a><a href="/legal/refunds/">Refunds</a><a href="/legal/cookies/">Cookies</a><a href="/legal/impressum/">Impressum</a></div></div></nav><div class="header-actions"><button type="button" class="terminal-link" aria-label="Open KS_Site terminal" title="KS_Site terminal (Ctrl+K)">//</button><div class="header-auth"><a class="auth-link" href="/login/">Log In</a><a class="auth-link secondary" href="/register/">Register</a></div><button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-expanded="false"><span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span></button></div></div></header>
 <!-- /shell:header -->
+
 
 <main id="main-content">
 
   <section class="page-header">
     <div class="container">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="/">Home</a><span aria-hidden="true">/</span><span>Support</span><span aria-hidden="true">/</span><span aria-current="page">System Status</span>
+        <a href="/">Home</a><span aria-hidden="true">/</span><a href="/support/">Support</a><span aria-hidden="true">/</span><span aria-current="page">System Status</span>
       </nav>
-      <h1>System Status</h1>
-      <p class="page-lead">This section is in development and has no public content yet.</p>
+      <h1>System status</h1>
+      <p class="page-lead">Whether the parts of KANASAKA that depend on a server are answering right now.</p>
     </div>
   </section>
 
   <section class="section">
     <div class="container">
-      <div class="callout">
-        <h3>Status: in development</h3>
-        <p>Nothing has been published here. For questions about System Status, get in touch and we will point you to what is available today.</p>
+      <div class="callout" id="status-summary" role="status" aria-live="polite">
+        <h3>Checking</h3>
+        <p>Asking the status endpoint&hellip;</p>
       </div>
-      <p><a href="/support/contact/">Contact KANASAKA</a> &middot; <a href="/">Back to home</a></p>
+
+      <ul class="status-list" id="status-list">
+        <li class="status-row" data-component="site"><span>Website</span><span class="badge">Checking</span></li>
+        <li class="status-row" data-component="api"><span>Sign-in and account API</span><span class="badge">Checking</span></li>
+        <li class="status-row" data-component="database"><span>Account database</span><span class="badge">Checking</span></li>
+        <li class="status-row" data-component="downloads"><span>Installer downloads</span><span class="badge">Checking</span></li>
+      </ul>
+      <p class="status-meta" id="status-meta">This page needs JavaScript to show live results.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="kicker">What this shows</span>
+        <h2>A live check, not a record</h2>
+        <p>Each check runs when you open this page: the account database answers a trivial query and the downloads bucket answers a lookup. The result is a yes or a no, nothing more.</p>
+      </div>
+      <ul class="feature-list">
+        <li class="feature">
+          <h3>No uptime history</h3>
+          <p>Nothing is stored between checks, so there is no uptime percentage and no incident log, and no service-level agreement is offered.</p>
+        </li>
+        <li class="feature">
+          <h3>KS_Link has its own servers</h3>
+          <p>KS_Link runs a separate relay and account system. This page does not report on it.</p>
+        </li>
+      </ul>
+      <p>Seeing a problem this page does not show? <a href="/support/contact/">Contact KANASAKA</a>.</p>
     </div>
   </section>
 
 </main>
 
+</main>
+
 <!-- shell:footer -->
-<footer id="site-footer" class="site-footer"><div class="site-footer-inner"><div class="footer-grid"><div class="footer-brand"><span class="footer-wordmark">KANASAKA</span><p>Software and AI.</p></div><nav class="footer-col" aria-label="Products"><h2>Products</h2><ul><li><a href="/products/ks-link/">KS_Link</a></li><li><a href="/downloads/">Downloads</a></li><li><a href="/legal/products/">Technical overview</a></li></ul></nav><nav class="footer-col" aria-label="Company"><h2>Company</h2><ul><li><a href="/company/about/">About</a></li><li><a href="/legal/security/">Security</a></li><li><a href="/support/contact/">Contact</a></li></ul></nav><nav class="footer-col" aria-label="Legal"><h2>Legal</h2><ul><li><a href="/legal/privacy/">Privacy</a></li><li><a href="/legal/terms/">Terms</a></li><li><a href="/legal/refunds/">Refunds</a></li><li><a href="/legal/cookies/">Cookies</a></li><li><a href="/legal/impressum/">Impressum</a></li></ul></nav></div><div class="footer-base"><p>© 2026 KANASAKA · Germany</p></div></div></footer>
+<footer id="site-footer" class="site-footer"><div class="site-footer-inner"><div class="footer-grid"><div class="footer-brand"><span class="footer-wordmark">KANASAKA</span><p>Software and AI.</p></div><nav class="footer-col" aria-label="Products"><h2>Products</h2><ul><li><a href="/products/ks-link/">KS_Link</a></li><li><a href="/downloads/">Downloads</a></li><li><a href="/legal/products/">Technical overview</a></li></ul></nav><nav class="footer-col" aria-label="Company"><h2>Company</h2><ul><li><a href="/company/about/">About</a></li><li><a href="/legal/security/">Security</a></li><li><a href="/changelog/">Changelog</a></li></ul></nav><nav class="footer-col" aria-label="Support"><h2>Support</h2><ul><li><a href="/support/faq/">FAQ</a></li><li><a href="/support/system-status/">System status</a></li><li><a href="/support/contact/">Contact</a></li></ul></nav><nav class="footer-col" aria-label="Legal"><h2>Legal</h2><ul><li><a href="/legal/privacy/">Privacy</a></li><li><a href="/legal/terms/">Terms</a></li><li><a href="/legal/refunds/">Refunds</a></li><li><a href="/legal/cookies/">Cookies</a></li><li><a href="/legal/impressum/">Impressum</a></li></ul></nav></div><div class="footer-base"><p>© 2026 KANASAKA · Germany</p></div></div></footer>
 <!-- /shell:footer -->
 
 </body>

@@ -144,7 +144,7 @@
       const trigger = item.querySelector(":scope > .nav-link[aria-haspopup]");
       if (!trigger) return;
       trigger.addEventListener("click", function (event) {
-        if (window.innerWidth <= 1100) {
+        if (window.innerWidth <= 1240) {
           event.preventDefault();
           const expanded = item.classList.toggle("expanded");
           trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -259,7 +259,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=8").then(resolve);
+      loadScript("/assets/js/motion.js?v=9").then(resolve);
     });
   }
 
@@ -359,7 +359,7 @@
 
     // The shell data normally arrives with its own <script> tag; this is the
     // fallback for a page that lacks it.
-    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=1");
+    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=2");
 
     // Header and footer first: the session check is a network call, and the
     // page used to sit without its header until it came back. The sign-in

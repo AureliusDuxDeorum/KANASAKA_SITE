@@ -92,7 +92,15 @@ assets/js/hud.js            (also) live readouts: UTC, session timer, viewport, 
 assets/js/hero-ascii.js     (also) scan band (fx>=1), tear (fx 2). Fixed 15 Hz tick (TICK_MS 66,
                             shared with motion.js decode); no adaptive rate.
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.
-main.js (NAV, FOOTER_COLUMNS)  Nav and footer list only pages that exist; unfinished pages are noindex and
+assets/js/shell.js          Nav/footer data + renderHeader/renderFooter. scripts/prerender.mjs (npm run
+                            prerender) writes them, the SEO block, sitemap.xml and robots Sitemap line into
+                            every page; main.js only hydrates. npm test fails when pages are stale.
+functions/_middleware.js + _routes.json  Answers 404 for repo files that Pages could publish from the repo
+                            root (schema.sql, wrangler.toml, docs/, tests/, functions/, ...); /api/* stays
+                            routed for functions/api/_middleware.js. Self-test check "http-repo-files".
+functions/api/status.js     Public GET /api/status (booleans only) for /support/system-status/ (assets/js/status.js).
+.github/workflows/ci.yml    Runs npm test on push to main and on pull requests.
+main.js (NAV, FOOTER_COLUMNS)  (now shell.js) Nav and footer list only pages that exist; unfinished pages are noindex and
                             use the "In development" template. (The old scripts/generate_pages.py skeleton
                             generator was removed: it would have overwritten the edited pages.)
 functions/api/_middleware.js  Runs in front of every /api/* route: global same-origin (CSRF) check on all

@@ -518,6 +518,10 @@
     "/company/": ["/company/about/", "/support/contact/", "/legal/security/"],
     "/company/about/": ["/products/ks-link/", "/support/contact/", "/legal/impressum/"],
     "/support/contact/": ["/company/about/", "/legal/security/", "/products/ks-link/"],
+    "/support/": ["/support/faq/", "/support/system-status/", "/support/contact/"],
+    "/support/faq/": ["/support/contact/", "/downloads/", "/legal/security/"],
+    "/support/system-status/": ["/support/faq/", "/support/contact/", "/downloads/"],
+    "/changelog/": ["/company/about/", "/products/ks-link/", "/legal/security/"],
   };
   var STARTERS = ["/products/ks-link/", "/downloads/", "/legal/security/", "/company/about/", "/support/contact/"];
   var COMMAND_ITEMS = [

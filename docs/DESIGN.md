@@ -41,9 +41,17 @@ Direction: **disciplined deep-tech**. Keep the angular KS logo, Tektur and the b
 
 ## Information architecture
 
-The nav and footer (`NAV`, `FOOTER_COLUMNS` in `assets/js/main.js`) list **only pages that exist**. A page enters the nav when it has real content; until then it keeps its URL, uses the *In development* template and stays `noindex`. The test suite checks this.
+The nav and footer (`NAV`, `FOOTER_COLUMNS` in `assets/js/shell.js`) list **only pages that exist**. A page enters the nav when it has real content; until then it keeps its URL, uses the *In development* template and stays `noindex`. The test suite checks this.
 
-Current nav: Products (KS_Link, Technical overview) · Downloads · Security · Company (About, Contact) · Legal. Each dropdown label is a real link to a small overview page (`/products/`, `/company/`, `/legal/`): clicking it navigates on desktop, hover/focus opens the list; on phones the label expands the list and an "<Section> overview" row links to the page.
+Current nav: Products (KS_Link, Technical overview) · Downloads · Security · Company (About, Changelog) · Support (FAQ, System status, Contact) · Legal. Each dropdown label is a real link to a small overview page (`/products/`, `/company/`, `/support/`, `/legal/`): clicking it navigates on desktop, hover/focus opens the list; on phones the label expands the list and an "<Section> overview" row links to the page.
+
+### Shell, pre-render and SEO
+
+The header and footer are **in the HTML of every page**, not built in the browser: `assets/js/shell.js` holds the nav/footer data and pure render functions; `node scripts/prerender.mjs` (`npm run prerender`) writes them into each page between `<!-- shell:header -->` / `<!-- shell:footer -->` markers, and `main.js` only hydrates them (listeners, sign-in controls, the `is-auth-pending` reveal). After changing the nav, a page's `<title>` or `<meta name="description">`, or adding a page, run `npm run prerender`; `npm test` fails if any page is stale. The header collapses into the menu button at 1240 px (`style.css`, `components.css`, `motion.css`, `main.js`, `motion.js` must agree).
+
+The same script maintains `<!-- seo -->` blocks (canonical, Open Graph, Twitter card, Organization JSON-LD on the home page; `assets/images/og-default.png`), `sitemap.xml` and the `Sitemap:` line in `robots.txt`. A page is *indexable* when it has a title and a 50-160 character description, no `noindex`, and is not an account/auth page or listed in `UNLISTED_PREFIXES` (`scripts/prerender.mjs`). `404.html` is a normal page (noindex) that Cloudflare Pages serves for unknown URLs.
+
+New page checklist: copy a page skeleton, write a unique title and description, add `<div id="site-header"></div>` / `<div id="site-footer"></div>` slots (or copy the markers), add it to `NAV`/`FOOTER_COLUMNS` if it has real content, run `npm run prerender`, run `npm test`.
 
 ## Motion
 

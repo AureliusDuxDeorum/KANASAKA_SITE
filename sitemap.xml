@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://kanasaka.com/</loc></url>
+  <url><loc>https://kanasaka.com/changelog/</loc></url>
   <url><loc>https://kanasaka.com/company/</loc></url>
   <url><loc>https://kanasaka.com/company/about/</loc></url>
   <url><loc>https://kanasaka.com/downloads/</loc></url>
@@ -14,5 +15,8 @@
   <url><loc>https://kanasaka.com/legal/terms/</loc></url>
   <url><loc>https://kanasaka.com/products/</loc></url>
   <url><loc>https://kanasaka.com/products/ks-link/</loc></url>
+  <url><loc>https://kanasaka.com/support/</loc></url>
   <url><loc>https://kanasaka.com/support/contact/</loc></url>
+  <url><loc>https://kanasaka.com/support/faq/</loc></url>
+  <url><loc>https://kanasaka.com/support/system-status/</loc></url>
 </urlset>
