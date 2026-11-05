@@ -40,17 +40,18 @@
 }
 
 [data-theme="accent"] {
-  --glass-bg: rgba(12, 10, 20, 0.72);
-  --glass-bg-elevated: rgba(18, 14, 32, 0.82);
-  --glass-nav-bg: rgba(8, 6, 16, 0.86);
-  --glass-border: rgba(140, 110, 255, 0.22);
-  --glass-border-bright: rgba(180, 150, 255, 0.34);
-  --glass-shadow: 0 28px 56px rgba(20, 10, 50, 0.42);
-  --glass-inset: inset 0 1px 0 rgba(200, 180, 255, 0.12);
-  --strip-accent: rgba(180, 150, 255, 0.16);
-  --strip-accent-bright: rgba(220, 200, 255, 0.32);
-  --grid-line: rgba(140, 110, 255, 0.08);
-  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(90, 63, 168, 0.28), transparent 68%);
+  --glass-bg: rgba(10, 9, 14, 0.72);
+  --glass-bg-elevated: rgba(16, 14, 22, 0.82);
+  --glass-nav-bg: rgba(7, 6, 10, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-bright: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 28px 56px rgba(0, 0, 0, 0.42);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --strip-accent: rgba(255, 255, 255, 0.1);
+  --strip-accent-bright: rgba(255, 255, 255, 0.22);
+  --grid-line: rgba(255, 255, 255, 0.04);
+  /* the one soft purple moment: a glow at the top of the page */
+  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(62, 9, 88, 0.4), transparent 68%);
 }
 
 body {
@@ -639,7 +640,7 @@ h1 {
 }
 
 .cookie-consent-ok:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -697,7 +698,7 @@ h1 {
 }
 
 .legal-notice-banner-ok:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 

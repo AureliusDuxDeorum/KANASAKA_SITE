@@ -188,9 +188,11 @@
   white-space: nowrap;
 }
 
+/* the Alpha tag is the one coloured element in the normal themes: KS purple fill, white text */
 .badge--alpha {
-  color: var(--color-warn);
-  border-color: var(--color-warn);
+  background: var(--ks-purple);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
 .badge--ok {

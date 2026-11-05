@@ -59,23 +59,26 @@
   --color-accent: #111111;
 }
 
+/* Accent theme: the dark theme with near-black neutrals and the KS purple used
+   sparingly (button/badge fills, the page glow, the side wordmark). Borders,
+   text and surfaces stay neutral. */
 [data-theme="accent"] {
-  --color-base: #07060d;
-  --color-middle: #151022;
-  --color-upper: #221a35;
-  --color-surface: #100e18;
-  --color-border: #3c2782;
-  --color-border-light: #5a3fa8;
-  --color-text: #f5f2ff;
-  --color-text-muted: #b8aed6;
-  --color-text-subtle: #8a7fad;
-  --color-button-bg: #3c2782;
+  --color-base: #060509;
+  --color-middle: #121016;
+  --color-upper: #1b1920;
+  --color-surface: #0d0c11;
+  --color-border: #2c2933;
+  --color-border-light: #3e3a47;
+  --color-text: #f3f1f6;
+  --color-text-muted: #b4afbd;
+  --color-text-subtle: #8f899b;
+  --color-button-bg: var(--ks-purple);
   --color-button-text: #ffffff;
-  --color-button-secondary-bg: #151022;
-  --color-button-secondary-text: #e8e2ff;
-  --color-glow: rgba(60, 39, 130, 0.42);
-  --color-nav-bg: #0b0912;
-  --color-accent: #3c2782;
+  --color-button-secondary-bg: #121016;
+  --color-button-secondary-text: #e9e6ef;
+  --color-glow: rgba(62, 9, 88, 0.3);
+  --color-nav-bg: #08070b;
+  --color-accent: var(--ks-purple);
 }
 
 html {
@@ -676,32 +679,12 @@ h1 {
   fill: currentColor;
 }
 
-.alpha-badge {
-  display: inline-block;
-  border: 1px solid var(--color-border);
-  padding: 4px 10px;
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-text);
-}
-
 .platform-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
   flex-shrink: 0;
-}
-
-.platform-alpha-badge {
-  display: inline-block;
-  border: 1px solid var(--color-border);
-  padding: 3px 9px;
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-text-subtle);
 }
 
 .platform-label {
@@ -1234,9 +1217,9 @@ h1 {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--color-accent) 35%,
+    var(--color-focus) 35%,
     var(--color-text) 50%,
-    var(--color-accent) 65%,
+    var(--color-focus) 65%,
     transparent 100%
   );
   opacity: 0.85;
@@ -2052,7 +2035,7 @@ body.auth-modal-open > #site-footer {
   top: 50%;
   width: 3px;
   height: 0;
-  background: var(--color-accent);
+  background: var(--color-focus);
   transform: translateY(-50%);
   transition: height 320ms var(--auth-ease);
 }
@@ -2520,7 +2503,7 @@ body.auth-modal-open > #site-footer {
 }
 
 .theme-option.is-selected {
-  border-color: var(--color-accent);
+  border-color: var(--color-focus);
   box-shadow: 0 0 24px var(--color-glow);
   transform: translateX(4px);
 }
@@ -2554,7 +2537,7 @@ body.auth-modal-open > #site-footer {
 }
 
 .theme-preview-accent {
-  background: linear-gradient(135deg, #07060d 55%, #3c2782 55%);
+  background: linear-gradient(135deg, #060509 55%, #3e0958 55%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3164,7 +3147,7 @@ body.tos-open {
   }
 
   [data-theme="accent"] .kanasaka-rail {
-    color: rgba(180, 150, 255, 0.1);
+    color: rgba(62, 9, 88, 0.6);
   }
 }
 
@@ -3408,7 +3391,7 @@ body.tos-open {
 }
 
 [data-theme="accent"] {
-  --hud-color: rgba(200, 184, 255, 0.46);
+  --hud-color: rgba(255, 255, 255, 0.4);
 }
 
 .hud {

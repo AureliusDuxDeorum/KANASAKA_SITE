@@ -59,15 +59,29 @@
   --duration-base: 300ms;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* ── Brand colour ──
+     KS purple. Not used in the normal (dark / light) themes except for the Alpha
+     tag; the accent theme builds its few coloured moments from it. */
+  --ks-purple: #3e0958;
+
   /* ── Semantic status colours (same in every theme) ── */
   --color-ok: #3fb97c;
   --color-warn: #e0a43a;
   --color-danger: #e5484d;
+
+  /* focus rings, selected borders and active indicators: must stay visible in every theme */
+  --color-focus: #ffffff;
 }
 
 /* the light theme needs darker status colours to stay readable (WCAG AA, 4.5:1) */
 [data-theme="light"] {
+  --color-focus: #111111;
   --color-ok: #1a7f4b;
   --color-warn: #8a5a00;
   --color-danger: #c4262b;
+}
+
+[data-theme="accent"] {
+  /* a tint of the KS purple light enough to see on near-black (>= 3:1) */
+  --color-focus: #b585d6;
 }
