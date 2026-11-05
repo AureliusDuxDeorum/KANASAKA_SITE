@@ -1,6 +1,6 @@
 # Cloudflare WAF rules for KANASAKA auth
 
-Apply these in **Cloudflare Dashboard → Security → WAF → Custom rules** (or Rate limiting rules). WAF is the primary abuse control; application code focuses on cryptography, session integrity, and origin checks.
+Apply these in **Cloudflare Dashboard → Security → WAF → Rate limiting rules**. The WAF is a flood damper in front of the Functions; precise abuse control (per-account limits, lockouts) lives in the app, see `docs/SECURITY.md`.
 
 ## Prerequisites
 
@@ -9,46 +9,45 @@ Apply these in **Cloudflare Dashboard → Security → WAF → Custom rules** (o
 - Run D1 migrations through `005_auth_hardening.sql`
 - Set `SESSION_SECRET` (32+ random bytes) in Pages **Production secrets**
 
-## Recommended custom rules
+## What is actually deployed (2026-11-05)
 
-### 1. Block auth POST floods by IP
+Zone `kanasaka.com`, **Free plan** (one rate-limiting rule, counted per IP only, block duration 10 seconds -- the dashboard offered nothing longer).
 
-- **Expression:** `(http.request.uri.path starts with "/api/auth/") and (http.request.method eq "POST")`
-- **Action:** Rate limit — 30 requests per 10 minutes per IP
-- **Mitigation:** Block for 1 hour
+| Setting | Value |
+|---|---|
+| Rule name | Auth POST flood limit |
+| Expression | `(http.request.method eq "POST" and starts_with(http.request.uri.path, "/api/auth/"))` |
+| Characteristics | IP |
+| Rate | 10 requests / 10 seconds (inferred from the test below; confirm in the dashboard) |
+| Action / duration | Block / 10 seconds |
+| Status | Active |
 
-### 2. Tighter limit on login
+Verified with 30 rapid `POST /api/auth/logout` calls (harmless without a session): 10 x 200, then 429.
 
-- **Expression:** `(http.request.uri.path eq "/api/auth/login") and (http.request.method eq "POST")`
-- **Action:** Rate limit — 10 requests per 10 minutes per IP
-- **Mitigation:** Managed challenge, then block
+```
+for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code} " -X POST https://kanasaka.com/api/auth/logout -H "Origin: https://kanasaka.com" -H "Content-Type: application/json" -d '{}'; done
+```
 
-### 3. Tighter limit on password reset
+This is a **speed limit, not a ban**: after 10 seconds the IP is allowed again. It protects Functions/D1 from floods; slower guessing is stopped by the app-level limits in `docs/SECURITY.md` (per-account and per-IP login limits, one-time-code cap, mail throttles).
 
-- **Expression:** `(http.request.uri.path in {"/api/auth/forgot-password" "/api/auth/reset-password"}) and (http.request.method eq "POST")`
-- **Action:** Rate limit — 8 requests per hour per IP
+## Not deployed, on purpose
 
-### 4. Tighter limit on registration
+- **Origin-header block on auth routes** -- `functions/api/_middleware.js` already rejects cross-origin non-GET requests for all of `/api/*`, and desktop clients send different or no Origin headers.
+- **"Known bad bots" rule on `cf.client.bot`** -- that field matches *verified* bots (e.g. search engines), not bad ones, so it does not do what it sounds like. Real bad-bot scoring needs a plan with Bot Management.
+- **Bot Fight Mode** -- left off for now: KS_Link's updater and download endpoints are called by desktop apps, not browsers, and could be challenged. If enabled later, test an update check and a download immediately.
 
-- **Expression:** `(http.request.uri.path eq "/api/auth/register") and (http.request.method eq "POST")`
-- **Action:** Rate limit — 6 requests per hour per IP
+## If the plan is upgraded (paid plans allow more rules and longer periods)
 
-### 5. Block non-browser origins on mutating auth routes
+Add these rate-limiting rules (all per IP, on `POST`):
 
-- **Expression:** `(http.request.uri.path starts with "/api/auth/") and (http.request.method in {"POST" "PATCH" "DELETE"}) and (http.request.headers["origin"][0] ne "https://kanasaka.com") and (http.request.headers["origin"][0] ne "")`
-- **Action:** Block
+1. `starts_with(http.request.uri.path, "/api/auth/")` -- 30 requests / 10 minutes, block 1 hour
+2. `http.request.uri.path eq "/api/auth/login"` -- 10 / 10 minutes, managed challenge
+3. `http.request.uri.path in {"/api/auth/forgot-password" "/api/auth/reset-password"}` -- 8 / hour
+4. `http.request.uri.path eq "/api/auth/register"` -- 6 / hour
 
-### 6. Block known bad bots on auth paths
+## Managed rules
 
-- **Expression:** `(http.request.uri.path starts with "/api/auth/") and cf.client.bot`
-- **Action:** Managed challenge
-
-## Managed rules (enable)
-
-Under **Security → WAF → Managed rules**:
-
-- Cloudflare OWASP Core Ruleset (Paranoia level 1 on auth paths if available)
-- Cloudflare Bot Fight Mode or Super Bot Fight Mode (if on paid plan)
+Under **Security -> WAF -> Managed rules**, enable whatever the plan offers (the OWASP Core Ruleset is, as far as we know, paid-plan only). Check Security -> Events for false positives after enabling.
 
 ## Optional: cache bypass for auth
 

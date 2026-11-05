@@ -42,7 +42,7 @@ Locally: `npm test`.
 
 ## Manual checklist (cannot be verified from the app)
 
-- [ ] Cloudflare WAF rate limits from `docs/CLOUDFLARE_WAF.md` (the last audit could not read the ruleset)
+- [x] Cloudflare WAF rate limit on `/api/auth/*` POSTs (Free plan: 10 requests / 10 s per IP, 10 s block), verified 2026-11-05; remaining WAF options in `docs/CLOUDFLARE_WAF.md`
 - [ ] `SESSION_SECRET`, `ADMIN_SECRET`, `STRIPE_*`, `RESEND_API_KEY` set in Pages production secrets (System Status shows which are missing)
 - [ ] 2FA on the Cloudflare, GitHub, Stripe and Resend accounts
 - [ ] DNSSEC + CAA records; HSTS preload submission
