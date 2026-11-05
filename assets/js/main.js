@@ -1,87 +1,65 @@
 (function () {
+  // Only pages that exist. A page joins the nav when it has real content (see
+  // docs/DESIGN.md > Information architecture); unfinished pages keep their
+  // URL but stay out of the nav and the footer. A section with `href` is a
+  // plain link, one with `children` is a dropdown.
   const NAV = [
-    {
-      label: "Downloads",
-      children: [
-        { label: "All Downloads", href: "/downloads/" },
-        { label: "KS_Link", href: "/downloads/#ks-link" },
-      ],
-    },
     {
       label: "Products",
       children: [
         { label: "KS_Link", href: "/products/ks-link/" },
-        { label: "Robotics", href: "/products/robotics/" },
+        { label: "Technical overview", href: "/legal/products/" },
       ],
     },
-    {
-      label: "Research",
-      children: [
-        { label: "Artificial Intelligence", href: "/research/artificial-intelligence/" },
-        { label: "Robotics", href: "/research/robotics/" },
-        { label: "Publications", href: "/research/publications/" },
-        { label: "Future Projects", href: "/research/future-projects/" },
-      ],
-    },
+    { label: "Downloads", href: "/downloads/" },
+    { label: "Security", href: "/legal/security/" },
     {
       label: "Company",
       children: [
-        { label: "About KANASAKA", href: "/company/about/" },
-        { label: "Vision", href: "/company/vision/" },
-        { label: "Leadership", href: "/company/leadership/" },
-        { label: "News", href: "/company/news/" },
-        { label: "Careers", href: "/company/careers/" },
-      ],
-    },
-    {
-      label: "Support",
-      children: [
-        { label: "Documentation", href: "/support/documentation/" },
-        { label: "FAQ", href: "/support/faq/" },
+        { label: "About", href: "/company/about/" },
         { label: "Contact", href: "/support/contact/" },
-        { label: "System Status", href: "/support/system-status/" },
-      ],
-    },
-    {
-      label: "Developers",
-      children: [
-        { label: "API", href: "/developers/api/" },
-        { label: "SDK", href: "/developers/sdk/" },
-        { label: "GitHub", href: "/developers/github/" },
-        { label: "Documentation", href: "/developers/documentation/" },
-      ],
-    },
-    {
-      label: "Media",
-      children: [
-        { label: "Press Kit", href: "/media/press-kit/" },
-        { label: "Brand Assets", href: "/media/brand-assets/" },
-        { label: "Gallery", href: "/media/gallery/" },
-        { label: "Videos", href: "/media/videos/" },
       ],
     },
     {
       label: "Legal",
       children: [
-        { label: "Products", href: "/legal/products/" },
         { label: "Privacy", href: "/legal/privacy/" },
         { label: "Terms", href: "/legal/terms/" },
         { label: "Refunds", href: "/legal/refunds/" },
         { label: "Cookies", href: "/legal/cookies/" },
-        { label: "Licenses", href: "/legal/licenses/" },
-        { label: "Security", href: "/legal/security/" },
         { label: "Impressum", href: "/legal/impressum/" },
       ],
     },
   ];
 
-  const FOOTER_LINKS = [
-    { label: "Privacy", href: "/legal/privacy/" },
-    { label: "Terms", href: "/legal/terms/" },
-    { label: "Refunds", href: "/legal/refunds/" },
-    { label: "Cookies", href: "/legal/cookies/" },
-    { label: "Impressum", href: "/legal/impressum/" },
-    { label: "Contact", href: "/support/contact/" },
+  // Footer columns (same real pages as the nav, plus the always-useful ones).
+  const FOOTER_COLUMNS = [
+    {
+      title: "Products",
+      links: [
+        { label: "KS_Link", href: "/products/ks-link/" },
+        { label: "Downloads", href: "/downloads/" },
+        { label: "Technical overview", href: "/legal/products/" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About", href: "/company/about/" },
+        { label: "Security", href: "/legal/security/" },
+        { label: "Contact", href: "/support/contact/" },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy", href: "/legal/privacy/" },
+        { label: "Terms", href: "/legal/terms/" },
+        { label: "Refunds", href: "/legal/refunds/" },
+        { label: "Cookies", href: "/legal/cookies/" },
+        { label: "Impressum", href: "/legal/impressum/" },
+      ],
+    },
   ];
 
   const currentPath = normalizePath(window.location.pathname);
@@ -223,6 +201,15 @@
     nav.appendChild(wrapNavItem(homeLink));
 
     NAV.forEach(function (section) {
+      if (section.href) {
+        const direct = document.createElement("a");
+        direct.className = "nav-link" + (isActive(section.href) ? " active" : "");
+        direct.href = section.href;
+        direct.textContent = section.label;
+        nav.appendChild(wrapNavItem(direct));
+        return;
+      }
+
       const item = document.createElement("div");
       item.className = "nav-item";
 
@@ -326,26 +313,50 @@
     const inner = document.createElement("div");
     inner.className = "site-footer-inner";
 
-    const links = document.createElement("div");
-    links.className = "footer-links";
+    const grid = document.createElement("div");
+    grid.className = "footer-grid";
 
-    FOOTER_LINKS.forEach(function (link) {
-      const a = document.createElement("a");
-      a.href = link.href;
-      a.textContent = link.label;
-      links.appendChild(a);
+    const brand = document.createElement("div");
+    brand.className = "footer-brand";
+    const wordmark = document.createElement("span");
+    wordmark.className = "footer-wordmark";
+    wordmark.textContent = "KANASAKA";
+    const blurb = document.createElement("p");
+    blurb.textContent = "Software, AI, robotics and biotech.";
+    brand.appendChild(wordmark);
+    brand.appendChild(blurb);
+    grid.appendChild(brand);
+
+    FOOTER_COLUMNS.forEach(function (column) {
+      const col = document.createElement("nav");
+      col.className = "footer-col";
+      col.setAttribute("aria-label", column.title);
+
+      const heading = document.createElement("h2");
+      heading.textContent = column.title;
+      col.appendChild(heading);
+
+      const list = document.createElement("ul");
+      column.links.forEach(function (link) {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = link.href;
+        a.textContent = link.label;
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      col.appendChild(list);
+      grid.appendChild(col);
     });
 
-    const tagline = document.createElement("p");
-    tagline.className = "footer-tagline";
-    tagline.textContent = "Software · AI · Robotics · Biotech";
-
+    const base = document.createElement("div");
+    base.className = "footer-base";
     const copy = document.createElement("p");
-    copy.textContent = "\u00a9 2026 KANASAKA";
+    copy.textContent = "\u00a9 2026 KANASAKA \u00b7 Germany";
+    base.appendChild(copy);
 
-    inner.appendChild(links);
-    inner.appendChild(tagline);
-    inner.appendChild(copy);
+    inner.appendChild(grid);
+    inner.appendChild(base);
     footer.appendChild(inner);
 
     return footer;
@@ -430,7 +441,7 @@
   function loadHud() {
     if (window.__ksHudLoaded) return;
     window.__ksHudLoaded = true;
-    loadScript("/assets/js/hud.js?v=2");
+    loadScript("/assets/js/hud.js?v=3");
   }
 
   function loadLogoAnimation() {

@@ -53,7 +53,7 @@ scripts/stamp-version.mjs   Writes assets/site-meta.json (version from package.j
                             (patch = fixes, minor = features, major = redesigns / breaking changes).
 assets/js/hud.js            Quiet console-style labels: footer line (build, theme, theme hex codes) and a
                             vertical page code on the left edge. Code grammar: //xf_SSP_T_LL = nav section
-                            in header order (00 Home ... 08 Legal; 09x account, 09x auth pages), page
+                            in header order (00 Home, 01 Products, 02 Downloads, 03 Security, 04 Company, 05 Legal; 09x account/auth pages), page
                             within the section, theme letter (d/l/a), layout class (01 phone <768, 02 tablet
                             <1024, 03 laptop <1700, 04 desktop). The home hero adds its own grid/mask
                             readout (hero-ascii.js). All values are live or from the build, none invented.
@@ -72,6 +72,15 @@ assets/js/product-showcase.js  Home product strip. The endless drift is the CSS 
                             Images: preview-700.webp + preview.webp via srcset. Footer has no backdrop-filter
                             (invisible, but an extra render pass per frame).
 main.js (mountPageMark)     Adds a quiet "//" (.page-mark) at the top of every page except the home page.
+assets/css/tokens.css       Design tokens (type scale, tracking, space, radius, motion, container, status
+                            colours). Loaded first on every page. See docs/DESIGN.md.
+assets/css/components.css   Reusable components: page header, breadcrumb, section header, feature list, spec
+                            list, badge, callout, card (chamfer), data table, CTA band, prose, footer columns.
+assets/fonts/               Inter (variable, latin, SIL OFL: Inter-OFL.txt) + Tektur SemiBold.
+docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.
+main.js (NAV, FOOTER_COLUMNS)  Nav and footer list only pages that exist; unfinished pages are noindex and
+                            use the "In development" template (scripts/generate_pages.py predates this and
+                            must not be re-run over them).
 functions/api/_middleware.js  Runs in front of every /api/* route: global same-origin (CSRF) check on all
                             non-GET requests (Stripe webhook exempt: signature-authenticated) + security
                             headers on API responses (_headers only covers static files).

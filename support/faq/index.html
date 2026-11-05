@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FAQ | KANASAKA</title>
+  <meta name="robots" content="noindex">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -13,11 +14,14 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=136">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=94">
+  <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/tokens.css?v=4">
+  <link rel="stylesheet" href="/assets/css/style.css?v=139">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=96">
+  <link rel="stylesheet" href="/assets/css/components.css?v=5">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=100"></script>
-  <script defer src="/assets/js/main.js?v=123"></script>
+  <script defer src="/assets/js/main.js?v=124"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -26,12 +30,23 @@
 
 <main id="main-content">
 
-  <section class="coming-soon">
-    <div class="coming-soon-box">
-      <span class="coming-soon-label">Coming Soon</span>
+  <section class="page-header">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span aria-hidden="true">/</span><span>Support</span><span aria-hidden="true">/</span><span aria-current="page">FAQ</span>
+      </nav>
       <h1>FAQ</h1>
-      <p>This section is under development. Check back for updates.</p>
-      <a href="/" class="button secondary coming-soon-back">Back to Home</a>
+      <p class="page-lead">This section is in development and has no public content yet.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="callout">
+        <h3>Status: in development</h3>
+        <p>Nothing has been published here. For questions about FAQ, get in touch and we will point you to what is available today.</p>
+      </div>
+      <p><a href="/support/contact/">Contact KANASAKA</a> &middot; <a href="/">Back to home</a></p>
     </div>
   </section>
 

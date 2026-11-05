@@ -8,7 +8,7 @@
   //   left edge     //xf_<route>_<theme>_<layout>  + route + scroll position
   //
   // Code grammar:  xf_SSP_T_LL
-  //   SS  nav section, in header order (00 Home, 01 Downloads, 02 Products ...)
+  //   SS  nav section, in header order (00 Home, 01 Products, 02 Downloads ...)
   //   P   page within the section (1-based, as in its dropdown)
   //   T   theme: d dark, l light, a accent
   //   LL  layout class by viewport width: 01 phone (<768), 02 tablet (<1024),
@@ -59,6 +59,8 @@
 
     var items = document.querySelectorAll(".site-nav > .nav-item");
     for (var i = 0; i < items.length; i++) {
+      var direct = items[i].querySelector(":scope > a.nav-link.active");
+      if (direct) return pad(i, 2) + "1";
       var links = items[i].querySelectorAll(".nav-dropdown a");
       for (var j = 0; j < links.length; j++) {
         if (links[j].classList.contains("active")) {

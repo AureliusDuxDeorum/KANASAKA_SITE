@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About KANASAKA | KANASAKA</title>
+  <title>About | KANASAKA</title>
+  <meta name="description" content="KANASAKA works across software, AI, robotics and biotech, from Germany.">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -13,11 +14,14 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=136">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=94">
+  <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/tokens.css?v=4">
+  <link rel="stylesheet" href="/assets/css/style.css?v=139">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=96">
+  <link rel="stylesheet" href="/assets/css/components.css?v=5">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=100"></script>
-  <script defer src="/assets/js/main.js?v=123"></script>
+  <script defer src="/assets/js/main.js?v=124"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -26,12 +30,45 @@
 
 <main id="main-content">
 
-  <section class="coming-soon">
-    <div class="coming-soon-box">
-      <span class="coming-soon-label">Coming Soon</span>
+  <section class="page-header">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span aria-hidden="true">/</span><span>Company</span><span aria-hidden="true">/</span><span aria-current="page">About</span>
+      </nav>
       <h1>About KANASAKA</h1>
-      <p>This section is under development. Check back for updates.</p>
-      <a href="/" class="button secondary coming-soon-back">Back to Home</a>
+      <p class="page-lead">KANASAKA works across software, AI, robotics and biotech, from Germany.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="kicker">Today</span>
+        <h2>What exists now</h2>
+        <p>This site lists only products and documents that are available today.</p>
+      </div>
+      <ul class="feature-list">
+        <li class="feature">
+          <h3><a href="/products/ks-link/">KS_Link</a> <span class="badge badge--alpha">Alpha</span></h3>
+          <p>A free, end-to-end encrypted messenger for Windows, Linux and Android.</p>
+        </li>
+        <li class="feature">
+          <h3><a href="/legal/security/">Security</a></h3>
+          <p>How KS_Link and kanasaka.com accounts are protected, and how to report a vulnerability.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta-band">
+        <div>
+          <h2>Get in touch</h2>
+          <p>Product, support and partnership questions: <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a>. Legal details are in the <a href="/legal/impressum/">Impressum</a>.</p>
+        </div>
+        <div class="actions"><a class="button" href="/support/contact/">Contact</a></div>
+      </div>
     </div>
   </section>
 

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KS_Link | KANASAKA</title>
+  <meta name="description" content="KS_Link is a free, end-to-end encrypted messenger for Windows, Linux and Android. Currently in alpha.">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -13,11 +14,14 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=136">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=94">
+  <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/tokens.css?v=4">
+  <link rel="stylesheet" href="/assets/css/style.css?v=139">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=96">
+  <link rel="stylesheet" href="/assets/css/components.css?v=5">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=100"></script>
-  <script defer src="/assets/js/main.js?v=123"></script>
+  <script defer src="/assets/js/main.js?v=124"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -26,41 +30,87 @@
 
 <main id="main-content">
 
-  <section class="hero compact">
-    <div class="kanasaka-logo small" role="img" aria-label="KANASAKA">
-      <div class="logo-side" aria-hidden="true"><div></div><div></div></div>
-      <div class="logo-center" aria-hidden="true"><span>K</span><span>S</span></div>
-      <div class="logo-side" aria-hidden="true"><div></div><div></div></div>
+  <section class="page-header">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span aria-hidden="true">/</span><span>Products</span><span aria-hidden="true">/</span><span aria-current="page">KS_Link</span>
+      </nav>
+      <h1>KS_Link <span class="badge badge--alpha">Alpha</span></h1>
+      <p class="page-lead">A free, end-to-end encrypted messenger for Windows, Linux and Android.</p>
+      <p class="page-actions"><a class="button" href="/downloads/#ks-link">Download</a> <a class="button secondary" href="/legal/products/#ks_link">Technical overview</a></p>
     </div>
-
-    <h1>KS_Link</h1>
   </section>
 
-  <section class="page-section">
-    <article class="content-card featured-card">
-      <div class="product-info">
-        <span class="section-kicker">Desktop &amp; Mobile</span>
-        <h2>Encrypted Messaging, Free <span class="alpha-badge">Alpha</span></h2>
-
-        <p><a href="/legal/products/#ks_link">Read the full technical overview</a></p>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="kicker">How it works</span>
+        <h2>Private by construction</h2>
+        <p>What KS_Link does, and what the relay server can and cannot see.</p>
       </div>
-
-      <div class="actions">
-        <a href="/downloads/#ks-link" class="button">Download</a>
-      </div>
-    </article>
+      <ul class="feature-list">
+        <li class="feature">
+          <h3>End-to-end encrypted messages</h3>
+          <p>Messages are encrypted on the sending device, using per-conversation keys derived from each participant's device keys, before they reach the relay. Images travel through the same encrypted channel as text.</p>
+        </li>
+        <li class="feature">
+          <h3>A relay without access to content</h3>
+          <p>The relay stores and forwards encrypted payloads, conversation membership and delivery metadata (timestamps, delivery acknowledgements). It has no access to message content.</p>
+        </li>
+        <li class="feature">
+          <h3>Independent accounts</h3>
+          <p>KS_Link runs its own self-hosted account system, separate from kanasaka.com: no shared login, database or subscription. It is not gated behind a KS_Package subscription.</p>
+        </li>
+        <li class="feature">
+          <h3>Account security</h3>
+          <p>TOTP two-factor authentication with backup codes for recovery, and a session list that shows every signed-in device and lets you revoke each one individually.</p>
+        </li>
+        <li class="feature">
+          <h3>Sandboxed plugins</h3>
+          <p>Optional features run in a WASM sandbox with explicit, revocable permissions. The first plugin, KS_Social, is an opt-in feed; unlike direct messages, its content is not end-to-end encrypted by design.</p>
+        </li>
+        <li class="feature">
+          <h3>Blocking and reporting</h3>
+          <p>You can block a contact at any time and report a message, post or account for review. Reported content and limited associated records are retained to support review and to meet legal reporting obligations.</p>
+        </li>
+      </ul>
+    </div>
   </section>
 
-  <section class="page-section">
-    <h2>Alpha software</h2>
-    <p>
-      KS_Link is early, active-development software. Features, APIs, and
-      the protocol itself may change between releases without backward
-      compatibility. See the <a href="/legal/privacy/">Privacy Policy</a>
-      for how KS_Link handles your data, and the
-      <a href="/legal/terms/">Terms of Service</a> for the alpha-software
-      terms that apply to it.
-    </p>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="kicker">Availability</span>
+        <h2>Platforms</h2>
+      </div>
+      <dl class="spec-list">
+        <dt>Windows</dt><dd>x64 installer &middot; Windows 10/11, 64-bit</dd>
+        <dt>Linux</dt><dd>.deb, .rpm and AppImage &middot; Debian/Ubuntu, Fedora/RHEL or any distribution</dd>
+        <dt>Android</dt><dd>APK (arm64) &middot; self-signed, requires installing from unknown sources</dd>
+        <dt>iOS</dt><dd>Planned, not yet available</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="callout">
+        <h3>Alpha software</h3>
+        <p>KS_Link is in early, active development. Features, APIs and the protocol itself may change between releases without backward compatibility. See the <a href="/legal/privacy/">Privacy Policy</a> for how KS_Link handles your data and the <a href="/legal/terms/">Terms of Service</a> for the alpha-software terms.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta-band">
+        <div>
+          <h2>Try the alpha</h2>
+          <p>Installers for Windows, Linux and Android are on the downloads page.</p>
+        </div>
+        <div class="actions"><a class="button" href="/downloads/#ks-link">Go to downloads</a></div>
+      </div>
+    </div>
   </section>
 
 </main>

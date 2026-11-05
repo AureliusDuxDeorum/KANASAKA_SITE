@@ -1,0 +1,73 @@
+/* ── KANASAKA design tokens ───────────────────────────────────────────────
+   One place for the numbers every page shares. Component CSS should use these
+   names instead of literals: if a value you need is not here, add it here
+   (and to the scale in docs/DESIGN.md) rather than inventing a one-off.
+
+   Colour *themes* (dark / light / accent) live in style.css and redesign.css;
+   this file holds everything that does not change with the theme.            */
+
+:root {
+  /* ── Type ── */
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Tektur", "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* seven-step UI scale + two fluid display sizes */
+  --text-2xs: 11px; /* HUD, badges, dense meta */
+  --text-xs: 12px; /* labels, captions, nav */
+  --text-sm: 14px; /* UI text, secondary copy */
+  --text-md: 16px; /* body */
+  --text-lg: 18px; /* lead paragraphs, small headings */
+  --text-xl: 24px; /* section headings */
+  --text-2xl: 32px; /* page / card headings */
+  --text-display-1: clamp(40px, 6vw, 64px);
+  --text-display-2: clamp(28px, 4vw, 40px);
+
+  --leading-body: 1.6;
+  --leading-tight: 1.15;
+
+  /* two tracking values for UPPERCASE text, one for large display type */
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.16em;
+  --tracking-display: -0.01em;
+
+  /* ── Space (4 px base) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  --container: 1280px;
+  --gutter: clamp(20px, 4vw, 64px);
+  --section-pad: clamp(64px, 9vw, 96px);
+
+  /* ── Shape ── */
+  --radius: 2px; /* everything: the logo is angular */
+  --radius-round: 50%; /* avatars only */
+  --chamfer: 10px; /* signature cut corner, see .chamfer in style.css */
+  --border-width: 1px;
+  --button-pad-x: 18px; /* horizontal padding of .button (text-only hitbox) */
+
+  /* ── Motion ── */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Semantic status colours (same in every theme) ── */
+  --color-ok: #3fb97c;
+  --color-warn: #e0a43a;
+  --color-danger: #e5484d;
+}
+
+/* the light theme needs darker status colours to stay readable (WCAG AA, 4.5:1) */
+[data-theme="light"] {
+  --color-ok: #1a7f4b;
+  --color-warn: #8a5a00;
+  --color-danger: #c4262b;
+}

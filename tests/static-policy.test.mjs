@@ -143,3 +143,80 @@ test("security.txt and robots.txt are published", () => {
   assert.match(read(".well-known/security.txt"), /^Expires: /m);
   assert.match(read("robots.txt"), /Disallow: \/api\//);
 });
+
+// ── design system guards (docs/DESIGN.md) ────────────────────────────────
+
+const css = tracked.filter((f) => f.startsWith("assets/css/") && f.endsWith(".css"));
+
+function pageFile(href) {
+  const clean = href.split("#")[0].split("?")[0];
+  return clean.replace(/^\//, "") + "index.html";
+}
+
+test("navigation and footer only link to real, indexable pages", () => {
+  const main = read("assets/js/main.js");
+  const hrefs = [...new Set([...main.matchAll(/href:\s*"(\/[^"#]*)/g)].map((m) => m[1]))];
+  assert.ok(hrefs.length >= 8, "found the nav/footer links");
+  for (const href of hrefs) {
+    const file = pageFile(href);
+    assert.ok(fs.existsSync(path.join(ROOT, file)), href + " has no page");
+    const text = read(file);
+    assert.ok(!/name="robots" content="noindex"/.test(text), href + " is noindex but linked from the nav");
+    assert.ok(!/This section is in development/.test(text), href + " is a stub but linked from the nav");
+  }
+});
+
+test("every unfinished page is marked noindex and uses the shared template", () => {
+  for (const file of html.filter((f) => /This section is in development/.test(read(f)))) {
+    const text = read(file);
+    assert.ok(/name="robots" content="noindex"/.test(text), file + " should be noindex");
+    assert.ok(text.includes('class="page-header"') && text.includes('class="callout"'), file + " should use the template");
+    assert.ok(!text.includes("coming-soon-box"), file + " still uses the old Coming Soon box");
+  }
+});
+
+test("every page loads tokens.css before the other stylesheets, plus components.css", () => {
+  for (const file of html) {
+    const text = read(file);
+    const order = ["tokens.css", "style.css", "redesign.css", "components.css"].map((n) => text.indexOf("/assets/css/" + n));
+    assert.ok(order.every((i) => i > -1), file + " is missing a stylesheet");
+    assert.deepEqual([...order].sort((a, b) => a - b), order, file + ": stylesheet order");
+  }
+});
+
+test("fonts: every @font-face and preload points at a file that exists", () => {
+  const refs = new Set();
+  for (const file of css) for (const m of read(file).matchAll(/url\("?(\/assets\/fonts\/[^")]+)"?\)/g)) refs.add(m[1]);
+  for (const file of html) for (const m of read(file).matchAll(/href="(\/assets\/fonts\/[^"]+)"/g)) refs.add(m[1]);
+  assert.ok(refs.size >= 2);
+  for (const ref of refs) assert.ok(fs.existsSync(path.join(ROOT, ref.slice(1))), ref + " is missing");
+  assert.ok(read("assets/css/style.css").includes('font-family: "Inter"'), "Inter must be loaded, not assumed installed");
+});
+
+test("type scale: no new off-scale font sizes, tracking or radii", () => {
+  const allowedSize = new Set(["50px", "30px", "28px", "22px", "20px", "16px", "13px", "12px", "10px", "1.8rem", "0.95rem"]);
+  const allowedTracking = new Set(["0.06em", "0.2em", "0.1em", "0.08em"]);
+  for (const file of css.filter((f) => !f.endsWith("tokens.css"))) {
+    const text = read(file);
+    for (const m of text.matchAll(/font-size:\s*([^;]+);/g)) {
+      const v = m[1].trim();
+      if (v.startsWith("var(") || v.startsWith("clamp(") || v.startsWith("inherit")) continue;
+      assert.ok(allowedSize.has(v), file + ": font-size " + v + " is not on the scale (use a --text-* token)");
+    }
+    for (const m of text.matchAll(/letter-spacing:\s*([^;]+);/g)) {
+      const v = m[1].trim();
+      if (v.startsWith("var(") || v === "0" || v === "normal") continue;
+      assert.ok(allowedTracking.has(v), file + ": letter-spacing " + v + " is not a token");
+    }
+    for (const m of text.matchAll(/border-radius:\s*([^;]+);/g)) {
+      const v = m[1].trim();
+      assert.ok(/^(0|var\(--radius(-round)?\)|0 [^;]*)$/.test(v) || v === "50%", file + ": border-radius " + v + " (use --radius)");
+    }
+  }
+});
+
+test("status colours come from tokens, not literals", () => {
+  for (const file of css.filter((f) => !f.endsWith("tokens.css"))) {
+    assert.ok(!/#e5484d/i.test(read(file)), file + ": use var(--color-danger)");
+  }
+});

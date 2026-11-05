@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Generate KANASAKA site skeleton pages."""
+"""Generate KANASAKA site skeleton pages.
+
+LEGACY: written for the first skeleton. Most pages have since been hand-edited
+(design system, docs/DESIGN.md; unfinished pages use the "In development"
+template). Running this overwrites them, so do not re-run it over the site.
+"""
 
 from pathlib import Path
 

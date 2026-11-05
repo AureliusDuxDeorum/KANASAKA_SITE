@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Security | KANASAKA</title>
+  <meta name="description" content="How KANASAKA protects KS_Link messages and kanasaka.com accounts, and how to report a vulnerability.">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -13,11 +14,14 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/assets/css/style.css?v=136">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=94">
+  <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/tokens.css?v=4">
+  <link rel="stylesheet" href="/assets/css/style.css?v=139">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=96">
+  <link rel="stylesheet" href="/assets/css/components.css?v=5">
   <script defer src="/assets/js/password-policy.js?v=88"></script>
   <script defer src="/assets/js/auth.js?v=100"></script>
-  <script defer src="/assets/js/main.js?v=123"></script>
+  <script defer src="/assets/js/main.js?v=124"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -26,12 +30,40 @@
 
 <main id="main-content">
 
-  <section class="coming-soon">
-    <div class="coming-soon-box">
-      <span class="coming-soon-label">Coming Soon</span>
+  <section class="page-header">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a><span aria-hidden="true">/</span><span aria-current="page">Security</span>
+      </nav>
       <h1>Security</h1>
-      <p>This section is under development. Check back for updates.</p>
-      <a href="/" class="button secondary coming-soon-back">Back to Home</a>
+      <p class="page-lead">How KANASAKA protects KS_Link messages and kanasaka.com accounts, and how to report a problem.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container prose">
+      <h2>KS_Link messages</h2>
+      <p>Messages are encrypted on the sending device, using per-conversation keys derived from each participant's device keys, before they reach KANASAKA's relay server. Images use the same encrypted channel as text.</p>
+      <p>The relay stores and forwards encrypted payloads, conversation membership and delivery metadata such as timestamps and delivery acknowledgements. It has no access to message content.</p>
+      <ul>
+        <li>KS_Link accounts are separate from kanasaka.com accounts: no shared login, database or subscription.</li>
+        <li>Two-factor authentication (TOTP) with backup codes, and a session list to see and revoke every signed-in device.</li>
+        <li>Plugins run in a WASM sandbox with explicit, revocable permissions. KS_Social content is not end-to-end encrypted by design, because it is meant to be visible to your contacts.</li>
+      </ul>
+      <p>KS_Link is alpha software. Features and the protocol may change between releases. Full details are in the <a href="/legal/products/#ks_link">technical overview</a>.</p>
+
+      <h2>kanasaka.com accounts</h2>
+      <ul>
+        <li>Passwords are hashed with Argon2id and checked against a policy that blocks short and common passwords.</li>
+        <li>Sessions use Secure, HttpOnly, SameSite=Strict cookies, are rotated regularly and are revoked on sign-in, password change and when two-factor authentication is switched off.</li>
+        <li>Email verification is required before an account can sign in. Sign-in attempts, verification codes and message-sending endpoints are rate limited.</li>
+        <li>Two-factor authentication with one-time codes and backup codes is available, and it is required for administrative access.</li>
+        <li>The site is served over HTTPS only and uses a strict Content Security Policy that does not allow inline or third-party scripts.</li>
+      </ul>
+
+      <h2>Report a vulnerability</h2>
+      <p>Send reports to <a href="mailto:contactns@kanasaka.com">contactns@kanasaka.com</a>. We typically respond within one to two business days. Our machine-readable contact details are in <a href="/.well-known/security.txt">security.txt</a>.</p>
+      <p>Please include enough detail to reproduce the issue and avoid accessing data that is not yours.</p>
     </div>
   </section>
 

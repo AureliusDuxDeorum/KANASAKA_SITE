@@ -102,7 +102,7 @@ a.showcase-hit {
   font-weight: 600;
   font-size: clamp(34px, 5vw, 76px);
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
   color: var(--color-text);
   white-space: nowrap;
 }
@@ -111,7 +111,7 @@ a.showcase-hit {
   display: block;
   flex-shrink: 0;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 .showcase-shot {
@@ -132,7 +132,7 @@ a.showcase-hit {
   font-family: "Tektur", Inter, system-ui, sans-serif;
   font-weight: 600;
   font-size: clamp(16px, 2.2vw, 34px);
-  letter-spacing: 0.22em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   text-align: center;
 }

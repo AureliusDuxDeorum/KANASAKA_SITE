@@ -1,11 +1,12 @@
 /* ── KANASAKA site redesign: glass surfaces, light strips, smooth motion ── */
 
 :root {
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: var(--ease);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration-fast: 240ms;
-  --duration-med: 480ms;
-  --duration-slow: 720ms;
+  /* durations / easing come from tokens.css (--duration-fast / --duration-base);
+     the old names stay as aliases so existing rules keep working */
+  --duration-med: var(--duration-base);
+  --duration-slow: 500ms;
   --glass-blur: 18px;
   --glass-blur-strong: 24px;
 }
@@ -611,7 +612,7 @@ h1 {
 
 .cookie-consent-text {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   max-width: 60ch;
 }
@@ -625,10 +626,10 @@ h1 {
   flex: 0 0 auto;
   padding: 0.45rem 1.1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--color-button-bg);
   color: var(--color-button-text);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -665,7 +666,7 @@ h1 {
 
 .legal-notice-banner-text {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   max-width: 60ch;
 }
@@ -683,10 +684,10 @@ h1 {
   flex: 0 0 auto;
   padding: 0.45rem 1.1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--color-button-bg);
   color: var(--color-button-text);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -709,7 +710,7 @@ h1 {
   padding: 0.6rem 1rem;
   background: var(--color-button-bg);
   color: var(--color-button-text);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
   transition: top 0.15s ease;
@@ -768,7 +769,7 @@ h1 {
 
 .button.settings-delete-button,
 .settings-delete-button {
-  color: #e5484d;
+  color: var(--color-danger);
 }
 
 .button:hover,
@@ -809,7 +810,7 @@ h1 {
 
 .button.settings-delete-button:hover,
 .settings-delete-button:hover {
-  color: #e5484d;
+  color: var(--color-danger);
 }
 
 .settings-nav-item:hover,
