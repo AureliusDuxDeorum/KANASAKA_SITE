@@ -220,3 +220,12 @@ test("status colours come from tokens, not literals", () => {
     assert.ok(!/#e5484d/i.test(read(file)), file + ": use var(--color-danger)");
   }
 });
+
+test("unreleased product areas are not advertised anywhere public", () => {
+  // Robotics and biotech are still in development: no mention in pages, nav,
+  // footer or scripts until they are announced (remove this test then).
+  const files = [...html, ...js, ".well-known/security.txt", "site.webmanifest"].filter((f) => tracked.includes(f));
+  for (const file of files) {
+    assert.ok(!/robotic|bio-?tech/i.test(read(file)), file + " mentions an unreleased product area");
+  }
+});

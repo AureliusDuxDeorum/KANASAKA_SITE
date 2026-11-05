@@ -79,8 +79,8 @@ assets/css/components.css   Reusable components: page header, breadcrumb, sectio
 assets/fonts/               Inter (variable, latin, SIL OFL: Inter-OFL.txt) + Tektur SemiBold.
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.
 main.js (NAV, FOOTER_COLUMNS)  Nav and footer list only pages that exist; unfinished pages are noindex and
-                            use the "In development" template (scripts/generate_pages.py predates this and
-                            must not be re-run over them).
+                            use the "In development" template. (The old scripts/generate_pages.py skeleton
+                            generator was removed: it would have overwritten the edited pages.)
 functions/api/_middleware.js  Runs in front of every /api/* route: global same-origin (CSRF) check on all
                             non-GET requests (Stripe webhook exempt: signature-authenticated) + security
                             headers on API responses (_headers only covers static files).
@@ -96,7 +96,6 @@ tests/                      npm test (node --test, no dependencies): real SQLite
                             Stripe signatures, diagnostics, self-test and static CSP/policy guards.
 docs/SECURITY.md            Security overview: controls in place, findings fixed, manual checklist.
 .well-known/security.txt, robots.txt  Disclosure contact; keeps account/auth/api paths out of indexes.
-scripts/generate_pages.py   Static HTML page generator
 scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
 scripts/publish-ks-link-update.mjs  Upload a KS_Link installer/manifest to R2
 docs/R2_INSTALLERS.md       R2 bucket setup + upload instructions

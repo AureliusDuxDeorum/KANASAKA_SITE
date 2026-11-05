@@ -322,7 +322,7 @@
     wordmark.className = "footer-wordmark";
     wordmark.textContent = "KANASAKA";
     const blurb = document.createElement("p");
-    blurb.textContent = "Software, AI, robotics and biotech.";
+    blurb.textContent = "Software and AI.";
     brand.appendChild(wordmark);
     brand.appendChild(blurb);
     grid.appendChild(brand);
