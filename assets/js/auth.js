@@ -186,7 +186,9 @@
       email,
       password,
       tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
-      tosVersion: "2",
+      // Same constant the acceptance modal records (assets/js/tos.js), so a Terms
+      // version bump can never leave registration sending a stale one.
+      tosVersion: (window.KanasakaTerms && window.KanasakaTerms.TOS_VERSION) || "4",
     };
 
     if (accountId) {

@@ -1,6 +1,6 @@
 (function () {
   var TOS_KEY = "kanasaka-tos-accepted";
-  var TOS_VERSION = "3";
+  var TOS_VERSION = "4";
   var SHOW_DELAY_MS = 1000;
 
   var TERMS_HTML =
@@ -92,7 +92,7 @@
     '<section class="tos-section">' +
     "<h3>17. Contact</h3>" +
     "<p>Questions about these Terms: <a href=\"mailto:contactns@kanasaka.com\">contactns@kanasaka.com</a></p>" +
-    "<p class=\"tos-effective\">Effective date: 18 October 2026</p>" +
+    "<p class=\"tos-effective\">Effective date: 5 November 2026</p>" +
     "</section>";
 
   var scheduled = false;

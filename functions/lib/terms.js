@@ -1,5 +1,5 @@
-export const TERMS_EFFECTIVE_DATE = "18 October 2026";
-export const CURRENT_TOS_VERSION = "3";
+export const TERMS_EFFECTIVE_DATE = "5 November 2026";
+export const CURRENT_TOS_VERSION = "4";
 
 export function getTermsEmailHtml() {
   return `
