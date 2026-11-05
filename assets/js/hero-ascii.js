@@ -30,6 +30,16 @@
   const FLIP_MAX_PERIOD = 7.5;
   const FLIP_MIN_COVERAGE = 0.6; // only cells at least this covered by the logo
 
+  // Extras gated by the motion layer (html[data-motion] / html[data-fx]; see
+  // assets/js/motion.js): fx >= 1 adds the scan band and pointer interference
+  // (Dark and Light), fx 2 (Accent) adds the glitch "tear". All of it is
+  // arithmetic inside the existing per-cell loop: no extra DOM, no extra loop.
+  const BAND_PERIOD = 9; // seconds between scan-band sweeps
+  const BAND_SWEEP = 2.4; // seconds one sweep takes
+  const BAND_HEIGHT = 3; // rows of falloff either side of the band centre
+  const POINTER_RADIUS = 120; // px
+  const TEAR_MS = 120;
+
   const LOGO_VERTICAL = {
     name: "KS_V",
     ratio: "1:2",
@@ -74,6 +84,19 @@
 
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function rootAttr(name) {
+    return document.documentElement.getAttribute(name);
+  }
+
+  // OS reduce-motion or the in-app "Off": render once, never animate
+  function motionIsOff() {
+    return prefersReducedMotion() || rootAttr("data-motion") === "off";
+  }
+
+  function extrasLevel() {
+    return rootAttr("data-motion") === "full" ? Number(rootAttr("data-fx") || 0) : 0;
   }
 
   // hash() is a pure function of its (integer) inputs but was recomputing
@@ -162,7 +185,8 @@
     const fieldWrap = document.querySelector(".ha-field-wrap");
     if (!hero || !fieldEl || !fieldWrap) return;
 
-    const reduced = prefersReducedMotion();
+    let reduced = motionIsOff();
+    const hudH = document.getElementById("ha-hud-h");
 
     let cols = 0;
     let rows = 0;
@@ -182,6 +206,21 @@
     // visibilitychange event (scrolling the hero out of view and back,
     // say). See the probe itself for what decides this.
     let forceStatic = false;
+
+    // pointer interference (desktop, fine pointer): page coordinates, so no
+    // layout reads happen while rendering
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    const pointer = { inside: false, pageX: 0, pageY: 0, strength: 0 };
+    let wrapPageLeft = 0;
+    let wrapPageTop = 0;
+    let baseHudH = "";
+    let hudPointerShown = false;
+    // accent tear
+    let nextTearAt = 8 + Math.random() * 6;
+    let tearUntil = 0;
+    let tearY0 = 0;
+    let tearY1 = 0;
+    let tearShift = 0;
 
     function buildLetterMask() {
       if (!cols || !rows) return;
@@ -251,16 +290,17 @@
       cellH = cell.h || cellH;
 
       const wrapRect = fieldWrap.getBoundingClientRect();
+      wrapPageLeft = wrapRect.left + window.scrollX;
+      wrapPageTop = wrapRect.top + window.scrollY;
       cols = Math.floor(wrapRect.width / cellW);
       rows = Math.floor(wrapRect.height / cellH);
 
       buildLetterMask();
 
-      const hudH = document.getElementById("ha-hud-h");
       const hudV = document.getElementById("ha-hud-v");
       if (hudH) {
-        hudH.textContent =
-          "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
+        baseHudH = "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
+        hudH.textContent = baseHudH;
       }
       if (hudV) {
         hudV.textContent =
@@ -288,25 +328,77 @@
       // them for every one of the thousands of cells was pure waste.
       const driftX = reduced ? 0 : t * 0.025;
       const driftY = reduced ? 0 : t * 0.016;
+
+      const fxLvl = reduced ? 0 : extrasLevel();
+
+      // scan band: a soft horizontal highlight sweeping down the field
+      let bandRow = -99;
+      if (fxLvl >= 1) {
+        const phase = (t % BAND_PERIOD) / BAND_SWEEP;
+        if (phase < 1) bandRow = phase * (rows + BAND_HEIGHT * 2) - BAND_HEIGHT;
+      }
+
+      // pointer interference: ripple around the cursor inside a small window
+      pointer.strength += ((fxLvl >= 1 && pointer.inside ? 1 : 0) - pointer.strength) * 0.25;
+      const ptrOn = pointer.strength > 0.02;
+      const pcx = (pointer.pageX - wrapPageLeft) / cellW;
+      const pcy = (pointer.pageY - wrapPageTop) / cellH;
+      const rx = Math.ceil(POINTER_RADIUS / cellW) + 1;
+      const ry = Math.ceil(POINTER_RADIUS / cellH) + 1;
+      const px0 = Math.floor(pcx) - rx;
+      const px1 = Math.floor(pcx) + rx;
+      const py0 = Math.floor(pcy) - ry;
+      const py1 = Math.floor(pcy) + ry;
+
+      // accent only: now and then a few rows shear sideways for 120 ms
+      if (fxLvl >= 2) {
+        if (t >= nextTearAt && tearUntil === 0) {
+          tearUntil = t + TEAR_MS / 1000;
+          tearY0 = Math.floor(Math.random() * Math.max(1, rows - 6));
+          tearY1 = tearY0 + 3 + Math.floor(Math.random() * 4);
+          tearShift = (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 3));
+        } else if (tearUntil && t >= tearUntil) {
+          tearUntil = 0;
+          nextTearAt = t + 12 + Math.random() * 8;
+        }
+      } else if (tearUntil) {
+        tearUntil = 0;
+      }
+
+      if (hudH) {
+        if (fxLvl >= 2 && ptrOn) {
+          hudH.textContent =
+            baseHudH + "  //PTR " + String(Math.max(0, Math.round(pcx))).padStart(3, "0") + "," + String(Math.max(0, Math.round(pcy))).padStart(3, "0");
+          hudPointerShown = true;
+        } else if (hudPointerShown) {
+          hudH.textContent = baseHudH;
+          hudPointerShown = false;
+        }
+      }
+
       for (let y = 0; y < rows; y++) {
         let runChar = "";
         let runKey = null;
         const runs = [];
         const ny = y * 0.16 - driftY;
         const rowMaskOffset = y * cols;
+        const shift = tearUntil && y >= tearY0 && y < tearY1 ? tearShift : 0;
+        const bandBoost = bandRow > -99 ? Math.max(0, 1 - Math.abs(y - bandRow) / BAND_HEIGHT) : 0;
+        const rowNearPointer = ptrOn && y >= py0 && y <= py1;
 
         for (let x = 0; x < cols; x++) {
           const nx = x * 0.09 + driftX;
           let v = fbm(nx, ny);
 
-          const m = letterMask ? letterMask[rowMaskOffset + x] : 0;
+          const sx = shift ? x - shift : x;
+          const m = letterMask && sx >= 0 && sx < cols ? letterMask[rowMaskOffset + sx] : 0;
           const isLetter = m > 0.1;
 
           let flipChar = "";
           if (isLetter) {
             // static grain: each cell sits a little differently in the dense
             // end of the ramp, so the mark reads as textured, not flat
-            const idx = rowMaskOffset + x;
+            const idx = rowMaskOffset + sx;
             const base = m * (0.84 + (cellGrain ? cellGrain[idx] : 0.5) * 0.11);
             v = Math.max(v, base);
 
@@ -318,6 +410,15 @@
                 const h = (Math.imul(idx, 73856093) ^ Math.imul(step + 1, 19349663) ^ Math.imul(cycle + 1, 83492791)) >>> 0;
                 flipChar = FLIP_CHARS.charAt(h % FLIP_CHARS.length);
               }
+            }
+          }
+          if (bandBoost) v += bandBoost * 0.28;
+          if (rowNearPointer && x >= px0 && x <= px1) {
+            const dx = (x - pcx) * cellW;
+            const dy = (y - pcy) * cellH;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            if (d < POINTER_RADIUS) {
+              v += Math.sin(d * 0.11 - t * 8) * 0.32 * (1 - d / POINTER_RADIUS) * pointer.strength;
             }
           }
           v = Math.max(0, Math.min(1, v));
@@ -389,7 +490,7 @@
     let onScreen = true;
 
     function syncRunning() {
-      const shouldRun = tabVisible && onScreen && !forceStatic;
+      const shouldRun = tabVisible && onScreen && !forceStatic && !reduced;
       if (shouldRun && !running) {
         running = true;
         rafId = window.requestAnimationFrame(frame);
@@ -416,6 +517,40 @@
       tabVisible = !document.hidden;
       syncRunning();
     });
+
+    if (finePointer) {
+      hero.addEventListener("pointerenter", function (event) {
+        if (event.pointerType !== "mouse") return;
+        const rect = fieldWrap.getBoundingClientRect();
+        wrapPageLeft = rect.left + window.scrollX;
+        wrapPageTop = rect.top + window.scrollY;
+        pointer.inside = true;
+      });
+      hero.addEventListener("pointermove", function (event) {
+        if (event.pointerType !== "mouse") return;
+        pointer.pageX = event.pageX;
+        pointer.pageY = event.pageY;
+      });
+      hero.addEventListener("pointerleave", function () {
+        pointer.inside = false;
+      });
+    }
+
+    // the in-app Motion setting / OS setting changed while the page is open
+    if (window.KanasakaMotion) {
+      window.KanasakaMotion.onChange(function () {
+        const off = motionIsOff();
+        if (off === reduced) return;
+        reduced = off;
+        if (reduced) {
+          running = false;
+          if (rafId) window.cancelAnimationFrame(rafId);
+          render(performance.now());
+        } else {
+          syncRunning();
+        }
+      });
+    }
 
     // Proactive capability check: measure this device's actual cost to
     // render one real frame at the page's real grid size, before ever

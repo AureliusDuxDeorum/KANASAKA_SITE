@@ -47,14 +47,29 @@ Current nav: Products (KS_Link, Technical overview) · Downloads · Security · 
 
 ## Motion
 
-Everything animated is gated in one place, `assets/js/motion.js` + `assets/css/motion.css`, by two attributes on `<html>`:
+Everything animated is gated in one place, `assets/js/motion.js` + `assets/css/motion.css` (and `assets/js/motion-boot.js`, a tiny synchronous script that sets the same attributes before the first paint), by two attributes on `<html>`:
 
-- `data-motion` = `full | reduced | off`: what the person/device allows. The OS "reduce motion" setting always forces `off`; otherwise the saved choice (Account > Customization > Motion: Automatic / Full / Reduced / Off); Automatic = full, except data-saver and weak touch devices = reduced.
-- `data-fx` = `0 | 1 | 2`: cyber intensity scaled by theme (light 0, dark 1, accent 2; reduced/off force 0).
+- `data-motion` = `full | reduced | off`: what the person/device allows. The OS "reduce motion" setting always forces `off`; otherwise the saved choice (Account > Customization > Motion: Automatic / Full / Reduced / Off, or the console); Automatic = full, except data-saver and weak touch devices = reduced.
+- `data-fx` = `0 | 1 | 2`: `1` = every animation (Dark **and** Light), `2` = the same plus the **glitch** effects (Accent only); reduced/off force `0`.
 
-With `off` the page is completely static and no motion code runs. Rules: animate only `transform`/`opacity` continuously; one-shot wipes may use `clip-path`; effects pause offscreen / in hidden tabs; JS effects share one rAF loop (`KanasakaMotion.raf`); no inline styles (classes + `style.setProperty`). Tests lint keyframe properties and require every animation in `motion.css` to be gated by `data-motion`.
+With `off` the page is completely static and no motion code runs. Rules: animate only `transform`/`opacity` continuously; one-shot wipes may use `clip-path`; effects pause offscreen / in hidden tabs; JS effects share one rAF loop (`KanasakaMotion.raf`); no inline styles (classes + `style.setProperty`); at most two continuous effects visible at once (home: ASCII hero + grid floor; content pages: scan sweep). Tests lint keyframe properties, require every animation in `motion.css` to be gated by `data-motion`, and require every glitch rule to be keyed to `data-fx="2"`.
 
-Effects today (phase 1): reveal choreography (sections draw their top rule, items rise in a stagger), hex-scramble decode of page headings, bracket reticles on cards / callouts / CTA bands, `[ LABEL ]` button brackets, a sliding nav indicator + stepped dropdown, scroll-progress hairline, status pulse on Alpha tags, theme-change wipe (View Transitions).
+| Effect | Dark + Light (fx 1) | Accent only (fx 2, glitch) |
+|---|---|---|
+| Reveal choreography (section rules draw, items rise in a stagger) | yes | |
+| Heading decode (hex scramble resolves into the text; page H1, statement, section/CTA h2) | yes | re-scrambles on hover |
+| Bracket reticles on cards, callouts, CTA bands; `[ LABEL ]` button brackets | yes | idle tick flicker; 1-beat tear on button/nav/logo hover |
+| Nav: sliding indicator, stepped dropdown | yes | |
+| Scroll-progress hairline, status pulse on Alpha tags, theme-change wipe | yes | |
+| Page transitions (cross-document View Transitions, stepped wipe) | yes | + 1-frame tear |
+| Boot sequence (first view per session; true values; any key skips) | yes | lines arrive corrupted, then resolve |
+| Live HUD (UTC clock, session timer, viewport, NET state, motion level) | yes | page code ticks on load; pointer readout over the hero |
+| Command console (Ctrl/Cmd+K or `/`; menu entry on phones) | yes | glitch on open/error |
+| Hero: scan band, pointer interference (fine pointer) | yes | tear bursts every 12-20 s |
+| Grid floor (home), scan sweep (content pages), scanlines | yes | |
+| Pointer light on cards/CTAs/features, product-strip hover (decode, reticle, scanlines) | yes | "COMING SOON" flicker |
+
+The command console (`assets/js/console.js`) only offers what the UI already offers (pages from the same `NAV`/`FOOTER_COLUMNS` as the header and footer, `theme ...`, `motion ...`, `login`, `register`, `account`, `help`, `clear`); no admin or API actions, no network, no storage. The header and footer are mounted before the session check (sign-in controls stay hidden until known), which is also what makes page transitions look right.
 
 ## Voice
 

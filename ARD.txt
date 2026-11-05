@@ -81,7 +81,14 @@ assets/js/motion.js         Motion gate (data-motion / data-fx on <html>), share
                             heading decode, nav indicator, scroll-progress element, theme-change wipe.
                             Loaded by main.js. API: window.KanasakaMotion. User setting: localStorage
                             kanasaka-motion (auto | full | reduced | off), Account > Customization.
-assets/css/motion.css       All effects, each gated by html[data-motion] / html[data-fx]. Loaded last.
+assets/css/motion.css       All effects, each gated by html[data-motion] / html[data-fx]. Loaded after components.css.
+assets/js/motion-boot.js    Synchronous, tiny: sets data-theme / data-motion / data-fx before first paint (keep in
+                            sync with motion.js compute()).
+assets/js/boot.js           First-visit-per-session boot sequence (true values, skippable). Skipped unless full.
+assets/js/console.js        Command console (Ctrl/Cmd+K, "/"): pages + theme/motion commands; no network/storage.
+assets/css/console.css      Console, header hint, mobile-menu entry.
+assets/js/hud.js            (also) live readouts: UTC, session timer, viewport, NET, motion level.
+assets/js/hero-ascii.js     (also) scan band + pointer interference (fx>=1), tear (fx 2).
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.
 main.js (NAV, FOOTER_COLUMNS)  Nav and footer list only pages that exist; unfinished pages are noindex and
                             use the "In development" template. (The old scripts/generate_pages.py skeleton

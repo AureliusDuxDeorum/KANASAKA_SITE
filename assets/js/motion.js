@@ -123,7 +123,7 @@
   var GLYPHS = "0123456789ABCDEF";
   var DECODE_MS = 520;
 
-  function decode(el, force) {
+  function decode(el, force, lockWidth) {
     if (!el || (el.hasAttribute("data-decoded") && !force) || el.children.length) return;
     var text = el.textContent;
     if (!text || !text.trim()) return;
@@ -132,6 +132,11 @@
     // keep the box stable while the glyphs change width
     var rect = el.getBoundingClientRect();
     el.style.minHeight = rect.height + "px";
+    if (lockWidth) {
+      // e.g. product names inside the moving strip: the strip must not change width
+      el.style.width = rect.width + "px";
+      el.style.overflow = "hidden";
+    }
 
     // real text stays in the DOM for assistive tech; the animation is aria-hidden
     var real = document.createElement("span");
@@ -155,6 +160,10 @@
       if (t >= 1) {
         el.textContent = text;
         el.style.minHeight = "";
+        if (lockWidth) {
+          el.style.width = "";
+          el.style.overflow = "";
+        }
         return false;
       }
       if (frame % 2 === 0) return true; // ~30 updates/s is plenty
@@ -368,6 +377,86 @@
     }, ms || 140);
   }
 
+  // ── atmosphere: scan sweep, pointer light, product-strip hover ─────────────
+  var atmosphereMounted = false;
+
+  function mountAtmosphere() {
+    if (atmosphereMounted || state.motion === "off") return;
+    atmosphereMounted = true;
+
+    // scan sweep on content pages (the home page already runs the ASCII hero + grid floor)
+    if (!document.getElementById("hero-ascii") && !document.querySelector(".scan-sweep")) {
+      var sweep = document.createElement("div");
+      sweep.className = "scan-sweep";
+      sweep.setAttribute("aria-hidden", "true");
+      document.body.appendChild(sweep);
+    }
+
+    // pointer light: only the element under a fine pointer is updated, once per frame
+    if (window.matchMedia("(pointer: fine)").matches) {
+      var LIGHT_SEL = ".card:not(.card--chamfer), .cta-band, .callout, .feature";
+      document.querySelectorAll(LIGHT_SEL).forEach(function (el) {
+        el.classList.add("pl-on");
+      });
+
+      var current = null;
+      var px = 0;
+      var py = 0;
+      var queued = false;
+
+      function update() {
+        queued = false;
+        if (!current) return;
+        var rect = current.getBoundingClientRect();
+        current.style.setProperty("--mx", px - rect.left + "px");
+        current.style.setProperty("--my", py - rect.top + "px");
+      }
+
+      document.addEventListener(
+        "pointermove",
+        function (event) {
+          if (state.motion !== "full" || event.pointerType !== "mouse") return;
+          var target = event.target.closest ? event.target.closest(".pl-on") : null;
+          if (target !== current) {
+            if (current) current.classList.remove("is-lit");
+            current = target;
+            if (current) current.classList.add("is-lit");
+          }
+          if (!current) return;
+          px = event.clientX;
+          py = event.clientY;
+          if (!queued) {
+            queued = true;
+            window.requestAnimationFrame(update);
+          }
+        },
+        { passive: true }
+      );
+
+      document.addEventListener("pointerleave", function () {
+        if (current) current.classList.remove("is-lit");
+        current = null;
+      });
+    }
+
+    // product strip: hovering a linked product decodes its name
+    document.addEventListener("pointerover", function (event) {
+      if (state.motion !== "full" || state.fx < 1 || event.pointerType === "touch") return;
+      var hit = event.target.closest ? event.target.closest("a.showcase-hit") : null;
+      if (!hit || hit.hasAttribute("data-hovered")) return;
+      hit.setAttribute("data-hovered", "");
+      var name = hit.querySelector(".showcase-name");
+      if (name) decode(name, true, true);
+      hit.addEventListener(
+        "pointerleave",
+        function () {
+          hit.removeAttribute("data-hovered");
+        },
+        { once: true }
+      );
+    });
+  }
+
   // ── accent glitch triggers ───────────────────────────────────────────────
   var glitchMounted = false;
 
@@ -391,7 +480,7 @@
           else visibleFrames.delete(entry.target);
         });
       });
-      document.querySelectorAll(".card, .cta-band, .callout").forEach(function (el) {
+      document.querySelectorAll(".card, .cta-band, .callout, .showcase-soon").forEach(function (el) {
         io.observe(el);
       });
     }
@@ -411,6 +500,7 @@
     mountReveal();
     mountNavIndicator();
     mountScrollProgress();
+    mountAtmosphere();
     mountGlitch();
   }
 

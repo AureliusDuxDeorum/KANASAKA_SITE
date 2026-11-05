@@ -268,3 +268,56 @@ test("infinite animations outside motion.css have a reduced-motion branch in the
     if (/infinite/.test(text)) assert.ok(/prefers-reduced-motion/.test(text), file + " has an infinite animation but no prefers-reduced-motion rule");
   }
 });
+
+// ── motion phase 2 guards ────────────────────────────────────────────────
+
+test("glitch effects are Accent-only (data-fx=\"2\") in every stylesheet", () => {
+  for (const file of css) {
+    for (const m of read(file).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selector = m[1].trim();
+      const body = m[2];
+      if (/^@keyframes|^(from|to|\d+%)/.test(selector)) continue;
+      if (/ks-glitch|tick-flicker/.test(body) && /animation/.test(body)) {
+        assert.ok(/data-fx="2"/.test(selector), file + ": glitch animation outside data-fx=\"2\": " + selector.slice(0, 80));
+      }
+    }
+  }
+});
+
+test("every page runs motion-boot.js before the deferred scripts and the first paint", () => {
+  for (const file of html) {
+    const text = read(file);
+    const boot = text.indexOf("/assets/js/motion-boot.js");
+    const firstDeferred = text.indexOf("<script defer");
+    assert.ok(boot > -1, file + ": motion-boot.js missing");
+    assert.ok(!/<script[^>]*motion-boot[^>]*\b(defer|async)\b/.test(text), file + ": motion-boot.js must be synchronous");
+    assert.ok(firstDeferred === -1 || boot < firstDeferred, file + ": motion-boot.js must precede deferred scripts");
+  }
+});
+
+test("the console makes no network requests and the boot sequence only reads the build stamp", () => {
+  const consoleJs = read("assets/js/console.js");
+  assert.ok(!/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|localStorage|sessionStorage/.test(consoleJs), "console.js must be network- and storage-free");
+  const bootJs = read("assets/js/boot.js");
+  const fetches = [...bootJs.matchAll(/\.fetch\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
+  assert.deepEqual(fetches, ["/assets/site-meta.json"]);
+});
+
+test("motion.js and motion-boot.js agree on the gate (storage keys, tiers)", () => {
+  const a = read("assets/js/motion.js");
+  const b = read("assets/js/motion-boot.js");
+  for (const key of ["kanasaka-motion", "kanasaka-theme"]) {
+    assert.ok(a.includes(key) || key === "kanasaka-theme", "motion.js lost " + key);
+    assert.ok(b.includes(key), "motion-boot.js lost " + key);
+  }
+  assert.ok(/theme === "accent" \? 2 : 1/.test(a), "motion.js: accent = fx 2, everything else 1");
+  assert.ok(/theme === "accent" \? "2" : "1"/.test(b), "motion-boot.js: accent = fx 2, everything else 1");
+});
+
+test("effects that run in Dark and Light are not limited to Accent", () => {
+  const text = read("assets/css/motion.css");
+  for (const sel of [".hero-floor", ".scan-sweep", ".pl-on", ".showcase-media::after"]) {
+    const rules = [...text.matchAll(/([^{}]*\bdata-fx="1"[^{}]*)\{/g)].map((m) => m[1]);
+    assert.ok(rules.some((r) => r.includes(sel)), sel + " must also be enabled at data-fx=\"1\"");
+  }
+});

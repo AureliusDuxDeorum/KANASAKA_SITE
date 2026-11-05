@@ -484,3 +484,180 @@ html:not([data-motion="full"])::view-transition-old(root),
 html:not([data-motion="full"])::view-transition-new(root) {
   animation: none;
 }
+
+/* ── Atmosphere: grid floor, scan sweep, scanlines, pointer light ───────────
+   All of it only where fx >= 1 (Dark, Light, Accent). Continuous pieces are
+   transform-only. Budget: the home page runs the ASCII hero + the grid floor;
+   content pages run the scan sweep (motion.js does not mount the sweep when a
+   hero exists). */
+
+:root {
+  --floor-line: rgba(255, 255, 255, 0.08);
+  --sweep-trail: rgba(255, 255, 255, 0.035);
+  --sweep-line: rgba(255, 255, 255, 0.12);
+  --scanline: rgba(255, 255, 255, 0.022);
+  --light-spot: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] {
+  --floor-line: rgba(0, 0, 0, 0.08);
+  --sweep-trail: rgba(0, 0, 0, 0.03);
+  --sweep-line: rgba(0, 0, 0, 0.1);
+  --scanline: rgba(0, 0, 0, 0.028);
+  --light-spot: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="accent"] {
+  --sweep-line: rgba(125, 79, 159, 0.45);
+}
+
+/* perspective grid floor under the home hero */
+
+.hero-floor {
+  display: none;
+}
+
+html[data-motion="full"][data-fx="1"] .hero-floor,
+html[data-motion="full"][data-fx="2"] .hero-floor {
+  display: block;
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  bottom: 0;
+  height: 46%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 520px;
+  perspective-origin: 50% 0;
+}
+
+html[data-motion="full"] .hero-floor::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 200%;
+  transform-origin: 50% 0;
+  transform: rotateX(64deg);
+  background-image:
+    linear-gradient(var(--floor-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--floor-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  animation: floor-scroll 5s linear infinite;
+}
+
+html[data-motion="full"] .hero-floor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--color-base) 0%, transparent 55%);
+}
+
+@keyframes floor-scroll {
+  from {
+    transform: rotateX(64deg) translateY(0);
+  }
+
+  to {
+    transform: rotateX(64deg) translateY(56px);
+  }
+}
+
+/* one hairline + soft trail crossing the viewport every ~16 s */
+
+.scan-sweep {
+  display: none;
+}
+
+html[data-motion="full"][data-fx="1"] .scan-sweep,
+html[data-motion="full"][data-fx="2"] .scan-sweep {
+  display: block;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 140px;
+  z-index: 40;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--sweep-trail));
+  border-bottom: var(--border-width) solid var(--sweep-line);
+  transform: translateY(-140px);
+  animation: ks-sweep 16s linear infinite;
+}
+
+@keyframes ks-sweep {
+  0% {
+    transform: translateY(-140px);
+  }
+
+  62%,
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+/* faint static scanlines over the whole page */
+
+html[data-motion="full"][data-fx="1"] body::after,
+html[data-motion="full"][data-fx="2"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, var(--scanline) 0, var(--scanline) 1px, transparent 1px, transparent 3px);
+}
+
+/* pointer light: a soft spot following the cursor on cards (motion.js sets --mx/--my) */
+
+html[data-motion="full"][data-fx="1"] .pl-on,
+html[data-motion="full"][data-fx="2"] .pl-on {
+  position: relative;
+}
+
+html[data-motion="full"][data-fx="1"] .pl-on::after,
+html[data-motion="full"][data-fx="2"] .pl-on::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), var(--light-spot), transparent 70%);
+  opacity: 0;
+  transition: opacity 200ms var(--ease);
+}
+
+html[data-motion="full"][data-fx="1"] .pl-on.is-lit::after,
+html[data-motion="full"][data-fx="2"] .pl-on.is-lit::after {
+  opacity: 1;
+}
+
+/* ── Product strip hover (links only): reticle locks, scanlines over the shot ── */
+
+html[data-motion="full"][data-fx="1"] .showcase-media::after,
+html[data-motion="full"][data-fx="2"] .showcase-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 1px, transparent 1px, transparent 3px);
+}
+
+html[data-motion="full"][data-fx="1"] a.showcase-hit:hover .showcase-media::before,
+html[data-motion="full"][data-fx="2"] a.showcase-hit:hover .showcase-media::before {
+  --tick: var(--color-text);
+  transform: scale(0.97);
+  opacity: 1;
+}
+
+html[data-motion="full"][data-fx="2"] .showcase-soon.is-glitch {
+  animation: ks-glitch 140ms steps(1, end) 1;
+}
+
+/* "Off" also stops the product strip's own drift (OS reduce-motion already does, in home.css) */
+html[data-motion="off"] .showcase-track {
+  animation: none;
+}

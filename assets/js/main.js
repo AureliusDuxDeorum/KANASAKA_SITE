@@ -508,7 +508,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=4").then(resolve);
+      loadScript("/assets/js/motion.js?v=6").then(resolve);
     });
   }
 
@@ -558,7 +558,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=97").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=98").then(resolve);
     });
   }
 
