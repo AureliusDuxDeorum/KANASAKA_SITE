@@ -27,6 +27,7 @@ export async function onRequestPost(context) {
       clientId: body.client_id,
       clientSecret: body.client_secret,
       redirectUri: body.redirect_uri,
+      codeVerifier: body.code_verifier,
     });
     return jsonResponse(result);
   } catch (err) {
