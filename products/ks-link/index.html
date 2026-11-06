@@ -77,19 +77,27 @@
         </li>
         <li class="feature">
           <h3>A relay without access to content</h3>
-          <p>The relay stores and forwards encrypted payloads, conversation membership and delivery metadata (timestamps, delivery acknowledgements). It has no access to message content.</p>
+          <p>The relay stores and forwards encrypted payloads, conversation membership and delivery metadata (timestamps, delivery acknowledgements). It has no access to message content. While a recipient is offline it holds the still-encrypted message for up to 24 hours and deletes it on delivery.</p>
         </li>
         <li class="feature">
-          <h3>Independent accounts</h3>
-          <p>KS_Link runs its own self-hosted account system, separate from kanasaka.com: no shared login, database or subscription. It is not gated behind a KS_Package subscription.</p>
+          <h3>History stays on your device</h3>
+          <p>Conversations, including photos, can be kept in an encrypted file on the device only. It is never uploaded and does not sync to other devices. You can turn it off or set it to erase itself after 24 hours, 7 days, 30 days or 1 year.</p>
+        </li>
+        <li class="feature">
+          <h3>One KANASAKA account</h3>
+          <p>A KS_Link account is a KANASAKA account: you sign in with your KANASAKA credentials. KS_Link keeps conversations and social data on its own infrastructure, and linking does not give kanasaka.com access to message content. It is not gated behind a KS_Package subscription.</p>
         </li>
         <li class="feature">
           <h3>Account security</h3>
-          <p>TOTP two-factor authentication with backup codes for recovery, and a session list that shows every signed-in device and lets you revoke each one individually.</p>
+          <p>Your KANASAKA account's sign-in protections apply, and a session list in the app shows every signed-in device and lets you revoke each one individually. Older KS_Link accounts keep their original sign-in, with TOTP two-factor authentication, during a transition period.</p>
         </li>
         <li class="feature">
-          <h3>Sandboxed plugins</h3>
-          <p>Optional features run in a WASM sandbox with explicit, revocable permissions. The first plugin, KS_Social, is an opt-in feed; unlike direct messages, its content is not end-to-end encrypted by design.</p>
+          <h3>Social built in</h3>
+          <p>KS_Social (feed, stories, explore, reels, saved posts and your profile) is part of KS_Link. Unlike direct messages, social content is not end-to-end encrypted by design: it is meant to be visible to your contacts or, where you choose, to everyone.</p>
+        </li>
+        <li class="feature">
+          <h3>Typing and read receipts are optional</h3>
+          <p>Typing indicators and read receipts are sent to the person you are chatting with only while the settings allow it. You can turn both off in Settings.</p>
         </li>
         <li class="feature">
           <h3>Blocking and reporting</h3>

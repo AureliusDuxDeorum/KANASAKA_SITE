@@ -66,11 +66,12 @@
     <div class="container prose">
       <h2>KS_Link messages</h2>
       <p>Messages are encrypted on the sending device, using per-conversation keys derived from each participant's device keys, before they reach KANASAKA's relay server. Images use the same encrypted channel as text.</p>
-      <p>The relay stores and forwards encrypted payloads, conversation membership and delivery metadata such as timestamps and delivery acknowledgements. It has no access to message content.</p>
+      <p>The relay stores and forwards encrypted payloads, conversation membership and delivery metadata such as timestamps and delivery acknowledgements. It has no access to message content. While a recipient is offline it holds the still-encrypted message for up to 24 hours and deletes it as soon as it is delivered.</p>
       <ul>
-        <li>KS_Link accounts are separate from kanasaka.com accounts: no shared login, database or subscription.</li>
-        <li>Two-factor authentication (TOTP) with backup codes, and a session list to see and revoke every signed-in device.</li>
-        <li>Plugins run in a WASM sandbox with explicit, revocable permissions. KS_Social content is not end-to-end encrypted by design, because it is meant to be visible to your contacts.</li>
+        <li>A KS_Link account is a KANASAKA account: you sign in to KS_Link with your KANASAKA credentials, and the account is created, managed and deleted on kanasaka.com. Linking shares only your account identifier, email address and display name with KS_Link's relay. Older KS_Link accounts keep their original sign-in during a transition period.</li>
+        <li>A session list in the app shows every device signed in to KS_Link and lets you revoke each one. Two-factor authentication follows your KANASAKA account (see below); accounts still on the original KS_Link login keep TOTP with backup codes.</li>
+        <li>Conversation history can be kept in an encrypted file on your own device. It is never uploaded and does not sync, so the relay never sees it, and KANASAKA cannot read or recover it. You can turn it off or set it to erase itself after 24 hours up to 1 year.</li>
+        <li>KS_Social (feed, stories and more) is built into KS_Link. Its content is not end-to-end encrypted by design, because it is meant to be visible to your contacts or, where you choose, to everyone.</li>
       </ul>
       <p>KS_Link is alpha software. Features and the protocol may change between releases. Full details are in the <a href="/legal/products/#ks_link">technical overview</a>.</p>
 

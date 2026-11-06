@@ -82,19 +82,33 @@
         <details class="faq-item">
           <summary>Can KANASAKA read my messages?</summary>
           <div class="faq-body">
-            <p>No. Messages are encrypted on the sending device, using per-conversation keys derived from each participant's device keys, before they reach the relay server. The relay stores and forwards encrypted payloads, conversation membership and delivery metadata such as timestamps and delivery acknowledgements. It has no access to message content.</p>
+            <p>No. Messages are encrypted on the sending device, using per-conversation keys derived from each participant's device keys, before they reach the relay server. The relay stores and forwards encrypted payloads, conversation membership and delivery metadata such as timestamps and delivery acknowledgements. It has no access to message content. While a recipient is offline, the relay holds the still-encrypted message for up to 24 hours and deletes it as soon as it is delivered.</p>
           </div>
         </details>
         <details class="faq-item">
           <summary>Do I need a kanasaka.com account to use KS_Link?</summary>
           <div class="faq-body">
-            <p>No. KS_Link runs its own account system, separate from kanasaka.com: no shared login, database or subscription. A kanasaka.com account does not give you a KS_Link account, and KS_Link is not gated behind a KS_Package subscription.</p>
+            <p>Yes. A KS_Link account is a KANASAKA account: you sign in to KS_Link with your KANASAKA credentials, and the account is created, managed and deleted from your Settings on kanasaka.com. KS_Link keeps conversations and social data on its own infrastructure, and linking does not give kanasaka.com access to message content. KS_Link is not gated behind a KS_Package subscription.</p>
+            <p>A KS_Link account created before this change keeps working with its original sign-in during a transition period, and you are offered the option to link it to a KANASAKA account.</p>
           </div>
         </details>
         <details class="faq-item">
           <summary>Is everything in KS_Link end-to-end encrypted?</summary>
           <div class="faq-body">
-            <p>Messages, including images, are. KS_Social, the first plugin, is an opt-in feed that is visible to your contacts by design, so its content is not end-to-end encrypted. Plugins run in a WASM sandbox and only get the access you grant, which you can withdraw at any time.</p>
+            <p>Messages, including images, are. KS_Social (feed, stories, explore, reels, saved posts and profiles) is built into KS_Link and is not end-to-end encrypted by design: it is meant to be visible to your contacts or, where you choose, to everyone. Stories disappear after 24 hours, and the author of a story can see who viewed it.</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Where is my message history stored?</summary>
+          <div class="faq-body">
+            <p>Only on your own device, if you leave history on. KS_Link keeps conversations, including photos, in an encrypted file there. It is never uploaded, does not sync to your other devices, and KANASAKA cannot read, recover or restore it. If the device or its secure storage is reset or lost, the history is gone.</p>
+            <p>In the app's Settings you can turn history off, have messages erased after 24 hours, 7 days, 30 days or 1 year, erase everything when you sign out, clear a single chat, or delete it all. Messages you sent are also stored on the recipient's device under that person's own settings.</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>How do I delete my KS_Link account?</summary>
+          <div class="faq-body">
+            <p>For a linked account, delete your KANASAKA account in Account Management on kanasaka.com. That ends your KS_Link sign-in, but KS_Link's own conversation and social data is not deleted automatically today. Export or delete it from the app's Settings first, or contact us. An account that has not been linked yet can still export or delete its KS_Link account and data from within the app.</p>
           </div>
         </details>
         <details class="faq-item">
