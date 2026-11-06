@@ -266,7 +266,7 @@
   function loadConsole() {
     if (window.KanasakaConsole || window.__ksConsoleLoading) return;
     window.__ksConsoleLoading = true;
-    loadScript("/assets/js/console.js?v=6");
+    loadScript("/assets/js/console.js?v=7");
   }
 
   function loadHud() {
@@ -346,7 +346,7 @@
   function loadBoot() {
     if (window.__ksBootLoading) return;
     window.__ksBootLoading = true;
-    loadScript("/assets/js/boot.js?v=2");
+    loadScript("/assets/js/boot.js?v=3");
   }
 
   async function boot() {

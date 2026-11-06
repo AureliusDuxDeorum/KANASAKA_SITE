@@ -449,6 +449,40 @@ html[data-motion="full"][data-fx="2"] .callout.is-glitch::before {
   color: var(--color-text);
 }
 
+/* on-demand variant (terminal BOOT / Ctrl+B): slower logo, more lines, progress bar */
+.ks-boot--long.is-on .ks-boot-logo {
+  transition: clip-path 700ms steps(20, end);
+}
+
+.ks-boot--long .ks-boot-lines {
+  min-height: calc(14 * 1.7 * var(--text-xs));
+}
+
+.ks-boot-bar {
+  height: 2px;
+  margin-top: var(--space-4);
+  background: var(--color-border);
+}
+
+.ks-boot-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-text);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.ks-boot-bar.is-fill > span {
+  transform: scaleX(1);
+  transition: transform 1300ms steps(26, end);
+}
+
+@media (max-height: 560px) {
+  .ks-boot--long .ks-boot-logo {
+    display: none;
+  }
+}
+
 .ks-boot.is-out {
   clip-path: inset(0 0 100% 0);
   transition: clip-path 180ms steps(9, end);

@@ -212,6 +212,7 @@
     ["ECHO", "Displays messages."],
     ["EXIT", "Quits the KS_Site terminal."],
     ["HELP", "Provides help information for KS_Site commands."],
+    ["KEYS", "Lists the keyboard shortcuts."],
     ["LOGIN", "Opens the sign-in dialog."],
     ["MOTION", "Sets the animation level: auto, full, reduced or off."],
     ["REGISTER", "Opens the registration dialog."],
@@ -221,6 +222,17 @@
     ["TREE", "Graphically displays the structure of the site."],
     ["VER", "Displays the KS_Site version."],
     ["WHOAMI", "Displays the signed-in account, or guest."],
+  ];
+
+  // Ctrl + letter, so plain keys stay free for typing. Handled at the bottom of
+  // this file; listed by the KEYS command.
+  var SHORTCUTS = [
+    ["Ctrl+K", "Open the terminal (Cmd+K on Mac)."],
+    ["Ctrl+B", "Replay the boot sequence (animation set to Full)."],
+    ["Ctrl+Y", "Cycle the theme: dark, light, accent."],
+    ["Ctrl+H", "Go to the home page."],
+    ["Ctrl+J", "Go to Downloads."],
+    ["/", "Open the terminal."],
   ];
 
   var USAGE = {
@@ -368,6 +380,14 @@
 
     exit: function () {
       close();
+    },
+
+    keys: function () {
+      print("Keyboard shortcuts (not while typing in a field, and only while this terminal is closed):");
+      SHORTCUTS.forEach(function (row) {
+        print(pad(row[0], 12) + row[1]);
+      });
+      print("Close this window with the \u00d7 button.");
     },
 
     ver: function () {
@@ -539,6 +559,7 @@
     ["tree", "Show the site structure"],
     ["dir", "List this directory"],
     ["help", "List commands"],
+    ["keys", "List keyboard shortcuts"],
     ["cls", "Clear the screen"],
     ["ver", "Show the version"],
     ["whoami", "Who is signed in"],
@@ -929,9 +950,6 @@
           input.value = history[historyIndex];
           renderSuggestions();
         }
-      } else if (key === "Escape") {
-        event.preventDefault();
-        close();
       } else if ((event.ctrlKey || event.metaKey) && (key === "l" || key === "L")) {
         event.preventDefault();
         clearScreen();
@@ -988,18 +1006,62 @@
     return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
   }
 
-  document.addEventListener("keydown", function (event) {
-    var key = event.key;
-    if ((event.ctrlKey || event.metaKey) && !event.altKey && (key === "k" || key === "K")) {
-      event.preventDefault();
-      if (isOpen) close();
-      else open();
-      return;
-    }
-    if (key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !isOpen && !typing(event.target)) {
-      event.preventDefault();
+  // Shortcuts that act on the page (not inside the terminal). They stay out of
+  // the way: nothing happens while the terminal is open, while a text field has
+  // focus, or while a dialog or the boot overlay is up. Closing the terminal is
+  // done with its x button, not with a key.
+  function pageIsBusy() {
+    return Boolean(
+      isOpen ||
+        document.querySelector(".ks-boot, #tos-overlay.is-visible") ||
+        document.body.classList.contains("auth-modal-open")
+    );
+  }
+
+  function cycleTheme() {
+    var theme = window.KanasakaTheme;
+    if (!theme) return false;
+    var order = ["dark", "light", "accent"];
+    var next = order[(order.indexOf(theme.getTheme()) + 1) % order.length];
+    theme.setTheme(next);
+    return true;
+  }
+
+  function shortcut(event) {
+    var key = (event.key || "").toLowerCase();
+    var plain = !event.altKey && !event.shiftKey;
+    if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey) {
       open();
+      return true;
     }
+    if (!plain) return false;
+    if ((event.ctrlKey || event.metaKey) && key === "k") {
+      open();
+      return true;
+    }
+    // the remaining shortcuts use the real Control key only (on a Mac, Cmd+letter belongs to the system)
+    if (!event.ctrlKey || event.metaKey) return false;
+    if (key === "b") {
+      if (!window.KanasakaBoot || document.documentElement.getAttribute("data-motion") !== "full") return false;
+      window.KanasakaBoot.play();
+      return true;
+    }
+    if (key === "y") return cycleTheme();
+    if (key === "h") {
+      window.location.assign("/");
+      return true;
+    }
+    if (key === "j") {
+      window.location.assign("/downloads/");
+      return true;
+    }
+    return false;
+  }
+
+  document.addEventListener("keydown", function (event) {
+    if (event.defaultPrevented || event.isComposing || event.repeat) return;
+    if (pageIsBusy() || typing(event.target)) return;
+    if (shortcut(event)) event.preventDefault();
   });
 
   window.KanasakaConsole = { open: open, close: close };
