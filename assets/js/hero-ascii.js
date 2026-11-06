@@ -210,7 +210,9 @@
     // the loop re-started later by an unrelated IntersectionObserver/
     // visibilitychange event (scrolling the hero out of view and back,
     // say). See the probe itself for what decides this.
-    let forceStatic = false;
+    let forceStatic = false; // the probe judged the hardware hopeless (final for this page)
+    let guardHalt = false; // the cost guard stopped the field (one retry, see syncRunning)
+    let tickLabel = Math.round(1000 / TICK_MS) + "HZ"; // shown in the HUD: 15HZ, 8HZ or STATIC
 
     // accent tear
     let nextTearAt = 8 + Math.random() * 6;
@@ -298,7 +300,7 @@
       }
       if (hudV) {
         hudV.textContent =
-          "//MASK " + activeLogo.name + " " + activeLogo.ratio + "  //SPAN " + Math.round(logoSpan * 100) + "%  //TICK " + Math.round(1000 / TICK_MS) + "HZ  //FLIP HEX " + FLIP_STEP_MS + "MS";
+          "//MASK " + activeLogo.name + " " + activeLogo.ratio + "  //SPAN " + Math.round(logoSpan * 100) + "%  //TICK " + tickLabel + "  //FLIP HEX " + FLIP_STEP_MS + "MS";
       }
     }
 
@@ -418,38 +420,80 @@
     //
     // Cost guard: the time from starting a render to the next animation frame
     // includes the browser's layout and paint of the rewritten field, which is
-    // most of the real cost. If its rolling average exceeds 90 % of the tick the
-    // field drops ONCE to a half-rate tick (still fixed, still deliberate), and if
-    // that is too much as well it stops on its current frame, like the capability
-    // probe below does up front. It never wanders between rates.
+    // most of the real cost. It is deliberately hard to trip, because a false
+    // alarm freezes the hero for good:
+    //   - nothing is measured for the first few seconds (fonts, scripts, the boot
+    //     and terms overlays all compete for the main thread then), nor while one
+    //     of those overlays or the sign-in dialog is up;
+    //   - a window is the MEDIAN of 30 samples, so a few long stalls do not count;
+    //   - it takes two bad windows in a row to act. The first action drops the
+    //     field ONCE to a half-rate tick (still fixed, still deliberate); two more
+    //     bad windows there stop it on its current frame. It never wanders between
+    //     rates;
+    //   - a stop is not final: the next time the hero comes back (tab shown, hero
+    //     scrolled into view) it gets one more try with a fresh warm-up.
+    // The //TICK readout in the HUD says which state the field is in.
+    const WARM_MS = 4000;
+    const WINDOW = 30;
     let tickMs = TICK_MS;
     let lastTick = -1;
     let renderedAt = 0;
-    let costSum = 0;
-    let costCount = 0;
+    let samples = [];
+    let strikes = 0;
+    let warmUntil = performance.now() + WARM_MS;
+    let retriesLeft = 1;
+
+    function setTickLabel(label) {
+      tickLabel = label;
+      const hudV = document.getElementById("ha-hud-v");
+      if (hudV) hudV.textContent = hudV.textContent.replace(/TICK \S+/, "TICK " + label);
+    }
+
+    function overlayUp() {
+      return Boolean(
+        document.querySelector(".ks-boot, #tos-overlay.is-visible") || document.body.classList.contains("auth-modal-open")
+      );
+    }
+
+    function resetGuard() {
+      samples = [];
+      strikes = 0;
+      warmUntil = performance.now() + WARM_MS;
+    }
+
+    // true = keep going, false = the field was stopped
+    function judgeWindow() {
+      const sorted = samples.slice().sort(function (a, b) {
+        return a - b;
+      });
+      const median = sorted[sorted.length >> 1];
+      samples = [];
+      strikes = median > tickMs * 0.9 ? strikes + 1 : 0;
+      if (strikes < 2) return true;
+      strikes = 0;
+      if (tickMs === TICK_MS) {
+        tickMs = TICK_MS * 2;
+        lastTick = -1;
+        setTickLabel(Math.round(1000 / tickMs) + "HZ");
+        return true;
+      }
+      guardHalt = true;
+      running = false;
+      setTickLabel("STATIC");
+      return false;
+    }
 
     function frame(now) {
       if (!running) return;
 
       if (renderedAt) {
-        costSum += now - renderedAt;
-        costCount += 1;
+        const delta = Math.max(0, now - renderedAt);
         renderedAt = 0;
-        if (costCount >= 20) {
-          if (costSum / costCount > tickMs * 0.9) {
-            if (tickMs === TICK_MS) {
-              tickMs = TICK_MS * 2;
-              lastTick = -1;
-              const hudV = document.getElementById("ha-hud-v");
-              if (hudV) hudV.textContent = hudV.textContent.replace(/TICK \d+HZ/, "TICK " + Math.round(1000 / tickMs) + "HZ");
-            } else {
-              forceStatic = true;
-              running = false;
-              return;
-            }
-          }
-          costSum = 0;
-          costCount = 0;
+        if (performance.now() < warmUntil || overlayUp()) {
+          if (samples.length) samples = [];
+        } else {
+          samples.push(delta);
+          if (samples.length >= WINDOW && !judgeWindow()) return;
         }
       }
 
@@ -472,8 +516,19 @@
     let tabVisible = !document.hidden;
     let onScreen = true;
 
+    let eligible = true;
+
     function syncRunning() {
-      const shouldRun = tabVisible && onScreen && !forceStatic && !reduced;
+      const base = tabVisible && onScreen && !forceStatic && !reduced;
+      // coming back after the guard stopped the field: one more try, fresh warm-up
+      if (base && !eligible && guardHalt && retriesLeft > 0) {
+        retriesLeft -= 1;
+        guardHalt = false;
+        resetGuard();
+        setTickLabel(Math.round(1000 / tickMs) + "HZ");
+      }
+      eligible = base;
+      const shouldRun = base && !guardHalt;
       if (shouldRun && !running) {
         running = true;
         rafId = window.requestAnimationFrame(frame);
@@ -535,10 +590,18 @@
     if (!reduced && cols && rows) {
       render(performance.now());
       render(performance.now());
-      const probeStart = performance.now();
-      render(performance.now());
-      void fieldEl.offsetHeight; // include the layout of the rewritten field
-      forceStatic = performance.now() - probeStart > TICK_MS / 2;
+      // best of three, so one cold or interrupted render does not decide it, and
+      // the budget is a whole tick: if rendering and laying out the field alone
+      // cannot finish inside one tick there is nothing left to guard
+      let best = Infinity;
+      for (let i = 0; i < 3; i += 1) {
+        const probeStart = performance.now();
+        render(performance.now());
+        void fieldEl.offsetHeight; // include the layout of the rewritten field
+        best = Math.min(best, performance.now() - probeStart);
+      }
+      forceStatic = best > TICK_MS;
+      if (forceStatic) setTickLabel("STATIC");
     }
 
     running = false;
