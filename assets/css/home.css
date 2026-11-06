@@ -175,3 +175,57 @@ a.showcase-hit {
 .ha-l7 { opacity: 0.93; color: var(--color-text); }
 .ha-l8 { opacity: 0.96; color: var(--color-text); }
 .ha-l9 { opacity: 1.00; color: var(--color-text); }
+
+/* /?hero=debug diagnostics panel (hero-ascii.js) and its switches */
+.ha-debug {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10;
+  max-width: calc(100% - 24px);
+  padding: 10px 12px;
+  background: var(--color-base);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+  pointer-events: auto;
+}
+.ha-debug pre {
+  margin: 0 0 8px;
+  white-space: pre-wrap;
+}
+.ha-debug-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ha-debug-row button {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-light);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.ha-debug-row button[aria-pressed="false"] {
+  background: var(--color-text);
+  color: var(--color-base);
+}
+html.dbg-nomask .ha-field-wrap {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+html.dbg-noblur *,
+html.dbg-noblur *::before,
+html.dbg-noblur *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.dbg-noanim *,
+html.dbg-noanim *::before,
+html.dbg-noanim *::after {
+  animation: none !important;
+  transition: none !important;
+}

@@ -558,6 +558,21 @@
     //   - a stop is not final: the next time the hero comes back (tab shown, hero
     //     scrolled into view) it gets one more try with a fresh warm-up.
     // The //TICK readout in the HUD says which state the field is in.
+    // ?hero=debug on the home page shows a diagnostics panel (see debugPanel below)
+    const DEBUG = /[?&]hero=debug\b/.test(window.location.search);
+    const stats = { render: [], frame: [], raf: [], lastRaf: 0 };
+    function keep(list, value) {
+      list.push(value);
+      if (list.length > 60) list.shift();
+    }
+    function median(list) {
+      if (!list.length) return 0;
+      const sorted = list.slice().sort(function (a, b) {
+        return a - b;
+      });
+      return sorted[sorted.length >> 1];
+    }
+
     const WARM_MS = 4000;
     const WINDOW = 30;
     let tickMs = TICK_MS;
@@ -611,10 +626,18 @@
     function frame(now) {
       if (!running) return;
 
+      if (DEBUG) {
+        if (stats.lastRaf) keep(stats.raf, now - stats.lastRaf);
+        stats.lastRaf = now;
+      }
+
       if (renderedAt) {
         const delta = Math.max(0, now - renderedAt);
         renderedAt = 0;
-        if (performance.now() < warmUntil || overlayUp()) {
+        if (DEBUG) keep(stats.frame, delta);
+        if (DEBUG && window.KanasakaHeroAscii.guardOff) {
+          samples = [];
+        } else if (performance.now() < warmUntil || overlayUp()) {
           if (samples.length) samples = [];
         } else {
           samples.push(delta);
@@ -627,6 +650,7 @@
         lastTick = tick;
         renderedAt = performance.now();
         render(start + tick * tickMs);
+        if (DEBUG) keep(stats.render, performance.now() - renderedAt);
       }
       rafId = window.requestAnimationFrame(frame);
     }
@@ -745,9 +769,70 @@
     } else if (!forceStatic) {
       syncRunning();
     }
+
+    // Diagnostics for a device that struggles (open /?hero=debug): live numbers
+    // plus switches for the usual suspects, so the culprit can be found on the
+    // device itself. Classes only (no inline styles); see home.css .dbg-*.
+    function debugPanel() {
+      const panel = document.createElement("div");
+      panel.className = "ha-debug";
+      const text = document.createElement("pre");
+      panel.appendChild(text);
+      const row = document.createElement("div");
+      row.className = "ha-debug-row";
+      panel.appendChild(row);
+
+      function toggle(label, onChange) {
+        const b = document.createElement("button");
+        b.type = "button";
+        let on = true;
+        function paint() {
+          b.textContent = label + " " + (on ? "ON" : "OFF");
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+        }
+        b.addEventListener("click", function () {
+          on = !on;
+          onChange(on);
+          paint();
+        });
+        paint();
+        row.appendChild(b);
+      }
+      const root = document.documentElement;
+      toggle("MASK", function (on) {
+        root.classList.toggle("dbg-nomask", !on);
+      });
+      toggle("HEADER BLUR", function (on) {
+        root.classList.toggle("dbg-noblur", !on);
+      });
+      toggle("CSS ANIM", function (on) {
+        root.classList.toggle("dbg-noanim", !on);
+      });
+      toggle("GUARD", function (on) {
+        window.KanasakaHeroAscii.guardOff = !on;
+      });
+
+      function line() {
+        const raf = median(stats.raf);
+        return [
+          "TICK " + tickLabel + (guardHalt ? " (STOPPED)" : running ? "" : " (IDLE)") + "  GUARD " + (window.KanasakaHeroAscii.guardOff ? "OFF" : "ON"),
+          "RAF " + raf.toFixed(1) + " MS (" + (raf ? Math.round(1000 / raf) : 0) + " HZ)",
+          "RENDER " + median(stats.render).toFixed(1) + " MS  (compute + draw)",
+          "FRAME " + median(stats.frame).toFixed(1) + " MS  (render to next frame, what the guard judges)",
+          "GRID " + cols + "X" + rows + "  CANVAS " + (canvas && ctx2 ? canvas.width + "X" + canvas.height : "NONE (DOM)") + "  DPR " + (window.devicePixelRatio || 1),
+        ].join("\n");
+      }
+      window.setInterval(function () {
+        text.textContent = line();
+      }, 500);
+      text.textContent = line();
+      hero.appendChild(panel);
+    }
+    if (DEBUG) debugPanel();
   }
 
   window.KanasakaHeroAscii = {
     init: init,
+    guardOff: false,
   };
 })();
