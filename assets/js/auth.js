@@ -150,9 +150,44 @@
     wrap.appendChild(card);
     document.body.appendChild(wrap);
 
-    window.setTimeout(function () {
-      window.location.href = path;
-    }, 250);
+    const status = lead;
+
+    // Ask the server first (same request with &check=1: validates everything,
+    // issues no code). A failure is shown in words; only a pass hands over to the
+    // app, whose ks-link:// redirect the browser would otherwise drop silently.
+    fetch(path + "&check=1", { credentials: "include", headers: { Accept: "application/json" } })
+      .then(function (response) {
+        return response.text().then(function (text) {
+          let data = null;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            data = null;
+          }
+          return { ok: response.ok && data && data.ok === true, message: (data && data.error) || "The server answered " + response.status + "." };
+        });
+      })
+      .catch(function () {
+        return { ok: false, message: "Could not reach kanasaka.com." };
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          title.textContent = "Could not open KS_Link";
+          status.textContent = result.message + " Nothing was sent to the app.";
+          button.textContent = "Try again";
+          return;
+        }
+        status.textContent = "Opening KS_Link. Your browser may ask you to allow it.";
+        window.setTimeout(function () {
+          window.location.href = path;
+        }, 150);
+        window.setTimeout(function () {
+          note.insertBefore(
+            document.createTextNode("Nothing opened? Make sure KS_Link is installed and has been started once, then press the button again. "),
+            note.firstChild
+          );
+        }, 4000);
+      });
   }
 
   function goAfterSignIn(path) {

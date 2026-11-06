@@ -3,6 +3,11 @@
 // functions/lib/ks-link-oauth.js's module doc). Requires an existing site
 // session cookie -- if absent, sends the user to log in first and back here
 // afterward, same shape any "continue to X" login redirect already needs.
+//
+// With &check=1 the same validation runs but no code is issued and the answer is
+// plain JSON ({ ok: true } or { error }): the sign-in page uses it to show the
+// real reason when the hand-over to the app cannot work, instead of a redirect
+// to a ks-link:// address that the browser drops silently.
 import { jsonResponse, resolveSession } from "../../lib/auth.js";
 import { assertAllowedRedirect, createAuthorizationCode, isValidCodeChallenge, ksLinkOAuthConfigured } from "../../lib/ks-link-oauth.js";
 
@@ -35,7 +40,12 @@ export async function onRequestGet(context) {
     return jsonResponse({ error: "Unknown client." }, 400);
   }
 
+  const checkOnly = url.searchParams.get("check") === "1";
+
   const { user } = await resolveSession(request, env);
+  if (!user && checkOnly) {
+    return jsonResponse({ error: "You are not signed in on this browser." }, 401);
+  }
   if (!user) {
     const returnTo = encodeURIComponent(url.pathname + url.search);
     return Response.redirect(`${url.origin}/login/?return_to=${returnTo}`, 302);
@@ -43,6 +53,10 @@ export async function onRequestGet(context) {
 
   if (!user.email_verified) {
     return jsonResponse({ error: "Verify your email address on kanasaka.com before linking KS_Link." }, 403);
+  }
+
+  if (checkOnly) {
+    return jsonResponse({ ok: true });
   }
 
   const code = await createAuthorizationCode(env, { userId: user.id, clientId, redirectUri: safeRedirectUri, codeChallenge });

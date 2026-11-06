@@ -69,3 +69,27 @@ test("token: the code is exchanged once, with the matching PKCE verifier", async
   assert.equal((await json(good)).email, "linked@example.com");
   assert.equal((await exchange({ ...base, code_verifier: VERIFIER })).status, 400, "code is single use");
 });
+
+test("authorize with check=1 validates but issues no code, and says why when it cannot", async () => {
+  const env = oauthEnv();
+  const count = async () => (await env.DB.prepare("SELECT COUNT(*) AS c FROM oauth_authorizations").first()).c;
+
+  const anon = await get(env, query({ check: "1" }));
+  assert.equal(anon.status, 401);
+  assert.match((await json(anon)).error, /not signed in/i);
+
+  const user = await insertUser(env);
+  const cookie = { Cookie: await sessionCookieFor(env, user.id) };
+  const ok = await get(env, query({ check: "1" }), cookie);
+  assert.equal(ok.status, 200);
+  assert.deepEqual(await json(ok), { ok: true });
+  assert.equal(await count(), 0, "check mode must not mint a code");
+
+  const bad = await get(env, query({ check: "1", client_id: "nope" }), cookie);
+  assert.equal(bad.status, 400);
+  assert.match((await json(bad)).error, /client/i);
+
+  const missing = await authorize({ request: req("/api/oauth/authorize" + query({ check: "1" })), env: makeEnv() });
+  assert.equal(missing.status, 500);
+  assert.match((await json(missing)).error, /not configured/i);
+});
