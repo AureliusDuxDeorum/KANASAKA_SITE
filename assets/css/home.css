@@ -32,6 +32,18 @@
   -webkit-mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
   mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
 }
+/* the field is painted on a canvas (hero-ascii.js); the <pre> stays only as the
+   font and cell-size reference, and is the DOM fallback when no canvas exists */
+#ha-field.is-canvas {
+  position: absolute;
+  visibility: hidden;
+}
+.ha-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}
 #ha-field {
   white-space: pre;
   color: var(--color-text-muted);
@@ -152,6 +164,7 @@ a.showcase-hit {
 .ha-a2 { opacity: 0.46; color: inherit; }
 .ha-a3 { opacity: 0.56; color: inherit; }
 .ha-a4 { opacity: 0.66; color: inherit; }
+.ha-a5 { opacity: 1; color: inherit; }
 .ha-l0 { opacity: 0.68; color: var(--color-text); }
 .ha-l1 { opacity: 0.72; color: var(--color-text); }
 .ha-l2 { opacity: 0.75; color: var(--color-text); }

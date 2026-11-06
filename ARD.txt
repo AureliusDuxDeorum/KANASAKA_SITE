@@ -89,7 +89,8 @@ assets/js/console.js        KS_Site terminal (header "//", Ctrl/Cmd+K, "/"): cmd
                             (dir, cd, tree, start, cls, ver, ...), theme/motion commands; no network/storage.
 assets/css/console.css      Terminal window and the header "//" button.
 assets/js/hud.js            (also) live readouts: UTC, session timer, viewport, NET, motion level.
-assets/js/hero-ascii.js     (also) scan band (fx>=1), tear (fx 2). Fixed 15 Hz tick (TICK_MS 66,
+assets/js/hero-ascii.js     Field is painted on a <canvas> (glyph atlas, changed cells only); DOM spans only as fallback.
+                            (also) scan band (fx>=1), tear (fx 2). Fixed 15 Hz tick (TICK_MS 66,
                             shared with motion.js decode); no adaptive rate. Cost guard: 4 s warm-up, median of 30,
                             two bad windows to drop to 7.5 Hz / stop, one retry on return; HUD //TICK shows STATIC.
 docs/DESIGN.md              Design system: foundations, components, templates, IA, voice.

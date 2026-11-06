@@ -160,16 +160,19 @@
   // Every run's opening <span> tag only ever depends on (isLetter, tier) --
   // a fixed set of 10 letter tiers + 4 ambient tiers -- so the tag can be
   // built once instead of concatenated fresh for every run, every frame. The
-  // tiers are CSS classes (home.css): the site CSP forbids inline style
-  // attributes. Index: ambient tiers at 0-9, letter tiers
-  // (offset +100 like the render loop's `key`) at 100-109.
-  const SPAN_OPEN = new Array(210);
-  for (let tier = 1; tier <= 4; tier++) {
-    SPAN_OPEN[tier] = '<span class="ha-a' + tier + '">';
-  }
-  for (let tier = 0; tier < RAMP.length; tier++) {
-    SPAN_OPEN[100 + tier] = '<span class="ha-l' + tier + '">';
-  }
+  // Every cell is one glyph in one of 15 styles. Styles are CSS classes
+  // (home.css; the site CSP forbids inline style attributes): ambient tiers
+  // ha-a1..a5 (style 0-4) and logo-letter tiers ha-l0..l9 (style 5-14). A
+  // style's colour and opacity are read from those classes, so the canvas
+  // painter below and the DOM fallback always look the same.
+  const GLYPHS = RAMP + FLIP_CHARS; // glyph index: ramp characters, then the hex flip characters
+  const STYLE_CLASSES = [];
+  for (let tier = 1; tier <= 5; tier++) STYLE_CLASSES.push("ha-a" + tier);
+  for (let tier = 0; tier < RAMP.length; tier++) STYLE_CLASSES.push("ha-l" + tier);
+  const STYLE_FLIP = 5 + RAMP.length - 1; // flipped characters use the brightest letter tier
+  const STYLE_OPEN = STYLE_CLASSES.map(function (name) {
+    return '<span class="' + name + '">';
+  });
 
   function measureCell(el) {
     const probe = document.createElement("span");
@@ -283,6 +286,131 @@
       }
     }
 
+    // The field is painted on a canvas: rebuilding ~2000 spans every tick and
+    // laying them out was more than a tablet could do in one 66 ms tick. Each
+    // tick computes one glyph and one style per cell into two byte arrays and
+    // draws only the cells that changed, from a pre-rendered glyph atlas. If a
+    // 2D canvas is not available the same arrays are rendered as DOM spans.
+    let cellCh = null;
+    let cellSt = null;
+    let prevCh = null;
+    let prevSt = null;
+    let canvas = null;
+    let ctx2 = null;
+    let atlas = null;
+    let atlasW = 0;
+    let atlasH = 0;
+    let xs = null;
+    let ys = null;
+    try {
+      canvas = document.createElement("canvas");
+      ctx2 = canvas.getContext("2d");
+    } catch (e) {
+      ctx2 = null;
+    }
+    if (ctx2) {
+      canvas.className = "ha-canvas";
+      canvas.setAttribute("aria-hidden", "true");
+      fieldWrap.appendChild(canvas);
+      fieldEl.classList.add("is-canvas"); // keeps the <pre> as the font and size reference only
+    }
+
+    function buildAtlas(dpr) {
+      atlasW = Math.ceil(cellW * dpr) + 1;
+      atlasH = Math.ceil(cellH * dpr) + 1;
+      atlas = document.createElement("canvas");
+      atlas.width = GLYPHS.length * atlasW;
+      atlas.height = STYLE_CLASSES.length * atlasH;
+      const a = atlas.getContext("2d");
+      const field = getComputedStyle(fieldEl);
+      const size = parseFloat(field.fontSize) * dpr;
+      a.font = field.fontStyle + " " + field.fontWeight + " " + size + "px " + field.fontFamily;
+      a.textBaseline = "alphabetic";
+      const m = a.measureText("0");
+      const ascent = m.fontBoundingBoxAscent !== undefined ? m.fontBoundingBoxAscent : size * 0.8;
+      const descent = m.fontBoundingBoxDescent !== undefined ? m.fontBoundingBoxDescent : size * 0.2;
+      // same vertical placement as the DOM: the line box centres the text's ascent+descent
+      const baseline = (cellH * dpr - (ascent + descent)) / 2 + ascent;
+      for (let si = 0; si < STYLE_CLASSES.length; si++) {
+        const probe = document.createElement("span");
+        probe.className = STYLE_CLASSES[si];
+        probe.textContent = "0";
+        fieldEl.appendChild(probe);
+        const ps = getComputedStyle(probe);
+        a.globalAlpha = parseFloat(ps.opacity);
+        a.fillStyle = ps.color;
+        fieldEl.removeChild(probe);
+        for (let gi = 1; gi < GLYPHS.length; gi++) {
+          a.fillText(GLYPHS.charAt(gi), gi * atlasW, si * atlasH + baseline);
+        }
+      }
+    }
+
+    function layoutField() {
+      const n = cols * rows;
+      if (!n) return;
+      if (!cellCh || cellCh.length !== n) {
+        cellCh = new Uint8Array(n);
+        cellSt = new Uint8Array(n);
+        prevCh = new Uint8Array(n);
+        prevSt = new Uint8Array(n);
+      }
+      prevCh.fill(255); // everything must be drawn again
+      if (!ctx2) return;
+      const dpr = window.devicePixelRatio || 1;
+      xs = new Int32Array(cols + 1);
+      ys = new Int32Array(rows + 1);
+      for (let i = 0; i <= cols; i++) xs[i] = Math.round(i * cellW * dpr);
+      for (let i = 0; i <= rows; i++) ys[i] = Math.round(i * cellH * dpr);
+      canvas.width = xs[cols];
+      canvas.height = ys[rows];
+      canvas.style.width = canvas.width / dpr + "px";
+      canvas.style.height = canvas.height / dpr + "px";
+      buildAtlas(dpr);
+    }
+
+    function drawField() {
+      for (let y = 0; y < rows; y++) {
+        const dy = ys[y];
+        const dh = ys[y + 1] - dy;
+        const row = y * cols;
+        for (let x = 0; x < cols; x++) {
+          const i = row + x;
+          const ch = cellCh[i];
+          const st = cellSt[i];
+          if (ch === prevCh[i] && st === prevSt[i]) continue;
+          prevCh[i] = ch;
+          prevSt[i] = st;
+          const dx = xs[x];
+          const dw = xs[x + 1] - dx;
+          ctx2.clearRect(dx, dy, dw, dh);
+          if (ch) ctx2.drawImage(atlas, ch * atlasW, st * atlasH, dw, dh, dx, dy, dw, dh);
+        }
+      }
+    }
+
+    function domField() {
+      const lines = [];
+      for (let y = 0; y < rows; y++) {
+        const row = y * cols;
+        let line = "";
+        let runStyle = -1;
+        let run = "";
+        for (let x = 0; x < cols; x++) {
+          const st = cellSt[row + x];
+          if (st !== runStyle) {
+            if (run) line += STYLE_OPEN[runStyle] + run + "</span>";
+            runStyle = st;
+            run = "";
+          }
+          run += GLYPHS.charAt(cellCh[row + x]);
+        }
+        if (run) line += STYLE_OPEN[runStyle] + run + "</span>";
+        lines.push(line);
+      }
+      fieldEl.innerHTML = lines.join("\n");
+    }
+
     function measure() {
       const cell = measureCell(fieldEl);
       cellW = cell.w || cellW;
@@ -292,6 +420,7 @@
       cols = Math.floor(wrapRect.width / cellW);
       rows = Math.floor(wrapRect.height / cellH);
 
+      layoutField();
       buildLetterMask();
 
       const hudV = document.getElementById("ha-hud-v");
@@ -304,10 +433,17 @@
       }
     }
 
-    window.addEventListener("resize", measure);
+    // measuring resizes the canvas, which blanks it: a field that is not running
+    // (reduced motion, stopped by the guard, hero off screen) has to repaint itself
+    function remeasure() {
+      measure();
+      if (!running && cols && rows) render(performance.now());
+    }
+
+    window.addEventListener("resize", remeasure);
     measure();
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(measure).catch(function () {});
+      document.fonts.ready.then(remeasure).catch(function () {});
     }
 
     let running = true;
@@ -317,7 +453,6 @@
     function render(now) {
       hashCache.clear();
       const t = (now - start) / 1000;
-      const lines = [];
 
       // hoisted out of the per-cell loop -- these don't vary by x/y, only
       // by frame (t) or by fixed geometry (cellH/cellW), so recomputing
@@ -326,6 +461,7 @@
       const driftY = reduced ? 0 : t * 0.016;
 
       const fxLvl = reduced ? 0 : extrasLevel();
+      if (!cellCh) return; // not laid out yet
 
       // scan band: a soft horizontal highlight sweeping down the field
       let bandRow = -99;
@@ -350,9 +486,6 @@
       }
 
       for (let y = 0; y < rows; y++) {
-        let runChar = "";
-        let runKey = null;
-        const runs = [];
         const ny = y * 0.16 - driftY;
         const rowMaskOffset = y * cols;
         const shift = tearUntil && y >= tearY0 && y < tearY1 ? tearShift : 0;
@@ -366,7 +499,7 @@
           const m = letterMask && sx >= 0 && sx < cols ? letterMask[rowMaskOffset + sx] : 0;
           const isLetter = m > 0.1;
 
-          let flipChar = "";
+          let flipIndex = -1;
           if (isLetter) {
             // static grain: each cell sits a little differently in the dense
             // end of the ramp, so the mark reads as textured, not flat
@@ -380,7 +513,7 @@
               const step = Math.floor(((local - cycle * flipPeriod[idx]) * 1000) / FLIP_STEP_MS);
               if (step < FLIP_STEPS) {
                 const h = (Math.imul(idx, 73856093) ^ Math.imul(step + 1, 19349663) ^ Math.imul(cycle + 1, 83492791)) >>> 0;
-                flipChar = FLIP_CHARS.charAt(h % FLIP_CHARS.length);
+                flipIndex = h % FLIP_CHARS.length;
               }
             }
           }
@@ -391,27 +524,19 @@
           // reads as an even, subtle texture instead of high-contrast
           // speckling; letters alone get to use the full ramp.
           const tier = isLetter ? Math.floor(v * (RAMP.length - 1)) : 1 + Math.floor(v * 4);
-          const ch = flipChar || RAMP[tier];
-          const key = flipChar ? 109 : tier + (isLetter ? 100 : 0);
-
-          if (key !== runKey) {
-            if (runChar) runs.push(runKey, runChar);
-            runChar = ch;
-            runKey = key;
+          const i = rowMaskOffset + x;
+          if (flipIndex >= 0) {
+            cellCh[i] = RAMP.length + flipIndex;
+            cellSt[i] = STYLE_FLIP;
           } else {
-            runChar += ch;
+            cellCh[i] = tier; // glyph index = ramp index
+            cellSt[i] = isLetter ? 5 + tier : tier - 1;
           }
         }
-        if (runChar) runs.push(runKey, runChar);
-
-        let line = "";
-        for (let i = 0; i < runs.length; i += 2) {
-          line += SPAN_OPEN[runs[i]] + runs[i + 1] + "</span>";
-        }
-        lines.push(line);
       }
 
-      fieldEl.innerHTML = lines.join("\n");
+      if (ctx2) drawField();
+      else domField();
     }
 
     // Fixed tick instead of an adaptive rate: render when the tick index changes
@@ -555,6 +680,16 @@
       tabVisible = !document.hidden;
       syncRunning();
     });
+
+    // theme switch: the glyph colours come from CSS, so rebuild the atlas and repaint
+    if (ctx2) {
+      new MutationObserver(function () {
+        if (!cols || !rows) return;
+        buildAtlas(window.devicePixelRatio || 1);
+        prevCh.fill(255);
+        if (!running) render(performance.now());
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    }
 
     // the in-app Motion setting / OS setting changed while the page is open
     if (window.KanasakaMotion) {
