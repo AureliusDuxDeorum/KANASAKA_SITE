@@ -47,9 +47,9 @@
     applyTheme(theme);
   }
 
-  function buildAuthControls() {
+  function buildAuthControls(className) {
     const wrap = document.createElement("div");
-    wrap.className = "header-auth";
+    wrap.className = className || "header-auth";
 
     const session =
       window.KanasakaAuth && window.KanasakaAuth.getSession
@@ -135,6 +135,7 @@
         toggle.classList.toggle("is-open", open);
         toggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
         toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        if (open) header.classList.remove("is-hidden");
       });
     }
 
@@ -151,6 +152,48 @@
         }
       });
     });
+
+    initHeaderAutoHide(header, nav);
+  }
+
+  // Phones: the pinned header slides away while you scroll down and returns as
+  // soon as you scroll up (or reach the top, open the menu, or tab into it).
+  // CSS only moves it on narrow screens (.is-hidden in style.css).
+  function initHeaderAutoHide(header, nav) {
+    let lastY = window.scrollY;
+    let ticking = false;
+    const THRESHOLD = 8;
+    const AFTER = 80;
+
+    function show() {
+      header.classList.remove("is-hidden");
+    }
+
+    function update() {
+      ticking = false;
+      const y = Math.max(0, window.scrollY);
+      const dy = y - lastY;
+      if (nav && nav.classList.contains("open")) {
+        show();
+      } else if (y <= AFTER || dy < -THRESHOLD) {
+        show();
+      } else if (dy > THRESHOLD) {
+        header.classList.add("is-hidden");
+      }
+      if (Math.abs(dy) > THRESHOLD || y <= AFTER) lastY = y;
+    }
+
+    window.addEventListener(
+      "scroll",
+      function () {
+        if (!ticking) {
+          ticking = true;
+          window.requestAnimationFrame(update);
+        }
+      },
+      { passive: true }
+    );
+    header.addEventListener("focusin", show);
   }
 
   // Fallback for a page that has no pre-rendered shell: render it from shell.js.
@@ -212,6 +255,9 @@
     if (!header) return;
     const current = header.querySelector(".header-auth");
     if (current) current.replaceWith(buildAuthControls());
+    // the same controls live inside the menu on the collapsed layout
+    const inMenu = header.querySelector(".nav-account");
+    if (inMenu) inMenu.replaceWith(buildAuthControls("nav-account"));
     header.classList.remove("is-auth-pending");
   }
 
@@ -359,7 +405,7 @@
 
     // The shell data normally arrives with its own <script> tag; this is the
     // fallback for a page that lacks it.
-    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=3");
+    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=4");
 
     // Header and footer first: the session check is a network call, and the
     // page used to sit without its header until it came back. The sign-in

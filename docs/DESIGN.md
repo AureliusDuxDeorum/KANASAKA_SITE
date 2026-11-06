@@ -53,6 +53,10 @@ The same script maintains `<!-- seo -->` blocks (canonical, Open Graph, Twitter 
 
 New page checklist: copy a page skeleton, write a unique title and description, add `<div id="site-header"></div>` / `<div id="site-footer"></div>` slots (or copy the markers), add it to `NAV`/`FOOTER_COLUMNS` if it has real content, run `npm run prerender`, run `npm test`.
 
+### Header on narrow screens
+
+At 1240 px and below the nav collapses into the menu button, and so do the sign-in controls: `.header-auth` is hidden and the same controls (Log In / Register, or the account link when signed in) live inside the open menu as `.nav-account` (rendered by `shell.js`, kept in step with `.header-auth` by `main.js` `refreshHeader`). On phones (560 px and below) the header is one row (logo left, Search and the menu button right, ~67 px instead of ~118 px) and slides away while scrolling down, returning on scroll up, at the top, when the menu opens or when focus enters it (`initHeaderAutoHide` in `main.js`, `.is-hidden` in `style.css`).
+
 ## Motion
 
 Everything animated is gated in one place, `assets/js/motion.js` + `assets/css/motion.css` (and `assets/js/motion-boot.js`, a tiny synchronous script that sets the same attributes before the first paint), by two attributes on `<html>`:

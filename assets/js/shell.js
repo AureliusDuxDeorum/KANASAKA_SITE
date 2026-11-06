@@ -157,6 +157,13 @@
       );
     });
 
+    // Sign-in controls for the collapsed (menu button) layout; hidden on the desktop
+    // layout where `.header-auth` shows them. main.js keeps both in step.
+    out.push(
+      '<div class="nav-account"><a class="auth-link" href="/login/">Log In</a>' +
+        '<a class="auth-link secondary" href="/register/">Register</a></div>'
+    );
+
     return '<nav class="site-nav" aria-label="Main navigation">' + out.join("") + "</nav>";
   }
 

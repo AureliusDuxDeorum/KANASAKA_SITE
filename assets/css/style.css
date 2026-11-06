@@ -1032,6 +1032,11 @@ h1 {
   gap: 8px;
 }
 
+/* sign-in controls inside the menu: only on the collapsed layout (see the 1240px block) */
+.nav-account {
+  display: none;
+}
+
 .header-username {
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-label);
@@ -2871,10 +2876,24 @@ body.tos-open {
 /* ── Responsive ── */
 
 @media (max-width: 1240px) {
+  /* sign-in controls move into the open menu (.nav-account) */
   .header-auth {
-    order: 3;
-    width: 100%;
-    justify-content: flex-end;
+    display: none;
+  }
+
+  .nav-account {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .nav-account .auth-link,
+  .nav-account .header-user {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
   }
 
   .header-actions {
@@ -2933,9 +2952,9 @@ body.tos-open {
   }
 }
 
-/* Phones: logo + MENU share the first row, Log In / Register get their own
-   full-width row. Without this the header (logo + auth buttons side by side)
-   is ~431px wide and spills off the right edge of narrower screens. */
+/* Phones: one row: logo on the left, Search and the menu button on the right.
+   Log In / Register (or the account link) live inside the menu. The pinned
+   header slides away while scrolling down (main.js sets .is-hidden). */
 @media (max-width: 560px) {
   .site-header-inner {
     flex-wrap: wrap;
@@ -2948,19 +2967,25 @@ body.tos-open {
     display: contents;
   }
 
-  .nav-toggle {
-    order: 2;
+  .terminal-link {
+    order: 1;
     margin-left: auto;
   }
 
-  .header-auth {
-    order: 3;
-    width: 100%;
+  .nav-toggle {
+    order: 2;
   }
 
-  .header-auth .auth-link {
-    flex: 1;
-    text-align: center;
+  .site-header {
+    transition: transform var(--duration-base) var(--ease);
+  }
+
+  .site-header.is-hidden {
+    transform: translateY(-100%);
+  }
+
+  html[data-motion="off"] .site-header {
+    transition: none;
   }
 }
 
@@ -3613,6 +3638,7 @@ button,
 
 /* while the session check is in flight the sign-in controls are not shown (they
    would flip to the account link a moment later) */
-.site-header.is-auth-pending .header-auth {
+.site-header.is-auth-pending .header-auth,
+.site-header.is-auth-pending .nav-account {
   visibility: hidden;
 }
