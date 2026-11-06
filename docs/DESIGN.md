@@ -47,7 +47,7 @@ Current nav: Products (KS_Link, Technical overview) · Downloads · Security · 
 
 ### Shell, pre-render and SEO
 
-The header and footer are **in the HTML of every page**, not built in the browser: `assets/js/shell.js` holds the nav/footer data and pure render functions; `node scripts/prerender.mjs` (`npm run prerender`) writes them into each page between `<!-- shell:header -->` / `<!-- shell:footer -->` markers, and `main.js` only hydrates them (listeners, sign-in controls, the `is-auth-pending` reveal). After changing the nav, a page's `<title>` or `<meta name="description">`, or adding a page, run `npm run prerender`; `npm test` fails if any page is stale. The header collapses into the menu button at 1240 px (`style.css`, `components.css`, `motion.css`, `main.js`, `motion.js` must agree).
+The header and footer are **in the HTML of every page**, not built in the browser: `assets/js/shell.js` holds the nav/footer data and pure render functions; `node scripts/prerender.mjs` (`npm run prerender`) writes them into each page between `<!-- shell:header -->` / `<!-- shell:footer -->` markers, and `main.js` only hydrates them (listeners, sign-in controls, the `is-auth-pending` reveal). After changing the nav, a page's `<title>` or `<meta name="description">`, or adding a page, run `npm run prerender`; `npm test` fails if any page is stale. The header collapses into the menu button at 1320 px (`style.css`, `components.css`, `motion.css`, `main.js`, `motion.js` must agree).
 
 The same script also sets `?v=<content hash>` on every `/assets/js` and `/assets/css` URL (in the pages and in the script loaders inside `main.js`), so a changed file always has a new URL and a browser cannot keep running a stale copy next to new pages or API rules (a stale `auth.js`/`tos.js` once sent an old Terms version and broke registration). Never edit `?v=` numbers by hand; run `npm run prerender` after changing any script or stylesheet (`npm test` fails if it is out of date).
 
@@ -57,7 +57,7 @@ New page checklist: copy a page skeleton, write a unique title and description, 
 
 ### Header on narrow screens
 
-At 1240 px and below the nav collapses into the menu button, and so do the sign-in controls: `.header-auth` is hidden and the same controls (Log In / Register, or the account link when signed in) live inside the open menu as `.nav-account` (rendered by `shell.js`, kept in step with `.header-auth` by `main.js` `refreshHeader`). On phones (560 px and below) the header is one row (logo left, Search and the menu button right, ~67 px instead of ~118 px) and slides away while scrolling down, returning on scroll up, at the top, when the menu opens or when focus enters it (`initHeaderAutoHide` in `main.js`, `.is-hidden` in `style.css`).
+At 1320 px and below the nav collapses into the menu button, and so do the sign-in controls: `.header-auth` is hidden and the same controls (Log In / Register, or the account link when signed in) live inside the open menu as `.nav-account` (rendered by `shell.js`, kept in step with `.header-auth` by `main.js` `refreshHeader`). On phones (560 px and below) the header is one row (logo left, Search and the menu button right, ~67 px instead of ~118 px) and slides away while scrolling down, returning on scroll up, at the top, when the menu opens or when focus enters it (`initHeaderAutoHide` in `main.js`, `.is-hidden` in `style.css`).
 
 ## Motion
 

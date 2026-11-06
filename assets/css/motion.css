@@ -219,7 +219,7 @@ html[data-motion="full"] .button:not([disabled]):active {
 
 /* ── Nav: sliding indicator + stepped dropdown ──────────────────────────── */
 
-@media (min-width: 1241px) {
+@media (min-width: 1321px) {
   .site-nav.has-indicator {
     position: relative;
   }

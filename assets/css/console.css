@@ -197,8 +197,10 @@ html[data-motion="full"] .console-overlay.is-open .term {
 .terminal-link {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0; /* never squeezed by a tight header: the cursor used to wrap under the // */
+  white-space: nowrap;
   gap: var(--space-2);
-  padding: 10px 14px;
+  padding: 10px 10px;
   border: 0;
   background: transparent;
   color: var(--color-text-muted);

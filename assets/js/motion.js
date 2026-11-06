@@ -300,7 +300,7 @@
     }
 
     function place(link) {
-      if (!link || window.innerWidth <= 1240) {
+      if (!link || window.innerWidth <= 1320) {
         indicator.classList.remove("is-on");
         return;
       }

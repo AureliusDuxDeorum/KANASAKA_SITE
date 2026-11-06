@@ -567,7 +567,7 @@
   display: none;
 }
 
-@media (max-width: 1240px) {
+@media (max-width: 1320px) {
   .nav-dropdown .nav-dropdown-overview {
     display: block;
   }

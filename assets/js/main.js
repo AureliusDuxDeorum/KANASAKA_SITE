@@ -145,7 +145,7 @@
       const trigger = item.querySelector(":scope > .nav-link[aria-haspopup]");
       if (!trigger) return;
       trigger.addEventListener("click", function (event) {
-        if (window.innerWidth <= 1240) {
+        if (window.innerWidth <= 1320) {
           event.preventDefault();
           const expanded = item.classList.toggle("expanded");
           trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -305,7 +305,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=97ecb8fe").then(resolve);
+      loadScript("/assets/js/motion.js?v=4545f756").then(resolve);
     });
   }
 

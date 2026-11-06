@@ -141,7 +141,7 @@ main {
   align-items: center;
   justify-content: space-between;
   min-height: 64px;
-  gap: 24px;
+  gap: 16px;
 }
 
 .site-logo {
@@ -1029,10 +1029,12 @@ h1 {
 .header-auth {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   gap: 8px;
 }
 
-/* sign-in controls inside the menu: only on the collapsed layout (see the 1240px block) */
+/* sign-in controls inside the menu: only on the collapsed layout (see the 1320px block) */
 .nav-account {
   display: none;
 }
@@ -2891,7 +2893,7 @@ body.tos-open {
 
 /* ── Responsive ── */
 
-@media (max-width: 1240px) {
+@media (max-width: 1320px) {
   /* sign-in controls move into the open menu (.nav-account) */
   .header-auth {
     display: none;
