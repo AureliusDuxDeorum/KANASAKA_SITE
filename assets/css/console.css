@@ -192,11 +192,12 @@ html[data-motion="full"] .console-overlay.is-open .term {
   white-space: nowrap;
 }
 
-/* entry point: the "//" in the header, a plain text link like the nav */
+/* entry point: the "//" and the word "Search" in the header, a plain text link like the nav */
 
 .terminal-link {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-2);
   padding: 10px 14px;
   border: 0;
   background: transparent;
@@ -209,6 +210,12 @@ html[data-motion="full"] .console-overlay.is-open .term {
   transition: color var(--duration-fast) var(--ease);
 }
 
+.terminal-link-label {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
 .terminal-link:hover,
 .terminal-link:focus-visible {
   color: var(--color-text);
@@ -217,5 +224,19 @@ html[data-motion="full"] .console-overlay.is-open .term {
 @media (max-width: 560px) {
   .terminal-link {
     padding: 8px 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .terminal-link {
+    gap: var(--space-1);
+    padding: 8px 6px;
+  }
+}
+
+/* only the very narrowest phones: no room for the word next to the logo and the menu button */
+@media (max-width: 340px) {
+  .terminal-link-label {
+    display: none;
   }
 }

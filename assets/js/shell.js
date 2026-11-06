@@ -175,7 +175,8 @@
       '<span class="site-logo-text">KANASAKA</span></a>' +
       renderNav(opts.path) +
       '<div class="header-actions">' +
-      '<button type="button" class="terminal-link" aria-label="Open KS_Site terminal" title="KS_Site terminal (Ctrl+K)">//</button>' +
+      '<button type="button" class="terminal-link" aria-label="Search the site (opens the KS_Site terminal)" title="Search (Ctrl+K)">' +
+      '<span class="terminal-link-mark" aria-hidden="true">//</span><span class="terminal-link-label">Search</span></button>' +
       '<div class="header-auth">' +
       '<a class="auth-link" href="/login/">Log In</a>' +
       '<a class="auth-link secondary" href="/register/">Register</a></div>' +

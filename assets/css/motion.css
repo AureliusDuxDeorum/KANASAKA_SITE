@@ -696,8 +696,8 @@ html[data-motion="off"] .showcase-track {
   animation: none;
 }
 
-/* the header "//" carries a blinking cursor */
-html[data-motion="full"] .terminal-link::after {
+/* the header "//" carries a blinking cursor (the "Search" label sits after it) */
+html[data-motion="full"] .terminal-link-mark::after {
   content: "_";
   margin-left: 2px;
   animation: caret-blink 1.8s ease-in-out infinite;
