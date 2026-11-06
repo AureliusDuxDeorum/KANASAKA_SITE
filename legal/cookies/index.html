@@ -31,17 +31,17 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/tokens.css?v=6">
-  <link rel="stylesheet" href="/assets/css/style.css?v=149">
-  <link rel="stylesheet" href="/assets/css/redesign.css?v=99">
-  <link rel="stylesheet" href="/assets/css/components.css?v=14">
-  <link rel="stylesheet" href="/assets/css/motion.css?v=15">
-  <link rel="stylesheet" href="/assets/css/console.css?v=5">
-  <script src="/assets/js/motion-boot.js?v=2"></script>
-  <script defer src="/assets/js/password-policy.js?v=88"></script>
-  <script defer src="/assets/js/auth.js?v=101"></script>
-  <script defer src="/assets/js/shell.js?v=4"></script>
-  <script defer src="/assets/js/main.js?v=150"></script>
+  <link rel="stylesheet" href="/assets/css/tokens.css?v=090a7ebc">
+  <link rel="stylesheet" href="/assets/css/style.css?v=1cd8eb1e">
+  <link rel="stylesheet" href="/assets/css/redesign.css?v=1779b90c">
+  <link rel="stylesheet" href="/assets/css/components.css?v=a064e31b">
+  <link rel="stylesheet" href="/assets/css/motion.css?v=f28e4393">
+  <link rel="stylesheet" href="/assets/css/console.css?v=9fecd40d">
+  <script src="/assets/js/motion-boot.js?v=f8491e9f"></script>
+  <script defer src="/assets/js/password-policy.js?v=798cda94"></script>
+  <script defer src="/assets/js/auth.js?v=00545d2a"></script>
+  <script defer src="/assets/js/shell.js?v=c0582f3c"></script>
+  <script defer src="/assets/js/main.js?v=3ddeb785"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -61,7 +61,7 @@
 
     <h1>Cookie Policy</h1>
 
-    <p>Effective date: 18 October 2026</p>
+    <p>Effective date: 6 November 2026</p>
   </section>
 
   <section class="page-section legal-document">
@@ -69,17 +69,25 @@
       <section class="tos-section">
         <h2>1. What this page covers</h2>
         <p>This Cookie Policy explains what cookies and local-storage data kanasaka.com &mdash; the website &mdash; uses. It supplements our <a href="/legal/privacy/">Privacy Policy</a>.</p>
-        <p>KS_Link, the messaging application you can download from this Site, is a native desktop and mobile app, not a website, and does not use cookies at all. Its session token is stored in your operating system&rsquo;s own secure credential store (Windows Credential Manager, the Linux Secret Service, or the Android Keystore, depending on platform) rather than in a cookie or browser storage. See <a href="/legal/privacy/#ks_link">Section 11 of the Privacy Policy</a> for what KS_Link itself processes.</p>
+        <p>KS_Link, the messaging application you can download from this Site, is a native desktop and mobile app, not a website, and does not use cookies at all. Its session token is stored in your operating system&rsquo;s own secure credential store (Windows Credential Manager, the Linux Secret Service, or the Android Keystore, depending on platform) rather than in a cookie or browser storage. See <a href="/legal/privacy/#ks_link">Section 11 of the Privacy Policy</a> for what KS_Link itself processes. Linking KS_Link to your KANASAKA account happens on this Site: you sign in on kanasaka.com in your browser, so the session cookie described in Section 2 applies to that step, while KS_Link itself still sets no cookies.</p>
       </section>
 
       <section class="tos-section">
         <h2>2. Strictly necessary cookies</h2>
-        <p>We set one session cookie when you sign in, used solely to keep you authenticated. The Site cannot function (you cannot stay logged in) without it, so it is set automatically and is not subject to the consent banner's choice — this matches the "strictly necessary" exemption under the ePrivacy Directive and GDPR, which does not require consent for cookies essential to a service you've requested.</p>
+        <p>We set one session cookie (named <code>__Host-kanasaka_session</code>) when you sign in, used solely to keep you authenticated. If you leave &ldquo;Stay logged in on this device&rdquo; ticked it lasts up to 30 days; if you untick it, it ends when you close your browser. The Site cannot function (you cannot stay logged in) without it, so it is set automatically and is not subject to the consent banner's choice — this matches the "strictly necessary" exemption under the ePrivacy Directive and GDPR, which does not require consent for cookies essential to a service you've requested.</p>
       </section>
 
       <section class="tos-section">
-        <h2>3. Local storage (not a cookie, but disclosed here)</h2>
-        <p>Your browser's local storage, not a cookie, stores a few preferences entirely on your device: your selected theme, and whether you've already acknowledged this cookie notice. None of this is sent to our servers, and none of it is used for tracking or advertising.</p>
+        <h2>3. Local and session storage (not cookies, but disclosed here)</h2>
+        <p>Your browser&rsquo;s local storage, which is not a cookie, keeps these entries on your device:</p>
+        <ul>
+          <li>your selected theme and your animation setting (automatic, full, reduced or off);</li>
+          <li>whether you have already acknowledged the cookie notice;</li>
+          <li>which version of the Terms of Service you have accepted in this browser (when you are signed in, your acceptance is also recorded with your account on our servers, as described in the Terms of Service and Privacy Policy);</li>
+          <li>if you finish registering, or sign in with &ldquo;Stay logged in on this device&rdquo; ticked: the email address, display name and initials of up to five accounts, used only to offer them again on the sign-in screen. They are not sent to our servers except when you submit one to sign in, and you can remove an entry from the sign-in screen or clear it in your browser&rsquo;s settings.</li>
+        </ul>
+        <p>Your browser&rsquo;s session storage, which is cleared when you close the tab, remembers whether the boot sequence has already played and when your visit started, for the live readout in the page footer. The site also writes and immediately removes a single test entry to check that storage works.</p>
+        <p>Apart from the Terms acceptance described above, none of this is sent to our servers, and none of it is used for tracking or advertising.</p>
       </section>
 
       <section class="tos-section">

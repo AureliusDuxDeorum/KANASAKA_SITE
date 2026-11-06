@@ -1316,8 +1316,12 @@ h1 {
   margin-bottom: 14px;
 }
 
-.otp-box {
+/* `.otp-boxes .otp-box` (not just `.otp-box`) so these win over the generic
+   `.auth-field input` padding and font size: with 15px/16px of padding each box
+   had only a few pixels left for its digit on a phone. */
+.otp-boxes .otp-box {
   width: 100%;
+  min-width: 0;
   max-width: 52px;
   aspect-ratio: 1;
   padding: 0;
@@ -1326,11 +1330,23 @@ h1 {
   color: var(--color-text);
   font: inherit;
   font-size: 22px;
+  line-height: 1;
   text-align: center;
   transition:
     border-color 240ms ease,
     box-shadow 320ms var(--auth-ease),
     background-color 240ms ease;
+}
+
+@media (max-width: 420px) {
+  .otp-boxes {
+    gap: 6px;
+  }
+
+  /* never below 16px: iOS zooms the page when a smaller field is focused */
+  .otp-boxes .otp-box {
+    font-size: var(--text-lg);
+  }
 }
 
 .otp-box:hover:not(:disabled) {
@@ -3641,4 +3657,41 @@ button,
 .site-header.is-auth-pending .header-auth,
 .site-header.is-auth-pending .nav-account {
   visibility: hidden;
+}
+
+/* ── Hand-over to the KS_Link app after signing in (auth.js showAppHandoff) ── */
+
+.auth-handoff {
+  position: fixed;
+  inset: 0;
+  z-index: 3500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: var(--color-base);
+}
+
+.auth-handoff-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.auth-handoff-card h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.auth-handoff-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.auth-handoff-note {
+  color: var(--color-text-subtle);
 }

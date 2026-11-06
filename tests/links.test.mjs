@@ -30,12 +30,12 @@ test("internal links and asset references in every page resolve", () => {
   assert.deepEqual(broken, []);
 });
 
-test("scripts and stylesheets are versioned with ?v= so a deploy busts the cache", () => {
+test("scripts and stylesheets are versioned with a content hash (?v=) so a changed file always has a new URL", () => {
   const unversioned = [];
   for (const file of listPages()) {
     const html = fs.readFileSync(path.join(ROOT, file), "utf8");
     for (const m of html.matchAll(/(?:href|src)="(\/assets\/(?:js|css)\/[^"]+)"/g)) {
-      if (!/\?v=\d+$/.test(m[1])) unversioned.push(file + " -> " + m[1]);
+      if (!/\?v=[0-9a-f]{8}$/.test(m[1])) unversioned.push(file + " -> " + m[1]);
     }
   }
   assert.deepEqual(unversioned, []);

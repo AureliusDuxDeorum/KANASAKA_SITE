@@ -305,20 +305,20 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=9").then(resolve);
+      loadScript("/assets/js/motion.js?v=97ecb8fe").then(resolve);
     });
   }
 
   function loadConsole() {
     if (window.KanasakaConsole || window.__ksConsoleLoading) return;
     window.__ksConsoleLoading = true;
-    loadScript("/assets/js/console.js?v=7");
+    loadScript("/assets/js/console.js?v=1695885a");
   }
 
   function loadHud() {
     if (window.__ksHudLoaded) return;
     window.__ksHudLoaded = true;
-    loadScript("/assets/js/hud.js?v=5");
+    loadScript("/assets/js/hud.js?v=886a1b7d");
   }
 
   function loadLogoAnimation() {
@@ -328,7 +328,7 @@
         return;
       }
 
-      loadScript("/assets/js/logo-animation.js?v=69").then(resolve);
+      loadScript("/assets/js/logo-animation.js?v=534a5642").then(resolve);
     });
   }
 
@@ -339,7 +339,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=69").then(resolve);
+      loadScript("/assets/js/tos.js?v=c731ec21").then(resolve);
     });
   }
 
@@ -355,7 +355,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=108").then(resolve);
+      loadScript("/assets/js/hero-ascii.js?v=a2347837").then(resolve);
     });
   }
 
@@ -392,7 +392,7 @@
   function loadBoot() {
     if (window.__ksBootLoading) return;
     window.__ksBootLoading = true;
-    loadScript("/assets/js/boot.js?v=3");
+    loadScript("/assets/js/boot.js?v=8ba54a55");
   }
 
   async function boot() {
@@ -405,7 +405,7 @@
 
     // The shell data normally arrives with its own <script> tag; this is the
     // fallback for a page that lacks it.
-    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=4");
+    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=c0582f3c");
 
     // Header and footer first: the session check is a network call, and the
     // page used to sit without its header until it came back. The sign-in

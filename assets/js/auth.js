@@ -88,13 +88,79 @@
     }
   }
 
+  // Where to go after signing in. `next` is a same-site page (protected pages
+  // send people to /login/?next=...). `return_to` is what the OAuth authorize
+  // endpoint (functions/api/oauth/authorize.js) sends logged-out visitors with
+  // when KS_Link is linking an account: it must point back at that endpoint and
+  // nowhere else, so it can never be used as an open redirect.
   function getNextPath() {
     const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get("return_to");
+    if (returnTo && /^\/api\/oauth\/authorize\?/.test(returnTo) && !returnTo.startsWith("//")) {
+      return returnTo;
+    }
     const next = params.get("next");
     if (!next || !next.startsWith("/") || next.startsWith("//")) {
       return "/";
     }
     return next;
+  }
+
+  function isAppLinkPath(path) {
+    return /^\/api\/oauth\/authorize\?/.test(path);
+  }
+
+  // Signed in on the way back to the KS_Link app: say so, hand the browser over to
+  // the app (the authorize endpoint answers with a ks-link:// redirect, which
+  // leaves this page in place), and keep a button for when the browser asks
+  // first or blocks the automatic hand-over.
+  function showAppHandoff(path) {
+    const existing = document.getElementById("auth-handoff");
+    if (existing) existing.remove();
+
+    const wrap = document.createElement("div");
+    wrap.id = "auth-handoff";
+    wrap.className = "auth-handoff";
+    wrap.setAttribute("role", "status");
+
+    const card = document.createElement("div");
+    card.className = "auth-handoff-card";
+
+    const title = document.createElement("h1");
+    title.textContent = "You are signed in";
+    const lead = document.createElement("p");
+    lead.textContent = "Returning to KS_Link. Your browser may ask you to allow opening the app.";
+    const button = document.createElement("a");
+    button.className = "button";
+    button.href = path;
+    button.textContent = "Open KS_Link";
+    const note = document.createElement("p");
+    note.className = "auth-handoff-note";
+    note.appendChild(document.createTextNode("If nothing happens, press the button. When KS_Link is open you can close this tab, or "));
+    const home = document.createElement("a");
+    home.href = "/";
+    home.textContent = "continue to kanasaka.com";
+    note.appendChild(home);
+    note.appendChild(document.createTextNode("."));
+
+    card.appendChild(title);
+    card.appendChild(lead);
+    card.appendChild(button);
+    card.appendChild(note);
+    wrap.appendChild(card);
+    document.body.appendChild(wrap);
+
+    window.setTimeout(function () {
+      window.location.href = path;
+    }, 250);
+  }
+
+  function goAfterSignIn(path) {
+    if (isAppLinkPath(path)) {
+      showAppHandoff(path);
+    } else {
+      window.location.href = path;
+    }
   }
 
   async function apiRequest(path, options) {
@@ -504,7 +570,8 @@
         sessionCache = data;
         showFormSuccess(form, "Email verified. Redirecting...");
         window.setTimeout(function () {
-          window.location.href = getNextPath() === "/" ? "/downloads/" : getNextPath();
+          const target = getNextPath();
+          goAfterSignIn(target === "/" ? "/downloads/" : target);
         }, 1200);
       } catch (error) {
         showFormError(form, error.message || "Verification failed.");
@@ -2475,7 +2542,7 @@
     const wasDedicatedPage = onAuthModalPage();
     closeAuthModal();
     if (wasDedicatedPage) {
-      window.location.href = getNextPath();
+      goAfterSignIn(getNextPath());
     }
   }
 

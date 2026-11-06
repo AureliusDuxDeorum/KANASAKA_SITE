@@ -5,6 +5,10 @@
 //   <!-- seo -->           ... <!-- /seo -->             canonical, Open Graph, Twitter card
 //                                                        (and Organization JSON-LD on the home page)
 //   sitemap.xml, and the Sitemap line in robots.txt
+//   ?v=<hash> on every /assets/js and /assets/css URL (in the pages and in the
+//                         loaders inside main.js): a short hash of the file's content,
+//                         so a changed file always has a new URL and a browser can never
+//                         keep running an old copy next to new pages or API rules.
 //
 // The <title> and <meta name="description"> stay hand-written in each page (the
 // description is required, 50-160 characters, on every indexable page).
@@ -15,6 +19,7 @@
 // There is no build step on the host (the build command is empty), so this
 // runs here, and its output is committed.
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
@@ -133,11 +138,38 @@ function setSeo(html, info) {
   return html.slice(0, at) + block + "\n" + html.slice(at);
 }
 
-export function renderPage(html, file, shell) {
+const ASSET_RE = /(\/assets\/(?:js|css)\/[A-Za-z0-9._-]+\.(?:js|css))\?v=[A-Za-z0-9]+/g;
+const MAIN_JS = "/assets/js/main.js";
+
+function hashOf(bytes) {
+  return crypto.createHash("sha1").update(bytes).digest("hex").slice(0, 8);
+}
+
+// -> { mainJs: text of main.js with current loader versions, version(urlPath) }
+// main.js is versioned from its *updated* text, so the pages always match the file
+// that will actually be committed.
+export function assetVersions() {
+  const cache = new Map();
+  function fileHash(urlPath) {
+    if (!cache.has(urlPath)) cache.set(urlPath, hashOf(fs.readFileSync(path.join(ROOT, urlPath.slice(1)))));
+    return cache.get(urlPath);
+  }
+  const mainPath = path.join(ROOT, MAIN_JS.slice(1));
+  const mainJs = fs.readFileSync(mainPath, "utf8").replace(ASSET_RE, (m, p) => (p === MAIN_JS ? m : p + "?v=" + fileHash(p)));
+  cache.set(MAIN_JS, hashOf(mainJs));
+  return { mainJs, mainPath, version: fileHash };
+}
+
+export function versionAssets(text, versions) {
+  return text.replace(ASSET_RE, (m, p) => p + "?v=" + versions.version(p));
+}
+
+export function renderPage(html, file, shell, versions) {
   const page = urlPath(file);
   let out = inject(html, "shell:header", shell.renderHeader({ path: page, authPending: true }));
   out = inject(out, "shell:footer", shell.renderFooter());
   out = setSeo(out, seoInfo(out, file));
+  if (versions) out = versionAssets(out, versions);
   return out;
 }
 
@@ -169,12 +201,17 @@ function syncFile(file, wanted, check, stale) {
 export function run({ check = false } = {}) {
   const shell = loadShell();
   const stale = [];
+  const versions = assetVersions();
+  if (versions.mainJs !== fs.readFileSync(versions.mainPath, "utf8")) {
+    stale.push("assets/js/main.js");
+    if (!check) fs.writeFileSync(versions.mainPath, versions.mainJs);
+  }
   for (const file of listPages()) {
     const abs = path.join(ROOT, file);
     const before = fs.readFileSync(abs, "utf8");
     let after;
     try {
-      after = renderPage(before, file, shell);
+      after = renderPage(before, file, shell, versions);
     } catch (err) {
       throw new Error(file + ": " + err.message);
     }
