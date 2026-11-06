@@ -69,6 +69,34 @@ export async function onRequestGet(context) {
     return jsonResponse(manifest);
   }
 
+  // Platform-neutral "what's the newest release?" for the installs that can't
+  // self-update through Tauri's updater (Linux packages, Android): the app asks
+  // this, compares versions itself, and offers a download link. The version is
+  // the Windows manifest's -- releases are published together, Windows last, so
+  // it is the release train's version.
+  if (slug === "version.json") {
+    const object = await env.INSTALLERS.get(MANIFEST_KEY);
+    if (!object) {
+      return errorResponse("No update manifest published yet.", 404);
+    }
+    let manifest;
+    try {
+      manifest = await object.json();
+    } catch {
+      return errorResponse("Update manifest is corrupt.", 500);
+    }
+    const downloads = {};
+    for (const id of Object.keys(PLATFORMS)) {
+      downloads[id] = new URL(`/api/ks-link-updater/download/${id}`, request.url).toString();
+    }
+    return jsonResponse({
+      version: manifest.version,
+      notes: manifest.notes || "",
+      pub_date: manifest.pub_date || null,
+      downloads,
+    });
+  }
+
   if (slug.startsWith("download/")) {
     const platformId = slug.slice("download/".length);
     const config = PLATFORMS[platformId];
