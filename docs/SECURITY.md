@@ -6,7 +6,7 @@ Last reviewed: 2026-11-03 (v1.3.0). Reporting: see `/.well-known/security.txt`.
 
 - **Sessions** -- `__Host-` cookie, HttpOnly, Secure, SameSite=Strict; only HMAC hashes stored; rotated every 24 h; every session revoked on login, password change and 2FA disable.
 - **Passwords** -- Argon2id (19 MiB / 3 passes), 15+ characters, blocklist; unknown-email logins pay for a dummy hash so timing does not reveal accounts.
-- **CSRF** -- `functions/api/_middleware.js` rejects any non-GET `/api/*` request from another origin (Stripe webhook exempt, it is signature-authenticated); every route also checks itself.
+- **CSRF** -- `functions/api/_middleware.js` rejects any non-GET `/api/*` request from another origin; every route also checks itself (no route is exempt).
 - **CSP** -- `script-src 'self'`, `style-src 'self'` (no inline anything), `object-src 'none'`, `frame-ancestors 'none'`, `connect-src 'self'`, no third-party hosts. `tests/static-policy.test.mjs` fails if a page or script would need an inline exception.
 - **Rate limits (in code)** -- login per account and per IP; registration per IP; reset/verification/terms mails per address and per IP; 2FA codes per account; wrong one-time codes per account (5 / 5 min, then the challenge and codes are destroyed); admin actions per actor.
 - **Admin** -- admin tools need an admin role *and* 2FA, step-up password for role changes, lockout after 3 wrong confirmations, audit log, constant-time comparison for the bearer secret.
@@ -37,14 +37,14 @@ Last reviewed: 2026-11-03 (v1.3.0). Reporting: see `/.well-known/security.txt`.
 Account > Developer (admin + 2FA):
 
 - **System Status** -- configuration present/missing (never values), database + schema + required tables, 24 h activity, build info, and a list of things that can only be checked outside the app.
-- **Self-Test Suite** -- non-destructive live checks (hashing, Argon2, cookie flags, same-origin rules, error sanitising, Stripe signature handling, DB round trip, throttle counters, and the headers/CSRF/admin gate of this very deployment).
+- **Self-Test Suite** -- non-destructive live checks (hashing, Argon2, cookie flags, same-origin rules, error sanitising, DB round trip, throttle counters, and the headers/CSRF/admin gate of this very deployment).
 
 Locally: `npm test`.
 
 ## Manual checklist (cannot be verified from the app)
 
 - [x] Cloudflare WAF rate limit on `/api/auth/*` POSTs (Free plan: 10 requests / 10 s per IP, 10 s block), verified 2026-11-05; remaining WAF options in `docs/CLOUDFLARE_WAF.md`
-- [ ] `SESSION_SECRET`, `ADMIN_SECRET`, `STRIPE_*`, `RESEND_API_KEY` set in Pages production secrets (System Status shows which are missing)
-- [ ] 2FA on the Cloudflare, GitHub, Stripe and Resend accounts
+- [ ] `SESSION_SECRET`, `ADMIN_SECRET`, `RESEND_API_KEY` set in Pages production secrets (System Status shows which are missing)
+- [ ] 2FA on the Cloudflare, GitHub and Resend accounts
 - [ ] DNSSEC + CAA records; HSTS preload submission
 - [ ] Decide whether to make a missing `SESSION_SECRET` a hard failure (currently reported as FAIL, token hashing falls back to unkeyed SHA-256)

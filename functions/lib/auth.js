@@ -11,7 +11,7 @@ import {
   passwordPolicyError,
 } from "./password-policy.js";
 import { getAuthSchema, usersHaveKsStocksSubscriptionColumns } from "./schema.js";
-import { ksStocksEntitlementFromUser, ksPackageSubscriptionsOpen, KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE } from "./ks-stocks-access.js";
+import { ksStocksEntitlementFromUser } from "./ks-stocks-access.js";
 import { generateNumericCode, generateRawToken, hashSecret } from "./tokens.js";
 import { applyDuePendingRoleChanges } from "./pending-changes.js";
 
@@ -327,7 +327,7 @@ export async function deleteAllUserSessions(env, userId) {
 async function loadSessionUser(env, tokenHash, schema) {
   const hasKsStocksColumns = await usersHaveKsStocksSubscriptionColumns(env);
   const subscriptionSelect = hasKsStocksColumns
-    ? ", u.ks_stocks_subscription_status, u.ks_stocks_subscription_ends_at, u.stripe_customer_id"
+    ? ", u.ks_stocks_subscription_status, u.ks_stocks_subscription_ends_at"
     : "";
 
   if (schema.sessionsHashed) {
@@ -657,11 +657,6 @@ export function sessionPayload(user, env) {
     twoFactorEnabled: Boolean(user && user.totp_enabled),
     ...ksStocksEntitlementFromUser(user),
   };
-
-  if (env) {
-    payload.subscriptionsOpen = ksPackageSubscriptionsOpen(env);
-    payload.subscriptionsPausedMessage = KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE;
-  }
 
   return payload;
 }

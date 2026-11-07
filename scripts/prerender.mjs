@@ -74,7 +74,7 @@ export const OG_IMAGE = "/assets/images/og-default.png";
 
 // Pages that are reachable but must not be advertised: not in the sitemap, no
 // share tags. (Everything robots.txt disallows is covered by its prefixes.)
-export const UNLISTED_PREFIXES = ["/account/", "/admin/", "/login/", "/register/", "/verify/", "/forgot-password/", "/reset-password/", "/products/ks-stocks/", "/link/"];
+export const UNLISTED_PREFIXES = ["/account/", "/admin/", "/login/", "/register/", "/verify/", "/forgot-password/", "/reset-password/", "/link/"];
 
 function attr(value) {
   return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

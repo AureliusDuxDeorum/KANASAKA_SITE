@@ -11,8 +11,6 @@ import { insertUser, json, makeEnv, ORIGIN, req, sessionCookieFor } from "./help
 const SECRETS = {
   SESSION_SECRET: "super-secret-session-value-0123456789abcdef",
   ADMIN_SECRET: "super-secret-admin-value-0123456789abcdef0123",
-  STRIPE_SECRET_KEY: "sk_live_should_never_leak",
-  STRIPE_WEBHOOK_SECRET: "whsec_should_never_leak",
   RESEND_API_KEY: "re_should_never_leak",
 };
 
@@ -53,7 +51,7 @@ test("status: an admin with 2FA gets a report that never contains a secret value
 
   const report = JSON.parse(text);
   const ids = report.groups.flatMap((g) => g.checks.map((c) => c.id));
-  for (const id of ["SESSION_SECRET", "STRIPE_WEBHOOK_SECRET", "db-reach", "db-tables", "waf"]) assert.ok(ids.includes(id), id);
+  for (const id of ["SESSION_SECRET", "RESEND_API_KEY", "db-reach", "db-tables", "waf"]) assert.ok(ids.includes(id), id);
   assert.equal(report.summary.fail, 0);
   const warned = report.groups.flatMap((g) => g.checks).filter((c) => c.status === "warn").map((c) => c.id).sort();
   assert.deepEqual(warned, ["ARGON2", "INSTALLERS"], "fixture has no R2 bucket and uses cheap Argon2 settings");
@@ -65,7 +63,6 @@ test("status: missing configuration is reported as FAIL, not hidden", async () =
   const by = Object.fromEntries(report.groups.flatMap((g) => g.checks).map((c) => [c.id, c]));
   assert.equal(by.SESSION_SECRET.status, "fail");
   assert.equal(by.RESEND_API_KEY.status, "fail");
-  assert.equal(by.STRIPE_WEBHOOK_SECRET.status, "fail");
   assert.equal(by.INSTALLERS.status, "warn");
   assert.equal(by["db-reach"].status, "ok");
   assert.equal(by["db-tables"].status, "ok");
@@ -155,8 +152,7 @@ test("self-test: a healthy deployment passes every check it can run", async () =
   const failed = report.results.filter((r) => r.status === "fail");
   assert.deepEqual(failed, []);
   assert.equal(report.summary.fail, 0);
-  assert.ok(report.summary.pass >= 13, "ran " + report.summary.pass);
-  assert.equal(byId(report)["stripe-signature"].status, "pass");
+  assert.ok(report.summary.pass >= 12, "ran " + report.summary.pass);
   assert.equal(byId(report)["argon2"].status, "pass");
 });
 
@@ -168,10 +164,9 @@ test("self-test: leaves no probe rows behind", async () => {
 });
 
 test("self-test: skips what it cannot run instead of failing", async () => {
-  const env = makeEnv({ ...SECRETS, STRIPE_WEBHOOK_SECRET: undefined });
+  const env = makeEnv(SECRETS);
   const report = await runSelfTests(env, { origin: ORIGIN, fetchImpl: async () => { throw new Error("offline"); } });
   const r = byId(report);
-  assert.equal(r["stripe-signature"].status, "skip");
   assert.equal(r["http-static-headers"].status, "skip");
   assert.equal(report.summary.fail, 0);
 });

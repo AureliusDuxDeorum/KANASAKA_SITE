@@ -2,9 +2,9 @@
 //
 //  1. CSRF backstop. Every state-changing route already calls
 //     requireSameOrigin itself; this makes the rule global so a route added
-//     later cannot forget it. The one exception is the Stripe webhook, which
-//     is called by Stripe (no browser Origin) and authenticates with its own
-//     signature instead.
+//     later cannot forget it. A route that must be called by something other
+//     than a browser (no Origin header) and authenticates some other way would be
+//     listed in CSRF_EXEMPT_PATHS; there is none today.
 //  2. Security headers on API responses. `_headers` only covers static files,
 //     so JSON/avatar/installer responses from Functions did not get them.
 //     Headers a handler already set (Cache-Control on the avatar, the R2
@@ -13,7 +13,7 @@
 import { assertSameOrigin } from "../lib/security.js";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-const CSRF_EXEMPT_PATHS = new Set(["/api/stripe/webhook"]);
+const CSRF_EXEMPT_PATHS = new Set();
 
 const API_HEADERS = {
   "X-Content-Type-Options": "nosniff",

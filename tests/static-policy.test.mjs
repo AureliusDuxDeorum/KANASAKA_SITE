@@ -90,7 +90,7 @@ test("no third-party hosts are loaded by pages, scripts or styles", () => {
 });
 
 test("every state-changing API route checks the origin (middleware is the backstop, this is the contract)", () => {
-  const exempt = new Set(["functions/api/stripe/webhook.js"]);
+  const exempt = new Set(); // no route is exempt
   for (const file of functions.filter((f) => f.startsWith("functions/api/") && !f.endsWith("_middleware.js"))) {
     const text = read(file);
     if (!/onRequest(Post|Put|Patch|Delete)\b/.test(text)) continue;

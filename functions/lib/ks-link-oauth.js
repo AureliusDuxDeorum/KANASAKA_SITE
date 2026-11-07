@@ -1,7 +1,6 @@
 // KS_Link account unification (plan: KS_Link/docs' rework plan, Phase 1.1) --
-// KANASAKA_SITE acting as an OAuth *provider* for the first time. Mirrors
-// alpaca-oauth.js's allowlist/exchange shape, but in the opposite direction
-// (we issue codes instead of redeeming someone else's), and reuses
+// KANASAKA_SITE acting as an OAuth *provider* for the first time: it issues
+// the codes (a redirect allowlist plus a code exchange), and reuses
 // email_tokens' exact pattern for the code itself: a random raw value the
 // caller holds, hashed via hashSecret() before it ever touches D1, so a DB
 // read alone can never mint a session.

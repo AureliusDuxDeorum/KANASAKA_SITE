@@ -339,7 +339,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=c731ec21").then(resolve);
+      loadScript("/assets/js/tos.js?v=4c3b277a").then(resolve);
     });
   }
 
@@ -405,7 +405,7 @@
 
     // The shell data normally arrives with its own <script> tag; this is the
     // fallback for a page that lacks it.
-    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=c0582f3c");
+    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=4f2a6683");
 
     // Header and footer first: the session check is a network call, and the
     // page used to sit without its header until it came back. The sign-in

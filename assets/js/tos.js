@@ -1,98 +1,84 @@
 (function () {
   var TOS_KEY = "kanasaka-tos-accepted";
-  var TOS_VERSION = "4";
+  var TOS_VERSION = "5";
   var SHOW_DELAY_MS = 1000;
 
   var TERMS_HTML =
     '<section class="tos-section">' +
     "<h3>1. Agreement to Terms</h3>" +
-    "<p>By accessing or using the KANASAKA website at kanasaka.com (the \"Site\"), creating an account, purchasing a subscription, or using software or downloads made available through the Site, you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree, do not use the Site or our services.</p>" +
+    "<p>By accessing or using the KANASAKA website at kanasaka.com (the \"Site\"), creating an account, or using software or downloads made available through the Site, you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree, do not use the Site or our services.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>2. Description of Service</h3>" +
-    "<p>KANASAKA provides an informational website, user accounts, subscription billing for KS_Package, authenticated access to entitled product downloads, desktop software access (including KS Stocks where entitled), a free public download of KS_Link (a separate messaging service described in Section 15), support and contact channels, and related online services. Features, pricing, and product availability may change, be limited, or be withdrawn during active development.</p>" +
+    "<p>KANASAKA provides an informational website, user accounts, downloads of KANASAKA software, a free public download of KS_Link (a separate messaging service described in Section 14), support and contact channels, and related online services. Features and product availability may change, be limited, or be withdrawn during active development.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>3. Eligibility</h3>" +
-    "<p>You must be at least 16 years old and able to form a binding contract under applicable law. By using the Site or purchasing a subscription, you represent that you meet these requirements. If you purchase on behalf of an organization, you represent that you have authority to bind that organization.</p>" +
+    "<p>You must be at least 16 years old and able to form a binding contract under applicable law. By using the Site, you represent that you meet these requirements. If you use the Site on behalf of an organization, you represent that you have authority to bind that organization.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>4. Accounts and Security</h3>" +
-    "<p>You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. You must provide accurate registration information, keep it up to date, and notify us promptly of unauthorized access. Your KANASAKA account ID is used to identify your account for permissions, billing, and software entitlement. Entitlements are tied to your account, not to a specific device. We may suspend or terminate accounts that violate these Terms or pose a security risk.</p>" +
+    "<p>You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. You must provide accurate registration information, keep it up to date, and notify us promptly of unauthorized access. Your KANASAKA account ID is used to identify your account for permissions and software access. Access is tied to your account, not to a specific device. We may suspend or terminate accounts that violate these Terms or pose a security risk.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>5. Acceptable Use</h3>" +
     "<p>You agree not to:</p>" +
     "<ul>" +
-    "<li>use the Site, subscriptions, or downloads for unlawful, harmful, or fraudulent purposes;</li>" +
-    "<li>attempt to gain unauthorized access to systems, accounts, paywalled content, or data;</li>" +
-    "<li>share, resell, or pool subscription access in a manner that circumvents account-based entitlement;</li>" +
-    "<li>interfere with or disrupt the Site, its infrastructure, billing systems, or other users;</li>" +
+    "<li>use the Site or downloads for unlawful, harmful, or fraudulent purposes;</li>" +
+    "<li>attempt to gain unauthorized access to systems, accounts, restricted content, or data;</li>" +
+    "<li>interfere with or disrupt the Site, its infrastructure, or other users;</li>" +
     "<li>reverse engineer, decompile, or redistribute software except as expressly permitted;</li>" +
     "<li>scrape, harvest, or automate access in a manner that burdens our services;</li>" +
     "<li>upload malware or submit false, misleading, or abusive content.</li>" +
     "</ul>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>6. Subscriptions and Billing (KS_Package)</h3>" +
-    "<p><strong>6.1 Product.</strong> KS_Package is a recurring subscription that grants entitlement to KANASAKA software and downloads made available under these Terms while the subscription is active, including KS Stocks desktop access, unless a specific product page states additional restrictions.</p>" +
-    "<p><strong>6.2 Pricing.</strong> Current list prices are €10.00 per month or €100.00 per year. The price shown at checkout is the price that applies to your purchase. We may change prices for future billing periods with reasonable notice where required by law.</p>" +
-    "<p><strong>6.3 Payment processing.</strong> Payments are processed by Stripe. By subscribing, you also agree to Stripe's applicable terms and privacy practices for payment processing. We do not store full payment card numbers on our servers.</p>" +
-    "<p><strong>6.4 Account-based entitlement.</strong> Your subscription is linked to your KANASAKA account and account ID. Entitlement applies when you sign in with that account on supported applications and the Site. It is not transferable and does not constitute a device license.</p>" +
-    "<p><strong>6.5 Renewal and cancellation.</strong> Subscriptions renew automatically for the selected billing period until you cancel through the billing portal in Account Settings or as otherwise made available. You may cancel at any time. After cancellation, access generally continues until the end of the current paid billing period, unless otherwise stated at checkout or required by law.</p>" +
-    "<p><strong>6.6 Failed payments.</strong> If a renewal payment fails, we may suspend or end entitlement until payment is successfully processed.</p>" +
-    "<p><strong>6.7 Refunds.</strong> Except where mandatory consumer law requires otherwise, subscription fees are non-refundable, including for partial billing periods or unused time.</p>" +
-    "<p><strong>6.8 EU withdrawal right.</strong> If you are a consumer in the European Union, you may have a statutory right to withdraw from a distance contract within 14 days. If you request immediate access to digital content or services and expressly consent to begin performance before the withdrawal period ends, you acknowledge that you may lose your right of withdrawal once delivery has begun, to the extent permitted by law.</p>" +
-    "<p><strong>6.9 Authorized complimentary access.</strong> We may grant selected authorized accounts complimentary access to some or all entitled services without a paid subscription. Such access may be modified or revoked at any time.</p>" +
+    "<h3>6. Software Access and Downloads</h3>" +
+    "<p>KS_Link is free, as described in Section 14. Software is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>7. Software Access and Downloads</h3>" +
-    "<p>Access to product downloads and entitled desktop software requires a valid KS_Package subscription or authorized complimentary access, except where a product page explicitly states different requirements — KS_Link is free and requires neither, as described in Section 15. Software such as KS Stocks is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
-    "<p><strong>KS Stocks third-party accounts.</strong> KS Stocks does not include Alpaca or Ollama accounts. You must create and maintain your own Alpaca brokerage account and Ollama access (cloud API key or local instance) to use core app features. You are responsible for those third-party accounts, their fees, and compliance with their terms.</p>" +
+    "<h3>7. Intellectual Property</h3>" +
+    "<p>The Site, KANASAKA branding, logos, text, graphics, and software are owned by KANASAKA or its licensors and protected by intellectual property laws. These Terms do not grant you any ownership rights except the limited right to use the Site and permitted downloads or software in accordance with these Terms.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>8. Intellectual Property</h3>" +
-    "<p>The Site, KANASAKA branding, logos, text, graphics, and software are owned by KANASAKA or its licensors and protected by intellectual property laws. These Terms do not grant you any ownership rights except the limited right to use the Site, your subscription entitlements, and permitted downloads or software in accordance with these Terms.</p>" +
+    "<h3>8. Privacy</h3>" +
+    "<p>Our handling of personal data is described in our Privacy Policy. By using the Site, you acknowledge that we process account, security, and usage data as needed to operate the service.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>9. Privacy</h3>" +
-    "<p>Our handling of personal data is described in our Privacy Policy. By using the Site or subscribing, you acknowledge that we process account, security, billing, and usage data as needed to operate the service, and that payment data is handled by our payment processor.</p>" +
+    "<h3>9. Disclaimers</h3>" +
+    "<p>The Site and all software are provided \"as is\" and \"as available\" without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation. Market, portfolio, and analysis features in KANASAKA software are provided for informational and tooling purposes only. They do not constitute investment, tax, or legal advice, and they are not a regulated financial service. You are solely responsible for your financial decisions. Software that relies on third-party services does not include those services; we do not operate them and are not responsible for their availability, accuracy, or policies.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>10. Disclaimers</h3>" +
-    "<p>The Site, subscriptions, and all software are provided \"as is\" and \"as available\" without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, secure, or error-free operation. KS Stocks and related market or portfolio features are provided for informational and tooling purposes only. They do not constitute investment, tax, or legal advice, and they are not a regulated financial service. You are solely responsible for your financial decisions. KS Stocks relies on third-party services including Alpaca and Ollama; we do not operate those services and are not responsible for their availability, accuracy, or policies.</p>" +
+    "<h3>10. Limitation of Liability</h3>" +
+    "<p>To the fullest extent permitted by law, KANASAKA and its operators will not be liable for indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, or goodwill arising from your use of the Site or software. Our total liability for any claim relating to the Site or services will not exceed €100.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>11. Limitation of Liability</h3>" +
-    "<p>To the fullest extent permitted by law, KANASAKA and its operators will not be liable for indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, or goodwill arising from your use of the Site, subscriptions, or software. Our total liability for any claim relating to the Site or services will not exceed the greater of €100 or the amount you paid us (if any) in the twelve months before the claim.</p>" +
-    "</section>" +
-    '<section class="tos-section">' +
-    "<h3>12. Indemnification</h3>" +
+    "<h3>11. Indemnification</h3>" +
     "<p>You agree to indemnify and hold harmless KANASAKA from claims, damages, and expenses (including reasonable legal fees) arising from your misuse of the Site, violation of these Terms, or infringement of third-party rights.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>13. Termination</h3>" +
-    "<p>You may stop using the Site at any time. If you delete your KANASAKA account, you remain responsible for canceling any active subscription through the billing portal so that renewals do not continue. We may suspend or terminate access if you breach these Terms or if required for legal, security, or operational reasons. Upon termination or expiry of entitlement, access to downloads and entitled software may end immediately or at the end of the current billing period, as applicable. Provisions that by nature should survive termination will remain in effect.</p>" +
+    "<h3>12. Termination</h3>" +
+    "<p>You may stop using the Site at any time. We may suspend or terminate access if you breach these Terms or if required for legal, security, or operational reasons. Upon termination, access to downloads and software that depends on your account may end immediately. Provisions that by nature should survive termination will remain in effect.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>14. Changes to Terms</h3>" +
-    "<p>We may update these Terms from time to time. Material changes will be indicated by updating the effective date and, where appropriate, the Terms version. Continued use after changes become effective constitutes acceptance of the revised Terms. If you do not agree to updated Terms, you must stop using the Site and cancel any active subscription.</p>" +
+    "<h3>13. Changes to Terms</h3>" +
+    "<p>We may update these Terms from time to time. Material changes will be indicated by updating the effective date and, where appropriate, the Terms version. Continued use after changes become effective constitutes acceptance of the revised Terms. If you do not agree to updated Terms, you must stop using the Site.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>15. KS_Link</h3>" +
-    "<p>KS_Link is a free, alpha-stage end-to-end encrypted messaging application distributed from this Site. Unlike the KS_Package-entitled downloads described in Sections 6&ndash;7, KS_Link requires no subscription. A KS_Link account is a KANASAKA account: you sign in to KS_Link with your KANASAKA credentials, and your account is created, managed, and deleted through your Settings on this Site rather than inside the app. KS_Link operates its own separate messaging infrastructure for everything beyond account identity &mdash; conversations, message delivery, and social features &mdash; which is described for your reference in our Privacy Policy. If you created a KS_Link account before this Site and KS_Link shared accounts, it continues to work with its original sign-in during a transition period and will be offered the option to link to a KANASAKA account.</p>" +
-    "<p>KS_Link is pre-release software: it may be incomplete or unstable, may contain security issues not yet discovered, and may change materially — including in ways that are not backward compatible — without notice. It is provided \"as is\" under the disclaimers in Section 10. You must be at least 16 years old to create a KS_Link account.</p>" +
+    "<h3>14. KS_Link</h3>" +
+    "<p>KS_Link is a free, alpha-stage end-to-end encrypted messaging application distributed from this Site. A KS_Link account is a KANASAKA account: you sign in to KS_Link with your KANASAKA credentials, and your account is created, managed, and deleted through your Settings on this Site rather than inside the app. KS_Link operates its own separate messaging infrastructure for everything beyond account identity &mdash; conversations, message delivery, and social features &mdash; which is described for your reference in our Privacy Policy. If you created a KS_Link account before this Site and KS_Link shared accounts, it continues to work with its original sign-in during a transition period and will be offered the option to link to a KANASAKA account.</p>" +
+    "<p>KS_Link is pre-release software: it may be incomplete or unstable, may contain security issues not yet discovered, and may change materially — including in ways that are not backward compatible — without notice. It is provided \"as is\" under the disclaimers in Section 9. You must be at least 16 years old to create a KS_Link account.</p>" +
     "<p>KS_Link can keep your conversation history, including images, on your own device in encrypted form, so it is still there when you reopen the app. That copy exists only on that device: it is encrypted with a key held in the device&rsquo;s secure storage, it is never uploaded to us, and it does not transfer to your other devices. You are responsible for your device and its security. We cannot read, recover or restore saved history; it is lost if you delete it, if you turn history off, if the app&rsquo;s data or the device&rsquo;s secure storage is reset, or if the device is lost. You can turn history off, choose how long messages are kept, erase it when you sign out, or delete it at any time in the app&rsquo;s Settings. Images sent in chats are automatically resized and compressed on your device to fit within message size limits.</p>" +
     "<p>KS_Link includes a user-facing reporting mechanism for content or accounts that violate the law or KS_Link's own acceptable-use terms. Reported material and limited associated records may be retained for a period after a report (at least 90 days) to support a review process and to meet legal reporting obligations that may apply to online messaging services, including reporting apparent child sexual abuse material to the relevant authorities where required by law. We may suspend or remove access to KS_Link, or to a specific account, for violations of its acceptable-use terms, for legal compliance, or for security reasons.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>16. Governing Law</h3>" +
+    "<h3>15. Governing Law</h3>" +
     "<p>These Terms are governed by the laws of Germany, excluding conflict-of-law rules. Mandatory consumer protections in your country of residence remain unaffected where applicable.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>17. Contact</h3>" +
+    "<h3>16. Contact</h3>" +
     "<p>Questions about these Terms: <a href=\"mailto:contactns@kanasaka.com\">contactns@kanasaka.com</a></p>" +
-    "<p class=\"tos-effective\">Effective date: 5 November 2026</p>" +
+    "<p class=\"tos-effective\">Effective date: 7 November 2026</p>" +
     "</section>";
 
   var scheduled = false;

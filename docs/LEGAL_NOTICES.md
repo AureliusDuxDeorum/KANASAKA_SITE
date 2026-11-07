@@ -1,8 +1,7 @@
 # Legal/policy-update notices
 
 Reusable system for telling existing account holders about a material
-change to a legal document (cookie policy, ToS, privacy policy, refund
-policy, ...). Publish once, two things happen automatically:
+change to a legal document (cookie policy, ToS, privacy policy, ...). Publish once, two things happen automatically:
 
 1. Every verified user gets an email right away.
 2. Any signed-in user who hasn't acknowledged that notice yet sees a
@@ -35,7 +34,7 @@ Or from an authenticated admin session (dev_ks / role=admin, 2FA required)
 instead of the bearer secret -- same endpoint, just send the session cookie
 instead of the `Authorization` header.
 
-- `noticeType` -- any short slug (`cookies`, `tos`, `privacy`, `refund`, ...).
+- `noticeType` -- any short slug (`cookies`, `tos`, `privacy`, ...).
   Each type tracks its own "latest version" independently.
 - `version` -- any string that changes when the document changes (a date
   works well: `2026-10-15`). Publishing the same `noticeType` + `version`

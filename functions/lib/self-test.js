@@ -11,7 +11,6 @@ import { clearSessionCookieHeader, sessionCookieHeader, SESSION_COOKIE } from ".
 import { publicError } from "./errors.js";
 import { passwordPolicyError } from "./password-policy.js";
 import { assertSameOrigin } from "./security.js";
-import { verifyStripeWebhook } from "./stripe.js";
 import { logEvent, tooManyRecentEvents } from "./throttle.js";
 import {
   generateNumericCode,
@@ -143,7 +142,7 @@ export function buildTests({ env, origin, fetchImpl }) {
         console.error = () => {};
         try {
           assert(publicError(new Error("D1_ERROR: no such table: users"), "x") === "x", "Database error leaked.");
-          assert(publicError(new Error("fetch failed https://api.stripe.com"), "x") === "x", "Network error leaked.");
+          assert(publicError(new Error("fetch failed https://api.example.com"), "x") === "x", "Network error leaked.");
         } finally {
           console.error = quiet;
         }
@@ -152,23 +151,6 @@ export function buildTests({ env, origin, fetchImpl }) {
           "User-facing message was hidden."
         );
         return "ok";
-      },
-    },
-    {
-      id: "stripe-signature",
-      label: "Stripe webhook signature verification",
-      run: async () => {
-        const secret = env.STRIPE_WEBHOOK_SECRET;
-        if (!secret) throw new Skip("STRIPE_WEBHOOK_SECRET is not set.");
-        const body = JSON.stringify({ id: "evt_selftest", type: "selftest.probe" });
-        const stamp = Math.floor(Date.now() / 1000);
-        const sign = async (t, payload) => "t=" + t + ",v1=" + (await hmacHex(secret, t + "." + payload));
-        const make = (header) => request(new URL("/api/stripe/webhook", origin).toString(), { method: "POST", headers: { "stripe-signature": header }, body });
-
-        assert(await verifyStripeWebhook(make(await sign(stamp, body)), env, body), "Valid signature rejected.");
-        assert(!(await verifyStripeWebhook(make(await sign(stamp, body + " ")), env, body)), "Tampered body accepted.");
-        assert(!(await verifyStripeWebhook(make(await sign(stamp - 3600, body)), env, body)), "Stale timestamp accepted.");
-        return "valid / tampered / stale handled correctly";
       },
     },
     {

@@ -67,8 +67,6 @@ export function configurationChecks(env) {
     }),
     secretCheck(env, "ADMIN_SECRET", "Admin bearer secret", { required: false, minLength: 32 }),
     secretCheck(env, "RESEND_API_KEY", "Email provider key (Resend)"),
-    secretCheck(env, "STRIPE_SECRET_KEY", "Stripe secret key"),
-    secretCheck(env, "STRIPE_WEBHOOK_SECRET", "Stripe webhook secret"),
     check(
       "DB",
       "D1 database binding",
@@ -112,15 +110,6 @@ export function configurationChecks(env) {
       "Password hashing (Argon2id)",
       params.memorySize >= 19456 && params.iterations >= 2 ? "ok" : "warn",
       params.memorySize + " KiB, " + params.iterations + " passes, " + params.parallelism + " lane(s)"
-    )
-  );
-
-  checks.push(
-    check(
-      "SUBSCRIPTIONS",
-      "KS Package subscriptions",
-      "info",
-      String(env.KS_PACKAGE_SUBSCRIPTIONS_OPEN) === "true" ? "Open." : "Closed (paused message shown)."
     )
   );
 
@@ -259,7 +248,7 @@ export function hardeningChecks() {
   return [
     check("waf", "Cloudflare WAF rate limits", "manual", "Verify in the Cloudflare dashboard (docs/CLOUDFLARE_WAF.md)."),
     check("dns", "DNSSEC / CAA records", "manual", "Verify at the DNS provider."),
-    check("acct2fa", "2FA on Cloudflare, GitHub, Stripe, Resend", "manual", "Verify on each account."),
+    check("acct2fa", "2FA on Cloudflare, GitHub, Resend", "manual", "Verify on each account."),
   ];
 }
 

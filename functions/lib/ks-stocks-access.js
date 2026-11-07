@@ -1,26 +1,18 @@
 /**
- * KS Stocks desktop entitlement (KANASAKA session contract).
+ * KS Stocks desktop entitlement (KANASAKA session contract), read-only.
  *
- * Website integration (Stripe, later):
- * - Run migrations/014_ks_stocks_subscription.sql
- * - Stripe Checkout sets stripe_customer_id on users
- * - Webhooks update ks_stocks_subscription_status (+ optional ends_at)
- * - sessionPayload() exposes ksStocksEntitled to the desktop app via /api/auth/session
+ * The site no longer sells or manages anything: there is no checkout, billing
+ * portal or payment webhook. Accounts that already hold KS Stocks access keep it,
+ * so the desktop app keeps working for them; the flag is simply read from what is
+ * already stored on the account and never changes by itself.
  *
  * Rules:
- * - account_id "dev_ks" → permanent developer admin (KS Stocks and other gated features)
- * - everyone else → ksStocksEntitled when subscription status is active or trialing
+ * - account_id "dev_ks" -> permanent developer admin
+ * - everyone else -> ksStocksEntitled when the stored status is active or trialing
+ *   (migrations/014_ks_stocks_subscription.sql)
  */
 
 export const KS_STOCKS_DEV_ACCOUNT_ID = "dev_ks";
-export const KS_STOCKS_SUBSCRIBE_URL = "https://kanasaka.com/products/ks-stocks/";
-export const KS_PACKAGE_SUBSCRIPTIONS_PAUSED_MESSAGE =
-  "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval. Existing subscribers keep access; new sign-ups will open soon.";
-
-export function ksPackageSubscriptionsOpen(env) {
-  const flag = env && env.KS_PACKAGE_SUBSCRIPTIONS_OPEN;
-  return String(flag || "").toLowerCase() === "true" || String(flag) === "1";
-}
 
 const ACTIVE_SUBSCRIPTION_STATUSES = {
   active: true,

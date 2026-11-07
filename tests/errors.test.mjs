@@ -22,7 +22,7 @@ test("internal details are replaced by the fallback", () => {
       "D1_ERROR: no such table: users",
       "UNIQUE constraint failed: users.email",
       "fetch failed",
-      "Stripe: No such customer: cus_123",
+      "Resend: No such domain: dom_123",
       "TypeError: Cannot read properties of undefined",
       "request to https://api.resend.com/emails failed",
       "x".repeat(500),

@@ -1,9 +1,7 @@
 # KS_Link installer downloads (R2)
 
-Unlike the entitlement-gated download flow this used to describe (for
-KS_Unify and K-Mobile, both retired), KS_Link is free — every download and
-the self-updater manifest are served publicly, with no session, no
-subscription check, no signed/expiring link.
+KS_Link is free — every download and the self-updater manifest are served
+publicly, with no session and no signed/expiring link.
 
 ## One-time setup
 

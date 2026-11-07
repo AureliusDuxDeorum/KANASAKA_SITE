@@ -106,7 +106,7 @@ main.js (NAV, FOOTER_COLUMNS)  (now shell.js) Nav and footer list only pages tha
                             use the "In development" template. (The old scripts/generate_pages.py skeleton
                             generator was removed: it would have overwritten the edited pages.)
 functions/api/_middleware.js  Runs in front of every /api/* route: global same-origin (CSRF) check on all
-                            non-GET requests (Stripe webhook exempt: signature-authenticated) + security
+                            non-GET requests (no route is exempt) + security
                             headers on API responses (_headers only covers static files).
 functions/lib/throttle.js   auth_events-based counters (by ip / email / userId), event logging, 90-day purge.
 functions/lib/errors.js     publicError(): what a caught error may tell the client (DB/provider details are
@@ -117,7 +117,7 @@ functions/api/admin/diagnostics.js, self-test.js  Admin+2FA gated, throttled, au
                             Developer) shows them as "System Status" and "Self-Test Suite".
 tests/                      npm test (node --test, no dependencies): real SQLite built from schema.sql +
                             migrations behind a D1-shaped stub; covers auth, 2FA lockout, throttles, middleware,
-                            Stripe signatures, diagnostics, self-test and static CSP/policy guards.
+                            diagnostics, self-test, Terms sync, entitlement and static CSP/policy guards.
 docs/SECURITY.md            Security overview: controls in place, findings fixed, manual checklist.
 .well-known/security.txt, robots.txt  Disclosure contact; keeps account/auth/api paths out of indexes.
 scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
@@ -603,6 +603,16 @@ Upload: node scripts/publish-ks-link-update.mjs <platform> <file> [notes] (see d
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-07  Removed all billing and monetization: the Billing panel in Account Settings, the
+            Stripe checkout/portal/webhook and /api/billing endpoints, lib/stripe.js and
+            lib/billing.js, the Stripe checks in the dev panel and self-test, the KS Stocks page, the
+            Refund Policy page and every price/subscription/refund passage in the Terms (section 6
+            deleted, sections renumbered; Terms version 5, effective 2026-11-07). Accounts that
+            already hold KS Stocks access keep it: functions/lib/ks-stocks-access.js still reads the
+            stored status (and the dev_ks account) and /api/auth/session still reports ksStocksEntitled
+            for the desktop app; nothing can change that status any more. The database columns
+            (migrations/014) are left as they are. Outside the repo: delete the Stripe webhook and
+            the STRIPE_* secrets and price variables in Pages.
 2026-10-16  Compliance pass (K5 feature-wave Slice 5, planned alongside the
             K_V0.4 desktop app's own ARD-171): added /legal/refunds/ (new
             standalone page expanding Terms 6.5-6.9's existing refund

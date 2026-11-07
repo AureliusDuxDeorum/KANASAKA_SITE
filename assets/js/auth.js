@@ -301,7 +301,7 @@
       tosAccepted: Boolean(tosCheckbox && tosCheckbox.checked),
       // Same constant the acceptance modal records (assets/js/tos.js), so a Terms
       // version bump can never leave registration sending a stale one.
-      tosVersion: (window.KanasakaTerms && window.KanasakaTerms.TOS_VERSION) || "4",
+      tosVersion: (window.KanasakaTerms && window.KanasakaTerms.TOS_VERSION) || "5",
     };
 
     if (accountId) {
@@ -1897,8 +1897,6 @@
       });
     }
 
-    initBillingPanel();
-
     initSettingsStepModal(profileForm, {
       triggerLabel: "Edit Profile",
       steps: ["accountId", "displayName"],
@@ -1916,188 +1914,6 @@
       steps: ["password", "confirm"],
       danger: true,
     });
-  }
-
-  function formatBillingDate(value) {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }
-
-  function setBillingMessage(message, isError) {
-    const node = document.getElementById("billing-status-message");
-    if (!node) return;
-    if (!message) {
-      node.hidden = true;
-      node.textContent = "";
-      node.classList.remove("is-error");
-      return;
-    }
-    node.hidden = false;
-    node.textContent = message;
-    node.classList.toggle("is-error", Boolean(isError));
-  }
-
-  async function startBillingCheckout(plan, button) {
-    if (button) button.disabled = true;
-    setBillingMessage("");
-
-    try {
-      const { response, data } = await apiRequest("/api/stripe/checkout", {
-        method: "POST",
-        body: JSON.stringify({ plan: plan }),
-      });
-
-      if (!response.ok) {
-        throw new Error((data && data.error) || "Could not start checkout.");
-      }
-
-      if (data && data.url) {
-        window.location.href = data.url;
-        return;
-      }
-
-      throw new Error("Could not start checkout.");
-    } catch (error) {
-      setBillingMessage(error.message || "Could not start checkout.", true);
-      if (button) button.disabled = false;
-    }
-  }
-
-  async function openBillingPortal(button) {
-    if (button) button.disabled = true;
-    setBillingMessage("");
-
-    try {
-      const { response, data } = await apiRequest("/api/stripe/portal", {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error((data && data.error) || "Could not open billing portal.");
-      }
-
-      if (data && data.url) {
-        window.location.href = data.url;
-        return;
-      }
-
-      throw new Error("Could not open billing portal.");
-    } catch (error) {
-      setBillingMessage(error.message || "Could not open billing portal.", true);
-      if (button) button.disabled = false;
-    }
-  }
-
-  function renderBillingPanel(data) {
-    const unconfigured = document.getElementById("billing-unconfigured");
-    const paused = document.getElementById("billing-paused");
-    const developer = document.getElementById("billing-developer");
-    const active = document.getElementById("billing-active");
-    const subscribe = document.getElementById("billing-subscribe");
-    const badge = document.getElementById("billing-status-badge");
-    const renews = document.getElementById("billing-renews");
-    const portalButton = document.getElementById("billing-portal-button");
-
-    [unconfigured, paused, developer, active, subscribe].forEach(function (node) {
-      if (node) node.hidden = true;
-    });
-
-    if (!data || !data.configured) {
-      if (unconfigured) unconfigured.hidden = false;
-      return;
-    }
-
-    if (data.ksStocksAccessReason === "developer") {
-      if (developer) developer.hidden = false;
-      return;
-    }
-
-    if (data.ksStocksEntitled) {
-      if (active) active.hidden = false;
-      if (badge) {
-        badge.textContent =
-          data.subscriptionStatus === "trialing" ? "Trialing" : "Active";
-        badge.classList.add("billing-badge-active");
-      }
-      if (renews) {
-        const renewDate = formatBillingDate(data.subscriptionEndsAt);
-        if (renewDate) {
-          renews.hidden = false;
-          renews.textContent = "Current period ends " + renewDate + ".";
-        } else {
-          renews.hidden = true;
-          renews.textContent = "";
-        }
-      }
-      if (portalButton) {
-        portalButton.hidden = !data.stripeCustomerId;
-      }
-      return;
-    }
-
-    if (data.subscriptionsOpen === false) {
-      if (paused) {
-        paused.hidden = false;
-        const copy = paused.querySelector("[data-billing-paused-copy]");
-        if (copy) {
-          copy.textContent =
-            data.subscriptionsPausedMessage ||
-            "KS_Package subscriptions are temporarily unavailable while KS Stocks completes approval.";
-        }
-      }
-      return;
-    }
-
-    if (subscribe) subscribe.hidden = false;
-  }
-
-  async function initBillingPanel() {
-    const panel = document.getElementById("settings-panel-billing");
-    if (!panel) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const billingResult = params.get("billing");
-    if (billingResult === "success") {
-      setBillingMessage("Subscription updated. KS Stocks access should be active shortly.");
-    } else if (billingResult === "cancel") {
-      setBillingMessage("Checkout was canceled.", true);
-    }
-
-    document.querySelectorAll("[data-billing-plan]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        startBillingCheckout(button.getAttribute("data-billing-plan"), button);
-      });
-    });
-
-    const portalButton = document.getElementById("billing-portal-button");
-    if (portalButton) {
-      portalButton.addEventListener("click", function () {
-        openBillingPortal(portalButton);
-      });
-    }
-
-    try {
-      const { response, data } = await apiRequest("/api/billing/status", {
-        method: "GET",
-      });
-
-      if (!response.ok) {
-        throw new Error((data && data.error) || "Could not load billing.");
-      }
-
-      renderBillingPanel(data);
-      if (data && typeof data.ksStocksEntitled === "boolean") {
-        updateSession(Object.assign({}, getSession(), data));
-      }
-    } catch (error) {
-      setBillingMessage(error.message || "Could not load billing.", true);
-    }
   }
 
   // Collapses a multi-field settings form down to a single trigger button,
@@ -2246,9 +2062,6 @@
       return;
     }
 
-    if (window.location.hash === "#billing") {
-      showSettingsPanel("billing");
-    }
   }
 
   let settingsPanelTimer = null;

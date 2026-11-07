@@ -31,9 +31,9 @@ test("foreign Referer without an Origin is refused", async () => {
   assert.equal(res.status, 403);
 });
 
-test("the Stripe webhook is exempt (it authenticates by signature)", async () => {
-  const res = await run(req("/api/stripe/webhook", { method: "POST", origin: "https://api.stripe.com" }));
-  assert.equal(res.status, 200);
+test("no route is exempt: a POST from another origin is refused whatever the path", async () => {
+  const res = await run(req("/api/oauth/token", { method: "POST", origin: "https://evil.example" }));
+  assert.equal(res.status, 403);
 });
 
 test("GET responses get security headers and no-store", async () => {

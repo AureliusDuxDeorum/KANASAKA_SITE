@@ -709,7 +709,7 @@ h1 {
    existing little lift on hover is kept. Last block in the last stylesheet
    so it wins over the older per-button boxes in style.css above.
    Not covered on purpose: .theme-option tiles (selection cards) and the
-   small .billing-badge / .download-badge style tags (labels, not buttons). */
+   small .download-badge style tags (labels, not buttons). */
 
 .button,
 .button.secondary,

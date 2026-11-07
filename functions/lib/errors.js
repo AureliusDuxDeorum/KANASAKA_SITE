@@ -8,7 +8,7 @@
 // always logged server-side.
 
 const INTERNAL_PATTERN =
-  /D1_|SQLITE|SQL|no such (table|column)|constraint|syntax error|stack|fetch failed|network|ECONN|ETIMEDOUT|timed? ?out|https?:\/\/|api[_ -]?key|secret|token|stripe|resend|twilio|undefined|null|TypeError|ReferenceError|RangeError|cannot read|is not a function|JSON/i;
+  /D1_|SQLITE|SQL|no such (table|column)|constraint|syntax error|stack|fetch failed|network|ECONN|ETIMEDOUT|timed? ?out|https?:\/\/|api[_ -]?key|secret|token|resend|twilio|undefined|null|TypeError|ReferenceError|RangeError|cannot read|is not a function|JSON/i;
 
 const MAX_PUBLIC_LENGTH = 200;
 

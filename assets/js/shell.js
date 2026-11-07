@@ -49,7 +49,6 @@
       children: [
         { label: "Privacy", href: "/legal/privacy/" },
         { label: "Terms", href: "/legal/terms/" },
-        { label: "Refunds", href: "/legal/refunds/" },
         { label: "Cookies", href: "/legal/cookies/" },
         { label: "Impressum", href: "/legal/impressum/" },
       ],
@@ -87,7 +86,6 @@
       links: [
         { label: "Privacy", href: "/legal/privacy/" },
         { label: "Terms", href: "/legal/terms/" },
-        { label: "Refunds", href: "/legal/refunds/" },
         { label: "Cookies", href: "/legal/cookies/" },
         { label: "Impressum", href: "/legal/impressum/" },
       ],
