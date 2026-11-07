@@ -17,6 +17,8 @@ PKCE is mandatory. `code_verifier` is 43-128 characters from `A-Za-z0-9._~-`, ge
 
 ## Mode A: poll (recommended, no app launch needed)
 
+Implemented in KS_Link 0.6.1 (app: `client/src/lib/api.ts` `beginSiteLogin`/`waitForSiteLogin`, `cmd_site_poll`; relay: `POST /v1/auth/site-poll`, `handleSitePoll` in `relay/src/auth_routes.ts`; the relay needs to be redeployed with `npx wrangler deploy` for it to work).
+
 `redirect_uri=urn:kanasaka:oauth:poll`
 
 The browser ends on `/link/connected/` ("KS_Link is connected, switch back to the app"). Nothing tries to open the app, so it does not matter whether the app is already running, which is the whole point: a custom-scheme redirect asks the OS to start the app *again*, which on desktop needs single-instance forwarding and on a phone (one instance per app) does nothing at all.
