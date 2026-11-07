@@ -164,7 +164,11 @@
           } catch (e) {
             data = null;
           }
-          return { ok: response.ok && data && data.ok === true, message: (data && data.error) || "The server answered " + response.status + "." };
+          return {
+            ok: response.ok && data && data.ok === true,
+            mode: data && data.mode,
+            message: (data && data.error) || "The server answered " + response.status + ".",
+          };
         });
       })
       .catch(function () {
@@ -175,6 +179,14 @@
           title.textContent = "Could not open KS_Link";
           status.textContent = result.message + " Nothing was sent to the app.";
           button.textContent = "Try again";
+          return;
+        }
+        if (result.mode === "poll") {
+          // No app to launch: the running app collects the approval itself. The
+          // authorize endpoint stores it and sends the browser to /link/connected/.
+          status.textContent = "Finishing the sign-in. KS_Link continues on its own.";
+          button.remove();
+          window.location.href = path;
           return;
         }
         status.textContent = "Opening KS_Link. Your browser may ask you to allow it.";

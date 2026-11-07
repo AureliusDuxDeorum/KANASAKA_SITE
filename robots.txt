@@ -6,6 +6,7 @@ Disallow: /login/
 Disallow: /register/
 Disallow: /verify/
 Disallow: /forgot-password/
+Disallow: /link/
 Disallow: /reset-password/
 
 Sitemap: https://kanasaka.com/sitemap.xml

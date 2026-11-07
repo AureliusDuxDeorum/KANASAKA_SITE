@@ -12,6 +12,7 @@ Last reviewed: 2026-11-03 (v1.3.0). Reporting: see `/.well-known/security.txt`.
 - **Admin** -- admin tools need an admin role *and* 2FA, step-up password for role changes, lockout after 3 wrong confirmations, audit log, constant-time comparison for the bearer secret.
 - **Errors** -- `publicError()` keeps database/provider details out of responses.
 - **Repo files are not served** -- the repo root is the deploy root, so `functions/_middleware.js` (routed by `_routes.json`) answers 404 for `schema.sql`, `wrangler.toml`, `package*.json`, `ARD.txt`, `docs/`, `migrations/`, `functions/`, `tests/`, `scripts/`, `.github/`. `tests/repo-hygiene.test.mjs` also fails if an unknown file lands in the repo root. After a deploy, the dev panel self-test "Repository files are not served" confirms it against the live site.
+- **KS_Link sign-in** -- OAuth provider with mandatory PKCE, single-use codes/approvals, verified email required, server-to-server exchange with a client secret; poll mode keeps the verifier inside the app and never redirects a code through the OS. See `docs/KS_LINK_OAUTH.md`.
 - **Data retention** -- `auth_events` (IPs, emails) is purged after 90 days.
 
 ## Fixed in 1.3.0

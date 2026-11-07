@@ -18,7 +18,7 @@ const ROOT_FILES = new Set([
 ]);
 const ROOT_DIRS = new Set([
   ".github", ".well-known", "account", "admin", "assets", "changelog", "company", "developers", "docs",
-  "downloads", "forgot-password", "functions", "legal", "login", "media", "migrations", "products",
+  "downloads", "forgot-password", "functions", "legal", "link", "login", "media", "migrations", "products",
   "register", "research", "reset-password", "scripts", "support", "tests", "verify",
 ]);
 

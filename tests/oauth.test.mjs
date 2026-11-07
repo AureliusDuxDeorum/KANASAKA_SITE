@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { test } from "node:test";
 
 import { onRequestGet as authorize } from "../functions/api/oauth/authorize.js";
+import { onRequestPost as poll } from "../functions/api/oauth/poll.js";
 import { onRequestPost as token } from "../functions/api/oauth/token.js";
 import { insertUser, json, makeEnv, req, sessionCookieFor } from "./helpers.mjs";
 
@@ -82,7 +83,7 @@ test("authorize with check=1 validates but issues no code, and says why when it 
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
   const ok = await get(env, query({ check: "1" }), cookie);
   assert.equal(ok.status, 200);
-  assert.deepEqual(await json(ok), { ok: true });
+  assert.deepEqual(await json(ok), { ok: true, mode: "app" });
   assert.equal(await count(), 0, "check mode must not mint a code");
 
   const bad = await get(env, query({ check: "1", client_id: "nope" }), cookie);
@@ -92,4 +93,72 @@ test("authorize with check=1 validates but issues no code, and says why when it 
   const missing = await authorize({ request: req("/api/oauth/authorize" + query({ check: "1" })), env: makeEnv() });
   assert.equal(missing.status, 500);
   assert.match((await json(missing)).error, /not configured/i);
+});
+
+
+// ── poll mode: the browser never has to start the app ────────────────────────
+
+const POLL_URI = "urn:kanasaka:oauth:poll";
+const pollQuery = (extra = {}) => query({ redirect_uri: POLL_URI, ...extra });
+const askPoll = (env, body, origin = null) => poll({ request: req("/api/oauth/poll", { method: "POST", body, origin }), env });
+const pollBody = (extra = {}) => ({ client_id: "ks-link", client_secret: "shh-secret", code_verifier: VERIFIER, ...extra });
+
+test("poll mode: authorize stores the approval and lands on /link/connected/ instead of redirecting to the app", async () => {
+  const env = oauthEnv();
+  const user = await insertUser(env);
+  const cookie = { Cookie: await sessionCookieFor(env, user.id) };
+
+  const check = await get(env, pollQuery({ check: "1" }), cookie);
+  assert.deepEqual(await json(check), { ok: true, mode: "poll" });
+  assert.equal((await env.DB.prepare("SELECT COUNT(*) AS c FROM oauth_authorizations").first()).c, 0);
+
+  const res = await get(env, pollQuery(), cookie);
+  assert.equal(res.status, 302);
+  assert.equal(new URL(res.headers.get("location")).pathname, "/link/connected/");
+  const row = await env.DB.prepare("SELECT redirect_uri, expires_at FROM oauth_authorizations").first();
+  assert.equal(row.redirect_uri, POLL_URI);
+  const minutes = (new Date(row.expires_at).getTime() - Date.now()) / 60000;
+  assert.ok(minutes > 8 && minutes <= 10.1, "poll approvals live about 10 minutes, got " + minutes);
+});
+
+test("poll: pending until the person has signed in, then the identity once, and only for the right verifier", async () => {
+  const env = oauthEnv();
+  const user = await insertUser(env, { email: "poll@example.com" });
+
+  const before = await askPoll(env, pollBody());
+  assert.equal(before.status, 202);
+  assert.deepEqual(await json(before), { status: "pending" });
+
+  await get(env, pollQuery(), { Cookie: await sessionCookieFor(env, user.id) });
+
+  const wrong = await askPoll(env, pollBody({ code_verifier: "w".repeat(64) }));
+  assert.equal(wrong.status, 202, "another verifier learns nothing");
+
+  const ok = await askPoll(env, pollBody());
+  assert.equal(ok.status, 200);
+  const body = await json(ok);
+  assert.equal(body.status, "approved");
+  assert.equal(body.email, "poll@example.com");
+
+  const again = await askPoll(env, pollBody());
+  assert.equal(again.status, 202, "single use");
+});
+
+test("poll: needs the client secret, refuses browsers on other sites, and ignores a deep-link approval", async () => {
+  const env = oauthEnv();
+  const user = await insertUser(env);
+  await get(env, query(), { Cookie: await sessionCookieFor(env, user.id) }); // normal deep-link approval, same challenge
+
+  assert.equal((await askPoll(env, pollBody({ client_secret: "nope" }))).status, 400);
+  assert.equal((await askPoll(env, pollBody({ code_verifier: "short" }))).status, 400);
+  assert.equal((await askPoll(env, pollBody(), "https://evil.example")).status, 403);
+  assert.equal((await askPoll(env, pollBody())).status, 202, "the deep-link code cannot be collected by polling");
+});
+
+test("poll: an expired approval is simply pending", async () => {
+  const env = oauthEnv();
+  const user = await insertUser(env);
+  await get(env, pollQuery(), { Cookie: await sessionCookieFor(env, user.id) });
+  await env.DB.prepare("UPDATE oauth_authorizations SET expires_at = ?").bind(new Date(Date.now() - 1000).toISOString()).run();
+  assert.equal((await askPoll(env, pollBody())).status, 202);
 });
