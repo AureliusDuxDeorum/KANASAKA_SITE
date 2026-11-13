@@ -339,7 +339,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=4c3b277a").then(resolve);
+      loadScript("/assets/js/tos.js?v=36fbb4e7").then(resolve);
     });
   }
 

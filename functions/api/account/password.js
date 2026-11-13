@@ -11,6 +11,7 @@ import {
   verifyPassword,
 } from "../../lib/auth.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import { notifyKsLink } from "../../lib/ks-link-revoke.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -66,6 +67,7 @@ export async function onRequestPost(context) {
     .run();
 
   await deleteAllUserSessions(env, user.id);
+  await notifyKsLink(context, user.id, "credentials");
   const session = await createSession(env, user.id);
   await logAuthEvent(env, "password_change_success", { ip, userId: user.id });
 

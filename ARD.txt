@@ -1,7 +1,7 @@
 KANASAKA SITE — Architecture Reference Document (ARD)
 ======================================================
 Maintained by: Cursor agent (update this file after every substantive change)
-Last updated: 2026-09-15
+Last updated: 2026-11-13
 Repo: AureliusDuxDeorum/KANASAKA_SITE
 Local path: ~/KANASAKA_SITE
 Production: https://kanasaka.com
@@ -589,6 +589,33 @@ Platforms: windows-x86_64 (.exe), linux-deb, linux-rpm, linux-appimage, android 
 R2 bucket: kanasaka-installers (same bucket other products use), shared binding INSTALLERS
 Upload: node scripts/publish-ks-link-update.mjs <platform> <file> [notes] (see docs/R2_INSTALLERS.md)
 
+9b. KS_LINK ACCOUNTS (a KS_Link account IS a KANASAKA account)
+--------------------------------------------------------------
+Sign-in and registration happen INSIDE the KS_Link app (full detail: docs/KS_LINK_OAUTH.md):
+  POST /api/ks-link/login        { email, password, code_challenge } -> { code } | { twoFactorRequired, challenge, ... }
+  POST /api/ks-link/two-factor   { challenge, code, code_challenge } -> { code }
+  GET  /api/ks-link/config       { tosVersion, termsUrl, privacyUrl } (what registration needs)
+  POST /api/oauth/token          server-to-server only (the relay, with KS_LINK_OAUTH_CLIENT_ID/_SECRET):
+                                 { code, client_id, client_secret, code_verifier } -> identity
+Registration, email verification and password reset reuse /api/auth/register, /verify,
+/resend-verification, /forgot-password, /reset-password, called by the app directly.
+The password goes from the app to this site only; KS_Link's relay never sees it. PKCE (S256) is
+mandatory; codes are single use, 120 s, stored hashed in oauth_authorizations. App sign-in starts
+NO site session and does not sign the person out of the website. The credential checks are shared
+with the website login (functions/lib/login-flow.js) so throttles / verified-email rule / 2FA are one
+implementation. Removed 2026-11-13: /api/oauth/authorize, /api/oauth/poll, /link/connected/, the
+login page's app hand-off, the ks-link:// deep link and poll mode.
+
+WAF: the rules in docs/CLOUDFLARE_WAF.md cover /api/auth/*; the app endpoints under /api/ks-link/ need their own
+(see "KS_Link app sign-in endpoints" there) -- until added they are outside the speed limits.
+
+PLANNED, NOT BUILT: closed-app push notifications for KS_Link on Android (Firebase Cloud Messaging).
+Designed and built once, then removed on purpose (KS_Link commit b2590ee, revert 66debc0): relay sends a
+data-only push (event kind + the other person's display name, never message text) through FCM HTTP v1
+using a service-account JWT; Android service shows "KS_Link: <name> liked your post". Blocked on
+creating the service-account key (organization policy iam.disableServiceAccountKeyCreation).
+Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose FCM before it ships.
+
 
 10. OPERATIONAL NOTES
 ---------------------
@@ -603,6 +630,18 @@ Upload: node scripts/publish-ks-link-update.mjs <platform> <file> [notes] (see d
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-13  KS_Link session revocation: functions/lib/ks-link-revoke.js signs (HMAC, shared client secret) and sends
+            POST /v1/internal/revoke to the relay after a password change/reset, 2FA-disable ("credentials": the
+            relay ends all KS_Link sessions) and account deletion ("deleted": the relay erases the KS_Link account).
+            Best effort, one retry, failures in auth_events as ks_link_revoke_failed. Optional env KS_LINK_RELAY_URL.
+2026-11-13  KS_Link sign-in moved INTO the app and the browser hand-off removed. New
+            /api/ks-link/login, /api/ks-link/two-factor and /api/ks-link/config; the credential
+            half of login extracted to functions/lib/login-flow.js (the website login now uses it
+            too); lib/ks-link-oauth.js reduced to issuing/redeeming one-time app sign-in codes.
+            Deleted /api/oauth/authorize, /api/oauth/poll, /link/connected/ and the login page's
+            KS_Link hand-off (assets/js/auth.js, style.css). Privacy policy section 11 and the FAQ
+            updated. Terms section 14 still mentions a legacy "transition period" and needs the next
+            Terms version bump (not done here: it forces re-acceptance). tests/oauth.test.mjs rewritten.
 2026-11-07  Removed all billing and monetization: the Billing panel in Account Settings, the
             Stripe checkout/portal/webhook and /api/billing endpoints, lib/stripe.js and
             lib/billing.js, the Stripe checks in the dev panel and self-test, the KS Stocks page, the

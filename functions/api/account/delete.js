@@ -11,6 +11,7 @@ import {
 } from "../../lib/auth.js";
 import { deleteAvatar } from "../../lib/profile.js";
 import { logAuthEvent, requireSameOrigin } from "../../lib/security.js";
+import { notifyKsLink } from "../../lib/ks-link-revoke.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -57,6 +58,7 @@ export async function onRequestPost(context) {
   await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(user.id).run();
 
   await logAuthEvent(env, "account_deleted", { userId: user.id });
+  await notifyKsLink(context, user.id, "deleted");
 
   if (sessionToken) {
     await deleteSession(env, sessionToken);

@@ -1,7 +1,7 @@
 // POST /api/oauth/token -- server-to-server only, called by KS_Link's relay
 // (never the KS_Link app directly, which is why this takes a client_secret
 // the app itself never holds). Body: { code, client_id, client_secret,
-// redirect_uri }. Returns { site_user_id, email, display_name, account_id }
+// code_verifier }. Returns { site_user_id, email, display_name, account_id }
 // as a plain JSON response -- no JWT, this response is consumed once,
 // directly, by the relay's own request, not parsed/trusted by a client.
 import { jsonResponse } from "../../lib/auth.js";
@@ -32,7 +32,6 @@ export async function onRequestPost(context) {
       code: body.code,
       clientId: body.client_id,
       clientSecret: body.client_secret,
-      redirectUri: body.redirect_uri,
       codeVerifier: body.code_verifier,
     });
     return jsonResponse(result);
