@@ -7,6 +7,7 @@ import {
 } from "../../../lib/auth.js";
 import { disableEmail2fa, disableSms2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
+import { notifyKsLink } from "../../../lib/ks-link-revoke.js";
 
 import { publicError, errorStatus } from "../../../lib/errors.js";
 
@@ -45,6 +46,7 @@ export async function onRequestPost(context) {
       await disableEmail2fa(env, user.id, code);
     }
     await deleteAllUserSessions(env, user.id);
+    await notifyKsLink(context, user.id, "credentials");
     await logAuthEvent(env, "twofa_disabled", { ip: clientIp(request), userId: user.id });
 
     return jsonResponse({

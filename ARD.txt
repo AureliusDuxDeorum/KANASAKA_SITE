@@ -630,6 +630,10 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-13  KS_Link session revocation: functions/lib/ks-link-revoke.js signs (HMAC, shared client secret) and sends
+            POST /v1/internal/revoke to the relay after a password change/reset, 2FA-disable ("credentials": the
+            relay ends all KS_Link sessions) and account deletion ("deleted": the relay erases the KS_Link account).
+            Best effort, one retry, failures in auth_events as ks_link_revoke_failed. Optional env KS_LINK_RELAY_URL.
 2026-11-13  KS_Link sign-in moved INTO the app and the browser hand-off removed. New
             /api/ks-link/login, /api/ks-link/two-factor and /api/ks-link/config; the credential
             half of login extracted to functions/lib/login-flow.js (the website login now uses it

@@ -1,6 +1,6 @@
 (function () {
   var TOS_KEY = "kanasaka-tos-accepted";
-  var TOS_VERSION = "5";
+  var TOS_VERSION = "6";
   var SHOW_DELAY_MS = 1000;
 
   var TERMS_HTML =
@@ -66,7 +66,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>14. KS_Link</h3>" +
-    "<p>KS_Link is a free, alpha-stage end-to-end encrypted messaging application distributed from this Site. A KS_Link account is a KANASAKA account: you sign in to KS_Link with your KANASAKA credentials, and your account is created, managed, and deleted through your Settings on this Site rather than inside the app. KS_Link operates its own separate messaging infrastructure for everything beyond account identity &mdash; conversations, message delivery, and social features &mdash; which is described for your reference in our Privacy Policy. If you created a KS_Link account before this Site and KS_Link shared accounts, it continues to work with its original sign-in during a transition period and will be offered the option to link to a KANASAKA account.</p>" +
+    "<p>KS_Link is a free, alpha-stage end-to-end encrypted messaging application distributed from this Site. A KS_Link account is a KANASAKA account: you sign in to KS_Link with your KANASAKA credentials, and you can create that account and sign in either on this Site or inside the KS_Link app, and when you do it in the app your credentials are sent to this Site, not to KS_Link&rsquo;s own servers. Your password, two-factor sign-in and other account settings are managed through your Settings on this Site. Deleting your KANASAKA account also erases your KS_Link account and the data KS_Link holds for it (other than limited records we are required or permitted to keep, described in our Privacy Policy). Changing your password or turning off two-factor sign-in on this Site also ends your KS_Link sign-ins. KS_Link operates its own separate messaging infrastructure for everything beyond account identity &mdash; conversations, message delivery, and social features &mdash; which is described for your reference in our Privacy Policy. A KS_Link account created before KANASAKA sign-in was built into the app no longer has a separate password: it is matched to a KANASAKA account by the verified email address the first time you sign in with that KANASAKA account, and an old account that is not claimed within a period we announce may be deleted.</p>" +
     "<p>KS_Link is pre-release software: it may be incomplete or unstable, may contain security issues not yet discovered, and may change materially — including in ways that are not backward compatible — without notice. It is provided \"as is\" under the disclaimers in Section 9. You must be at least 16 years old to create a KS_Link account.</p>" +
     "<p>KS_Link can keep your conversation history, including images, on your own device in encrypted form, so it is still there when you reopen the app. That copy exists only on that device: it is encrypted with a key held in the device&rsquo;s secure storage, it is never uploaded to us, and it does not transfer to your other devices. You are responsible for your device and its security. We cannot read, recover or restore saved history; it is lost if you delete it, if you turn history off, if the app&rsquo;s data or the device&rsquo;s secure storage is reset, or if the device is lost. You can turn history off, choose how long messages are kept, erase it when you sign out, or delete it at any time in the app&rsquo;s Settings. Images sent in chats are automatically resized and compressed on your device to fit within message size limits.</p>" +
     "<p>KS_Link includes a user-facing reporting mechanism for content or accounts that violate the law or KS_Link's own acceptable-use terms. Reported material and limited associated records may be retained for a period after a report (at least 90 days) to support a review process and to meet legal reporting obligations that may apply to online messaging services, including reporting apparent child sexual abuse material to the relevant authorities where required by law. We may suspend or remove access to KS_Link, or to a specific account, for violations of its acceptable-use terms, for legal compliance, or for security reasons.</p>" +
@@ -78,7 +78,7 @@
     '<section class="tos-section">' +
     "<h3>16. Contact</h3>" +
     "<p>Questions about these Terms: <a href=\"mailto:contactns@kanasaka.com\">contactns@kanasaka.com</a></p>" +
-    "<p class=\"tos-effective\">Effective date: 7 November 2026</p>" +
+    "<p class=\"tos-effective\">Effective date: 13 November 2026</p>" +
     "</section>";
 
   var scheduled = false;

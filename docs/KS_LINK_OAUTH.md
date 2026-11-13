@@ -36,3 +36,14 @@ returns the Terms version registration requires.
 
 `KS_LINK_OAUTH_CLIENT_ID` and `KS_LINK_OAUTH_CLIENT_SECRET` (the same pair the relay holds). Without them the app
 sign-in endpoints answer 503.
+
+## Telling the relay when an account changes
+
+`functions/lib/ks-link-revoke.js` calls KS_Link's relay (`POST <KS_LINK_RELAY_URL or https://link.kanasaka.com>/v1/internal/revoke`)
+with `{ site_user_id, reason }`, signed with HMAC-SHA256 over `"<timestamp>.<body>"` using
+`KS_LINK_OAUTH_CLIENT_SECRET` (headers `X-KS-Timestamp`, `X-KS-Signature`):
+
+- `credentials` -- after a password change, a password reset, or switching two-factor off: the relay ends every KS_Link session.
+- `deleted` -- after the account is deleted: the relay erases the KS_Link account and its data.
+
+Best effort (one retry); a failure is logged as `ks_link_revoke_failed` in `auth_events`.
