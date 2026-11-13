@@ -316,7 +316,7 @@ test("motion.js and motion-boot.js agree on the gate (storage keys, tiers)", () 
 
 test("effects that run in Dark and Light are not limited to Accent", () => {
   const text = read("assets/css/motion.css");
-  for (const sel of [".hero-floor", ".scan-sweep", ".pl-on", ".showcase-media::after"]) {
+  for (const sel of [".hero-floor", ".pl-on", ".showcase-media::after"]) {
     const rules = [...text.matchAll(/([^{}]*\bdata-fx="1"[^{}]*)\{/g)].map((m) => m[1]);
     assert.ok(rules.some((r) => r.includes(sel)), sel + " must also be enabled at data-fx=\"1\"");
   }

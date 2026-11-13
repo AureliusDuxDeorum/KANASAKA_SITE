@@ -305,7 +305,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=4545f756").then(resolve);
+      loadScript("/assets/js/motion.js?v=aece0f2c").then(resolve);
     });
   }
 

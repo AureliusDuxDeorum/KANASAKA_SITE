@@ -386,20 +386,12 @@
     }, ms || 140);
   }
 
-  // ── atmosphere: scan sweep, pointer light, product-strip hover ─────────────
+  // ── atmosphere: pointer light, product-strip hover ─────────────────────────
   var atmosphereMounted = false;
 
   function mountAtmosphere() {
     if (atmosphereMounted || state.motion === "off") return;
     atmosphereMounted = true;
-
-    // scan sweep on content pages (the home page already runs the ASCII hero + grid floor)
-    if (!document.getElementById("hero-ascii") && !document.querySelector(".scan-sweep")) {
-      var sweep = document.createElement("div");
-      sweep.className = "scan-sweep";
-      sweep.setAttribute("aria-hidden", "true");
-      document.body.appendChild(sweep);
-    }
 
     // pointer light: only the element under a fine pointer is updated, once per frame
     if (window.matchMedia("(pointer: fine)").matches) {
