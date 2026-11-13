@@ -1,35 +1,19 @@
-// KS_Link account unification (plan: KS_Link/docs' rework plan, Phase 1.1) --
-// KANASAKA_SITE acting as an OAuth *provider* for the first time: it issues
-// the codes (a redirect allowlist plus a code exchange), and reuses
-// email_tokens' exact pattern for the code itself: a random raw value the
-// caller holds, hashed via hashSecret() before it ever touches D1, so a DB
-// read alone can never mint a session.
+// Sign-in codes for the KS_Link app. A KANASAKA account IS the KS_Link account: the app signs
+// in through /api/ks-link/login (and /api/ks-link/two-factor), which issue a one-time code
+// bound to a PKCE challenge the app made; KS_Link's relay redeems it server-to-server at
+// /api/oauth/token with the app's verifier and the client secret, and learns who signed in.
+// The code is a random value the caller holds, hashed via hashSecret() before it touches D1,
+// so a database read alone can never mint a session. See docs/KS_LINK_OAUTH.md.
 
 import { hashSecret, generateRawToken, timingSafeEqualString } from "./tokens.js";
 
-// The KS_Link app's own custom URI scheme (registered via
-// tauri-plugin-deep-link). Deliberately the ONLY entry: a localhost
-// fallback would let any local process that binds the port catch a code.
-// Second, scheme-free way to finish a login: "poll". The app does not have to be
-// started again by the browser (which breaks when it is already running: a second
-// desktop instance, or nothing at all on a phone, where an app cannot run twice).
-// The browser signs the person in and shows "return to KS_Link"; the app, which
-// keeps running, polls POST /api/oauth/poll (through KS_Link's relay) with its
-// PKCE verifier until the approval appears. See docs/KS_LINK_OAUTH.md.
-export const POLL_REDIRECT_URI = "urn:kanasaka:oauth:poll";
+// A sign-in code is only ever issued by /api/ks-link/login or /api/ks-link/two-factor, for the
+// KS_Link app, and redeemed by KS_Link's relay. The "redirect" it is bound to is this fixed
+// marker: nothing is redirected anywhere any more (the browser hand-off and the app-launch
+// deep link were removed), it just keeps old-style codes from being redeemable as new ones.
+export const APP_SIGNIN_REDIRECT_URI = "urn:kanasaka:app:signin";
 
-const ALLOWED_REDIRECT_URIS = new Set(["ks-link://oauth/callback", POLL_REDIRECT_URI]);
-
-const CODE_TTL_SECONDS = 120; // deep-link mode: the code is used within seconds
-const POLL_TTL_SECONDS = 600; // poll mode: the person may still be typing a password or a 2FA code
-
-export function assertAllowedRedirect(redirectUri) {
-  const value = String(redirectUri || "").trim();
-  if (!ALLOWED_REDIRECT_URIS.has(value)) {
-    throw new Error("Redirect URI is not allowed.");
-  }
-  return value;
-}
+const CODE_TTL_SECONDS = 120; // redeemed by the app within seconds of issue
 
 export function ksLinkOAuthConfigured(env) {
   return Boolean(env.KS_LINK_OAUTH_CLIENT_ID && env.KS_LINK_OAUTH_CLIENT_SECRET);
@@ -50,17 +34,16 @@ async function s256(verifier) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-/** Mints a short-lived, single-use authorization code for an already-authenticated site user. */
-export async function createAuthorizationCode(env, { userId, clientId, redirectUri, codeChallenge }) {
+/** Mints a short-lived, single-use sign-in code for a user who has just proven who they are. */
+export async function issueAppSigninCode(env, { userId, codeChallenge }) {
   const rawCode = generateRawToken(32);
   const codeHash = await hashSecret(rawCode, env);
-  const ttl = redirectUri === POLL_REDIRECT_URI ? POLL_TTL_SECONDS : CODE_TTL_SECONDS;
-  const expiresAt = new Date(Date.now() + ttl * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString();
 
   await env.DB.prepare(
     "INSERT INTO oauth_authorizations (code_hash, user_id, client_id, redirect_uri, expires_at, code_challenge) VALUES (?, ?, ?, ?, ?, ?)"
   )
-    .bind(codeHash, userId, String(clientId), redirectUri, expiresAt, codeChallenge)
+    .bind(codeHash, userId, String(env.KS_LINK_OAUTH_CLIENT_ID), APP_SIGNIN_REDIRECT_URI, expiresAt, codeChallenge)
     .run();
 
   return rawCode;
@@ -86,15 +69,15 @@ const ROW_SELECT = `SELECT oa.code_hash, oa.user_id, oa.redirect_uri, oa.expires
 // The checks every redemption goes through, whichever way the row was found:
 // unused, unexpired, same redirect, PKCE verifier matches, verified email, and
 // consumed atomically so a second (concurrent) attempt loses.
-async function redeemRow(env, row, { redirectUri, codeVerifier }) {
+async function redeemRow(env, row, { codeVerifier }) {
   if (row.consumed_at) {
     throw new Error("Authorization code already used.");
   }
   if (new Date(row.expires_at).getTime() < Date.now()) {
     throw new Error("Authorization code expired.");
   }
-  if (row.redirect_uri !== redirectUri) {
-    throw new Error("Redirect URI does not match the one the code was issued for.");
+  if (row.redirect_uri !== APP_SIGNIN_REDIRECT_URI) {
+    throw new Error("Not a KS_Link sign-in code.");
   }
   // PKCE: the verifier must hash to the challenge sent when the login began.
   if (!row.code_challenge || !timingSafeEqualString(await s256(String(codeVerifier)), row.code_challenge)) {
@@ -129,12 +112,11 @@ async function redeemRow(env, row, { redirectUri, codeVerifier }) {
 }
 
 /** Server-to-server only -- called by KS_Link's relay, never the app directly, which is why this takes a client_secret. */
-export async function exchangeAuthorizationCode(env, { code, clientId, clientSecret, redirectUri, codeVerifier }) {
+export async function exchangeAuthorizationCode(env, { code, clientId, clientSecret, codeVerifier }) {
   checkClient(env, clientId, clientSecret);
   if (!VERIFIER_PATTERN.test(String(codeVerifier || ""))) {
     throw new Error("code_verifier is required.");
   }
-  assertAllowedRedirect(redirectUri);
 
   const rawCode = String(code || "").trim();
   if (!rawCode) {
@@ -146,28 +128,5 @@ export async function exchangeAuthorizationCode(env, { code, clientId, clientSec
   if (!row) {
     throw new Error("Invalid authorization code.");
   }
-  return redeemRow(env, row, { redirectUri, codeVerifier });
-}
-
-/**
- * Poll mode, server-to-server (KS_Link's relay, with the client secret). The app keeps
- * running while the browser signs the person in; this is asked repeatedly with the
- * app's PKCE verifier. Returns null while nothing has been approved yet (the answer
- * is the same for "not yet", "expired" and "never started", so it reveals nothing),
- * and the same identity as the code exchange once approved. Single use.
- */
-export async function pollAuthorization(env, { clientId, clientSecret, codeVerifier }) {
-  checkClient(env, clientId, clientSecret);
-  if (!VERIFIER_PATTERN.test(String(codeVerifier || ""))) {
-    throw new Error("code_verifier is required.");
-  }
-  const challenge = await s256(String(codeVerifier));
-  const row = await env.DB.prepare(
-    ROW_SELECT +
-      " WHERE oa.code_challenge = ? AND oa.redirect_uri = ? AND oa.consumed_at IS NULL AND datetime(oa.expires_at) > datetime('now') ORDER BY oa.created_at DESC LIMIT 1"
-  )
-    .bind(challenge, POLL_REDIRECT_URI)
-    .first();
-  if (!row) return null;
-  return redeemRow(env, row, { redirectUri: POLL_REDIRECT_URI, codeVerifier });
+  return redeemRow(env, row, { codeVerifier });
 }

@@ -79,3 +79,18 @@ Pages **Variables** (non-secret):
 | `SESSION_ROTATE_HOURS` | `24` | Session ID rotation interval |
 
 If login returns 500 / CPU exceeded, lower `ARGON2_MEMORY_KIB` to `4096` or upgrade Workers plan.
+
+
+## KS_Link app sign-in endpoints (added 2026-11-13)
+
+The KS_Link app signs in through `/api/ks-link/login` and `/api/ks-link/two-factor`, which do the same
+password / second-factor checking as `/api/auth/login` but sit OUTSIDE the `/api/auth/` prefix, so the rules
+above do not cover them. Without matching rules a credential-stuffing run can simply use the app path and skip
+the speed limit and the managed challenge. Add, in the dashboard:
+
+1. `starts_with(http.request.uri.path, "/api/ks-link/")` and method POST -- 30 requests / 10 minutes, block 1 hour
+2. `http.request.uri.path in {"/api/ks-link/login" "/api/ks-link/two-factor"}` -- 10 / 10 minutes per IP
+
+Do NOT add a managed challenge to these two paths: the native app cannot solve one and sign-in would fail.
+The app-level limits (8 failures per email, 30 per address, 15 minutes; capped two-factor challenges and code
+guesses) are what stop slow guessing there; the WAF speed limit stops floods.

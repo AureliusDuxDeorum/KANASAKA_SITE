@@ -1,0 +1,145 @@
+// The credential half of signing in, shared by the website (functions/api/auth/login.js,
+// which then starts a cookie session) and the KS_Link app (functions/api/ks-link/login.js,
+// which then issues a one-time sign-in code). One implementation, so the throttles, the
+// password check, the verified-email rule and the two-factor step cannot drift apart.
+//
+// Returns { response } when the attempt is over (refused, throttled, or waiting for a
+// two-factor code) and { user, ip, location } when the password was right and no second
+// factor is needed.
+import {
+  errorResponse,
+  jsonResponse,
+  LOGIN_FAILURE_MESSAGE,
+  loginPasswordValidationError,
+  normalizeEmail,
+  upgradePasswordHash,
+  validateEmail,
+  verifyPassword,
+  burnPasswordCheck,
+} from "./auth.js";
+import { createTwoFactorChallenge, maskEmail, maskPhone } from "./two-factor.js";
+import { smsConfigured } from "./sms.js";
+import { approxLocation, clientIp, tooManyRecentEvents, logAuthEvent, notifyLogin, tooManyRecentFailures } from "./security.js";
+import { publicError, errorStatus } from "./errors.js";
+
+export async function authenticateLogin({ request, env }, body, { remember = false } = {}) {
+  const ip = clientIp(request);
+  const location = approxLocation(request);
+
+  const email = normalizeEmail(body.email);
+  const password = String(body.password || "");
+  const passwordError = loginPasswordValidationError(password);
+
+  if (await tooManyRecentFailures(env, "login_failed", email, { max: 8, windowMinutes: 15 })) {
+    return { response: errorResponse("Too many failed login attempts. Please try again later.", 429) };
+  }
+
+  // Per source address as well as per account: credential stuffing walks a
+  // list of different emails from one place, which the per-email counter above
+  // never sees. Generous enough for a shared office/campus address.
+  if (await tooManyRecentEvents(env, "login_failed", "ip", ip, { max: 30, windowMinutes: 15 })) {
+    return { response: errorResponse("Too many failed login attempts. Please try again later.", 429) };
+  }
+
+  if (!validateEmail(email) || passwordError) {
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "invalid_input" });
+    return { response: errorResponse(LOGIN_FAILURE_MESSAGE, 401) };
+  }
+
+  const user = await env.DB.prepare(
+    `SELECT u.id, u.email, u.password_hash, u.email_verified, u.display_name, u.totp_enabled, u.phone_e164,
+            ua.updated_at AS avatar_updated_at,
+            CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
+     FROM users u
+     LEFT JOIN user_avatars ua ON ua.user_id = u.id
+     WHERE u.email = ? COLLATE NOCASE`
+  )
+    .bind(email)
+    .first();
+
+  if (!user) {
+    await burnPasswordCheck(password, env);
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "unknown_user" });
+    return { response: errorResponse(LOGIN_FAILURE_MESSAGE, 401) };
+  }
+
+  const valid = await verifyPassword(password, user.password_hash, env);
+  if (!valid) {
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "bad_password" });
+    await notifyLogin(env, user.email, { success: false, reason: "Incorrect password was entered.", location, userId: user.id });
+    return { response: errorResponse(LOGIN_FAILURE_MESSAGE, 401) };
+  }
+
+  if (!user.email_verified) {
+    await logAuthEvent(env, "login_failed", { ip, email, reason: "unverified" });
+    await notifyLogin(env, user.email, {
+      success: false,
+      reason: "The correct password was entered, but this account's email is not verified yet.",
+      location,
+      userId: user.id,
+    });
+    return { response: errorResponse(LOGIN_FAILURE_MESSAGE, 401) };
+  }
+
+  await upgradePasswordHash(env, user.id, password, user.password_hash);
+
+  if (user.totp_enabled) {
+    const method = user.phone_e164 ? "sms" : "email";
+
+    if (method === "sms" && !smsConfigured(env)) {
+      await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "sms_unconfigured" });
+      await notifyLogin(env, user.email, {
+        success: false,
+        reason: "The correct password was entered, but the two-factor code could not be sent (misconfigured).",
+        location,
+        userId: user.id,
+      });
+      return { response: errorResponse("Two-factor authentication is misconfigured. Contact support.", 503) };
+    }
+
+    // Each challenge emails/texts a code. A password-holder repeating the
+    // login to bury the owner in codes (or to farm fresh guesses at a new
+    // code) is capped per account.
+    if (await tooManyRecentEvents(env, "login_2fa_required", "userId", user.id, { max: 8, windowMinutes: 15 })) {
+      return { response: errorResponse("Too many sign-in attempts. Please try again in a few minutes.", 429) };
+    }
+
+    try {
+      const challenge = await createTwoFactorChallenge(env, user.id, remember);
+      await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
+      if (method === "sms") {
+        // Email-method 2FA already emails the code itself, which doubles as
+        // the login notification -- a separate one here would just be a
+        // second email for the same event. SMS goes to a different channel,
+        // so it still needs its own.
+        await notifyLogin(env, user.email, {
+          success: true,
+          reason: "The correct password was entered. A two-factor verification code was requested to finish signing in.",
+          location,
+          userId: user.id,
+        });
+      }
+      return {
+        response: jsonResponse({
+          twoFactorRequired: true,
+          challenge: challenge.challenge,
+          expiresIn: challenge.expiresIn,
+          method: challenge.method,
+          phoneMasked: method === "sms" ? maskPhone(user.phone_e164) : null,
+          emailMasked: method === "email" ? maskEmail(user.email) : null,
+        }),
+      };
+    } catch (err) {
+      await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "send_failed" });
+      await notifyLogin(env, user.email, {
+        success: false,
+        reason: "The correct password was entered, but the two-factor code could not be sent.",
+        location,
+        userId: user.id,
+      });
+      return { response: errorResponse(publicError(err, "Could not send verification code."), errorStatus(err, 503)) };
+    }
+  }
+
+  return { user, ip, location };
+}

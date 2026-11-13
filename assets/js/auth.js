@@ -89,16 +89,9 @@
   }
 
   // Where to go after signing in. `next` is a same-site page (protected pages
-  // send people to /login/?next=...). `return_to` is what the OAuth authorize
-  // endpoint (functions/api/oauth/authorize.js) sends logged-out visitors with
-  // when KS_Link is linking an account: it must point back at that endpoint and
-  // nowhere else, so it can never be used as an open redirect.
+  // send people to /login/?next=...).
   function getNextPath() {
     const params = new URLSearchParams(window.location.search);
-    const returnTo = params.get("return_to");
-    if (returnTo && /^\/api\/oauth\/authorize\?/.test(returnTo) && !returnTo.startsWith("//")) {
-      return returnTo;
-    }
     const next = params.get("next");
     if (!next || !next.startsWith("/") || next.startsWith("//")) {
       return "/";
@@ -106,108 +99,8 @@
     return next;
   }
 
-  function isAppLinkPath(path) {
-    return /^\/api\/oauth\/authorize\?/.test(path);
-  }
-
-  // Signed in on the way back to the KS_Link app: say so, hand the browser over to
-  // the app (the authorize endpoint answers with a ks-link:// redirect, which
-  // leaves this page in place), and keep a button for when the browser asks
-  // first or blocks the automatic hand-over.
-  function showAppHandoff(path) {
-    const existing = document.getElementById("auth-handoff");
-    if (existing) existing.remove();
-
-    const wrap = document.createElement("div");
-    wrap.id = "auth-handoff";
-    wrap.className = "auth-handoff";
-    wrap.setAttribute("role", "status");
-
-    const card = document.createElement("div");
-    card.className = "auth-handoff-card";
-
-    const title = document.createElement("h1");
-    title.textContent = "You are signed in";
-    const lead = document.createElement("p");
-    lead.textContent = "Returning to KS_Link. Your browser may ask you to allow opening the app.";
-    const button = document.createElement("a");
-    button.className = "button";
-    button.href = path;
-    button.textContent = "Open KS_Link";
-    const note = document.createElement("p");
-    note.className = "auth-handoff-note";
-    note.appendChild(document.createTextNode("If nothing happens, press the button. When KS_Link is open you can close this tab, or "));
-    const home = document.createElement("a");
-    home.href = "/";
-    home.textContent = "continue to kanasaka.com";
-    note.appendChild(home);
-    note.appendChild(document.createTextNode("."));
-
-    card.appendChild(title);
-    card.appendChild(lead);
-    card.appendChild(button);
-    card.appendChild(note);
-    wrap.appendChild(card);
-    document.body.appendChild(wrap);
-
-    const status = lead;
-
-    // Ask the server first (same request with &check=1: validates everything,
-    // issues no code). A failure is shown in words; only a pass hands over to the
-    // app, whose ks-link:// redirect the browser would otherwise drop silently.
-    fetch(path + "&check=1", { credentials: "include", headers: { Accept: "application/json" } })
-      .then(function (response) {
-        return response.text().then(function (text) {
-          let data = null;
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
-            data = null;
-          }
-          return {
-            ok: response.ok && data && data.ok === true,
-            mode: data && data.mode,
-            message: (data && data.error) || "The server answered " + response.status + ".",
-          };
-        });
-      })
-      .catch(function () {
-        return { ok: false, message: "Could not reach kanasaka.com." };
-      })
-      .then(function (result) {
-        if (!result.ok) {
-          title.textContent = "Could not open KS_Link";
-          status.textContent = result.message + " Nothing was sent to the app.";
-          button.textContent = "Try again";
-          return;
-        }
-        if (result.mode === "poll") {
-          // No app to launch: the running app collects the approval itself. The
-          // authorize endpoint stores it and sends the browser to /link/connected/.
-          status.textContent = "Finishing the sign-in. KS_Link continues on its own.";
-          button.remove();
-          window.location.href = path;
-          return;
-        }
-        status.textContent = "Opening KS_Link. Your browser may ask you to allow it.";
-        window.setTimeout(function () {
-          window.location.href = path;
-        }, 150);
-        window.setTimeout(function () {
-          note.insertBefore(
-            document.createTextNode("Nothing opened? Make sure KS_Link is installed and has been started once, then press the button again. "),
-            note.firstChild
-          );
-        }, 4000);
-      });
-  }
-
   function goAfterSignIn(path) {
-    if (isAppLinkPath(path)) {
-      showAppHandoff(path);
-    } else {
-      window.location.href = path;
-    }
+    window.location.href = path;
   }
 
   async function apiRequest(path, options) {
