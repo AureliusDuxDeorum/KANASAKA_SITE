@@ -16,6 +16,7 @@ import { onRequestPost as totpEnable } from "../functions/api/account/two-factor
 import { createEmailToken, createSession, hashPassword, resolveSession } from "../functions/lib/auth.js";
 import {
   APP_SESSION_DAYS,
+  APP_SESSION_MAX_DAYS,
   MAX_APP_DEVICES,
   bearerToken,
   cleanDeviceLabel,
@@ -341,4 +342,27 @@ test("before migration 021 an app sign-in is refused up front, so nothing is con
   assert.match((await json(res)).error, /not available yet/i);
   const two = await appTwoFactor({ request: req("/api/app/two-factor", { method: "POST", body: { challenge: "c", code: "123456", client: "ks-c1" } }), env, waitUntil() {} });
   assert.equal(two.status, 503);
+});
+
+test("session: sliding stops at 150 days after sign-in, however often the device is used", async () => {
+  const env = makeEnv();
+  const user = await account(env);
+  const { token } = await signIn(env, user);
+  assert.equal(APP_SESSION_MAX_DAYS, 150);
+  const day = 24 * 3600_000;
+
+  // 149 days old and used: still good, but the new expiry is capped at the 150-day mark, not pushed 30 days out
+  await env.DB.prepare("UPDATE app_sessions SET created_at = datetime('now', '-149 days'), last_used_at = datetime('now', '-2 hours')").run();
+  const ok = await get(appSession, env, "/api/app/session", bearer(token));
+  assert.equal(ok.status, 200);
+  const row = await env.DB.prepare("SELECT created_at, expires_at FROM app_sessions").first();
+  const left = Date.parse(row.expires_at) - Date.now();
+  assert.ok(left > 0.5 * day && left < 1.5 * day, "about one day left, not thirty: " + left / day);
+
+  // 151 days old: over, even with an expiry still in the future, and it is not listed either
+  await env.DB.prepare("UPDATE app_sessions SET created_at = datetime('now', '-151 days'), expires_at = ?").bind(new Date(Date.now() + 20 * day).toISOString()).run();
+  assert.equal((await get(appSession, env, "/api/app/session", bearer(token))).status, 401);
+  const fresh = await signIn(env, user, "Second");
+  const list = await json(await get(devicesGet, env, "/api/app/devices", bearer(fresh.token)));
+  assert.deepEqual(list.devices.map((d) => d.label), ["Second"], "the over-age one is not shown");
 });

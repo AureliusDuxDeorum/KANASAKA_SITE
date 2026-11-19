@@ -606,7 +606,7 @@ A native app signs in at /api/app/* and holds its own session, one per device. D
   emailed / texted / backup codes. The difference: NO cookie, and the website session and other devices are NOT touched (the website
   login still keeps one session per account, but app sessions are separate from it and from each other).
 - Token: 32 random bytes, shown once, stored only as hashSecret() output in app_sessions (migration 021). `id` is a separate public
-  handle for listing/signing out. 30 days, sliding (written at most hourly). NOT rotated: a bearer token the server replaced but the
+  handle for listing/signing out. 30 days, sliding (written at most hourly), and never past 150 days after sign-in (APP_SESSION_MAX_DAYS: then sign in again). NOT rotated: a bearer token the server replaced but the
   app never received would strand it; revocation does the work. At most 10 devices per account; the least recently used goes first.
 - Revoked together with the website sessions on: password change, password reset, switching a 2FA method off. Deleted with the account.
 - Allowed apps: APP_CLIENTS in lib/app-sessions.js ("ks-c1"). KS_Link is a separate service with its own sign-in (9b) and does not use

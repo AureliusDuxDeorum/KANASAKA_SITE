@@ -2,7 +2,8 @@
 // are not subject to the website's cookie rules and do not touch its single-session-per-account rule.
 //
 //   * The token is 32 random bytes, shown once, stored only as hashSecret() output (like website sessions).
-//   * Lifetime is APP_SESSION_DAYS, sliding: a check pushes the expiry out. A device unused that long drops off.
+//   * Lifetime is APP_SESSION_DAYS, sliding: a check pushes the expiry out. A device unused that long drops off. Sliding never lasts
+//     forever: APP_SESSION_MAX_DAYS after sign-in the session ends whatever its use, and the person signs in again.
 //   * No rotation. A bearer token replaced by the server but lost on the way back would strand the app; revocation does the work
 //     instead (per device, and all of them on a password change, reset, two-factor switch-off, or account deletion).
 //   * At most MAX_APP_DEVICES per account; signing in on one more evicts the least recently used.
@@ -10,6 +11,15 @@ import { sessionPayload } from "./auth.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 
 export const APP_SESSION_DAYS = 30;
+/** The longest any app session lives, however often it is used. */
+export const APP_SESSION_MAX_DAYS = 150;
+const MAX_AGE_SQL = `datetime(s.created_at, '+${APP_SESSION_MAX_DAYS} days') > datetime('now')`;
+
+/** A timestamp the database wrote ('YYYY-MM-DD HH:MM:SS', UTC) or an ISO one, as milliseconds; NaN if it is neither. */
+function dbTime(value) {
+  const text = String(value);
+  return Date.parse(text.replace(" ", "T") + (/[zZ]|[+-]\d\d:\d\d$/.test(text) ? "" : "Z"));
+}
 export const MAX_APP_DEVICES = 10;
 /** A check writes to the database at most this often, so reading a session is not a write every time. */
 export const SLIDE_AFTER_MS = 60 * 60 * 1000;
@@ -82,17 +92,20 @@ export async function resolveAppSession(request, env) {
      FROM app_sessions s
      JOIN users u ON u.id = s.user_id
      LEFT JOIN user_avatars ua ON ua.user_id = u.id
-     WHERE s.token_hash = ? AND datetime(s.expires_at) > datetime('now')`
+     WHERE s.token_hash = ? AND datetime(s.expires_at) > datetime('now') AND ${MAX_AGE_SQL}`
   )
     .bind(tokenHash)
     .first();
 
   if (!row || !row.email_verified) return { user: null, session: null };
 
-  const lastUsed = Date.parse(String(row.last_used_at).replace(" ", "T") + (String(row.last_used_at).includes("Z") ? "" : "Z"));
+  const lastUsed = dbTime(row.last_used_at);
   let expiresAt = row.expires_at;
   if (!Number.isFinite(lastUsed) || Date.now() - lastUsed >= SLIDE_AFTER_MS) {
-    expiresAt = new Date(Date.now() + APP_SESSION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    // Slide forward, but never past the absolute limit.
+    const hardStop = dbTime(row.session_created_at) + APP_SESSION_MAX_DAYS * 24 * 60 * 60 * 1000;
+    const slid = Date.now() + APP_SESSION_DAYS * 24 * 60 * 60 * 1000;
+    expiresAt = new Date(Number.isFinite(hardStop) ? Math.min(slid, hardStop) : slid).toISOString();
     await env.DB.prepare("UPDATE app_sessions SET last_used_at = datetime('now'), expires_at = ? WHERE token_hash = ?")
       .bind(expiresAt, tokenHash)
       .run();
@@ -149,7 +162,7 @@ export async function deleteAllAppSessions(env, userId) {
 export async function listAppSessions(env, userId) {
   const { results } = await env.DB.prepare(
     `SELECT id, client, device_label, created_at, last_used_at, expires_at
-     FROM app_sessions WHERE user_id = ? AND datetime(expires_at) > datetime('now')
+     FROM app_sessions s WHERE s.user_id = ? AND datetime(s.expires_at) > datetime('now') AND ${MAX_AGE_SQL}
      ORDER BY last_used_at DESC, created_at DESC`
   )
     .bind(Math.trunc(Number(userId)))
