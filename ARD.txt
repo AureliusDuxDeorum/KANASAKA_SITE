@@ -541,6 +541,7 @@ Public vars (wrangler.toml)
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/011_account_id.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/015_session_remember.sql
   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/016_admin_hardening.sql
+  npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/021_app_sessions.sql
 
 007_wipe_accounts.sql — IRREVERSIBLE data wipe (users, sessions, tokens, avatars,
   auth_events, rate_limits). Schema preserved.
@@ -589,6 +590,31 @@ Platforms: windows-x86_64 (.exe), linux-deb, linux-rpm, linux-appimage, android 
 R2 bucket: kanasaka-installers (same bucket other products use), shared binding INSTALLERS
 Upload: node scripts/publish-ks-link-update.mjs <platform> <file> [notes] (see docs/R2_INSTALLERS.md)
 
+9a. APP SESSIONS (KS_C1 and any other native app of ours that is not KS_Link)
+-------------------------------------------------------------------------------
+A native app signs in at /api/app/* and holds its own session, one per device. Detail: functions/lib/app-sessions.js.
+  POST   /api/app/login           { email, password, client, device } -> { token, expiresAt, profile, plan } | { twoFactorRequired, challenge, ... }
+  POST   /api/app/two-factor      { challenge, code, client, device }  -> { token, expiresAt, profile, plan }
+  POST   /api/app/two-factor-send { challenge }                        "email me a code instead" (the website's handler, re-exported)
+  GET    /api/app/session         Bearer -> { authenticated, profile, plan, device } | 401
+  POST   /api/app/logout          Bearer -> signs this device out (always 200)
+  GET    /api/app/devices         Bearer -> this account's devices, the current one marked
+  DELETE /api/app/devices?id=<id> | ?others=1    Bearer -> sign one device, or every other one, out
+  POST   /api/admin/app-devices   { q, deviceId | all:true } -> admin signs a user's devices out (session-or-secret, 2FA required on the
+                                  session path; audited as admin_app_devices_revoked). /api/admin/lookup lists them as appDevices.
+- Same credential checks as the website (lib/login-flow.js, lib/two-factor.js): throttles, verified-email rule, authenticator /
+  emailed / texted / backup codes. The difference: NO cookie, and the website session and other devices are NOT touched (the website
+  login still keeps one session per account, but app sessions are separate from it and from each other).
+- Token: 32 random bytes, shown once, stored only as hashSecret() output in app_sessions (migration 021). `id` is a separate public
+  handle for listing/signing out. 30 days, sliding (written at most hourly). NOT rotated: a bearer token the server replaced but the
+  app never received would strand it; revocation does the work. At most 10 devices per account; the least recently used goes first.
+- Revoked together with the website sessions on: password change, password reset, switching a 2FA method off. Deleted with the account.
+- Allowed apps: APP_CLIENTS in lib/app-sessions.js ("ks-c1"). KS_Link is a separate service with its own sign-in (9b) and does not use
+  these endpoints.
+- `plan` is { id: "free", paid: false } until paid plans exist; appPlan() is the one place that will change.
+- WAF: see "KS_C1 app sign-in endpoints" in docs/CLOUDFLARE_WAF.md. NO managed challenge under /api/app/ (a native app cannot solve it).
+- Registration, email confirmation and password reset stay on /api/auth/* (they need no session).
+
 9b. KS_LINK ACCOUNTS (a KS_Link account IS a KANASAKA account)
 --------------------------------------------------------------
 Sign-in and registration happen INSIDE the KS_Link app (full detail: docs/KS_LINK_OAUTH.md):
@@ -630,6 +656,11 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-19  App sessions for native apps (KS_C1): /api/app/login, /two-factor, /two-factor-send, /session, /logout, /devices; migration
+            021_app_sessions.sql (table app_sessions); functions/lib/app-sessions.js; revoked on password change/reset and 2FA removal,
+            deleted with the account; admin: /api/admin/app-devices and appDevices in /api/admin/lookup, with Sign out buttons in the
+            Developer panel (assets/js/auth.js; prerender re-run for the new ?v= hashes). tests/app-sessions.test.mjs. NOT DEPLOYED:
+            run migration 021 on remote D1, deploy, then add the two WAF rules in docs/CLOUDFLARE_WAF.md.
 2026-11-13  KS_Link session revocation: functions/lib/ks-link-revoke.js signs (HMAC, shared client secret) and sends
             POST /v1/internal/revoke to the relay after a password change/reset, 2FA-disable ("credentials": the
             relay ends all KS_Link sessions) and account deletion ("deleted": the relay erases the KS_Link account).

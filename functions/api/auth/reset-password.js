@@ -16,6 +16,7 @@ import {
   tooManyRecentFailures,
 } from "../../lib/security.js";
 import { notifyKsLink } from "../../lib/ks-link-revoke.js";
+import { deleteAllAppSessions } from "../../lib/app-sessions.js";
 
 const CODE_RE = /^[0-9]{6}$/;
 
@@ -66,6 +67,7 @@ export async function onRequestPost(context) {
     .run();
 
   await deleteAllUserSessions(env, record.user_id);
+  await deleteAllAppSessions(env, record.user_id);
   await notifyKsLink(context, record.user_id, "credentials");
   await logAuthEvent(env, "password_reset_success", { ip, userId: record.user_id });
 

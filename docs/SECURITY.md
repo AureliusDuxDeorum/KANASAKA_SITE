@@ -32,6 +32,14 @@ Last reviewed: 2026-11-03 (v1.3.0). Reporting: see `/.well-known/security.txt`.
 | Low | Time-locked role changes applied only after UTC midnight (same ISO/`datetime` issue) | fixed with the above |
 | Low | No security.txt / robots.txt; empty `Unify_Setup.exe` tracked | added / removed |
 
+## App sessions (KS_C1)
+
+Native apps sign in at `/api/app/*` and hold a per-device bearer token instead of the website's cookie. Tokens are 32 random bytes,
+shown once and stored only as an HMAC, last 30 days sliding, never rotate, and are revoked on a password change or reset, when a
+second-factor method is removed, and when the account is deleted. An account has at most 10 devices and can list and sign any of
+them out (`/api/app/devices`); an admin can do the same from the Developer panel. The credential checks and throttles are the
+website's own (`functions/lib/login-flow.js`). See ARD.txt section 9a.
+
 ## Developer panel
 
 Account > Developer (admin + 2FA):

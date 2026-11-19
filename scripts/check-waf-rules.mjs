@@ -29,6 +29,16 @@ const EXPECTED_RULES = [
     patterns: ["/api/auth/register", "POST"],
   },
   {
+    id: "app-post-flood",
+    summary: "Rate limit app POST routes (30 / 10 min / IP)",
+    patterns: ['starts with "/api/app/"', "POST"],
+  },
+  {
+    id: "app-login-limit",
+    summary: "Tighter app login limit (10 / 10 min / IP), no managed challenge",
+    patterns: ["/api/app/login", "/api/app/two-factor"],
+  },
+  {
     id: "auth-bots",
     summary: "Challenge bots on auth paths",
     patterns: ["/api/auth/", "cf.client.bot"],

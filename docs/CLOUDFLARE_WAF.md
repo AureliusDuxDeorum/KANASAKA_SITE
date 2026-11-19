@@ -94,3 +94,22 @@ the speed limit and the managed challenge. Add, in the dashboard:
 Do NOT add a managed challenge to these two paths: the native app cannot solve one and sign-in would fail.
 The app-level limits (8 failures per email, 30 per address, 15 minutes; capped two-factor challenges and code
 guesses) are what stop slow guessing there; the WAF speed limit stops floods.
+
+
+## KS_C1 app sign-in endpoints (added 2026-11-19)
+
+KS_C1 signs in through `/api/app/login` and `/api/app/two-factor`. Like the KS_Link paths above they sit OUTSIDE the `/api/auth/`
+prefix, which is the point: `/api/auth/login` carries a managed challenge that a native app cannot solve, so the app must not use
+it. And like them they need their own rules, or a credential-stuffing run could simply use the app path and skip the speed limit.
+Add, in the dashboard:
+
+1. `starts_with(http.request.uri.path, "/api/app/")` and method POST -- 30 requests / 10 minutes, block 1 hour
+2. `http.request.uri.path in {"/api/app/login" "/api/app/two-factor"}` -- 10 / 10 minutes per IP
+
+Do NOT add a managed challenge to anything under `/api/app/`: the native app cannot solve one and sign-in would fail. The app-level
+limits in `functions/lib/login-flow.js` (8 failures per email, 30 per address, 15 minutes; capped second-step challenges and code
+guesses) are shared with the website and are what stop slow guessing; the WAF speed limit stops floods.
+
+`GET /api/app/session` is called by the app at start, every 15 minutes, and when its window regains focus: do not rate-limit it
+tightly (a 100 requests / 10 minutes per IP ceiling is plenty and still covers a shared office address).
+

@@ -1,5 +1,6 @@
 import { errorResponse, jsonResponse } from "../../lib/auth.js";
 import { normalizeAccountId } from "../../lib/ks-stocks-access.js";
+import { listAppSessions } from "../../lib/app-sessions.js";
 import { applyDuePendingRoleChanges, getPendingRoleChange } from "../../lib/pending-changes.js";
 import {
   adminActorLabel,
@@ -68,6 +69,7 @@ export async function onRequestGet(context) {
     twoFactorEnabled: Boolean(user_.totp_enabled),
     hasPhone: Boolean(user_.phone_e164),
     createdAt: user_.created_at,
+    appDevices: await listAppSessions(env, user_.id),
     pendingRoleChange: pending
       ? { newRole: pending.new_role, previousRole: pending.previous_role, effectiveAt: pending.effective_at }
       : null,

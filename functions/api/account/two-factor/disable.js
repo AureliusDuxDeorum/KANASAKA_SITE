@@ -10,6 +10,7 @@ import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security
 import { notifyKsLink } from "../../../lib/ks-link-revoke.js";
 
 import { publicError, errorStatus } from "../../../lib/errors.js";
+import { deleteAllAppSessions } from "../../../lib/app-sessions.js";
 
 // Removes ONE second factor ({ method: "email" | "totp", code }); removing the
 // last one switches two-factor off. With a single method enabled `method` may
@@ -51,6 +52,7 @@ export async function onRequestPost(context) {
   try {
     const result = await removeTwoFactorMethod(env, user.id, method, code);
     await deleteAllUserSessions(env, user.id);
+    await deleteAllAppSessions(env, user.id);
     await notifyKsLink(context, user.id, "credentials");
     await logAuthEvent(env, result.remaining.length ? "twofa_method_removed" : "twofa_disabled", {
       ip: clientIp(request),

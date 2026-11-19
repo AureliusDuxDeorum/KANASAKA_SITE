@@ -55,6 +55,7 @@ export async function onRequestPost(context) {
   await deleteAvatar(env, user.id);
   await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ?").bind(user.id).run();
   await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
+  await env.DB.prepare("DELETE FROM app_sessions WHERE user_id = ?").bind(user.id).run();
   await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(user.id).run();
 
   await logAuthEvent(env, "account_deleted", { userId: user.id });

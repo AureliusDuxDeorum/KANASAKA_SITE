@@ -826,7 +826,25 @@
     const lookupResult = document.getElementById("settings-dev-lookup-result");
     const roleForm = document.getElementById("settings-dev-role-form");
     const roleSelect = document.getElementById("settings-dev-role-select");
+    // App devices (KS_C1) signed in to the looked-up account, each with a button to sign it out.
+    function appDevicesHtml(devices) {
+      if (!devices || !devices.length) return "<dt>App devices</dt><dd>None</dd>";
+      return (
+        "<dt>App devices</dt><dd>" +
+        devices
+          .map(function (d) {
+            return (
+              escapeHtml(d.label || "Unknown device") + " (" + escapeHtml(d.client) + "), last used " + escapeHtml(d.lastUsedAt) +
+              ' <button type="button" class="link-button" data-revoke-device="' + escapeHtml(d.id) + '">Sign out</button>'
+            );
+          })
+          .join("<br>") +
+        ' <br><button type="button" class="link-button" data-revoke-all-devices="1">Sign out all</button></dd>'
+      );
+    }
+
     let lookedUpAccountId = null;
+    let lookedUpQuery = "";
 
     if (lookupForm) {
       lookupForm.addEventListener("submit", async function (event) {
@@ -849,6 +867,7 @@
           }
 
           lookedUpAccountId = data.accountId || null;
+          lookedUpQuery = data.email || query;
           lookupResult.hidden = false;
           lookupResult.innerHTML =
             "<dt>Email</dt><dd>" + escapeHtml(data.email) + "</dd>" +
@@ -857,6 +876,7 @@
             "<dt>Verified</dt><dd>" + (data.emailVerified ? "Yes" : "No") + "</dd>" +
             "<dt>2FA</dt><dd>" + (data.twoFactorEnabled ? "Enabled" : "Off") + "</dd>" +
             "<dt>Created</dt><dd>" + escapeHtml(data.createdAt) + "</dd>" +
+            appDevicesHtml(data.appDevices) +
             (data.pendingRoleChange
               ? "<dt>Pending change</dt><dd>" +
                 escapeHtml(data.pendingRoleChange.previousRole) +
@@ -879,6 +899,29 @@
           roleForm.hidden = true;
         } finally {
           setButtonLoading(submit, false);
+        }
+      });
+    }
+
+    if (lookupResult) {
+      lookupResult.addEventListener("click", async function (event) {
+        const button = event.target.closest("[data-revoke-device],[data-revoke-all-devices]");
+        if (!button || !lookedUpQuery) return;
+        const all = button.hasAttribute("data-revoke-all-devices");
+        button.disabled = true;
+        try {
+          const { response, data } = await apiRequest("/api/admin/app-devices", {
+            method: "POST",
+            body: JSON.stringify(
+              all ? { q: lookedUpQuery, all: true } : { q: lookedUpQuery, deviceId: button.getAttribute("data-revoke-device") }
+            ),
+          });
+          if (!response.ok) throw new Error((data && data.error) || "Could not sign the device out.");
+          // Look the account up again so the list shows what is left.
+          if (lookupForm) lookupForm.requestSubmit();
+        } catch (error) {
+          showFormError(lookupForm, error.message || "Could not sign the device out.");
+          button.disabled = false;
         }
       });
     }
