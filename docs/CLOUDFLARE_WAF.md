@@ -106,6 +106,22 @@ Add, in the dashboard:
 1. `starts_with(http.request.uri.path, "/api/app/")` and method POST -- 30 requests / 10 minutes, block 1 hour
 2. `http.request.uri.path in {"/api/app/login" "/api/app/two-factor"}` -- 10 / 10 minutes per IP
 
+**On the Free plan (what is deployed)** there is only one rate-limiting rule, so the two above cannot both be added. Instead edit the
+existing "Auth POST flood limit" rule so its expression also covers the app paths:
+
+```
+(http.request.method eq "POST" and (starts_with(http.request.uri.path, "/api/auth/") or starts_with(http.request.uri.path, "/api/app/")))
+```
+
+Keep Characteristics = IP and the same rate and 10-second block. Do not add `/api/ks-link/` to it: some of those calls come from KS_Link's
+relay, not from people, and would all count against one shared limit. Verify with 30 rapid logouts (harmless, always answers 200):
+
+```
+for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code} " -X POST https://kanasaka.com/api/app/logout; done
+```
+
+Expect about 10 x 200, then 429.
+
 Do NOT add a managed challenge to anything under `/api/app/`: the native app cannot solve one and sign-in would fail. The app-level
 limits in `functions/lib/login-flow.js` (8 failures per email, 30 per address, 15 minutes; capped second-step challenges and code
 guesses) are shared with the website and are what stop slow guessing; the WAF speed limit stops floods.
