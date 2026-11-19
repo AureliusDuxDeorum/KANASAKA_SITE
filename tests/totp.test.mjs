@@ -7,7 +7,6 @@ import { onRequestPost as totpSetup } from "../functions/api/account/two-factor/
 import { onRequestPost as totpEnable } from "../functions/api/account/two-factor/totp-enable.js";
 import { onRequestPost as disable } from "../functions/api/account/two-factor/disable.js";
 import { onRequestPost as sendCode } from "../functions/api/account/two-factor/send-code.js";
-import { onRequestPost as totpEmailCode } from "../functions/api/account/two-factor/totp-email-code.js";
 import { onRequestPost as emailEnable } from "../functions/api/account/two-factor/email-enable.js";
 import { onRequestPost as sendLoginEmail } from "../functions/api/auth/two-factor-send.js";
 import { hashSecret } from "../functions/lib/tokens.js";
@@ -37,11 +36,10 @@ async function giveCode(env, userId, purpose, code) {
     .run();
 }
 
-// Authenticator setup on an account with no email method starts with an emailed code.
+// A signed-in account (its email was verified at registration) can add an authenticator directly.
 async function enableFor(env, user) {
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
-  await giveCode(env, user.id, "totp_setup", "111111");
-  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "111111" }, cookie));
+  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie));
   const enable = await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: await generateTotpCode(setup.secret) }, cookie);
   return { cookie, setup, enable, result: await json(enable) };
 }
@@ -78,16 +76,7 @@ test("setup hands back a secret and an otpauth link, and stores only the sealed 
   const user = await account(env);
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
 
-  const bare = await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie);
-  assert.equal(bare.status, 400, "no confirmation code, no secret");
-  assert.equal((await json(bare)).needsEmailCode, true);
-  const sent = await call(totpEmailCode, env, "/api/account/two-factor/totp-email-code", {}, cookie);
-  assert.equal(sent.status, 200);
-  assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM sms_otp_codes WHERE user_id = ? AND purpose = 'totp_setup'").bind(user.id).first().then((r) => r.c), 1);
-  await giveCode(env, user.id, "totp_setup", "111111");
-  assert.equal((await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "222222" }, cookie)).status, 400, "wrong confirmation");
-
-  const res = await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "111111" }, cookie);
+  const res = await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie);
   assert.equal(res.status, 200);
   const body = await json(res);
   assert.match(body.secret, /^[A-Z2-7]{32}$/);
@@ -105,8 +94,7 @@ test("enabling needs a code from the app; a wrong one changes nothing", async ()
   const env = makeEnv();
   const user = await account(env);
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
-  await giveCode(env, user.id, "totp_setup", "111111");
-  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "111111" }, cookie));
+  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie));
 
   const wrong = await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: "000000" }, cookie);
   assert.equal(wrong.status, 400);
@@ -281,7 +269,7 @@ async function bothMethods(env) {
   const original = await generateBackupCodes(env, user.id);
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
   const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie));
-  assert.ok(setup.secret, "an account that already has email codes needs no extra confirmation");
+  assert.ok(setup.secret);
   const enable = await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: await generateTotpCode(setup.secret) }, cookie);
   assert.equal(enable.status, 200, await enable.clone().text());
   return { user, cookie, setup, original, enable: await json(enable) };

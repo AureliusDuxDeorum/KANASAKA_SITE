@@ -250,22 +250,7 @@ async function loadMethodState(env, userId) {
   return { row, methods: twoFactorMethodsFromUser(row) };
 }
 
-// Adding an authenticator starts with a code emailed to the account address,
-// unless email codes are already one of the account's methods (the address is
-// then already proven). Sent by /totp-email-code.
-export async function sendTotpSetupEmailCode(env, userId) {
-  const { row, methods } = await loadMethodState(env, userId);
-  if (methods.includes("totp")) throw new Error("Authenticator app is already set up.");
-  if (methods.includes("email")) throw new Error("No email confirmation is needed.");
-  if (methods.includes("sms")) throw new Error("Turn off text-message two-factor first.");
-
-  const code = generateSmsCode();
-  await storeSmsOtp(env, userId, "totp_setup", code);
-  await sendTwoFactorCodeEmail(env, row.email, code, "setup");
-  return { emailMasked: maskEmail(row.email) };
-}
-
-export async function beginTotpSetup(env, userId, emailCode) {
+export async function beginTotpSetup(env, userId) {
   const { row, methods } = await loadMethodState(env, userId);
 
   if (methods.includes("totp")) {
@@ -276,14 +261,6 @@ export async function beginTotpSetup(env, userId, emailCode) {
   }
   if (methods.includes("email") && !(await usersHaveTwofaEmailColumn(env))) {
     throw new Error("Using email and an authenticator together isn't available yet.");
-  }
-
-  if (!methods.includes("email")) {
-    if (!(await verifySmsOtp(env, userId, "totp_setup", emailCode))) {
-      const err = new Error("Invalid or expired confirmation code.");
-      err.needsEmailCode = true;
-      throw err;
-    }
   }
 
   const secret = generateTotpSecret();

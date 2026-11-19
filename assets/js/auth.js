@@ -1364,7 +1364,6 @@
     const totpStateEl = byId("settings-2fa-totp-state");
     const totpStartBtn = byId("settings-2fa-totp-start");
     const totpRemoveBtn = byId("settings-2fa-totp-remove-start");
-    const totpConfirmForm = byId("settings-2fa-totp-confirm-form");
     const totpForm = byId("settings-2fa-totp-form");
     const totpRemoveForm = byId("settings-2fa-totp-remove-form");
     const totpQrEl = byId("settings-2fa-totp-qr");
@@ -1372,7 +1371,7 @@
     const totpCopyBtn = byId("settings-2fa-totp-copy");
     const totpCopyStatusEl = byId("settings-2fa-totp-copy-status");
 
-    if (!emailForm || !emailRemoveForm || !totpForm || !totpConfirmForm || !totpRemoveForm) return;
+    if (!emailForm || !emailRemoveForm || !totpForm || !totpRemoveForm) return;
 
     let totpSecret = "";
     let copyTimer = null;
@@ -1404,7 +1403,6 @@
 
     function clearTotpSetup() {
       totpSecret = "";
-      totpConfirmForm.hidden = true;
       totpForm.hidden = true;
       totpQrEl.textContent = "";
       totpSecretEl.textContent = "";
@@ -1460,7 +1458,6 @@
 
     const emailCodeGroup = initOtpGroup(byId("settings-2fa-setup-code-boxes"), emailForm.querySelector('[name="code"]'));
     initOtpGroup(byId("settings-2fa-disable-code-boxes"), emailRemoveForm.querySelector('[name="code"]'));
-    const confirmGroup = initOtpGroup(byId("settings-2fa-totp-confirm-code-boxes"), totpConfirmForm.querySelector('[name="code"]'));
     const totpCodeGroup = initOtpGroup(byId("settings-2fa-totp-code-boxes"), totpForm.querySelector('[name="code"]'));
     initOtpGroup(byId("settings-2fa-totp-remove-code-boxes"), totpRemoveForm.querySelector('[name="code"]'));
 
@@ -1537,7 +1534,6 @@
     // ---- authenticator: set up ---------------------------------------------
 
     function showTotpSetup(data) {
-      totpConfirmForm.hidden = true;
       totpSecret = String(data.secret || "");
       if (!renderQrCode(totpQrEl, data.otpauthUri)) totpQrEl.textContent = "";
       totpSecretEl.textContent = totpSecret.replace(/(.{4})(?=.)/g, "$1 ");
@@ -1547,73 +1543,23 @@
       if (totpCodeGroup) totpCodeGroup.clear();
     }
 
-    async function requestTotpSecret(code, errorForm) {
-      const { response, data } = await post("/api/account/two-factor/totp-setup", code ? { code } : {});
-      if (!response.ok) {
-        errorForm.hidden = false;
-        showFormError(errorForm, (data && data.error) || "Could not start authenticator setup.");
-        return false;
-      }
-      showTotpSetup(data);
-      return true;
-    }
-
-    async function sendTotpConfirmCode() {
-      const { response, data } = await post("/api/account/two-factor/totp-email-code");
-      totpConfirmForm.hidden = false;
-      clearFormError(totpConfirmForm);
-      clearFormSuccess(totpConfirmForm);
-      if (!response.ok) {
-        showFormError(totpConfirmForm, (data && data.error) || "Could not send code.");
-        return false;
-      }
-      showFormSuccess(totpConfirmForm, data.message || "Code sent.");
-      if (confirmGroup) confirmGroup.clear();
-      return true;
-    }
-
     totpStartBtn.addEventListener("click", async function () {
       totpStartBtn.disabled = true;
       closeForms();
       try {
-        if (methods().indexOf("email") !== -1) {
-          // The account's email is already proven by its email codes.
-          await requestTotpSecret("", totpForm);
-        } else {
-          await sendTotpConfirmCode();
+        const { response, data } = await post("/api/account/two-factor/totp-setup");
+        if (!response.ok) {
+          totpForm.hidden = false;
+          showFormError(totpForm, (data && data.error) || "Could not start authenticator setup.");
+          return;
         }
+        showTotpSetup(data);
       } finally {
         totpStartBtn.disabled = false;
       }
     });
 
-    byId("settings-2fa-totp-confirm-resend").addEventListener("click", async function (event) {
-      const btn = event.currentTarget;
-      btn.disabled = true;
-      try {
-        await sendTotpConfirmCode();
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    byId("settings-2fa-totp-confirm-cancel").addEventListener("click", clearTotpSetup);
     byId("settings-2fa-totp-cancel").addEventListener("click", clearTotpSetup);
-
-    totpConfirmForm.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      clearFormError(totpConfirmForm);
-      clearFormSuccess(totpConfirmForm);
-      const code = totpConfirmForm.querySelector('[name="code"]').value.trim();
-      const submit = totpConfirmForm.querySelector('[type="submit"]');
-      submit.disabled = true;
-      try {
-        const ok = await requestTotpSecret(code, totpConfirmForm);
-        if (!ok && confirmGroup) confirmGroup.clear();
-      } finally {
-        submit.disabled = false;
-      }
-    });
 
     function flashCopied() {
       if (totpCopyBtn) totpCopyBtn.classList.add("is-copied");

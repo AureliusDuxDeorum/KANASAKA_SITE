@@ -23,7 +23,7 @@
   <script src="/assets/js/motion-boot.js?v=f8491e9f"></script>
   <script defer src="/assets/js/password-policy.js?v=798cda94"></script>
   <script defer src="/assets/js/qrcode.js?v=34689bb5"></script>
-  <script defer src="/assets/js/auth.js?v=4ad3fd1b"></script>
+  <script defer src="/assets/js/auth.js?v=b1fbcad6"></script>
   <script defer src="/assets/js/shell.js?v=4f2a6683"></script>
   <script defer src="/assets/js/main.js?v=2c04d163"></script>
 </head>
@@ -239,20 +239,6 @@
                   <p id="settings-2fa-totp-desc" class="settings-panel-intro">A 6-digit code from an app such as Google Authenticator, Microsoft Authenticator, Authy or 1Password.</p>
                   <button id="settings-2fa-totp-start" class="button secondary" type="button">Set Up</button>
                   <button id="settings-2fa-totp-remove-start" class="button secondary" type="button" hidden>Remove</button>
-
-                  <form id="settings-2fa-totp-confirm-form" class="auth-form settings-form" hidden>
-                    <p class="settings-panel-intro">First, confirm it's you: we emailed a code to your account address.</p>
-                    <div class="auth-field">
-                      <label id="settings-2fa-totp-confirm-code-label">Email confirmation code</label>
-                      <div class="otp-boxes" id="settings-2fa-totp-confirm-code-boxes" role="group" aria-labelledby="settings-2fa-totp-confirm-code-label"></div>
-                      <input type="hidden" id="settings-2fa-totp-confirm-code" name="code">
-                    </div>
-                    <div class="settings-2fa-actions">
-                      <button class="button secondary" type="submit">Continue</button>
-                      <button id="settings-2fa-totp-confirm-resend" class="link-button" type="button">Resend code</button>
-                      <button id="settings-2fa-totp-confirm-cancel" class="link-button" type="button">Cancel</button>
-                    </div>
-                  </form>
 
                   <form id="settings-2fa-totp-form" class="auth-form settings-form" hidden>
                     <p class="settings-panel-intro">1. In your authenticator app, add an account and scan this QR code.</p>
