@@ -5,6 +5,7 @@
 //   body:  { challenge, code, client, device }
 //   200    { token, expiresAt, profile, plan }
 import { errorResponse, jsonResponse, readJson } from "../../lib/auth.js";
+import { appSessionsTableExists } from "../../lib/schema.js";
 import { appPlan, appProfile, cleanDeviceLabel, createAppSession, loadProfileUser, normalizeClient } from "../../lib/app-sessions.js";
 import { errorStatus, publicError } from "../../lib/errors.js";
 import { approxLocation, clientIp, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
@@ -19,6 +20,10 @@ export async function onRequestPost(context) {
 
   const originError = requireSameOrigin(request, env);
   if (originError) return originError;
+
+  if (!(await appSessionsTableExists(env))) {
+    return errorResponse("App sign-in is not available yet. Try again later.", 503);
+  }
 
   const ip = clientIp(request);
   const location = approxLocation(request);

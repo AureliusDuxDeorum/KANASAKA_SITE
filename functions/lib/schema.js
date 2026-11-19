@@ -103,6 +103,27 @@ export async function usersHaveTwofaEmailColumn(env) {
   }
 }
 
+// Migration 021. Checked before an app sign-in spends a password check, a challenge or a one-time backup code on a session that
+// could not be stored. Only a positive answer is remembered, so running the migration needs no redeploy.
+export async function appSessionsTableExists(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  const key = "app_sessions:" + env.DB.toString();
+  if (schemaCache.get(key)) {
+    return true;
+  }
+
+  try {
+    const exists = (await tableColumns(env, "app_sessions")).length > 0;
+    if (exists) schemaCache.set(key, true);
+    return exists;
+  } catch {
+    return false;
+  }
+}
+
 export async function twofaChallengesHaveRememberColumn(env) {
   if (!env?.DB) {
     return false;

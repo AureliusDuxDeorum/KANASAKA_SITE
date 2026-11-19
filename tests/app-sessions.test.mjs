@@ -305,3 +305,40 @@ test("helpers: bearer parsing, device labels, and the client list", () => {
   assert.equal(cleanDeviceLabel("x".repeat(200)).length, 60);
   assert.equal(cleanDeviceLabel("a\u0000b\u007fc"), "a b c");
 });
+
+test("a device name is text in the sign-in notification email, never markup", async () => {
+  const { sendLoginNotificationEmail } = await import("../functions/lib/email.js");
+  const sent = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    sent.push(JSON.parse(init.body).html);
+    return new Response(JSON.stringify({ id: "x" }), { status: 200 });
+  };
+  try {
+    const evil = 'Laptop <a href="https://evil.example">Secure your account</a> & "co"';
+    await sendLoginNotificationEmail({ RESEND_API_KEY: "k", SITE_URL: "https://kanasaka.com" }, "a@b.co", {
+      success: true,
+      reason: "Signed in to the KS-C1 app on " + cleanDeviceLabel(evil) + ".",
+      location: "<b>x</b>",
+      securityPhrase: "<i>phrase</i>",
+    });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.equal(sent.length, 1);
+  assert.ok(!/<a href|<b>x|<i>phrase/.test(sent[0]), sent[0]);
+  assert.ok(sent[0].includes("&lt;a href=&quot;https://evil.example&quot;&gt;"), "shown literally");
+});
+
+test("before migration 021 an app sign-in is refused up front, so nothing is consumed", async () => {
+  const env = makeEnv();
+  env.DB.raw.exec("DROP TABLE app_sessions");
+  const { clearAuthSchemaCache } = await import("../functions/lib/schema.js");
+  clearAuthSchemaCache();
+  const user = await insertUser(env, { password_hash: await hashPassword(PASSWORD, env) });
+  const res = await appLogin({ request: req("/api/app/login", { method: "POST", body: { email: user.email, password: PASSWORD, client: "ks-c1", device: "t" } }), env, waitUntil() {} });
+  assert.equal(res.status, 503);
+  assert.match((await json(res)).error, /not available yet/i);
+  const two = await appTwoFactor({ request: req("/api/app/two-factor", { method: "POST", body: { challenge: "c", code: "123456", client: "ks-c1" } }), env, waitUntil() {} });
+  assert.equal(two.status, 503);
+});

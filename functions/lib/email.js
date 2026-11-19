@@ -209,9 +209,19 @@ export async function sendPasswordResetCodeEmail(env, email, code) {
 // Anti-phishing security phrase (Coinbase/Binance pattern): stamped at the
 // top of every security-sensitive email below when the user has one set, so
 // a phishing lookalike -- which can't know it -- is immediately obvious.
+// Text that reaches an email body from outside (a device name an app sent, the account's own security phrase) is never markup.
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function securityPhraseBanner(securityPhrase) {
   if (!securityPhrase) return "";
-  return `<p style="padding:12px 14px;background:#f2f2f2;border-left:4px solid #111;margin:0 0 16px;"><strong>Your security phrase:</strong> ${securityPhrase}<br>If you don't see this exact phrase, or don't recognize it, this email is not really from KANASAKA.</p>`;
+  return `<p style="padding:12px 14px;background:#f2f2f2;border-left:4px solid #111;margin:0 0 16px;"><strong>Your security phrase:</strong> ${escapeHtml(securityPhrase)}<br>If you don't see this exact phrase, or don't recognize it, this email is not really from KANASAKA.</p>`;
 }
 
 export async function sendLoginNotificationEmail(env, email, { success, reason, location, securityPhrase }) {
@@ -219,8 +229,8 @@ export async function sendLoginNotificationEmail(env, email, { success, reason, 
   const html = `
     ${securityPhraseBanner(securityPhrase)}
     <p>${success ? "A sign-in to your KANASAKA account just succeeded." : "A sign-in attempt on your KANASAKA account was blocked."}</p>
-    <p><strong>Result:</strong> ${reason}</p>
-    <p><strong>Approximate location:</strong> ${location || "unknown"}</p>
+    <p><strong>Result:</strong> ${escapeHtml(reason)}</p>
+    <p><strong>Approximate location:</strong> ${escapeHtml(location || "unknown")}</p>
     <p><strong>Time:</strong> ${when}</p>
     <p>If this wasn't you, change your password right away and consider enabling two-factor authentication in Account Settings.</p>
   `;

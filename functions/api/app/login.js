@@ -11,6 +11,7 @@
 //            -> finish with POST /api/app/two-factor
 //   400/401/429/503   { error }
 import { errorResponse, jsonResponse, readJson } from "../../lib/auth.js";
+import { appSessionsTableExists } from "../../lib/schema.js";
 import { appPlan, appProfile, cleanDeviceLabel, createAppSession, loadProfileUser, normalizeClient } from "../../lib/app-sessions.js";
 import { authenticateLogin } from "../../lib/login-flow.js";
 import { logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
@@ -24,6 +25,10 @@ export async function onRequestPost(context) {
 
   const originError = requireSameOrigin(request, env);
   if (originError) return originError;
+
+  if (!(await appSessionsTableExists(env))) {
+    return errorResponse("App sign-in is not available yet. Try again later.", 503);
+  }
 
   const body = await readJson(request);
   if (!body) return errorResponse("Invalid request body.");
