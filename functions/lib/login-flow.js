@@ -17,7 +17,7 @@ import {
   verifyPassword,
   burnPasswordCheck,
 } from "./auth.js";
-import { createTwoFactorChallenge, maskEmail, maskPhone } from "./two-factor.js";
+import { createTwoFactorChallenge, maskEmail, maskPhone, twoFactorMethodFromUser } from "./two-factor.js";
 import { smsConfigured } from "./sms.js";
 import { approxLocation, clientIp, tooManyRecentEvents, logAuthEvent, notifyLogin, tooManyRecentFailures } from "./security.js";
 import { publicError, errorStatus } from "./errors.js";
@@ -48,6 +48,7 @@ export async function authenticateLogin({ request, env }, body, { remember = fal
 
   const user = await env.DB.prepare(
     `SELECT u.id, u.email, u.password_hash, u.email_verified, u.display_name, u.totp_enabled, u.phone_e164,
+            CASE WHEN u.totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
      FROM users u
@@ -84,7 +85,7 @@ export async function authenticateLogin({ request, env }, body, { remember = fal
   await upgradePasswordHash(env, user.id, password, user.password_hash);
 
   if (user.totp_enabled) {
-    const method = user.phone_e164 ? "sms" : "email";
+    const method = twoFactorMethodFromUser(user);
 
     if (method === "sms" && !smsConfigured(env)) {
       await logAuthEvent(env, "login_2fa_failed", { ip, userId: user.id, reason: "sms_unconfigured" });
@@ -107,11 +108,11 @@ export async function authenticateLogin({ request, env }, body, { remember = fal
     try {
       const challenge = await createTwoFactorChallenge(env, user.id, remember);
       await logAuthEvent(env, "login_2fa_required", { ip, userId: user.id });
-      if (method === "sms") {
+      if (method !== "email") {
         // Email-method 2FA already emails the code itself, which doubles as
         // the login notification -- a separate one here would just be a
-        // second email for the same event. SMS goes to a different channel,
-        // so it still needs its own.
+        // second email for the same event. SMS and authenticator-app codes
+        // aren't emailed, so they still need their own.
         await notifyLogin(env, user.email, {
           success: true,
           reason: "The correct password was entered. A two-factor verification code was requested to finish signing in.",

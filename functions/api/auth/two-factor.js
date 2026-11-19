@@ -37,7 +37,7 @@ export async function onRequestPost(context) {
   }
 
   if (!code) {
-    return errorResponse("Enter the 6-digit code from your text message.");
+    return errorResponse("Enter your 6-digit verification code.");
   }
 
   try {
@@ -48,7 +48,7 @@ export async function onRequestPost(context) {
     await logAuthEvent(env, "login_success", {
       ip,
       userId: user.user_id,
-      method: "sms",
+      method: "2fa",
     });
     await notifyLogin(env, user.email, {
       success: true,

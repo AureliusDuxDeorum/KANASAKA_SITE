@@ -1296,6 +1296,49 @@
     if (!panel.hidden) loadOnce();
   }
 
+  // Draws `text` as a QR code into `container` (an inline SVG built from DOM
+  // nodes, so it needs no inline styles). Returns false when the encoder
+  // (assets/js/qrcode.js) isn't available.
+  function renderQrCode(container, text) {
+    if (typeof window.qrcode !== "function") return false;
+
+    const qr = window.qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+
+    const size = qr.getModuleCount();
+    const quiet = 4;
+    const ns = "http://www.w3.org/2000/svg";
+    let path = "";
+    for (let row = 0; row < size; row += 1) {
+      for (let col = 0; col < size; col += 1) {
+        if (qr.isDark(row, col)) path += "M" + col + " " + row + "h1v1h-1z";
+      }
+    }
+
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", -quiet + " " + -quiet + " " + (size + quiet * 2) + " " + (size + quiet * 2));
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "QR code for your authenticator app");
+    svg.setAttribute("shape-rendering", "crispEdges");
+
+    const background = document.createElementNS(ns, "rect");
+    background.setAttribute("class", "qr-bg");
+    background.setAttribute("x", String(-quiet));
+    background.setAttribute("y", String(-quiet));
+    background.setAttribute("width", String(size + quiet * 2));
+    background.setAttribute("height", String(size + quiet * 2));
+
+    const modules = document.createElementNS(ns, "path");
+    modules.setAttribute("class", "qr-dark");
+    modules.setAttribute("d", path);
+
+    svg.appendChild(background);
+    svg.appendChild(modules);
+    container.replaceChildren(svg);
+    return true;
+  }
+
   function initTwoFactorSettings(profile) {
     const statusEl = document.getElementById("settings-2fa-status");
     const offBox = document.getElementById("settings-2fa-off");
@@ -1314,6 +1357,20 @@
     const backupRemainingEl = document.getElementById("settings-2fa-backup-remaining");
     const regenerateStartBtn = document.getElementById("settings-2fa-regenerate-start");
     const regenerateForm = document.getElementById("settings-2fa-regenerate-form");
+    const totpStartBtn = document.getElementById("settings-2fa-totp-start");
+    const totpForm = document.getElementById("settings-2fa-totp-form");
+    const totpCancelBtn = document.getElementById("settings-2fa-totp-cancel");
+    const totpQrEl = document.getElementById("settings-2fa-totp-qr");
+    const totpSecretEl = document.getElementById("settings-2fa-totp-secret");
+    const onIntroEl = document.getElementById("settings-2fa-on-intro");
+    const disableBackupField = document.getElementById("settings-2fa-disable-backup-field");
+    const disableBackupInput = document.getElementById("settings-2fa-disable-backup");
+
+    function clearTotpSetup() {
+      if (totpForm) totpForm.hidden = true;
+      if (totpQrEl) totpQrEl.textContent = "";
+      if (totpSecretEl) totpSecretEl.textContent = "";
+    }
 
     function showBackupCodes(codes) {
       if (!backupBox || !backupList || !Array.isArray(codes)) return;
@@ -1324,10 +1381,21 @@
     function render() {
       setupForm.hidden = true;
       disableForm.hidden = true;
+      clearTotpSetup();
       if (regenerateForm) regenerateForm.hidden = true;
 
       if (profile.twoFactorEnabled) {
-        statusEl.textContent = "Enabled.";
+        const method = profile.twoFactorMethod;
+        statusEl.textContent =
+          method === "totp" ? "Enabled (authenticator app)." : method === "sms" ? "Enabled (text message)." : "Enabled (email).";
+        if (onIntroEl) {
+          onIntroEl.textContent =
+            method === "totp"
+              ? "Two-factor authentication is on. When you log in, enter the 6-digit code from your authenticator app."
+              : method === "sms"
+                ? "Two-factor authentication is on. Codes are sent to your phone."
+                : "Two-factor authentication is on. Codes are sent to your account email.";
+        }
         offBox.hidden = true;
         onBox.hidden = false;
         if (backupRemainingEl) {
@@ -1345,11 +1413,77 @@
 
     initOtpGroup(document.getElementById("settings-2fa-setup-code-boxes"), setupForm.querySelector('[name="code"]'));
     initOtpGroup(document.getElementById("settings-2fa-disable-code-boxes"), disableForm.querySelector('[name="code"]'));
+    const totpCodeGroup = totpForm
+      ? initOtpGroup(document.getElementById("settings-2fa-totp-code-boxes"), totpForm.querySelector('[name="code"]'))
+      : null;
 
     render();
 
+    if (totpStartBtn && totpForm) {
+      totpStartBtn.addEventListener("click", async function () {
+        totpStartBtn.disabled = true;
+        clearFormError(totpForm);
+        clearFormSuccess(totpForm);
+        setupForm.hidden = true;
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/totp-setup", { method: "POST" });
+          if (!response.ok) {
+            totpForm.hidden = false;
+            showFormError(totpForm, (data && data.error) || "Could not start authenticator setup.");
+            return;
+          }
+
+          const drawn = renderQrCode(totpQrEl, data.otpauthUri);
+          if (!drawn) totpQrEl.textContent = "";
+          totpSecretEl.textContent = String(data.secret || "").replace(/(.{4})(?=.)/g, "$1 ");
+          totpForm.hidden = false;
+          if (totpCodeGroup) totpCodeGroup.clear();
+        } finally {
+          totpStartBtn.disabled = false;
+        }
+      });
+
+      if (totpCancelBtn) {
+        totpCancelBtn.addEventListener("click", clearTotpSetup);
+      }
+
+      totpForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(totpForm);
+        clearFormSuccess(totpForm);
+
+        const code = totpForm.querySelector('[name="code"]').value.trim();
+        const submit = totpForm.querySelector('[type="submit"]');
+        submit.disabled = true;
+
+        try {
+          const { response, data } = await apiRequest("/api/account/two-factor/totp-enable", {
+            method: "POST",
+            body: JSON.stringify({ code }),
+          });
+
+          if (!response.ok) {
+            throw new Error((data && data.error) || "Could not enable two-factor authentication.");
+          }
+
+          profile.twoFactorEnabled = true;
+          profile.twoFactorMethod = "totp";
+          profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
+          updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
+          render();
+          showBackupCodes(data.backupCodes);
+        } catch (error) {
+          showFormError(totpForm, error.message || "Could not enable two-factor authentication.");
+          if (totpCodeGroup) totpCodeGroup.clear();
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    }
+
     setupStartBtn.addEventListener("click", async function () {
       setupStartBtn.disabled = true;
+      clearTotpSetup();
       try {
         const { response, data } = await apiRequest("/api/account/two-factor/email-setup", {
           method: "POST",
@@ -1404,6 +1538,7 @@
         }
 
         profile.twoFactorEnabled = true;
+        profile.twoFactorMethod = "email";
         profile.emailMasked = data.emailMasked || profile.emailMasked;
         profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
         updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
@@ -1463,6 +1598,17 @@
     }
 
     disableStartBtn.addEventListener("click", async function () {
+      const usesApp = profile.twoFactorMethod === "totp";
+      if (disableBackupField) disableBackupField.hidden = !usesApp;
+      disableResendBtn.hidden = usesApp;
+      if (usesApp) {
+        // The app makes the code itself: nothing to send.
+        clearFormError(disableForm);
+        disableForm.hidden = false;
+        showFormSuccess(disableForm, "Enter the current code from your authenticator app, or a backup code.");
+        return;
+      }
+
       disableStartBtn.disabled = true;
       try {
         const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
@@ -1505,7 +1651,9 @@
       clearFormError(disableForm);
       clearFormSuccess(disableForm);
 
-      const code = disableForm.querySelector('[name="code"]').value.trim();
+      const code =
+        disableForm.querySelector('[name="code"]').value.trim() ||
+        (disableBackupInput ? disableBackupInput.value.trim() : "");
       const submit = disableForm.querySelector('[type="submit"]');
       submit.disabled = true;
 
@@ -2602,10 +2750,14 @@
           verifyForm.dataset.challenge = result.challenge || "";
           const destination = result.emailMasked || result.phoneMasked;
           const lead = root.querySelector("#auth-modal-login-verify-lead");
+          verifyForm.dataset.method = result.method || "";
           if (lead) {
-            lead.textContent = destination
-              ? "Enter the 6-digit code we sent to " + destination + "."
-              : "Enter the 6-digit code we sent you.";
+            lead.textContent =
+              result.method === "totp"
+                ? "Enter the 6-digit code from your authenticator app."
+                : destination
+                  ? "Enter the 6-digit code we sent to " + destination + "."
+                  : "Enter the 6-digit code we sent you.";
           }
           const firstBox = root.querySelector("#auth-modal-login-verify-boxes .otp-box");
           if (firstBox) firstBox.focus();
@@ -2638,7 +2790,9 @@
         otpField.hidden = usingBackupCode;
         backupField.hidden = !usingBackupCode;
         backupToggleBtn.textContent = usingBackupCode
-          ? "Use the emailed code instead"
+          ? verifyForm.dataset.method === "totp"
+            ? "Use the authenticator code instead"
+            : "Use the emailed code instead"
           : "Use a backup code instead";
         const toFocus = usingBackupCode
           ? backupInput

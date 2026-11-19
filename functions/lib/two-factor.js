@@ -4,6 +4,13 @@ import { sendTwoFactorCodeEmail } from "./email.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
 import { twofaChallengesHaveRememberColumn } from "./schema.js";
 import { logEvent, tooManyRecentEvents } from "./throttle.js";
+import {
+  buildOtpAuthUri,
+  findTotpStep,
+  generateTotpSecret,
+  openSecret,
+  sealSecret,
+} from "./totp.js";
 
 function maskEmail(email) {
   const [local, domain] = String(email || "").split("@");
@@ -163,6 +170,133 @@ export async function countUnusedBackupCodes(env, userId) {
     .bind(userId)
     .first();
   return row ? Number(row.c) : 0;
+}
+
+export const TOTP_ISSUER = "KANASAKA";
+export const TOTP_REPLAYED_MESSAGE = "That code was already used. Wait for the next one from your app.";
+
+// Checks a code from the user's authenticator app against a stored (sealed)
+// secret. Counts toward the same per-account lockout as every other code, and
+// refuses a code whose 30-second step was already accepted so an observed code
+// can't be replayed inside its validity window.
+async function verifyTotpCodeFor(env, userId, sealed, code, purpose) {
+  if (await otpLockedOut(env, userId)) {
+    throw tooManyAttemptsError(userId);
+  }
+
+  const secret = await openSecret(sealed, env);
+  const step = secret ? await findTotpStep(secret, normalizeSmsCode(code)) : null;
+  if (step === null) {
+    await recordOtpFailure(env, userId, purpose);
+    return false;
+  }
+
+  const usedType = "totp_used_" + step;
+  if (await tooManyRecentEvents(env, usedType, "userId", userId, { max: 1, windowMinutes: 5 })) {
+    throw new Error(TOTP_REPLAYED_MESSAGE);
+  }
+  await logEvent(env, usedType, { userId });
+  return true;
+}
+
+// A 6-digit entry is an authenticator code; anything else can only be a backup
+// code. Routing on the format means one entry is one guess, not two.
+async function verifyTotpOrBackup(env, userId, sealed, code, purpose) {
+  if (/^\d{6}$/.test(normalizeSmsCode(code))) {
+    return verifyTotpCodeFor(env, userId, sealed, code, purpose);
+  }
+  if (await otpLockedOut(env, userId)) {
+    throw tooManyAttemptsError(userId);
+  }
+  return verifyBackupCode(env, userId, code);
+}
+
+export async function beginTotpSetup(env, userId) {
+  const row = await env.DB.prepare("SELECT email, totp_enabled FROM users WHERE id = ?")
+    .bind(userId)
+    .first();
+
+  if (!row) {
+    throw new Error("Account not found.");
+  }
+
+  if (row.totp_enabled) {
+    throw new Error("Two-factor authentication is already enabled.");
+  }
+
+  const secret = generateTotpSecret();
+  await env.DB.prepare("UPDATE users SET totp_pending_secret = ? WHERE id = ?")
+    .bind(await sealSecret(secret, env), userId)
+    .run();
+
+  return {
+    secret,
+    otpauthUri: buildOtpAuthUri(row.email, secret, TOTP_ISSUER),
+  };
+}
+
+export async function enableTotp2fa(env, userId, code) {
+  const row = await env.DB.prepare(
+    "SELECT totp_pending_secret, totp_enabled FROM users WHERE id = ?"
+  )
+    .bind(userId)
+    .first();
+
+  if (!row || !row.totp_pending_secret) {
+    throw new Error("Start the authenticator setup first.");
+  }
+
+  if (row.totp_enabled) {
+    throw new Error("Two-factor authentication is already enabled.");
+  }
+
+  const valid = await verifyTotpCodeFor(env, userId, row.totp_pending_secret, code, "totp_setup");
+  if (!valid) {
+    throw new Error("Invalid code. Check the 6 digits in your authenticator app and try again.");
+  }
+
+  await env.DB.prepare(
+    `UPDATE users
+     SET totp_secret = totp_pending_secret, totp_pending_secret = NULL,
+         phone_e164 = NULL, phone_pending_e164 = NULL,
+         totp_enabled = 1, totp_enabled_at = datetime('now')
+     WHERE id = ?`
+  )
+    .bind(userId)
+    .run();
+
+  const backupCodes = await generateBackupCodes(env, userId);
+  return { backupCodes };
+}
+
+// Turning authenticator 2FA off needs a current code from the app (or a backup
+// code) on top of the signed-in session.
+export async function disableTotp2fa(env, userId, code) {
+  const row = await env.DB.prepare("SELECT totp_secret FROM users WHERE id = ? AND totp_enabled = 1")
+    .bind(userId)
+    .first();
+
+  if (!row || !row.totp_secret) {
+    throw new Error("Two-factor authentication is not enabled.");
+  }
+
+  const valid = await verifyTotpOrBackup(env, userId, row.totp_secret, code, "totp_disable");
+  if (!valid) {
+    throw new Error("Invalid code. Enter a code from your authenticator app, or a backup code.");
+  }
+
+  await env.DB.prepare(
+    `UPDATE users
+     SET totp_enabled = 0, totp_enabled_at = NULL,
+         totp_secret = NULL, totp_pending_secret = NULL
+     WHERE id = ?`
+  )
+    .bind(userId)
+    .run();
+
+  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
+  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
+  await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
 }
 
 export async function beginSmsSetup(env, userId, phoneInput) {
@@ -393,10 +527,16 @@ export async function sendLoginEmailCode(env, userId) {
   };
 }
 
+// "totp" (authenticator app) | "sms" | "email" | null. Callers select
+// `CASE WHEN u.totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret` so the
+// secret itself never leaves the database layer.
 export function twoFactorMethodFromUser(user) {
   if (!user || !user.totp_enabled) return null;
+  if (user.has_totp_secret) return "totp";
   return user.phone_e164 ? "sms" : "email";
 }
+
+export const HAS_TOTP_SECRET_SQL = "CASE WHEN u.totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret";
 
 export async function createTwoFactorChallenge(env, userId, remember = true) {
   const rawToken = generateRawToken(32);
@@ -419,14 +559,17 @@ export async function createTwoFactorChallenge(env, userId, remember = true) {
       .run();
   }
 
-  const user = await env.DB.prepare("SELECT phone_e164 FROM users WHERE id = ?")
+  const user = await env.DB.prepare(
+    `SELECT u.phone_e164, u.totp_enabled, ${HAS_TOTP_SECRET_SQL} FROM users u WHERE u.id = ?`
+  )
     .bind(userId)
     .first();
-  const method = user && user.phone_e164 ? "sms" : "email";
+  const method = twoFactorMethodFromUser(user) || "email";
 
+  // An authenticator app generates the code itself: nothing to send.
   if (method === "sms") {
     await sendLoginSmsCode(env, userId);
-  } else {
+  } else if (method === "email") {
     await sendLoginEmailCode(env, userId);
   }
 
@@ -459,7 +602,7 @@ async function loadChallengeUser(env, rawChallenge) {
     ? ", c.remember"
     : "";
   const row = await env.DB.prepare(
-    `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.phone_e164, u.totp_enabled,
+    `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.phone_e164, u.totp_enabled, u.totp_secret,
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
             ${rememberSelect}
@@ -472,6 +615,11 @@ async function loadChallengeUser(env, rawChallenge) {
   )
     .bind(challengeHash)
     .first();
+
+  if (row) {
+    // The sealed secret stays inside this module.
+    row.has_totp_secret = row.totp_secret ? 1 : 0;
+  }
 
   if (row && row.remember == null) {
     row.remember = true;
@@ -490,9 +638,12 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
 
   let verified = false;
   try {
-    // 6 digits is the emailed/texted code; anything else can only be a backup
-    // code. Routing on the format means one entry is one guess, not two.
-    if (/^\d{6}$/.test(normalizeSmsCode(code))) {
+    // 6 digits is the authenticator/emailed/texted code; anything else can only
+    // be a backup code. Routing on the format means one entry is one guess,
+    // not two.
+    if (row.totp_secret) {
+      verified = await verifyTotpOrBackup(env, row.user_id, row.totp_secret, code, "login");
+    } else if (/^\d{6}$/.test(normalizeSmsCode(code))) {
       verified = await verifySmsOtp(env, row.user_id, "login", code);
     } else {
       if (await otpLockedOut(env, row.user_id)) {
@@ -518,12 +669,13 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
     .bind(challengeHash)
     .run();
 
+  delete row.totp_secret;
   return row;
 }
 
 export function twoFactorStatusFromUser(user) {
   const enabled = Boolean(user && user.totp_enabled);
-  const method = enabled ? (user.phone_e164 ? "sms" : "email") : null;
+  const method = twoFactorMethodFromUser(user);
   return {
     enabled,
     method,

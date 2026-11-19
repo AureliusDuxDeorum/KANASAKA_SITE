@@ -15,14 +15,15 @@
   <link rel="preload" href="/assets/fonts/Tektur-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="/assets/fonts/Inter-Variable-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/tokens.css?v=090a7ebc">
-  <link rel="stylesheet" href="/assets/css/style.css?v=9fc959c5">
+  <link rel="stylesheet" href="/assets/css/style.css?v=f278b490">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=ef92303b">
   <link rel="stylesheet" href="/assets/css/components.css?v=e94b85ec">
   <link rel="stylesheet" href="/assets/css/motion.css?v=817c1b73">
   <link rel="stylesheet" href="/assets/css/console.css?v=84f8057e">
   <script src="/assets/js/motion-boot.js?v=f8491e9f"></script>
   <script defer src="/assets/js/password-policy.js?v=798cda94"></script>
-  <script defer src="/assets/js/auth.js?v=da509eb1"></script>
+  <script defer src="/assets/js/qrcode.js?v=34689bb5"></script>
+  <script defer src="/assets/js/auth.js?v=3eb55359"></script>
   <script defer src="/assets/js/shell.js?v=4f2a6683"></script>
   <script defer src="/assets/js/main.js?v=2c04d163"></script>
 </head>
@@ -229,8 +230,25 @@
               <p id="settings-2fa-status" class="settings-panel-intro">Checking status...</p>
 
               <div id="settings-2fa-off" hidden>
-                <p class="settings-panel-intro">Add a 6-digit email code as a second step when you log in.</p>
+                <p class="settings-panel-intro">Add a second step when you log in: a 6-digit code from an authenticator app (such as Google Authenticator, Microsoft Authenticator, Authy or 1Password), or a code we email you.</p>
+                <button id="settings-2fa-totp-start" class="button secondary" type="button">Set Up with Authenticator App</button>
                 <button id="settings-2fa-setup-start" class="button secondary" type="button">Set Up via Email</button>
+
+                <form id="settings-2fa-totp-form" class="auth-form settings-form" hidden>
+                  <p class="settings-panel-intro">1. In your authenticator app, add an account and scan this QR code.</p>
+                  <div id="settings-2fa-totp-qr" class="settings-totp-qr"></div>
+                  <p class="settings-panel-intro">Can't scan it? Enter this key in your app instead (time-based, 6 digits):</p>
+                  <p><code id="settings-2fa-totp-secret" class="settings-totp-secret"></code></p>
+                  <div class="auth-field">
+                    <label id="settings-2fa-totp-code-label">2. Enter the 6-digit code your app shows</label>
+                    <div class="otp-boxes" id="settings-2fa-totp-code-boxes" role="group" aria-labelledby="settings-2fa-totp-code-label"></div>
+                    <input type="hidden" id="settings-2fa-totp-code" name="code">
+                  </div>
+                  <div class="settings-2fa-actions">
+                    <button class="button secondary" type="submit">Enable</button>
+                    <button id="settings-2fa-totp-cancel" class="link-button" type="button">Cancel</button>
+                  </div>
+                </form>
 
                 <form id="settings-2fa-setup-form" class="auth-form settings-form" hidden>
                   <div class="auth-field">
@@ -248,14 +266,14 @@
               <div id="settings-2fa-backup-codes" class="settings-backup-codes" hidden>
                 <p class="settings-panel-intro">
                   Save these one-time backup codes somewhere safe. Each can be used once, in place of the
-                  emailed code, if you ever lose access to your email. They won't be shown again.
+                  usual code, if you ever lose access to your authenticator app or email. They won't be shown again.
                 </p>
                 <pre id="settings-2fa-backup-codes-list" class="settings-backup-codes-list"></pre>
                 <button id="settings-2fa-backup-codes-dismiss" class="button secondary" type="button">I've saved these</button>
               </div>
 
               <div id="settings-2fa-on" hidden>
-                <p class="settings-panel-intro">Two-factor authentication is on. Codes are sent to your account email.</p>
+                <p id="settings-2fa-on-intro" class="settings-panel-intro">Two-factor authentication is on. Codes are sent to your account email.</p>
                 <p id="settings-2fa-backup-remaining" class="settings-panel-intro"></p>
                 <button id="settings-2fa-disable-start" class="button secondary" type="button">Disable</button>
                 <button id="settings-2fa-regenerate-start" class="button secondary" type="button">Regenerate Backup Codes</button>
@@ -265,6 +283,10 @@
                     <label id="settings-2fa-disable-code-label">Verification code</label>
                     <div class="otp-boxes" id="settings-2fa-disable-code-boxes" role="group" aria-labelledby="settings-2fa-disable-code-label"></div>
                     <input type="hidden" id="settings-2fa-disable-code" name="code">
+                  </div>
+                  <div class="auth-field" id="settings-2fa-disable-backup-field" hidden>
+                    <label for="settings-2fa-disable-backup">Or a backup code</label>
+                    <input id="settings-2fa-disable-backup" name="backupCode" type="text" autocomplete="off" placeholder="XXXXX-XXXXX">
                   </div>
                   <div class="settings-2fa-actions">
                     <button class="button settings-delete-button" type="submit">Disable Two-Factor</button>

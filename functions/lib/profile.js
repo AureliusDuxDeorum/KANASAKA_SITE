@@ -3,7 +3,7 @@ export const DISPLAY_NAME_MAX = 40;
 
 import { getAccountIdChangeStatus } from "./account-id.js";
 import { maskPhone } from "./phone.js";
-import { maskEmail } from "./two-factor.js";
+import { maskEmail, twoFactorMethodFromUser } from "./two-factor.js";
 import { normalizeRole } from "./roles.js";
 
 export const AVATAR_MIME_TYPES = {
@@ -95,6 +95,7 @@ export async function getUserProfile(env, userId) {
 
   const row = await env.DB.prepare(
     `SELECT u.id, u.email, u.display_name, u.account_id, ${changedAtSelect} u.role, u.totp_enabled, u.totp_enabled_at, u.phone_e164,
+            CASE WHEN u.totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret,
             ua.mime_type, ua.updated_at AS avatar_updated_at,
             (SELECT COUNT(*) FROM twofa_backup_codes WHERE user_id = u.id AND used_at IS NULL) AS backup_codes_remaining
      FROM users u
@@ -118,6 +119,7 @@ export async function getUserProfile(env, userId) {
     totp_enabled: row.totp_enabled,
     totp_enabled_at: row.totp_enabled_at,
     phone_e164: row.phone_e164,
+    has_totp_secret: row.has_totp_secret,
     has_avatar: Boolean(row.mime_type),
     avatar_updated_at: row.avatar_updated_at,
     backup_codes_remaining: Number(row.backup_codes_remaining || 0),
@@ -146,10 +148,10 @@ export function profilePayload(user) {
     avatarUrl: hasAvatar ? "/api/account/avatar?v=" + version : null,
     twoFactorEnabled: Boolean(user.totp_enabled),
     twoFactorEnabledAt: user.totp_enabled_at || null,
-    twoFactorMethod: user.totp_enabled ? (user.phone_e164 ? "sms" : "email") : null,
+    twoFactorMethod: twoFactorMethodFromUser(user),
     phoneMasked: user.phone_e164 ? maskPhone(user.phone_e164) : null,
     emailMasked:
-      user.totp_enabled && !user.phone_e164 ? maskEmail(user.email) : null,
+      twoFactorMethodFromUser(user) === "email" ? maskEmail(user.email) : null,
     backupCodesRemaining: user.totp_enabled ? Number(user.backup_codes_remaining || 0) : null,
   };
 }

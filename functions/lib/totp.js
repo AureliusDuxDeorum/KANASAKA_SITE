@@ -100,23 +100,94 @@ export async function generateTotpCode(secret, timestampMs = Date.now()) {
   return String(otp).padStart(6, "0");
 }
 
-export async function verifyTotpCode(secret, code, options = {}) {
+// The 30-second time step a code belongs to, or null when it matches none
+// inside the window. Callers use the step to refuse a replayed code.
+export async function findTotpStep(secret, code, options = {}) {
   const normalized = normalizeCode(code);
   if (!/^\d{6}$/.test(normalized)) {
-    return false;
+    return null;
   }
 
   const window = Number.isFinite(options.window) ? options.window : 1;
   const now = options.timestampMs || Date.now();
+  const currentStep = Math.floor(now / 1000 / 30);
+  let found = null;
 
+  // Every candidate is checked (no early exit) so timing doesn't reveal which
+  // step matched.
   for (let offset = -window; offset <= window; offset += 1) {
     const candidate = await generateTotpCode(secret, now + offset * 30 * 1000);
-    if (candidate === normalized) {
-      return true;
+    if (candidate === normalized && found === null) {
+      found = currentStep + offset;
     }
   }
 
-  return false;
+  return found;
+}
+
+export async function verifyTotpCode(secret, code, options = {}) {
+  return (await findTotpStep(secret, code, options)) !== null;
+}
+
+// Authenticator secrets are stored encrypted (AES-GCM, key derived from
+// SESSION_SECRET) so a copy of the database alone can't produce codes. With no
+// SESSION_SECRET configured they're stored with a "plain:" prefix instead,
+// matching how hashSecret() degrades.
+async function sealKey(env) {
+  const material = env && env.SESSION_SECRET;
+  if (!material) return null;
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode("kanasaka-totp-seal:" + material)
+  );
+  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+function toBase64(bytes) {
+  let binary = "";
+  bytes.forEach(function (byte) {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function fromBase64(text) {
+  const binary = atob(text);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+export async function sealSecret(secret, env) {
+  const key = await sealKey(env);
+  if (!key) return "plain:" + secret;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipher = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(secret)
+  );
+  return "v1:" + toBase64(iv) + ":" + toBase64(new Uint8Array(cipher));
+}
+
+export async function openSecret(stored, env) {
+  const value = String(stored || "");
+  if (value.startsWith("plain:")) return value.slice(6);
+  if (!value.startsWith("v1:")) return null;
+  const key = await sealKey(env);
+  if (!key) return null;
+  const parts = value.split(":");
+  if (parts.length !== 3) return null;
+  try {
+    const plain = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: fromBase64(parts[1]) },
+      key,
+      fromBase64(parts[2])
+    );
+    return new TextDecoder().decode(plain);
+  } catch {
+    return null;
+  }
 }
 
 export function generateBackupCodes(count = 8) {

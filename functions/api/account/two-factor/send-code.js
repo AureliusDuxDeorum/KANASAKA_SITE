@@ -41,9 +41,13 @@ export async function onRequestPost(context) {
       });
     }
 
-    const row = await env.DB.prepare("SELECT phone_e164 FROM users WHERE id = ?")
+    const row = await env.DB.prepare("SELECT phone_e164, totp_secret FROM users WHERE id = ?")
       .bind(user.id)
       .first();
+
+    if (row && row.totp_secret) {
+      return errorResponse("Your authenticator app generates the code. Open it and enter the current 6 digits.", 400);
+    }
 
     if (row && row.phone_e164) {
       const result = await sendDisableSmsCode(env, user.id);

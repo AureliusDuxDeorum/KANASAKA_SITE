@@ -1,6 +1,6 @@
 # SMS two-factor authentication (Twilio)
 
-Production 2FA sends a 6-digit code by text message via Twilio. Authenticator-app (TOTP) setup has been removed.
+Production 2FA sends a 6-digit code by text message via Twilio. Authenticator-app (TOTP, RFC 6238) 2FA is a separate method that needs no Twilio: Account Settings → Two-Factor Authentication → "Set Up with Authenticator App" (QR code + manual key; secret stored AES-GCM-encrypted with a key derived from `SESSION_SECRET`; a code is accepted once per 30-second step). It also works for the KS_Link app sign-in endpoints.
 
 ## Cloudflare secrets (Production)
 

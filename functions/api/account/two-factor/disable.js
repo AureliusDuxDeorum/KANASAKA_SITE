@@ -5,7 +5,7 @@ import {
   jsonResponse,
   readJson,
 } from "../../../lib/auth.js";
-import { disableEmail2fa, disableSms2fa } from "../../../lib/two-factor.js";
+import { disableEmail2fa, disableSms2fa, disableTotp2fa } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 import { notifyKsLink } from "../../../lib/ks-link-revoke.js";
 
@@ -30,7 +30,7 @@ export async function onRequestPost(context) {
   const code = String(body.code || "");
 
   const row = await env.DB.prepare(
-    "SELECT totp_enabled, phone_e164 FROM users WHERE id = ?"
+    "SELECT totp_enabled, phone_e164, totp_secret FROM users WHERE id = ?"
   )
     .bind(user.id)
     .first();
@@ -40,7 +40,9 @@ export async function onRequestPost(context) {
   }
 
   try {
-    if (row.phone_e164) {
+    if (row.totp_secret) {
+      await disableTotp2fa(env, user.id, code);
+    } else if (row.phone_e164) {
       await disableSms2fa(env, user.id, code);
     } else {
       await disableEmail2fa(env, user.id, code);
