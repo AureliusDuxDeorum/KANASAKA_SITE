@@ -5,12 +5,15 @@ import {
   jsonResponse,
   readJson,
 } from "../../../lib/auth.js";
-import { disableEmail2fa, disableSms2fa, disableTotp2fa } from "../../../lib/two-factor.js";
+import { removeTwoFactorMethod, twoFactorColumns, twoFactorMethodsFromUser } from "../../../lib/two-factor.js";
 import { clientIp, logAuthEvent, requireSameOrigin } from "../../../lib/security.js";
 import { notifyKsLink } from "../../../lib/ks-link-revoke.js";
 
 import { publicError, errorStatus } from "../../../lib/errors.js";
 
+// Removes ONE second factor ({ method: "email" | "totp", code }); removing the
+// last one switches two-factor off. With a single method enabled `method` may
+// be left out.
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -30,30 +33,37 @@ export async function onRequestPost(context) {
   const code = String(body.code || "");
 
   const row = await env.DB.prepare(
-    "SELECT totp_enabled, phone_e164, totp_secret FROM users WHERE id = ?"
+    `SELECT u.totp_enabled, ${await twoFactorColumns(env, "u")} FROM users u WHERE u.id = ?`
   )
     .bind(user.id)
     .first();
 
-  if (!row || !row.totp_enabled) {
+  const methods = twoFactorMethodsFromUser(row);
+  if (!methods.length) {
     return errorResponse("Two-factor authentication is not enabled.", 400);
   }
 
+  const method = String(body.method || (methods.length === 1 ? methods[0] : ""));
+  if (!methods.includes(method)) {
+    return errorResponse("Choose which method to remove.", 400);
+  }
+
   try {
-    if (row.totp_secret) {
-      await disableTotp2fa(env, user.id, code);
-    } else if (row.phone_e164) {
-      await disableSms2fa(env, user.id, code);
-    } else {
-      await disableEmail2fa(env, user.id, code);
-    }
+    const result = await removeTwoFactorMethod(env, user.id, method, code);
     await deleteAllUserSessions(env, user.id);
     await notifyKsLink(context, user.id, "credentials");
-    await logAuthEvent(env, "twofa_disabled", { ip: clientIp(request), userId: user.id });
+    await logAuthEvent(env, result.remaining.length ? "twofa_method_removed" : "twofa_disabled", {
+      ip: clientIp(request),
+      userId: user.id,
+      method,
+    });
 
     return jsonResponse({
       success: true,
-      message: "Two-factor authentication disabled. Sign in again on each device.",
+      remaining: result.remaining,
+      message: result.remaining.length
+        ? "Removed. Sign in again on each device."
+        : "Two-factor authentication disabled. Sign in again on each device.",
     });
   } catch (err) {
     return errorResponse(publicError(err, "Could not disable two-factor authentication."), errorStatus(err, 401));

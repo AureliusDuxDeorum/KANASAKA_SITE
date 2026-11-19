@@ -36,7 +36,7 @@ export async function onRequestPost(context) {
     return jsonResponse({
       success: true,
       emailMasked: result.emailMasked,
-      backupCodes: result.backupCodes,
+      backupCodes: result.backupCodes || null,
       message: "Two-factor authentication is now enabled for " + result.emailMasked + ".",
     });
   } catch (err) {

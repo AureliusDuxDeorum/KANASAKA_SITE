@@ -8,6 +8,8 @@ import {
   resendSmsSetup,
   sendDisableEmailCode,
   sendDisableSmsCode,
+  twoFactorColumns,
+  twoFactorMethodsFromUser,
 } from "../../../lib/two-factor.js";
 import { requireSameOrigin, allowSend, clientIp } from "../../../lib/security.js";
 
@@ -41,15 +43,19 @@ export async function onRequestPost(context) {
       });
     }
 
-    const row = await env.DB.prepare("SELECT phone_e164, totp_secret FROM users WHERE id = ?")
+    const row = await env.DB.prepare(
+      `SELECT u.totp_enabled, ${await twoFactorColumns(env, "u")} FROM users u WHERE u.id = ?`
+    )
       .bind(user.id)
       .first();
+    const methods = twoFactorMethodsFromUser(row);
+    const wanted = String((body && body.method) || "");
 
-    if (row && row.totp_secret) {
+    if (wanted === "totp" || (!wanted && methods.length === 1 && methods[0] === "totp")) {
       return errorResponse("Your authenticator app generates the code. Open it and enter the current 6 digits.", 400);
     }
 
-    if (row && row.phone_e164) {
+    if (methods.includes("sms") && wanted !== "email") {
       const result = await sendDisableSmsCode(env, user.id);
       return jsonResponse({
         success: true,

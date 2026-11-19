@@ -1341,35 +1341,59 @@
 
   function initTwoFactorSettings(profile) {
     const statusEl = document.getElementById("settings-2fa-status");
-    const offBox = document.getElementById("settings-2fa-off");
     const onBox = document.getElementById("settings-2fa-on");
-    if (!statusEl || !offBox || !onBox) return;
+    if (!statusEl || !onBox) return;
 
-    const setupStartBtn = document.getElementById("settings-2fa-setup-start");
-    const setupForm = document.getElementById("settings-2fa-setup-form");
-    const setupResendBtn = document.getElementById("settings-2fa-setup-resend");
-    const disableStartBtn = document.getElementById("settings-2fa-disable-start");
-    const disableForm = document.getElementById("settings-2fa-disable-form");
-    const disableResendBtn = document.getElementById("settings-2fa-disable-resend");
-    const backupBox = document.getElementById("settings-2fa-backup-codes");
-    const backupList = document.getElementById("settings-2fa-backup-codes-list");
-    const backupDismissBtn = document.getElementById("settings-2fa-backup-codes-dismiss");
-    const backupRemainingEl = document.getElementById("settings-2fa-backup-remaining");
-    const regenerateStartBtn = document.getElementById("settings-2fa-regenerate-start");
-    const regenerateForm = document.getElementById("settings-2fa-regenerate-form");
-    const totpStartBtn = document.getElementById("settings-2fa-totp-start");
-    const totpForm = document.getElementById("settings-2fa-totp-form");
-    const totpCancelBtn = document.getElementById("settings-2fa-totp-cancel");
-    const totpQrEl = document.getElementById("settings-2fa-totp-qr");
-    const totpSecretEl = document.getElementById("settings-2fa-totp-secret");
-    const onIntroEl = document.getElementById("settings-2fa-on-intro");
-    const disableBackupField = document.getElementById("settings-2fa-disable-backup-field");
-    const disableBackupInput = document.getElementById("settings-2fa-disable-backup");
+    const byId = function (id) { return document.getElementById(id); };
+    const backupBox = byId("settings-2fa-backup-codes");
+    const backupList = byId("settings-2fa-backup-codes-list");
+    const backupDismissBtn = byId("settings-2fa-backup-codes-dismiss");
+    const backupRemainingEl = byId("settings-2fa-backup-remaining");
+    const regenerateStartBtn = byId("settings-2fa-regenerate-start");
+    const regenerateForm = byId("settings-2fa-regenerate-form");
 
-    function clearTotpSetup() {
-      if (totpForm) totpForm.hidden = true;
-      if (totpQrEl) totpQrEl.textContent = "";
-      if (totpSecretEl) totpSecretEl.textContent = "";
+    // Email card
+    const emailStateEl = byId("settings-2fa-email-state");
+    const emailDescEl = byId("settings-2fa-email-desc");
+    const emailStartBtn = byId("settings-2fa-setup-start");
+    const emailForm = byId("settings-2fa-setup-form");
+    const emailRemoveBtn = byId("settings-2fa-disable-start");
+    const emailRemoveForm = byId("settings-2fa-disable-form");
+
+    // Authenticator card
+    const totpStateEl = byId("settings-2fa-totp-state");
+    const totpStartBtn = byId("settings-2fa-totp-start");
+    const totpRemoveBtn = byId("settings-2fa-totp-remove-start");
+    const totpConfirmForm = byId("settings-2fa-totp-confirm-form");
+    const totpForm = byId("settings-2fa-totp-form");
+    const totpRemoveForm = byId("settings-2fa-totp-remove-form");
+    const totpQrEl = byId("settings-2fa-totp-qr");
+    const totpSecretEl = byId("settings-2fa-totp-secret");
+    const totpCopyBtn = byId("settings-2fa-totp-copy");
+    const totpCopyStatusEl = byId("settings-2fa-totp-copy-status");
+
+    if (!emailForm || !emailRemoveForm || !totpForm || !totpConfirmForm || !totpRemoveForm) return;
+
+    let totpSecret = "";
+    let copyTimer = null;
+
+    function methods() {
+      if (Array.isArray(profile.twoFactorMethods)) return profile.twoFactorMethods;
+      return profile.twoFactorEnabled ? [profile.twoFactorMethod || "email"] : [];
+    }
+
+    function setMethods(list) {
+      profile.twoFactorMethods = list;
+      profile.twoFactorMethod = list[0] || null;
+      profile.twoFactorEnabled = list.length > 0;
+      updateSession(Object.assign({}, getSession(), { twoFactorEnabled: list.length > 0 }));
+    }
+
+    function addMethod(name) {
+      const list = methods().filter(function (m) { return m !== name; });
+      list.push(name);
+      list.sort(function (x, y) { return (x === "totp" ? 0 : 1) - (y === "totp" ? 0 : 1); });
+      setMethods(list);
     }
 
     function showBackupCodes(codes) {
@@ -1378,178 +1402,278 @@
       backupBox.hidden = false;
     }
 
-    function render() {
-      setupForm.hidden = true;
-      disableForm.hidden = true;
-      clearTotpSetup();
-      if (regenerateForm) regenerateForm.hidden = true;
-
-      if (profile.twoFactorEnabled) {
-        const method = profile.twoFactorMethod;
-        statusEl.textContent =
-          method === "totp" ? "Enabled (authenticator app)." : method === "sms" ? "Enabled (text message)." : "Enabled (email).";
-        if (onIntroEl) {
-          onIntroEl.textContent =
-            method === "totp"
-              ? "Two-factor authentication is on. When you log in, enter the 6-digit code from your authenticator app."
-              : method === "sms"
-                ? "Two-factor authentication is on. Codes are sent to your phone."
-                : "Two-factor authentication is on. Codes are sent to your account email.";
-        }
-        offBox.hidden = true;
-        onBox.hidden = false;
-        if (backupRemainingEl) {
-          const remaining = profile.backupCodesRemaining || 0;
-          backupRemainingEl.textContent =
-            remaining === 1 ? "1 backup code remaining." : remaining + " backup codes remaining.";
-        }
-      } else {
-        statusEl.textContent = "Currently off.";
-        offBox.hidden = false;
-        onBox.hidden = true;
-        if (backupBox) backupBox.hidden = true;
-      }
+    function clearTotpSetup() {
+      totpSecret = "";
+      totpConfirmForm.hidden = true;
+      totpForm.hidden = true;
+      totpQrEl.textContent = "";
+      totpSecretEl.textContent = "";
+      if (totpCopyStatusEl) totpCopyStatusEl.hidden = true;
+      if (totpCopyBtn) totpCopyBtn.classList.remove("is-copied");
     }
 
-    initOtpGroup(document.getElementById("settings-2fa-setup-code-boxes"), setupForm.querySelector('[name="code"]'));
-    initOtpGroup(document.getElementById("settings-2fa-disable-code-boxes"), disableForm.querySelector('[name="code"]'));
-    const totpCodeGroup = totpForm
-      ? initOtpGroup(document.getElementById("settings-2fa-totp-code-boxes"), totpForm.querySelector('[name="code"]'))
-      : null;
+    function closeForms() {
+      emailForm.hidden = true;
+      emailRemoveForm.hidden = true;
+      totpRemoveForm.hidden = true;
+      if (regenerateForm) regenerateForm.hidden = true;
+      clearTotpSetup();
+    }
+
+    function render() {
+      closeForms();
+      const list = methods();
+      const hasTotp = list.indexOf("totp") !== -1;
+      const emailLike = list.indexOf("sms") !== -1 ? "sms" : list.indexOf("email") !== -1 ? "email" : null;
+
+      const names = [];
+      if (hasTotp) names.push("authenticator app");
+      if (emailLike === "email") names.push("email");
+      if (emailLike === "sms") names.push("text message");
+      statusEl.textContent = names.length ? "Enabled: " + names.join(" and ") + "." : "Currently off.";
+
+      totpStateEl.textContent = hasTotp ? "On" : "Off";
+      totpStateEl.classList.toggle("is-on", hasTotp);
+      totpStartBtn.hidden = hasTotp;
+      totpStartBtn.disabled = emailLike === "sms";
+      totpRemoveBtn.hidden = !hasTotp;
+
+      emailStateEl.textContent = emailLike === "sms" ? "On (text message)" : emailLike ? "On" : "Off";
+      emailStateEl.classList.toggle("is-on", Boolean(emailLike));
+      emailStartBtn.hidden = Boolean(emailLike);
+      emailRemoveBtn.hidden = !emailLike;
+      if (emailDescEl) {
+        emailDescEl.textContent =
+          emailLike === "sms"
+            ? "We text a 6-digit code to " + (profile.phoneMasked || "your phone") + " each time you log in."
+            : "We email a 6-digit code to your account address each time you log in.";
+      }
+
+      onBox.hidden = list.length === 0;
+      if (backupRemainingEl) {
+        const remaining = profile.backupCodesRemaining || 0;
+        backupRemainingEl.textContent =
+          remaining === 1 ? "1 backup code remaining." : remaining + " backup codes remaining.";
+      }
+      if (!list.length && backupBox) backupBox.hidden = true;
+    }
+
+    const emailCodeGroup = initOtpGroup(byId("settings-2fa-setup-code-boxes"), emailForm.querySelector('[name="code"]'));
+    initOtpGroup(byId("settings-2fa-disable-code-boxes"), emailRemoveForm.querySelector('[name="code"]'));
+    const confirmGroup = initOtpGroup(byId("settings-2fa-totp-confirm-code-boxes"), totpConfirmForm.querySelector('[name="code"]'));
+    const totpCodeGroup = initOtpGroup(byId("settings-2fa-totp-code-boxes"), totpForm.querySelector('[name="code"]'));
+    initOtpGroup(byId("settings-2fa-totp-remove-code-boxes"), totpRemoveForm.querySelector('[name="code"]'));
 
     render();
 
-    if (totpStartBtn && totpForm) {
-      totpStartBtn.addEventListener("click", async function () {
-        totpStartBtn.disabled = true;
-        clearFormError(totpForm);
-        clearFormSuccess(totpForm);
-        setupForm.hidden = true;
-        try {
-          const { response, data } = await apiRequest("/api/account/two-factor/totp-setup", { method: "POST" });
-          if (!response.ok) {
-            totpForm.hidden = false;
-            showFormError(totpForm, (data && data.error) || "Could not start authenticator setup.");
-            return;
-          }
-
-          const drawn = renderQrCode(totpQrEl, data.otpauthUri);
-          if (!drawn) totpQrEl.textContent = "";
-          totpSecretEl.textContent = String(data.secret || "").replace(/(.{4})(?=.)/g, "$1 ");
-          totpForm.hidden = false;
-          if (totpCodeGroup) totpCodeGroup.clear();
-        } finally {
-          totpStartBtn.disabled = false;
-        }
-      });
-
-      if (totpCancelBtn) {
-        totpCancelBtn.addEventListener("click", clearTotpSetup);
-      }
-
-      totpForm.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        clearFormError(totpForm);
-        clearFormSuccess(totpForm);
-
-        const code = totpForm.querySelector('[name="code"]').value.trim();
-        const submit = totpForm.querySelector('[type="submit"]');
-        submit.disabled = true;
-
-        try {
-          const { response, data } = await apiRequest("/api/account/two-factor/totp-enable", {
-            method: "POST",
-            body: JSON.stringify({ code }),
-          });
-
-          if (!response.ok) {
-            throw new Error((data && data.error) || "Could not enable two-factor authentication.");
-          }
-
-          profile.twoFactorEnabled = true;
-          profile.twoFactorMethod = "totp";
-          profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
-          updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
-          render();
-          showBackupCodes(data.backupCodes);
-        } catch (error) {
-          showFormError(totpForm, error.message || "Could not enable two-factor authentication.");
-          if (totpCodeGroup) totpCodeGroup.clear();
-        } finally {
-          submit.disabled = false;
-        }
-      });
+    async function post(path, payload) {
+      return apiRequest(path, { method: "POST", body: payload === undefined ? undefined : JSON.stringify(payload) });
     }
 
-    setupStartBtn.addEventListener("click", async function () {
-      setupStartBtn.disabled = true;
-      clearTotpSetup();
+    // ---- email: set up -----------------------------------------------------
+
+    emailStartBtn.addEventListener("click", async function () {
+      emailStartBtn.disabled = true;
+      closeForms();
       try {
-        const { response, data } = await apiRequest("/api/account/two-factor/email-setup", {
-          method: "POST",
-        });
-        setupForm.hidden = false;
+        const { response, data } = await post("/api/account/two-factor/email-setup");
+        emailForm.hidden = false;
+        clearFormError(emailForm);
+        clearFormSuccess(emailForm);
         if (!response.ok) {
-          showFormError(setupForm, (data && data.error) || "Could not send code.");
+          showFormError(emailForm, (data && data.error) || "Could not send code.");
         } else {
-          showFormSuccess(setupForm, data.message || "Code sent.");
+          showFormSuccess(emailForm, data.message || "Code sent.");
+          if (emailCodeGroup) emailCodeGroup.clear();
         }
       } finally {
-        setupStartBtn.disabled = false;
+        emailStartBtn.disabled = false;
       }
     });
 
-    setupResendBtn.addEventListener("click", async function () {
-      clearFormError(setupForm);
-      clearFormSuccess(setupForm);
-      setupResendBtn.disabled = true;
+    byId("settings-2fa-setup-resend").addEventListener("click", async function (event) {
+      const btn = event.currentTarget;
+      clearFormError(emailForm);
+      clearFormSuccess(emailForm);
+      btn.disabled = true;
       try {
-        const { response, data } = await apiRequest("/api/account/two-factor/email-setup", {
-          method: "POST",
-        });
-        if (!response.ok) {
-          throw new Error((data && data.error) || "Could not resend code.");
-        }
-        showFormSuccess(setupForm, data.message || "Code sent.");
+        const { response, data } = await post("/api/account/two-factor/email-setup");
+        if (!response.ok) throw new Error((data && data.error) || "Could not resend code.");
+        showFormSuccess(emailForm, data.message || "Code sent.");
       } catch (error) {
-        showFormError(setupForm, error.message || "Could not resend code.");
+        showFormError(emailForm, error.message || "Could not resend code.");
       } finally {
-        setupResendBtn.disabled = false;
+        btn.disabled = false;
       }
     });
 
-    setupForm.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      clearFormError(setupForm);
-      clearFormSuccess(setupForm);
+    byId("settings-2fa-setup-cancel").addEventListener("click", function () { emailForm.hidden = true; });
 
-      const code = setupForm.querySelector('[name="code"]').value.trim();
-      const submit = setupForm.querySelector('[type="submit"]');
+    emailForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(emailForm);
+      clearFormSuccess(emailForm);
+
+      const code = emailForm.querySelector('[name="code"]').value.trim();
+      const submit = emailForm.querySelector('[type="submit"]');
       submit.disabled = true;
 
       try {
-        const { response, data } = await apiRequest("/api/account/two-factor/email-enable", {
-          method: "POST",
-          body: JSON.stringify({ code }),
-        });
+        const { response, data } = await post("/api/account/two-factor/email-enable", { code });
+        if (!response.ok) throw new Error((data && data.error) || "Could not enable email codes.");
 
-        if (!response.ok) {
-          throw new Error((data && data.error) || "Could not enable two-factor authentication.");
-        }
-
-        profile.twoFactorEnabled = true;
-        profile.twoFactorMethod = "email";
         profile.emailMasked = data.emailMasked || profile.emailMasked;
-        profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
-        updateSession(Object.assign({}, getSession(), { twoFactorEnabled: true }));
+        if (data.backupCodes) profile.backupCodesRemaining = data.backupCodes.length;
+        addMethod("email");
         render();
         showBackupCodes(data.backupCodes);
       } catch (error) {
-        showFormError(setupForm, error.message || "Could not enable two-factor authentication.");
+        showFormError(emailForm, error.message || "Could not enable email codes.");
       } finally {
         submit.disabled = false;
       }
     });
+
+    // ---- authenticator: set up ---------------------------------------------
+
+    function showTotpSetup(data) {
+      totpConfirmForm.hidden = true;
+      totpSecret = String(data.secret || "");
+      if (!renderQrCode(totpQrEl, data.otpauthUri)) totpQrEl.textContent = "";
+      totpSecretEl.textContent = totpSecret.replace(/(.{4})(?=.)/g, "$1 ");
+      clearFormError(totpForm);
+      clearFormSuccess(totpForm);
+      totpForm.hidden = false;
+      if (totpCodeGroup) totpCodeGroup.clear();
+    }
+
+    async function requestTotpSecret(code, errorForm) {
+      const { response, data } = await post("/api/account/two-factor/totp-setup", code ? { code } : {});
+      if (!response.ok) {
+        errorForm.hidden = false;
+        showFormError(errorForm, (data && data.error) || "Could not start authenticator setup.");
+        return false;
+      }
+      showTotpSetup(data);
+      return true;
+    }
+
+    async function sendTotpConfirmCode() {
+      const { response, data } = await post("/api/account/two-factor/totp-email-code");
+      totpConfirmForm.hidden = false;
+      clearFormError(totpConfirmForm);
+      clearFormSuccess(totpConfirmForm);
+      if (!response.ok) {
+        showFormError(totpConfirmForm, (data && data.error) || "Could not send code.");
+        return false;
+      }
+      showFormSuccess(totpConfirmForm, data.message || "Code sent.");
+      if (confirmGroup) confirmGroup.clear();
+      return true;
+    }
+
+    totpStartBtn.addEventListener("click", async function () {
+      totpStartBtn.disabled = true;
+      closeForms();
+      try {
+        if (methods().indexOf("email") !== -1) {
+          // The account's email is already proven by its email codes.
+          await requestTotpSecret("", totpForm);
+        } else {
+          await sendTotpConfirmCode();
+        }
+      } finally {
+        totpStartBtn.disabled = false;
+      }
+    });
+
+    byId("settings-2fa-totp-confirm-resend").addEventListener("click", async function (event) {
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      try {
+        await sendTotpConfirmCode();
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    byId("settings-2fa-totp-confirm-cancel").addEventListener("click", clearTotpSetup);
+    byId("settings-2fa-totp-cancel").addEventListener("click", clearTotpSetup);
+
+    totpConfirmForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(totpConfirmForm);
+      clearFormSuccess(totpConfirmForm);
+      const code = totpConfirmForm.querySelector('[name="code"]').value.trim();
+      const submit = totpConfirmForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+      try {
+        const ok = await requestTotpSecret(code, totpConfirmForm);
+        if (!ok && confirmGroup) confirmGroup.clear();
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    function flashCopied() {
+      if (totpCopyBtn) totpCopyBtn.classList.add("is-copied");
+      if (totpCopyStatusEl) totpCopyStatusEl.hidden = false;
+      window.clearTimeout(copyTimer);
+      copyTimer = window.setTimeout(function () {
+        if (totpCopyBtn) totpCopyBtn.classList.remove("is-copied");
+        if (totpCopyStatusEl) totpCopyStatusEl.hidden = true;
+      }, 2000);
+    }
+
+    if (totpCopyBtn) {
+      totpCopyBtn.addEventListener("click", async function () {
+        if (!totpSecret) return;
+        try {
+          await navigator.clipboard.writeText(totpSecret);
+          flashCopied();
+          return;
+        } catch (error) {
+          // fall through to the selection-based copy below
+        }
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(totpSecretEl);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          if (document.execCommand("copy")) flashCopied();
+        } catch (error) {
+          // The key stays selected, so it can still be copied by hand.
+        }
+      });
+    }
+
+    totpForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearFormError(totpForm);
+      clearFormSuccess(totpForm);
+
+      const code = totpForm.querySelector('[name="code"]').value.trim();
+      const submit = totpForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        const { response, data } = await post("/api/account/two-factor/totp-enable", { code });
+        if (!response.ok) throw new Error((data && data.error) || "Could not enable the authenticator app.");
+
+        if (data.backupCodes) profile.backupCodesRemaining = data.backupCodes.length;
+        addMethod("totp");
+        render();
+        showBackupCodes(data.backupCodes);
+      } catch (error) {
+        showFormError(totpForm, error.message || "Could not enable the authenticator app.");
+        if (totpCodeGroup) totpCodeGroup.clear();
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    // ---- backup codes ------------------------------------------------------
 
     if (backupDismissBtn) {
       backupDismissBtn.addEventListener("click", function () {
@@ -1575,14 +1699,10 @@
         setButtonLoading(submit, true);
 
         try {
-          const { response, data } = await apiRequest("/api/account/two-factor/regenerate-backup-codes", {
-            method: "POST",
-            body: JSON.stringify({ currentPassword: passwordField.value }),
+          const { response, data } = await post("/api/account/two-factor/regenerate-backup-codes", {
+            currentPassword: passwordField.value,
           });
-
-          if (!response.ok) {
-            throw new Error((data && data.error) || "Could not regenerate backup codes.");
-          }
+          if (!response.ok) throw new Error((data && data.error) || "Could not regenerate backup codes.");
 
           profile.backupCodesRemaining = (data.backupCodes && data.backupCodes.length) || 0;
           regenerateForm.hidden = true;
@@ -1597,84 +1717,99 @@
       });
     }
 
-    disableStartBtn.addEventListener("click", async function () {
-      const usesApp = profile.twoFactorMethod === "totp";
-      if (disableBackupField) disableBackupField.hidden = !usesApp;
-      disableResendBtn.hidden = usesApp;
-      if (usesApp) {
-        // The app makes the code itself: nothing to send.
-        clearFormError(disableForm);
-        disableForm.hidden = false;
-        showFormSuccess(disableForm, "Enter the current code from your authenticator app, or a backup code.");
-        return;
-      }
+    // ---- removing a method -------------------------------------------------
 
-      disableStartBtn.disabled = true;
-      try {
-        const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
-          method: "POST",
-          body: JSON.stringify({ purpose: "disable" }),
+    // Removing signs every device out (the server revokes all sessions), so a
+    // successful removal ends on the login page.
+    function wireRemoval({ startBtn, form, resendBtn, cancelBtn, backupInput, method, sendsCode }) {
+      async function sendCode(isResend) {
+        clearFormError(form);
+        clearFormSuccess(form);
+        const { response, data } = await post("/api/account/two-factor/send-code", {
+          purpose: "disable",
+          method: method(),
         });
-        disableForm.hidden = false;
+        form.hidden = false;
         if (!response.ok) {
-          showFormError(disableForm, (data && data.error) || "Could not send code.");
+          showFormError(form, (data && data.error) || (isResend ? "Could not resend code." : "Could not send code."));
         } else {
-          showFormSuccess(disableForm, data.message || "Code sent.");
+          showFormSuccess(form, data.message || "Code sent.");
         }
-      } finally {
-        disableStartBtn.disabled = false;
       }
+
+      startBtn.addEventListener("click", async function () {
+        const open = !form.hidden;
+        closeForms();
+        if (open) return;
+        startBtn.disabled = true;
+        try {
+          if (sendsCode()) {
+            await sendCode(false);
+          } else {
+            clearFormError(form);
+            form.hidden = false;
+            showFormSuccess(form, "Enter the current code from your authenticator app, or a backup code.");
+          }
+        } finally {
+          startBtn.disabled = false;
+        }
+      });
+
+      if (resendBtn) {
+        resendBtn.addEventListener("click", async function () {
+          resendBtn.disabled = true;
+          try {
+            await sendCode(true);
+          } finally {
+            resendBtn.disabled = false;
+          }
+        });
+      }
+
+      cancelBtn.addEventListener("click", function () { form.hidden = true; });
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFormError(form);
+        clearFormSuccess(form);
+
+        const code = form.querySelector('[name="code"]').value.trim() || (backupInput ? backupInput.value.trim() : "");
+        const submit = form.querySelector('[type="submit"]');
+        submit.disabled = true;
+
+        try {
+          const { response, data } = await post("/api/account/two-factor/disable", { method: method(), code });
+          if (!response.ok) throw new Error((data && data.error) || "Could not remove this method.");
+
+          showFormSuccess(form, (data.message || "Removed.") + " Redirecting to log in...");
+          window.setTimeout(function () {
+            window.location.href = "/login/";
+          }, 1800);
+        } catch (error) {
+          showFormError(form, error.message || "Could not remove this method.");
+          submit.disabled = false;
+        }
+      });
+    }
+
+    wireRemoval({
+      startBtn: emailRemoveBtn,
+      form: emailRemoveForm,
+      resendBtn: byId("settings-2fa-disable-resend"),
+      cancelBtn: byId("settings-2fa-disable-cancel"),
+      backupInput: byId("settings-2fa-disable-backup"),
+      method: function () { return methods().indexOf("sms") !== -1 ? "sms" : "email"; },
+      sendsCode: function () { return true; },
     });
 
-    disableResendBtn.addEventListener("click", async function () {
-      clearFormError(disableForm);
-      clearFormSuccess(disableForm);
-      disableResendBtn.disabled = true;
-      try {
-        const { response, data } = await apiRequest("/api/account/two-factor/send-code", {
-          method: "POST",
-          body: JSON.stringify({ purpose: "disable" }),
-        });
-        if (!response.ok) {
-          throw new Error((data && data.error) || "Could not resend code.");
-        }
-        showFormSuccess(disableForm, data.message || "Code sent.");
-      } catch (error) {
-        showFormError(disableForm, error.message || "Could not resend code.");
-      } finally {
-        disableResendBtn.disabled = false;
-      }
-    });
-
-    disableForm.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      clearFormError(disableForm);
-      clearFormSuccess(disableForm);
-
-      const code =
-        disableForm.querySelector('[name="code"]').value.trim() ||
-        (disableBackupInput ? disableBackupInput.value.trim() : "");
-      const submit = disableForm.querySelector('[type="submit"]');
-      submit.disabled = true;
-
-      try {
-        const { response, data } = await apiRequest("/api/account/two-factor/disable", {
-          method: "POST",
-          body: JSON.stringify({ code }),
-        });
-
-        if (!response.ok) {
-          throw new Error((data && data.error) || "Could not disable two-factor authentication.");
-        }
-
-        showFormSuccess(disableForm, (data.message || "Two-factor authentication disabled.") + " Redirecting to log in...");
-        window.setTimeout(function () {
-          window.location.href = "/login/";
-        }, 1800);
-      } catch (error) {
-        showFormError(disableForm, error.message || "Could not disable two-factor authentication.");
-        submit.disabled = false;
-      }
+    wireRemoval({
+      startBtn: totpRemoveBtn,
+      form: totpRemoveForm,
+      resendBtn: null,
+      cancelBtn: byId("settings-2fa-totp-remove-cancel"),
+      backupInput: byId("settings-2fa-totp-remove-backup"),
+      method: function () { return "totp"; },
+      sendsCode: function () { return false; },
     });
   }
 
@@ -2605,6 +2740,7 @@
       '<input id="auth-modal-login-verify-backup" type="text" autocomplete="off" placeholder="XXXXX-XXXXX">' +
       "</div>" +
       '<button type="submit" class="button auth-submit">Verify</button>' +
+      '<p class="auth-switch"><button type="button" class="link-button" data-action="send-email-code" hidden>Email me a code instead</button></p>' +
       '<p class="auth-switch"><button type="button" class="link-button" data-action="toggle-backup-code">Use a backup code instead</button></p>' +
       "</form>" +
       '<p class="auth-switch auth-modal-switch-mode">No account yet? <button type="button" class="link-button" data-action="switch-mode">Register</button></p>';
@@ -2751,6 +2887,13 @@
           const destination = result.emailMasked || result.phoneMasked;
           const lead = root.querySelector("#auth-modal-login-verify-lead");
           verifyForm.dataset.method = result.method || "";
+          // Authenticator + email codes on the account: nothing was emailed;
+          // the user can ask for it.
+          const offersEmail =
+            result.method === "totp" && Array.isArray(result.methods) && result.methods.indexOf("email") !== -1;
+          verifyForm.dataset.emailMasked = result.emailMasked || "";
+          const sendEmailBtn = verifyForm.querySelector('[data-action="send-email-code"]');
+          if (sendEmailBtn) sendEmailBtn.hidden = !offersEmail;
           if (lead) {
             lead.textContent =
               result.method === "totp"
@@ -2777,6 +2920,34 @@
     });
 
     initOtpGroup(root.querySelector("#auth-modal-login-verify-boxes"), verifyForm.querySelector('[name="code"]'));
+
+    const sendEmailBtn = verifyForm.querySelector('[data-action="send-email-code"]');
+    if (sendEmailBtn) {
+      sendEmailBtn.addEventListener("click", async function () {
+        clearFormError(verifyForm);
+        sendEmailBtn.disabled = true;
+        try {
+          const { response, data } = await apiRequest("/api/auth/two-factor-send", {
+            method: "POST",
+            body: JSON.stringify({ challenge: verifyForm.dataset.challenge || "" }),
+          });
+          if (!response.ok) throw new Error((data && data.error) || "Could not send the code.");
+
+          const lead = root.querySelector("#auth-modal-login-verify-lead");
+          if (lead) {
+            lead.textContent =
+              "We sent a 6-digit code to " +
+              (data.emailMasked || verifyForm.dataset.emailMasked || "your email") +
+              ". Enter it here, or use the code from your authenticator app.";
+          }
+          sendEmailBtn.textContent = "Send the email code again";
+        } catch (error) {
+          showFormError(verifyForm, error.message || "Could not send the code.");
+        } finally {
+          sendEmailBtn.disabled = false;
+        }
+      });
+    }
 
     const backupToggleBtn = verifyForm.querySelector('[data-action="toggle-backup-code"]');
     const otpField = verifyForm.querySelector("#auth-modal-login-verify-otp-field");

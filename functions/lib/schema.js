@@ -90,6 +90,19 @@ export async function usersHaveAccountIdChangedAtColumn(env) {
   }
 }
 
+export async function usersHaveTwofaEmailColumn(env) {
+  if (!env?.DB) {
+    return false;
+  }
+
+  try {
+    const columns = await tableColumns(env, "users");
+    return columns.includes("twofa_email_enabled");
+  } catch {
+    return false;
+  }
+}
+
 export async function twofaChallengesHaveRememberColumn(env) {
   if (!env?.DB) {
     return false;

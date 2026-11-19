@@ -1252,7 +1252,9 @@ h1 {
 
 /* display:grid above would otherwise beat the [hidden] attribute, leaving
    "hidden" forms (2FA setup, disable, regenerate...) visible. */
-.auth-form[hidden] {
+.auth-form[hidden],
+.button[hidden],
+.link-button[hidden] {
   display: none;
 }
 
@@ -2260,7 +2262,7 @@ body.auth-modal-open > #site-footer {
   margin-top: 4px;
 }
 
-#settings-2fa-off .button,
+.settings-2fa-method > .button,
 #settings-2fa-on .button {
   margin-top: 4px;
   margin-right: 10px;
@@ -2286,6 +2288,91 @@ body.auth-modal-open > #site-footer {
 
 .settings-totp-qr .qr-dark {
   fill: #000;
+}
+
+.settings-totp-key {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.settings-copy-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.settings-copy-button:hover,
+.settings-copy-button:focus-visible {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.settings-copy-button .settings-copied-icon,
+.settings-copy-button.is-copied .settings-copy-icon {
+  display: none;
+}
+
+.settings-copy-button.is-copied .settings-copied-icon {
+  display: block;
+}
+
+.settings-copy-status {
+  margin: -12px 0 16px;
+  color: var(--color-text-muted);
+}
+
+.settings-copy-status[hidden] {
+  display: none;
+}
+
+.settings-2fa-methods {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.settings-2fa-method {
+  padding: 20px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-base);
+}
+
+.settings-2fa-method-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.settings-2fa-method-title {
+  margin: 0;
+  font-size: var(--text-md);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.settings-2fa-method-state {
+  color: var(--color-text-muted);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.settings-2fa-method-state.is-on {
+  color: var(--color-text);
+}
+
+.settings-2fa-method .settings-panel-intro {
+  margin-bottom: 16px;
 }
 
 .settings-totp-secret {

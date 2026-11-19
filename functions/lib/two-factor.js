@@ -2,7 +2,7 @@ import { maskPhone, normalizePhone } from "./phone.js";
 import { sendVerificationSms } from "./sms.js";
 import { sendTwoFactorCodeEmail } from "./email.js";
 import { generateRawToken, hashSecret } from "./tokens.js";
-import { twofaChallengesHaveRememberColumn } from "./schema.js";
+import { twofaChallengesHaveRememberColumn, usersHaveTwofaEmailColumn } from "./schema.js";
 import { logEvent, tooManyRecentEvents } from "./throttle.js";
 import {
   buildOtpAuthUri,
@@ -172,6 +172,33 @@ export async function countUnusedBackupCodes(env, userId) {
   return row ? Number(row.c) : 0;
 }
 
+// An account can have several second factors at once (email codes and an
+// authenticator app); at sign-in the user picks one. "sms" is the legacy
+// text-message method and stays exclusive.
+//
+// Rows that go through twoFactorMethodsFromUser need these columns, which the
+// callers select with `await twoFactorColumns(env, "u")`: phone_e164,
+// has_totp_secret (the secret itself never leaves this module) and email_2fa.
+// Before migration 020 there is no email flag, so email is inferred the old
+// way (enabled, with no phone and no authenticator).
+export async function twoFactorColumns(env, alias = "u") {
+  const a = alias ? alias + "." : "";
+  const flag = (await usersHaveTwofaEmailColumn(env))
+    ? a + "twofa_email_enabled"
+    : `CASE WHEN ${a}totp_enabled = 1 AND ${a}totp_secret IS NULL AND ${a}phone_e164 IS NULL THEN 1 ELSE 0 END`;
+  return `${a}phone_e164, CASE WHEN ${a}totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret, ${flag} AS email_2fa`;
+}
+
+export function twoFactorMethodsFromUser(user) {
+  if (!user || !user.totp_enabled) return [];
+  const methods = [];
+  if (user.has_totp_secret) methods.push("totp");
+  if (user.phone_e164) methods.push("sms");
+  else if (user.email_2fa) methods.push("email");
+  // Enabled but nothing recorded: the pre-multi-method meaning, email.
+  return methods.length ? methods : ["email"];
+}
+
 export const TOTP_ISSUER = "KANASAKA";
 export const TOTP_REPLAYED_MESSAGE = "That code was already used. Wait for the next one from your app.";
 
@@ -179,7 +206,7 @@ export const TOTP_REPLAYED_MESSAGE = "That code was already used. Wait for the n
 // secret. Counts toward the same per-account lockout as every other code, and
 // refuses a code whose 30-second step was already accepted so an observed code
 // can't be replayed inside its validity window.
-async function verifyTotpCodeFor(env, userId, sealed, code, purpose) {
+async function verifyTotpCodeFor(env, userId, sealed, code, purpose, { countFailure = true } = {}) {
   if (await otpLockedOut(env, userId)) {
     throw tooManyAttemptsError(userId);
   }
@@ -187,7 +214,9 @@ async function verifyTotpCodeFor(env, userId, sealed, code, purpose) {
   const secret = await openSecret(sealed, env);
   const step = secret ? await findTotpStep(secret, normalizeSmsCode(code)) : null;
   if (step === null) {
-    await recordOtpFailure(env, userId, purpose);
+    // With countFailure off the caller still has another method to try for
+    // this same entry and records the (single) failure itself.
+    if (countFailure) await recordOtpFailure(env, userId, purpose);
     return false;
   }
 
@@ -211,17 +240,50 @@ async function verifyTotpOrBackup(env, userId, sealed, code, purpose) {
   return verifyBackupCode(env, userId, code);
 }
 
-export async function beginTotpSetup(env, userId) {
-  const row = await env.DB.prepare("SELECT email, totp_enabled FROM users WHERE id = ?")
+async function loadMethodState(env, userId) {
+  const row = await env.DB.prepare(
+    `SELECT u.email, u.totp_enabled, ${await twoFactorColumns(env, "u")} FROM users u WHERE u.id = ?`
+  )
     .bind(userId)
     .first();
+  if (!row) throw new Error("Account not found.");
+  return { row, methods: twoFactorMethodsFromUser(row) };
+}
 
-  if (!row) {
-    throw new Error("Account not found.");
+// Adding an authenticator starts with a code emailed to the account address,
+// unless email codes are already one of the account's methods (the address is
+// then already proven). Sent by /totp-email-code.
+export async function sendTotpSetupEmailCode(env, userId) {
+  const { row, methods } = await loadMethodState(env, userId);
+  if (methods.includes("totp")) throw new Error("Authenticator app is already set up.");
+  if (methods.includes("email")) throw new Error("No email confirmation is needed.");
+  if (methods.includes("sms")) throw new Error("Turn off text-message two-factor first.");
+
+  const code = generateSmsCode();
+  await storeSmsOtp(env, userId, "totp_setup", code);
+  await sendTwoFactorCodeEmail(env, row.email, code, "setup");
+  return { emailMasked: maskEmail(row.email) };
+}
+
+export async function beginTotpSetup(env, userId, emailCode) {
+  const { row, methods } = await loadMethodState(env, userId);
+
+  if (methods.includes("totp")) {
+    throw new Error("Authenticator app is already set up.");
+  }
+  if (methods.includes("sms")) {
+    throw new Error("Turn off text-message two-factor first.");
+  }
+  if (methods.includes("email") && !(await usersHaveTwofaEmailColumn(env))) {
+    throw new Error("Using email and an authenticator together isn't available yet.");
   }
 
-  if (row.totp_enabled) {
-    throw new Error("Two-factor authentication is already enabled.");
+  if (!methods.includes("email")) {
+    if (!(await verifySmsOtp(env, userId, "totp_setup", emailCode))) {
+      const err = new Error("Invalid or expired confirmation code.");
+      err.needsEmailCode = true;
+      throw err;
+    }
   }
 
   const secret = generateTotpSecret();
@@ -235,10 +297,15 @@ export async function beginTotpSetup(env, userId) {
   };
 }
 
+async function hasBackupCodes(env, userId) {
+  const row = await env.DB.prepare("SELECT COUNT(*) AS c FROM twofa_backup_codes WHERE user_id = ?")
+    .bind(userId)
+    .first();
+  return Boolean(row && Number(row.c) > 0);
+}
+
 export async function enableTotp2fa(env, userId, code) {
-  const row = await env.DB.prepare(
-    "SELECT totp_pending_secret, totp_enabled FROM users WHERE id = ?"
-  )
+  const row = await env.DB.prepare("SELECT totp_pending_secret, totp_secret FROM users WHERE id = ?")
     .bind(userId)
     .first();
 
@@ -246,8 +313,8 @@ export async function enableTotp2fa(env, userId, code) {
     throw new Error("Start the authenticator setup first.");
   }
 
-  if (row.totp_enabled) {
-    throw new Error("Two-factor authentication is already enabled.");
+  if (row.totp_secret) {
+    throw new Error("Authenticator app is already set up.");
   }
 
   const valid = await verifyTotpCodeFor(env, userId, row.totp_pending_secret, code, "totp_setup");
@@ -258,45 +325,72 @@ export async function enableTotp2fa(env, userId, code) {
   await env.DB.prepare(
     `UPDATE users
      SET totp_secret = totp_pending_secret, totp_pending_secret = NULL,
-         phone_e164 = NULL, phone_pending_e164 = NULL,
-         totp_enabled = 1, totp_enabled_at = datetime('now')
+         totp_enabled = 1, totp_enabled_at = COALESCE(totp_enabled_at, datetime('now'))
      WHERE id = ?`
   )
     .bind(userId)
     .run();
 
-  const backupCodes = await generateBackupCodes(env, userId);
+  // Backup codes belong to the account, not a method: issue them when 2FA
+  // first turns on, keep the existing set when a second method is added.
+  const backupCodes = (await hasBackupCodes(env, userId)) ? null : await generateBackupCodes(env, userId);
   return { backupCodes };
 }
 
-// Turning authenticator 2FA off needs a current code from the app (or a backup
-// code) on top of the signed-in session.
-export async function disableTotp2fa(env, userId, code) {
-  const row = await env.DB.prepare("SELECT totp_secret FROM users WHERE id = ? AND totp_enabled = 1")
-    .bind(userId)
-    .first();
-
-  if (!row || !row.totp_secret) {
-    throw new Error("Two-factor authentication is not enabled.");
+// Removes one second factor. Needs a current code of that method (or a backup
+// code). Removing the last one switches two-factor off altogether.
+export async function removeTwoFactorMethod(env, userId, method, code) {
+  const { methods } = await loadMethodState(env, userId);
+  if (!methods.includes(method)) {
+    throw new Error("That method is not enabled.");
   }
 
-  const valid = await verifyTotpOrBackup(env, userId, row.totp_secret, code, "totp_disable");
+  const six = /^\d{6}$/.test(normalizeSmsCode(code));
+  let valid;
+  if (method === "totp") {
+    const row = await env.DB.prepare("SELECT totp_secret FROM users WHERE id = ?").bind(userId).first();
+    valid = await verifyTotpOrBackup(env, userId, row && row.totp_secret, code, "remove_totp");
+  } else if (six) {
+    valid = await verifySmsOtp(env, userId, "disable", code);
+  } else {
+    if (await otpLockedOut(env, userId)) throw tooManyAttemptsError(userId);
+    valid = await verifyBackupCode(env, userId, code);
+  }
   if (!valid) {
-    throw new Error("Invalid code. Enter a code from your authenticator app, or a backup code.");
+    throw new Error(
+      method === "totp"
+        ? "Invalid code. Enter a code from your authenticator app, or a backup code."
+        : "Invalid or expired verification code."
+    );
   }
 
-  await env.DB.prepare(
-    `UPDATE users
-     SET totp_enabled = 0, totp_enabled_at = NULL,
-         totp_secret = NULL, totp_pending_secret = NULL
-     WHERE id = ?`
-  )
-    .bind(userId)
-    .run();
+  const remaining = methods.filter(function (m) {
+    return m !== method;
+  });
+
+  if (method === "totp") {
+    await env.DB.prepare("UPDATE users SET totp_secret = NULL, totp_pending_secret = NULL WHERE id = ?")
+      .bind(userId)
+      .run();
+  } else if (method === "sms") {
+    await env.DB.prepare("UPDATE users SET phone_e164 = NULL, phone_pending_e164 = NULL WHERE id = ?")
+      .bind(userId)
+      .run();
+  } else if (await usersHaveTwofaEmailColumn(env)) {
+    await env.DB.prepare("UPDATE users SET twofa_email_enabled = 0 WHERE id = ?").bind(userId).run();
+  }
 
   await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
   await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
+
+  if (!remaining.length) {
+    await env.DB.prepare("UPDATE users SET totp_enabled = 0, totp_enabled_at = NULL WHERE id = ?")
+      .bind(userId)
+      .run();
+    await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
+  }
+
+  return { remaining };
 }
 
 export async function beginSmsSetup(env, userId, phoneInput) {
@@ -394,37 +488,14 @@ export async function sendDisableSmsCode(env, userId) {
   };
 }
 
-export async function disableSms2fa(env, userId, code) {
-  const valid = await verifySmsOtp(env, userId, "disable", code);
-  if (!valid) {
-    throw new Error("Invalid or expired verification code.");
-  }
-
-  await env.DB.prepare(
-    `UPDATE users
-     SET phone_e164 = NULL, phone_pending_e164 = NULL, totp_enabled = 0,
-         totp_secret = NULL, totp_pending_secret = NULL, totp_enabled_at = NULL
-     WHERE id = ?`
-  )
-    .bind(userId)
-    .run();
-
-  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
-}
-
 export async function beginEmailSetup(env, userId) {
-  const row = await env.DB.prepare("SELECT email, totp_enabled FROM users WHERE id = ?")
-    .bind(userId)
-    .first();
+  const { row, methods } = await loadMethodState(env, userId);
 
-  if (!row) {
-    throw new Error("Account not found.");
+  if (methods.includes("email") || methods.includes("sms")) {
+    throw new Error("Email codes are already set up.");
   }
-
-  if (row.totp_enabled) {
-    throw new Error("Two-factor authentication is already enabled.");
+  if (methods.length && !(await usersHaveTwofaEmailColumn(env))) {
+    throw new Error("Using email and an authenticator together isn't available yet.");
   }
 
   const code = generateSmsCode();
@@ -437,16 +508,10 @@ export async function beginEmailSetup(env, userId) {
 }
 
 export async function enableEmail2fa(env, userId, code) {
-  const row = await env.DB.prepare("SELECT email, totp_enabled FROM users WHERE id = ?")
-    .bind(userId)
-    .first();
+  const { row, methods } = await loadMethodState(env, userId);
 
-  if (!row) {
-    throw new Error("Account not found.");
-  }
-
-  if (row.totp_enabled) {
-    throw new Error("Two-factor authentication is already enabled.");
+  if (methods.includes("email") || methods.includes("sms")) {
+    throw new Error("Email codes are already set up.");
   }
 
   const valid = await verifySmsOtp(env, userId, "email_setup", code);
@@ -454,15 +519,24 @@ export async function enableEmail2fa(env, userId, code) {
     throw new Error("Invalid or expired verification code.");
   }
 
-  await env.DB.prepare(
-    `UPDATE users
-     SET totp_enabled = 1, totp_enabled_at = datetime('now')
-     WHERE id = ?`
-  )
-    .bind(userId)
-    .run();
+  if (await usersHaveTwofaEmailColumn(env)) {
+    await env.DB.prepare(
+      `UPDATE users
+       SET twofa_email_enabled = 1, totp_enabled = 1,
+           totp_enabled_at = COALESCE(totp_enabled_at, datetime('now'))
+       WHERE id = ?`
+    )
+      .bind(userId)
+      .run();
+  } else {
+    await env.DB.prepare(
+      `UPDATE users SET totp_enabled = 1, totp_enabled_at = datetime('now') WHERE id = ?`
+    )
+      .bind(userId)
+      .run();
+  }
 
-  const backupCodes = await generateBackupCodes(env, userId);
+  const backupCodes = (await hasBackupCodes(env, userId)) ? null : await generateBackupCodes(env, userId);
 
   return {
     emailMasked: maskEmail(row.email),
@@ -471,14 +545,10 @@ export async function enableEmail2fa(env, userId, code) {
 }
 
 export async function sendDisableEmailCode(env, userId) {
-  const row = await env.DB.prepare(
-    "SELECT email FROM users WHERE id = ? AND totp_enabled = 1 AND phone_e164 IS NULL"
-  )
-    .bind(userId)
-    .first();
+  const { row, methods } = await loadMethodState(env, userId);
 
-  if (!row) {
-    throw new Error("Two-factor authentication is not enabled.");
+  if (!methods.includes("email")) {
+    throw new Error("Email codes are not enabled.");
   }
 
   const code = generateSmsCode();
@@ -490,31 +560,10 @@ export async function sendDisableEmailCode(env, userId) {
   };
 }
 
-export async function disableEmail2fa(env, userId, code) {
-  const valid = await verifySmsOtp(env, userId, "disable", code);
-  if (!valid) {
-    throw new Error("Invalid or expired verification code.");
-  }
-
-  await env.DB.prepare(
-    `UPDATE users SET totp_enabled = 0, totp_enabled_at = NULL WHERE id = ?`
-  )
-    .bind(userId)
-    .run();
-
-  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare("DELETE FROM twofa_backup_codes WHERE user_id = ?").bind(userId).run();
-  await env.DB.prepare("DELETE FROM twofa_challenges WHERE user_id = ?").bind(userId).run();
-}
-
 export async function sendLoginEmailCode(env, userId) {
-  const row = await env.DB.prepare(
-    "SELECT email FROM users WHERE id = ? AND totp_enabled = 1 AND phone_e164 IS NULL"
-  )
-    .bind(userId)
-    .first();
+  const { row, methods } = await loadMethodState(env, userId);
 
-  if (!row) {
+  if (!methods.includes("email")) {
     throw new Error("Two-factor authentication is misconfigured.");
   }
 
@@ -527,16 +576,11 @@ export async function sendLoginEmailCode(env, userId) {
   };
 }
 
-// "totp" (authenticator app) | "sms" | "email" | null. Callers select
-// `CASE WHEN u.totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret` so the
-// secret itself never leaves the database layer.
+// The method a sign-in expects first: the authenticator when there is one,
+// otherwise the one code that gets sent. null when two-factor is off.
 export function twoFactorMethodFromUser(user) {
-  if (!user || !user.totp_enabled) return null;
-  if (user.has_totp_secret) return "totp";
-  return user.phone_e164 ? "sms" : "email";
+  return twoFactorMethodsFromUser(user)[0] || null;
 }
-
-export const HAS_TOTP_SECRET_SQL = "CASE WHEN u.totp_secret IS NULL THEN 0 ELSE 1 END AS has_totp_secret";
 
 export async function createTwoFactorChallenge(env, userId, remember = true) {
   const rawToken = generateRawToken(32);
@@ -560,20 +604,47 @@ export async function createTwoFactorChallenge(env, userId, remember = true) {
   }
 
   const user = await env.DB.prepare(
-    `SELECT u.phone_e164, u.totp_enabled, ${HAS_TOTP_SECRET_SQL} FROM users u WHERE u.id = ?`
+    `SELECT u.totp_enabled, ${await twoFactorColumns(env, "u")} FROM users u WHERE u.id = ?`
   )
     .bind(userId)
     .first();
-  const method = twoFactorMethodFromUser(user) || "email";
+  const methods = twoFactorMethodsFromUser(user);
+  const method = methods[0] || "email";
 
-  // An authenticator app generates the code itself: nothing to send.
-  if (method === "sms") {
+  // A code is sent on its own only when it's the account's single method. With
+  // an authenticator the user may prefer it, so an emailed code is sent only
+  // if they ask (sendLoginCodeForChallenge).
+  if (methods.length === 1 && method === "sms") {
     await sendLoginSmsCode(env, userId);
-  } else if (method === "email") {
+  } else if (methods.length === 1 && method === "email") {
     await sendLoginEmailCode(env, userId);
   }
 
-  return { challenge: rawToken, expiresIn: CHALLENGE_MINUTES * 60, method };
+  return { challenge: rawToken, expiresIn: CHALLENGE_MINUTES * 60, method, methods };
+}
+
+// "Email me a code instead", from the sign-in screen of an account that has
+// both an authenticator and email codes.
+export async function sendLoginCodeForChallenge(env, rawChallenge, allow) {
+  const row = await loadChallengeUser(env, rawChallenge);
+  if (!row) {
+    throw new Error("Two-factor challenge expired. Sign in again.");
+  }
+
+  const methods = twoFactorMethodsFromUser(row);
+  if (!methods.includes("email")) {
+    throw new Error("Email codes are not enabled for this account.");
+  }
+
+  // `allow(userId)` is the caller's per-account send throttle; it runs before
+  // anything is emailed.
+  if (allow && !(await allow(row.user_id))) {
+    const err = new Error("Too many codes requested. Try again in a few minutes.");
+    err.status = 429;
+    throw err;
+  }
+
+  return sendLoginEmailCode(env, row.user_id);
 }
 
 export async function sendLoginSmsCode(env, userId) {
@@ -602,7 +673,8 @@ async function loadChallengeUser(env, rawChallenge) {
     ? ", c.remember"
     : "";
   const row = await env.DB.prepare(
-    `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.phone_e164, u.totp_enabled, u.totp_secret,
+    `SELECT c.user_id, u.email, u.display_name, u.email_verified, u.totp_enabled, u.totp_secret,
+            ${await twoFactorColumns(env, "u")},
             ua.updated_at AS avatar_updated_at,
             CASE WHEN ua.user_id IS NULL THEN 0 ELSE 1 END AS has_avatar
             ${rememberSelect}
@@ -638,12 +710,23 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
 
   let verified = false;
   try {
-    // 6 digits is the authenticator/emailed/texted code; anything else can only
+    // 6 digits is an authenticator/emailed/texted code; anything else can only
     // be a backup code. Routing on the format means one entry is one guess,
     // not two.
-    if (row.totp_secret) {
-      verified = await verifyTotpOrBackup(env, row.user_id, row.totp_secret, code, "login");
-    } else if (/^\d{6}$/.test(normalizeSmsCode(code))) {
+    const sixDigits = /^\d{6}$/.test(normalizeSmsCode(code));
+    const hasSentCode = twoFactorMethodsFromUser(row).some(function (m) {
+      return m === "email" || m === "sms";
+    });
+    if (sixDigits && row.totp_secret) {
+      // Either the app's code or (if the user asked for one) the emailed code;
+      // the entry counts as one failure only if neither matches.
+      verified = await verifyTotpCodeFor(env, row.user_id, row.totp_secret, code, "login", {
+        countFailure: !hasSentCode,
+      });
+      if (!verified && hasSentCode) {
+        verified = await verifySmsOtp(env, row.user_id, "login", code);
+      }
+    } else if (sixDigits) {
       verified = await verifySmsOtp(env, row.user_id, "login", code);
     } else {
       if (await otpLockedOut(env, row.user_id)) {
@@ -674,14 +757,14 @@ export async function verifyTwoFactorLogin(env, rawChallenge, code) {
 }
 
 export function twoFactorStatusFromUser(user) {
-  const enabled = Boolean(user && user.totp_enabled);
-  const method = twoFactorMethodFromUser(user);
+  const methods = twoFactorMethodsFromUser(user);
   return {
-    enabled,
-    method,
+    enabled: methods.length > 0,
+    method: methods[0] || null,
+    methods,
     enabledAt: user && user.totp_enabled_at ? user.totp_enabled_at : null,
     phoneMasked: user && user.phone_e164 ? maskPhone(user.phone_e164) : null,
-    emailMasked: enabled && method === "email" ? maskEmail(user.email) : null,
+    emailMasked: methods.includes("email") ? maskEmail(user.email) : null,
   };
 }
 

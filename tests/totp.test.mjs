@@ -7,9 +7,13 @@ import { onRequestPost as totpSetup } from "../functions/api/account/two-factor/
 import { onRequestPost as totpEnable } from "../functions/api/account/two-factor/totp-enable.js";
 import { onRequestPost as disable } from "../functions/api/account/two-factor/disable.js";
 import { onRequestPost as sendCode } from "../functions/api/account/two-factor/send-code.js";
+import { onRequestPost as totpEmailCode } from "../functions/api/account/two-factor/totp-email-code.js";
+import { onRequestPost as emailEnable } from "../functions/api/account/two-factor/email-enable.js";
+import { onRequestPost as sendLoginEmail } from "../functions/api/auth/two-factor-send.js";
+import { hashSecret } from "../functions/lib/tokens.js";
 import { hashPassword } from "../functions/lib/auth.js";
 import { getUserProfile, profilePayload } from "../functions/lib/profile.js";
-import { OTP_MAX_FAILURES, twoFactorMethodFromUser } from "../functions/lib/two-factor.js";
+import { generateBackupCodes, OTP_MAX_FAILURES, twoFactorMethodsFromUser } from "../functions/lib/two-factor.js";
 import { findTotpStep, generateTotpCode, openSecret, sealSecret, verifyTotpCode } from "../functions/lib/totp.js";
 import { insertUser, json, makeEnv, req, sessionCookieFor } from "./helpers.mjs";
 
@@ -26,9 +30,18 @@ async function account(env, extra = {}) {
 // A code from a *different* 30-second step, for the "already used" and "wrong" cases.
 const codeAt = (secret, offsetSteps) => generateTotpCode(secret, Date.now() + offsetSteps * 30_000);
 
+async function giveCode(env, userId, purpose, code) {
+  await env.DB.prepare("DELETE FROM sms_otp_codes WHERE user_id = ? AND purpose = ?").bind(userId, purpose).run();
+  await env.DB.prepare("INSERT INTO sms_otp_codes (user_id, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?)")
+    .bind(userId, purpose, await hashSecret("sms:" + purpose + ":" + code, env), new Date(Date.now() + 5 * 60_000).toISOString())
+    .run();
+}
+
+// Authenticator setup on an account with no email method starts with an emailed code.
 async function enableFor(env, user) {
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
-  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie));
+  await giveCode(env, user.id, "totp_setup", "111111");
+  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "111111" }, cookie));
   const enable = await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: await generateTotpCode(setup.secret) }, cookie);
   return { cookie, setup, enable, result: await json(enable) };
 }
@@ -64,7 +77,17 @@ test("setup hands back a secret and an otpauth link, and stores only the sealed 
   const env = makeEnv();
   const user = await account(env);
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
-  const res = await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie);
+
+  const bare = await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie);
+  assert.equal(bare.status, 400, "no confirmation code, no secret");
+  assert.equal((await json(bare)).needsEmailCode, true);
+  const sent = await call(totpEmailCode, env, "/api/account/two-factor/totp-email-code", {}, cookie);
+  assert.equal(sent.status, 200);
+  assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM sms_otp_codes WHERE user_id = ? AND purpose = 'totp_setup'").bind(user.id).first().then((r) => r.c), 1);
+  await giveCode(env, user.id, "totp_setup", "111111");
+  assert.equal((await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "222222" }, cookie)).status, 400, "wrong confirmation");
+
+  const res = await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "111111" }, cookie);
   assert.equal(res.status, 200);
   const body = await json(res);
   assert.match(body.secret, /^[A-Z2-7]{32}$/);
@@ -82,7 +105,8 @@ test("enabling needs a code from the app; a wrong one changes nothing", async ()
   const env = makeEnv();
   const user = await account(env);
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
-  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie));
+  await giveCode(env, user.id, "totp_setup", "111111");
+  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", { code: "111111" }, cookie));
 
   const wrong = await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: "000000" }, cookie);
   assert.equal(wrong.status, 400);
@@ -99,14 +123,14 @@ test("enabling needs a code from the app; a wrong one changes nothing", async ()
   assert.equal(row.totp_pending_secret, null);
 });
 
-test("enabling without starting setup is refused, and so is setup when 2FA is already on", async () => {
+test("enabling without starting setup is refused, and so is a second authenticator", async () => {
   const env = makeEnv();
   const user = await account(env);
   const cookie = { Cookie: await sessionCookieFor(env, user.id) };
   assert.equal((await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: "123456" }, cookie)).status, 400);
 
   await enableFor(env, user);
-  assert.equal((await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie)).status, 409);
+  assert.equal((await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie)).status, 400);
 });
 
 test("setup and enable need a session and reject a cross-origin POST", async () => {
@@ -125,12 +149,15 @@ test("profile reports the authenticator method and never exposes the secret", as
   const payload = profilePayload(profile);
   assert.equal(payload.twoFactorEnabled, true);
   assert.equal(payload.twoFactorMethod, "totp");
+  assert.deepEqual(payload.twoFactorMethods, ["totp"]);
   assert.equal(payload.emailMasked, null);
   assert.equal(payload.phoneMasked, null);
   assert.ok(!JSON.stringify(payload).includes("secret"));
-  assert.equal(twoFactorMethodFromUser({ totp_enabled: 1, has_totp_secret: 1, phone_e164: "+49" }), "totp");
-  assert.equal(twoFactorMethodFromUser({ totp_enabled: 1, has_totp_secret: 0, phone_e164: "+49" }), "sms");
-  assert.equal(twoFactorMethodFromUser({ totp_enabled: 1, has_totp_secret: 0, phone_e164: null }), "email");
+  assert.deepEqual(twoFactorMethodsFromUser({ totp_enabled: 1, has_totp_secret: 1, email_2fa: 1 }), ["totp", "email"]);
+  assert.deepEqual(twoFactorMethodsFromUser({ totp_enabled: 1, has_totp_secret: 0, phone_e164: "+49" }), ["sms"]);
+  assert.deepEqual(twoFactorMethodsFromUser({ totp_enabled: 1, has_totp_secret: 0, phone_e164: null, email_2fa: 1 }), ["email"]);
+  assert.deepEqual(twoFactorMethodsFromUser({ totp_enabled: 1 }), ["email"], "enabled with nothing recorded = the old email meaning");
+  assert.deepEqual(twoFactorMethodsFromUser({ totp_enabled: 0, has_totp_secret: 1 }), []);
 });
 
 test("login: password then an authenticator code signs in; nothing is emailed or texted", async () => {
@@ -144,6 +171,7 @@ test("login: password then an authenticator code signs in; nothing is emailed or
   const challenge = await json(first);
   assert.equal(challenge.twoFactorRequired, true);
   assert.equal(challenge.method, "totp");
+  assert.deepEqual(challenge.methods, ["totp"]);
   assert.equal(challenge.phoneMasked, null);
   assert.equal(challenge.emailMasked, null);
   assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM sms_otp_codes").first().then((r) => r.c), 0, "no one-time code was generated");
@@ -243,4 +271,136 @@ test("there is no 'send a code' for an authenticator account", async () => {
   const res = await call(sendCode, env, "/api/account/two-factor/send-code", { purpose: "disable" }, cookie);
   assert.equal(res.status, 400);
   assert.match((await json(res)).error, /authenticator/i);
+});
+
+// --- both methods on one account -------------------------------------------
+
+async function bothMethods(env) {
+  // email codes first (the account already has them), then the authenticator on top
+  const user = await account(env, { totp_enabled: 1, twofa_email_enabled: 1 });
+  const original = await generateBackupCodes(env, user.id);
+  const cookie = { Cookie: await sessionCookieFor(env, user.id) };
+  const setup = await json(await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie));
+  assert.ok(setup.secret, "an account that already has email codes needs no extra confirmation");
+  const enable = await call(totpEnable, env, "/api/account/two-factor/totp-enable", { code: await generateTotpCode(setup.secret) }, cookie);
+  assert.equal(enable.status, 200, await enable.clone().text());
+  return { user, cookie, setup, original, enable: await json(enable) };
+}
+
+test("an authenticator can be added next to email codes; the existing backup codes stay", async () => {
+  const env = makeEnv();
+  const { user, enable } = await bothMethods(env);
+  assert.equal(enable.backupCodes, null, "no new set was issued -- the old set still works");
+  assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM twofa_backup_codes WHERE user_id = ? AND used_at IS NULL").bind(user.id).first().then((r) => r.c), 8);
+  const profile = profilePayload(await getUserProfile(env, user.id));
+  assert.deepEqual(profile.twoFactorMethods, ["totp", "email"]);
+  assert.match(profile.emailMasked, /@example\.com$/);
+});
+
+test("email codes can be added next to an authenticator", async () => {
+  const env = makeEnv();
+  const user = await account(env);
+  const { cookie } = await enableFor(env, user);
+  await giveCode(env, user.id, "email_setup", "333333");
+  const res = await call(emailEnable, env, "/api/account/two-factor/email-enable", { code: "333333" }, cookie);
+  assert.equal(res.status, 200, await res.clone().text());
+  assert.equal((await json(res)).backupCodes, null);
+  assert.deepEqual(profilePayload(await getUserProfile(env, user.id)).twoFactorMethods, ["totp", "email"]);
+});
+
+test("with both methods nothing is sent at login until the user asks for the emailed code", async () => {
+  const env = makeEnv();
+  const { user, setup } = await bothMethods(env);
+
+  const start = await json(await call(login, env, "/api/auth/login", { email: user.email, password: PASSWORD }));
+  assert.deepEqual(start.methods, ["totp", "email"]);
+  assert.equal(start.method, "totp");
+  assert.match(start.emailMasked, /@/);
+  assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM sms_otp_codes WHERE purpose = 'login'").first().then((r) => r.c), 0);
+
+  // "Email me a code instead"
+  const sent = await call(sendLoginEmail, env, "/api/auth/two-factor-send", { challenge: start.challenge });
+  assert.equal(sent.status, 200, await sent.clone().text());
+  assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM sms_otp_codes WHERE user_id = ? AND purpose = 'login'").bind(user.id).first().then((r) => r.c), 1);
+
+  // the emailed code signs in ...
+  await giveCode(env, user.id, "login", "444444");
+  const viaEmail = await call(twoFactorLogin, env, "/api/auth/two-factor", { challenge: start.challenge, code: "444444" });
+  assert.equal(viaEmail.status, 200, await viaEmail.clone().text());
+
+  // ... and so does the app's code (new challenge)
+  const again = await json(await call(login, env, "/api/auth/login", { email: user.email, password: PASSWORD }));
+  const viaApp = await call(twoFactorLogin, env, "/api/auth/two-factor", { challenge: again.challenge, code: await codeAt(setup.secret, 1) });
+  assert.equal(viaApp.status, 200, await viaApp.clone().text());
+});
+
+test("with both methods one wrong entry counts as one failure, not two", async () => {
+  const env = makeEnv();
+  const { user } = await bothMethods(env);
+  const start = await json(await call(login, env, "/api/auth/login", { email: user.email, password: PASSWORD }));
+  await giveCode(env, user.id, "login", "444444");
+  const res = await call(twoFactorLogin, env, "/api/auth/two-factor", { challenge: start.challenge, code: "999999" });
+  assert.equal(res.status, 401);
+  assert.equal(await env.DB.prepare("SELECT COUNT(*) AS c FROM auth_events WHERE event_type = 'otp_failed'").first().then((r) => r.c), 1);
+});
+
+test("the emailed-code request needs a live challenge and an account that has email codes", async () => {
+  const env = makeEnv();
+  assert.equal((await call(sendLoginEmail, env, "/api/auth/two-factor-send", { challenge: "nope" })).status, 400);
+  assert.equal((await call(sendLoginEmail, env, "/api/auth/two-factor-send", {})).status, 400);
+
+  const user = await account(env);
+  const { setup } = await enableFor(env, user);
+  const start = await json(await call(login, env, "/api/auth/login", { email: user.email, password: PASSWORD }));
+  const res = await call(sendLoginEmail, env, "/api/auth/two-factor-send", { challenge: start.challenge });
+  assert.equal(res.status, 400, "authenticator-only accounts can't be sent an emailed code");
+  assert.ok(setup);
+});
+
+test("removing one method keeps two-factor on; removing the last switches it off", async () => {
+  const env = makeEnv();
+  const { user, cookie, setup } = await bothMethods(env);
+
+  const ambiguous = await call(disable, env, "/api/account/two-factor/disable", { code: "123456" }, cookie);
+  assert.equal(ambiguous.status, 400, "with two methods the caller must say which");
+
+  const removeApp = await call(disable, env, "/api/account/two-factor/disable", { method: "totp", code: await codeAt(setup.secret, 1) }, cookie);
+  assert.equal(removeApp.status, 200, await removeApp.clone().text());
+  assert.deepEqual((await json(removeApp)).remaining, ["email"]);
+  let row = await env.DB.prepare("SELECT totp_enabled, totp_secret, twofa_email_enabled FROM users WHERE id = ?").bind(user.id).first();
+  assert.deepEqual({ ...row }, { totp_enabled: 1, totp_secret: null, twofa_email_enabled: 1 });
+
+  const cookie2 = { Cookie: await sessionCookieFor(env, user.id) }; // sessions were revoked
+  await giveCode(env, user.id, "disable", "555555");
+  const removeEmail = await call(disable, env, "/api/account/two-factor/disable", { code: "555555" }, cookie2);
+  assert.equal(removeEmail.status, 200, await removeEmail.clone().text());
+  row = await env.DB.prepare("SELECT totp_enabled, twofa_email_enabled FROM users WHERE id = ?").bind(user.id).first();
+  assert.deepEqual({ ...row }, { totp_enabled: 0, twofa_email_enabled: 0 });
+});
+
+test("removing the email method leaves the authenticator working", async () => {
+  const env = makeEnv();
+  const { user, cookie } = await bothMethods(env);
+  await giveCode(env, user.id, "disable", "555555");
+  const res = await call(disable, env, "/api/account/two-factor/disable", { method: "email", code: "555555" }, cookie);
+  assert.equal(res.status, 200, await res.clone().text());
+  const profile = profilePayload(await getUserProfile(env, user.id));
+  assert.deepEqual(profile.twoFactorMethods, ["totp"]);
+  assert.equal(profile.emailMasked, null);
+});
+
+test("before migration 020 the site still works: email is inferred, a second method is refused", async () => {
+  const env = makeEnv();
+  env.DB.raw.exec("ALTER TABLE users DROP COLUMN twofa_email_enabled");
+  const { clearAuthSchemaCache } = await import("../functions/lib/schema.js");
+  clearAuthSchemaCache();
+
+  const user = await account(env, { totp_enabled: 1 });
+  const cookie = { Cookie: await sessionCookieFor(env, user.id) };
+  assert.deepEqual(profilePayload(await getUserProfile(env, user.id)).twoFactorMethods, ["email"]);
+  const start = await json(await call(login, env, "/api/auth/login", { email: user.email, password: PASSWORD }));
+  assert.equal(start.method, "email");
+  const res = await call(totpSetup, env, "/api/account/two-factor/totp-setup", {}, cookie);
+  assert.equal(res.status, 400);
+  assert.match((await json(res)).error, /isn't available yet/);
 });
