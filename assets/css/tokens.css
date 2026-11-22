@@ -70,7 +70,7 @@
   --color-danger: #e5484d;
 
   /* focus rings, selected borders and active indicators: must stay visible in every theme */
-  --color-focus: #ffffff;
+  --color-focus: #DFE5EB;
 }
 
 /* the light theme needs darker status colours to stay readable (WCAG AA, 4.5:1) */

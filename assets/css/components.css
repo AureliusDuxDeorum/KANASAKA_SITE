@@ -193,12 +193,12 @@
 /* the Alpha tag is the one coloured element in the normal themes: KS purple fill, white text */
 .badge--alpha {
   background: var(--ks-purple);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  border-color: rgba(223, 229, 235, 0.18);
+  color: #DFE5EB;
 }
 
 [data-theme="accent"] .badge--alpha {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(223, 229, 235, 0.1);
 }
 
 .badge--ok {

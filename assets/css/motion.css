@@ -525,9 +525,9 @@ html:not([data-motion="full"])::view-transition-new(root) {
    content pages have no continuous effect. */
 
 :root {
-  --floor-line: rgba(255, 255, 255, 0.14);
-  --scanline: rgba(255, 255, 255, 0.04);
-  --light-spot: rgba(255, 255, 255, 0.1);
+  --floor-line: rgba(223, 229, 235, 0.14);
+  --scanline: rgba(223, 229, 235, 0.04);
+  --light-spot: rgba(223, 229, 235, 0.1);
 }
 
 [data-theme="light"] {
@@ -635,7 +635,7 @@ html[data-motion="full"][data-fx="2"] .showcase-media::after {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 1px, transparent 1px, transparent 3px);
+  background: repeating-linear-gradient(to bottom, rgba(223, 229, 235, 0.04) 0, rgba(223, 229, 235, 0.04) 1px, transparent 1px, transparent 3px);
 }
 
 html[data-motion="full"][data-fx="1"] a.showcase-hit:hover .showcase-media::before,

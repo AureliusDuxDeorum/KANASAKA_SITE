@@ -28,16 +28,16 @@
   --color-surface: #121212;
   --color-border: #333333;
   --color-border-light: #444444;
-  --color-text: #ffffff;
+  --color-text: #DFE5EB;
   --color-text-muted: #a0a0a0;
   --color-text-subtle: #8a8a8a;
-  --color-button-bg: #e8e8e8;
+  --color-button-bg: #DFE5EB;
   --color-button-text: #111111;
   --color-button-secondary-bg: #141414;
-  --color-button-secondary-text: #eeeeee;
-  --color-glow: rgba(255, 255, 255, 0.12);
+  --color-button-secondary-text: #DFE5EB;
+  --color-glow: rgba(223, 229, 235, 0.12);
   --color-nav-bg: #0b0b0b;
-  --color-accent: #ffffff;
+  --color-accent: #DFE5EB;
 }
 
 [data-theme="light"] {
@@ -69,13 +69,13 @@
   --color-surface: #0d0c11;
   --color-border: #2c2933;
   --color-border-light: #3e3a47;
-  --color-text: #f3f1f6;
+  --color-text: #DFE5EB;
   --color-text-muted: #b4afbd;
   --color-text-subtle: #8f899b;
   --color-button-bg: var(--ks-purple);
-  --color-button-text: #ffffff;
+  --color-button-text: #DFE5EB;
   --color-button-secondary-bg: #121016;
-  --color-button-secondary-text: #e9e6ef;
+  --color-button-secondary-text: #DFE5EB;
   --color-glow: rgba(62, 9, 88, 0.3);
   --color-nav-bg: #08070b;
   --color-accent: var(--ks-purple);
@@ -398,7 +398,7 @@ main {
 
 .logo-signal {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.92);
+  stroke: rgba(223, 229, 235, 0.92);
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -1152,7 +1152,7 @@ h1 {
 .settings-card-elevated {
   box-shadow:
     0 28px 56px rgba(0, 0, 0, 0.32),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    0 0 0 1px rgba(223, 229, 235, 0.04) inset;
 }
 
 .auth-card-accent {
@@ -2505,7 +2505,7 @@ body.auth-modal-open > #site-footer {
 }
 
 .theme-preview-dark {
-  background: linear-gradient(135deg, #000000 55%, #ffffff 55%);
+  background: linear-gradient(135deg, #000000 55%, #DFE5EB 55%);
 }
 
 .theme-preview-light {
@@ -2672,7 +2672,7 @@ body.tos-open {
   background: var(--color-surface);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    0 0 0 1px rgba(223, 229, 235, 0.03) inset;
   transform: translateY(12px);
   transition: transform 240ms ease;
 }
@@ -3130,7 +3130,7 @@ body.tos-open {
     font-weight: 600;
     font-size: var(--rail-fs);
     line-height: 0.8;
-    color: rgba(255, 255, 255, 0.09);
+    color: rgba(223, 229, 235, 0.09);
   }
 
   .kanasaka-rail span {
@@ -3143,7 +3143,7 @@ body.tos-open {
   }
 
   [data-theme="accent"] .kanasaka-rail {
-    color: rgba(255, 255, 255, 0.06);
+    color: rgba(223, 229, 235, 0.06);
   }
 }
 
@@ -3379,7 +3379,7 @@ body.tos-open {
    never full white. */
 :root,
 [data-theme="dark"] {
-  --hud-color: rgba(255, 255, 255, 0.4);
+  --hud-color: rgba(223, 229, 235, 0.4);
 }
 
 [data-theme="light"] {
@@ -3387,7 +3387,7 @@ body.tos-open {
 }
 
 [data-theme="accent"] {
-  --hud-color: rgba(255, 255, 255, 0.4);
+  --hud-color: rgba(223, 229, 235, 0.4);
 }
 
 .hud {

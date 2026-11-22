@@ -15,14 +15,14 @@
   --glass-bg: rgba(14, 14, 14, 0.68);
   --glass-bg-elevated: rgba(22, 22, 22, 0.78);
   --glass-nav-bg: rgba(8, 8, 8, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-bright: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(223, 229, 235, 0.1);
+  --glass-border-bright: rgba(223, 229, 235, 0.18);
   --glass-shadow: 0 28px 56px rgba(0, 0, 0, 0.38);
-  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --strip-accent: rgba(255, 255, 255, 0.1);
-  --strip-accent-bright: rgba(255, 255, 255, 0.22);
-  --grid-line: rgba(255, 255, 255, 0.04);
-  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(255, 255, 255, 0.09), transparent 68%);
+  --glass-inset: inset 0 1px 0 rgba(223, 229, 235, 0.08);
+  --strip-accent: rgba(223, 229, 235, 0.1);
+  --strip-accent-bright: rgba(223, 229, 235, 0.22);
+  --grid-line: rgba(223, 229, 235, 0.04);
+  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(223, 229, 235, 0.09), transparent 68%);
 }
 
 [data-theme="light"] {
@@ -43,14 +43,14 @@
   --glass-bg: rgba(10, 9, 14, 0.72);
   --glass-bg-elevated: rgba(16, 14, 22, 0.82);
   --glass-nav-bg: rgba(7, 6, 10, 0.86);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-bright: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(223, 229, 235, 0.1);
+  --glass-border-bright: rgba(223, 229, 235, 0.18);
   --glass-shadow: 0 28px 56px rgba(0, 0, 0, 0.42);
-  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --strip-accent: rgba(255, 255, 255, 0.1);
-  --strip-accent-bright: rgba(255, 255, 255, 0.22);
-  --grid-line: rgba(255, 255, 255, 0.04);
-  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(255, 255, 255, 0.05), transparent 68%);
+  --glass-inset: inset 0 1px 0 rgba(223, 229, 235, 0.08);
+  --strip-accent: rgba(223, 229, 235, 0.1);
+  --strip-accent-bright: rgba(223, 229, 235, 0.22);
+  --grid-line: rgba(223, 229, 235, 0.04);
+  --ambient-glow: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(223, 229, 235, 0.05), transparent 68%);
 }
 
 body {
@@ -201,7 +201,7 @@ body::before {
 
 .nav-dropdown a:hover,
 .nav-dropdown a.active {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(223, 229, 235, 0.04);
   padding-left: 20px;
 }
 
@@ -432,7 +432,7 @@ h1 {
   background: linear-gradient(
     120deg,
     transparent 30%,
-    rgba(255, 255, 255, 0.12) 50%,
+    rgba(223, 229, 235, 0.12) 50%,
     transparent 70%
   );
   transform: translateX(-120%);
