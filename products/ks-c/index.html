@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="/assets/css/tokens.css?v=e7dcf121">
   <link rel="stylesheet" href="/assets/css/style.css?v=2151209f">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=7c4fb21b">
-  <link rel="stylesheet" href="/assets/css/components.css?v=b3ec4192">
+  <link rel="stylesheet" href="/assets/css/components.css?v=3f651e52">
   <link rel="stylesheet" href="/assets/css/motion.css?v=cc128217">
   <link rel="stylesheet" href="/assets/css/console.css?v=84f8057e">
   <script src="/assets/js/motion-boot.js?v=f8491e9f"></script>
@@ -70,7 +70,6 @@
           <source src="/assets/video/ks-c-ad-60s.mp4" type="video/mp4">
           <p>Your browser cannot play this video. <a href="/assets/video/ks-c-ad-60s.mp4">Download the 60-second KS_C film</a>.</p>
         </video>
-        <figcaption>KS_C in 60 seconds.</figcaption>
       </figure>
     </div>
   </section>
@@ -78,42 +77,25 @@
   <section class="section">
     <div class="container">
       <div class="section-header">
-        <span class="kicker">What it is</span>
-        <h2>A full coding toolset on the model you choose</h2>
-        <p>KS_C does not come with a model and does not route your code through KANASAKA. You point it at an endpoint you already have, and it brings the tools.</p>
+        <h2>A coding agent for the model you choose</h2>
+        <p>KS_C brings the tools; you bring the endpoint. It does not include a model and does not route your code through KANASAKA.</p>
       </div>
       <ul class="feature-list">
         <li class="feature">
-          <h3>Bring your own endpoint</h3>
-          <p>Run it on a local model server such as Ollama, LM Studio or any OpenAI-compatible server, or on a cloud provider: Anthropic, OpenAI, Gemini, OpenRouter, Groq, DeepSeek or Mistral. Local or cloud, the tools work the same. You can change a provider's address, and add your own.</p>
+          <h3>Your model, local or cloud</h3>
+          <p>Ollama, LM Studio, any OpenAI-compatible server, or Anthropic, OpenAI, Gemini and more, with your own key.</p>
         </li>
         <li class="feature">
-          <h3>Five modes</h3>
-          <p>Chat answers questions about the project and changes nothing. Plan reads the project and drafts a plan and to-do list. Code works the list one item at a time and pauses after each. Auto works the whole list. Security audits the project, fixes the gaps and re-checks.</p>
+          <h3>Five modes, full toolset</h3>
+          <p>Chat, Plan, Code, Auto and Security, with file editing, commands, web fetch, GitHub, Blender and MCP tools.</p>
         </li>
         <li class="feature">
-          <h3>The tools a modern agent needs</h3>
-          <p>Read, list, glob, grep, edit and write files; run commands and background processes such as dev servers; fetch web pages; and use GitHub and Blender through built-in plugins. Any MCP server you add brings its tools too. A UI verifier renders your app and compares it with a reference screenshot.</p>
-        </li>
-        <li class="feature">
-          <h3>You approve what it does</h3>
-          <p>Writes, commands and web fetches ask first, and writes show a diff. A command that reaches outside the project always asks, with the exact command shown. Every edit is snapshotted, so you can undo one edit or rewind everything since a message.</p>
-        </li>
-        <li class="feature">
-          <h3>A sandbox where one exists</h3>
-          <p>On Linux, commands run in a bubblewrap sandbox: read-only system, only the project writable, your keys and browser profiles hidden, no network apart from plain install commands. The header says SANDBOXED or NO SANDBOX, and without a sandbox every command asks.</p>
-        </li>
-        <li class="feature">
-          <h3>Your keys stay on your machine</h3>
-          <p>Provider keys live in the operating system's keychain, never in a file. Requests to a model go only to the hosts you configured. Credential files such as dotenv files, private keys and <code>.ssh</code> are refused by the agent. Text from files, commands, web pages and MCP servers is marked untrusted to the model.</p>
+          <h3>You stay in control</h3>
+          <p>Actions ask first and every edit can be undone. On Linux, commands run in a sandbox, and keys stay in your OS keychain.</p>
         </li>
         <li class="feature">
           <h3>One KANASAKA account</h3>
-          <p>KS_C opens with a KANASAKA account. You sign in, register and reset your password inside the app, and the app talks to kanasaka.com directly. Each device gets its own session, listed in the app's Settings, where you can sign any of them out. Your code, prompts and provider keys are not sent to KANASAKA.</p>
-        </li>
-        <li class="feature">
-          <h3>Built for long sessions</h3>
-          <p>A message queue, a command palette (Ctrl+K), a Changes tab with git status and diffs, task rename and delete, a usage and cost ledger, an optional spend limit per run, and project instructions in <code>AGENTS.md</code> or custom slash commands in <code>.ksc1/commands</code>.</p>
+          <p>Sign in inside the app. Your code, prompts and keys are never sent to KANASAKA.</p>
         </li>
       </ul>
     </div>
