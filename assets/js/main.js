@@ -312,7 +312,7 @@
   function loadConsole() {
     if (window.KanasakaConsole || window.__ksConsoleLoading) return;
     window.__ksConsoleLoading = true;
-    loadScript("/assets/js/console.js?v=1695885a");
+    loadScript("/assets/js/console.js?v=d929e090");
   }
 
   function loadHud() {
@@ -339,7 +339,7 @@
         return;
       }
 
-      loadScript("/assets/js/tos.js?v=36fbb4e7").then(resolve);
+      loadScript("/assets/js/tos.js?v=2f04f30b").then(resolve);
     });
   }
 
@@ -405,7 +405,7 @@
 
     // The shell data normally arrives with its own <script> tag; this is the
     // fallback for a page that lacks it.
-    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=4f2a6683");
+    if (!window.KanasakaShell) await loadScript("/assets/js/shell.js?v=9aae1c9f");
 
     // Header and footer first: the session check is a network call, and the
     // page used to sit without its header until it came back. The sign-in

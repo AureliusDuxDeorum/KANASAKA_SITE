@@ -1,6 +1,6 @@
 (function () {
   var TOS_KEY = "kanasaka-tos-accepted";
-  var TOS_VERSION = "6";
+  var TOS_VERSION = "7";
   var SHOW_DELAY_MS = 1000;
 
   var TERMS_HTML =
@@ -10,7 +10,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>2. Description of Service</h3>" +
-    "<p>KANASAKA provides an informational website, user accounts, downloads of KANASAKA software, a free public download of KS_Link (a separate messaging service described in Section 14), support and contact channels, and related online services. Features and product availability may change, be limited, or be withdrawn during active development.</p>" +
+    "<p>KANASAKA provides an informational website, user accounts, downloads of KANASAKA software, a free public download of KS_Link (a separate messaging service described in Section 14), downloads of KS_C (a coding agent described in Section 15), support and contact channels, and related online services. Features and product availability may change, be limited, or be withdrawn during active development.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>3. Eligibility</h3>" +
@@ -34,7 +34,7 @@
     "</section>" +
     '<section class="tos-section">' +
     "<h3>6. Software Access and Downloads</h3>" +
-    "<p>KS_Link is free, as described in Section 14. Software is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
+    "<p>KS_Link is free, as described in Section 14. KS_C is described in Section 15. Software is provided for personal or internal business use under these Terms unless a separate license agreement applies. Pre-release builds may be incomplete, unstable, or change without notice. You download and use software at your own risk. Distribution, sublicensing, or commercial resale of downloads or software is prohibited unless we authorize it in writing. Certain products, including private alpha releases, may be limited to designated accounts or platforms.</p>" +
     "</section>" +
     '<section class="tos-section">' +
     "<h3>7. Intellectual Property</h3>" +
@@ -72,13 +72,20 @@
     "<p>KS_Link includes a user-facing reporting mechanism for content or accounts that violate the law or KS_Link's own acceptable-use terms. Reported material and limited associated records may be retained for a period after a report (at least 90 days) to support a review process and to meet legal reporting obligations that may apply to online messaging services, including reporting apparent child sexual abuse material to the relevant authorities where required by law. We may suspend or remove access to KS_Link, or to a specific account, for violations of its acceptable-use terms, for legal compliance, or for security reasons.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>15. Governing Law</h3>" +
+    "<h3>15. KS_C</h3>" +
+    "<p>KS_C is a desktop coding agent distributed from this Site for Windows and Linux. It is currently in beta. KS_C requires a KANASAKA account: you create it and sign in inside the KS_C app, and when you do, your credentials are sent to this Site and not to any other server. Each device you sign in on has its own session, which you can end from the app or from your Settings on this Site. Changing or resetting your password, or turning off a two-factor method, ends those sessions, as does deleting your KANASAKA account, and a session also ends 150 days after you signed in. You must be at least 16 years old to create the account KS_C requires.</p>" +
+    "<p>KS_C does not include a language model. To use it you connect a model endpoint that you provide: a model server on your own machine or network, such as Ollama or LM Studio, or a cloud provider such as Anthropic, OpenAI or Google, using your own account and API key. You are responsible for those third-party accounts, any fees they charge and their terms. We do not operate those services and are not a party to your agreement with them, and we are not responsible for their availability, output or policies. What KS_C sends to a provider you configured goes to that provider and not to us.</p>" +
+    "<p>KS_C reads the files in a project folder you choose and, as you allow, edits those files, runs commands on your computer and fetches web pages. An AI model can be wrong, and it can be misled by text in the files, web pages and tool results it reads. You are responsible for reviewing what KS_C proposes before you approve it, for the commands and modes you allow, for keeping backups or version control of your work, and for the content you send to a model provider. Auto modes and ticked permissions let KS_C act without asking for each step; use them only on projects and machines where you accept that. A command sandbox is available on Linux only; on Windows commands run with your permissions. KS_C safeguards reduce risk but cannot remove it. Output produced by a model is provided as is, may be inaccurate, insecure or infringing, and is not professional advice; you are responsible for how you use it.</p>" +
+    "<p>KS_C is pre-release software: it may be incomplete or unstable, may contain security issues not yet discovered, and may change without notice. It is provided as is under the disclaimers in Section 9.</p>" +
+    "</section>" +
+    '<section class="tos-section">' +
+    "<h3>16. Governing Law</h3>" +
     "<p>These Terms are governed by the laws of Germany, excluding conflict-of-law rules. Mandatory consumer protections in your country of residence remain unaffected where applicable.</p>" +
     "</section>" +
     '<section class="tos-section">' +
-    "<h3>16. Contact</h3>" +
+    "<h3>17. Contact</h3>" +
     "<p>Questions about these Terms: <a href=\"mailto:contactns@kanasaka.com\">contactns@kanasaka.com</a></p>" +
-    "<p class=\"tos-effective\">Effective date: 13 November 2026</p>" +
+    "<p class=\"tos-effective\">Effective date: 23 November 2026</p>" +
     "</section>";
 
   var scheduled = false;

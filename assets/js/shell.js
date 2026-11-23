@@ -20,6 +20,7 @@
       label: "Products",
       href: "/products/",
       children: [
+        { label: "KS_C", href: "/products/ks-c/" },
         { label: "KS_Link", href: "/products/ks-link/" },
         { label: "Technical overview", href: "/legal/products/" },
       ],
@@ -60,6 +61,7 @@
     {
       title: "Products",
       links: [
+        { label: "KS_C", href: "/products/ks-c/" },
         { label: "KS_Link", href: "/products/ks-link/" },
         { label: "Downloads", href: "/downloads/" },
         { label: "Technical overview", href: "/legal/products/" },

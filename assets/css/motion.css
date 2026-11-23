@@ -312,7 +312,9 @@ html[data-motion="full"] .button:not([disabled]):active {
 }
 
 html[data-motion="full"][data-fx="1"] .badge--alpha::before,
-html[data-motion="full"][data-fx="2"] .badge--alpha::before {
+html[data-motion="full"][data-fx="1"] .badge--beta::before,
+html[data-motion="full"][data-fx="2"] .badge--alpha::before,
+html[data-motion="full"][data-fx="2"] .badge--beta::before {
   content: "";
   display: inline-block;
   width: 5px;

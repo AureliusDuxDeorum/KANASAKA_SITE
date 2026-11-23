@@ -62,3 +62,31 @@ Only Windows self-updates (tauri-plugin-updater) — Linux's package
 managers / AppImage's own mechanism and Android's Play Store/APK
 side-load path handle that differently, and Tauri's desktop updater
 plugin doesn't build for mobile at all.
+
+# KS_C installer downloads (R2)
+
+KS_C (app repo: `KS_C1`) uses the same bucket and `INSTALLERS` binding. Downloads are public, with no session; the app asks
+for a KANASAKA account when it opens. There is no updater manifest on the site: KS_C's own signed updates come from its
+release host (KS_C1 `docs/RELEASE.md`).
+
+```bash
+node scripts/publish-ks-c.mjs windows-exe <path-to-setup.exe>
+node scripts/publish-ks-c.mjs windows-msi <path-to-.msi>
+node scripts/publish-ks-c.mjs linux-deb <path-to-.deb>
+node scripts/publish-ks-c.mjs linux-rpm <path-to-.rpm>
+node scripts/publish-ks-c.mjs linux-appimage <path-to-.AppImage> 1.0.0 "Release notes"
+```
+
+The optional last two arguments (version, notes) write `installers/ks-c/version.json`, served at
+`GET /api/ks-c/version.json`. Give them on the last platform of a release.
+
+| Platform | R2 key |
+|----------|--------|
+| windows-exe | `installers/ks-c/windows-x86_64/KS_C.exe` |
+| windows-msi | `installers/ks-c/windows-x86_64/KS_C.msi` |
+| linux-deb | `installers/ks-c/linux-deb/KS_C.deb` |
+| linux-rpm | `installers/ks-c/linux-rpm/KS_C.rpm` |
+| linux-appimage | `installers/ks-c/linux-appimage/KS_C.AppImage` |
+
+`GET /api/ks-c/download/<platform>` streams the object. A platform with nothing uploaded answers 404, so upload before
+deploying, or leave that button out of `/downloads/`.

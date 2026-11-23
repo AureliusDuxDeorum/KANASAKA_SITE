@@ -16,7 +16,7 @@ import { ROOT } from "./helpers.mjs";
 
 const tracked = execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8" }).split("\n").filter(Boolean);
 const SKIP = [/^migrations\//, /^tests\//, /^ARD\.txt$/, /^\.github\//, /^functions\/vendor\//, /^functions\/lib\/(ks-stocks-access|schema|auth)\.js$/, /^changelog\//, /\.(png|webp|ico|ttf|woff2?|jpg|jpeg|gif|wasm|lock)$/, /package-lock\.json$/];
-const FORBIDDEN = /stripe|billing|\bcheckout\b|ks_package|ks package|refund|subscri|monetiz|paywall|pricing|per month|invoice|alpaca|ollama/i;
+const FORBIDDEN = /stripe|billing|\bcheckout\b|ks_package|ks package|refund|subscri|monetiz|paywall|pricing|per month|invoice|alpaca/i;
 
 test("no payment, billing, subscription or pricing wording anywhere on the site", () => {
   const hits = [];

@@ -529,21 +529,22 @@
   // empty prompt it recommends: things you ran recently, pages related to the
   // one you are on, then the usual starting points.
   var RELATED = {
-    "/": ["/products/ks-link/", "/downloads/", "/legal/security/"],
-    "/products/": ["/products/ks-link/", "/downloads/", "/legal/products/"],
+    "/": ["/products/ks-c/", "/downloads/", "/legal/security/"],
+    "/products/": ["/products/ks-c/", "/products/ks-link/", "/downloads/"],
+    "/products/ks-c/": ["/downloads/", "/legal/security/", "/legal/products/"],
     "/products/ks-link/": ["/downloads/", "/legal/security/", "/legal/products/"],
-    "/downloads/": ["/products/ks-link/", "/legal/security/", "/legal/privacy/"],
+    "/downloads/": ["/products/ks-c/", "/products/ks-link/", "/legal/security/"],
     "/legal/security/": ["/legal/privacy/", "/products/ks-link/", "/support/contact/"],
     "/legal/": ["/legal/privacy/", "/legal/terms/", "/legal/impressum/"],
     "/company/": ["/company/about/", "/support/contact/", "/legal/security/"],
-    "/company/about/": ["/products/ks-link/", "/support/contact/", "/legal/impressum/"],
+    "/company/about/": ["/products/ks-c/", "/support/contact/", "/legal/impressum/"],
     "/support/contact/": ["/company/about/", "/legal/security/", "/products/ks-link/"],
     "/support/": ["/support/faq/", "/support/system-status/", "/support/contact/"],
     "/support/faq/": ["/support/contact/", "/downloads/", "/legal/security/"],
     "/support/system-status/": ["/support/faq/", "/support/contact/", "/downloads/"],
     "/changelog/": ["/company/about/", "/products/ks-link/", "/legal/security/"],
   };
-  var STARTERS = ["/products/ks-link/", "/downloads/", "/legal/security/", "/company/about/", "/support/contact/"];
+  var STARTERS = ["/products/ks-c/", "/products/ks-link/", "/downloads/", "/legal/security/", "/company/about/", "/support/contact/"];
   var COMMAND_ITEMS = [
     ["theme dark", "Switch to the dark theme"],
     ["theme light", "Switch to the light theme"],

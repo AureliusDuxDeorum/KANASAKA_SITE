@@ -122,6 +122,7 @@ docs/SECURITY.md            Security overview: controls in place, findings fixed
 .well-known/security.txt, robots.txt  Disclosure contact; keeps account/auth/api paths out of indexes.
 scripts/check-waf-rules.mjs WAF audit vs docs/CLOUDFLARE_WAF.md
 scripts/publish-ks-link-update.mjs  Upload a KS_Link installer/manifest to R2
+scripts/publish-ks-c.mjs    Upload a KS_C installer (and the version record) to R2
 docs/R2_INSTALLERS.md       R2 bucket setup + upload instructions
 docs/WAF_STATUS.txt         Last WAF audit output (scripts/check-waf-rules.mjs)
 docs/CLOUDFLARE_WAF.md      WAF rule documentation
@@ -590,6 +591,14 @@ Platforms: windows-x86_64 (.exe), linux-deb, linux-rpm, linux-appimage, android 
 R2 bucket: kanasaka-installers (same bucket other products use), shared binding INSTALLERS
 Upload: node scripts/publish-ks-link-update.mjs <platform> <file> [notes] (see docs/R2_INSTALLERS.md)
 
+KS_C (the coding agent; its app repo is KS_C1) has plain public downloads, no updater manifest, at /downloads/#ks-c:
+GET /api/ks-c/download/{platform} — streams the installer from R2, no auth (functions/api/ks-c/[[catchall]].js)
+GET /api/ks-c/version.json — { version, notes, pub_date, downloads } from installers/ks-c/version.json
+Platforms: windows-exe, windows-msi, linux-deb, linux-rpm, linux-appimage (R2 keys under installers/ks-c/, see docs/R2_INSTALLERS.md)
+Upload: node scripts/publish-ks-c.mjs <platform> <file> [version] [notes]
+KS_C's own signed updates come from its release host, not from this site.
+The 60-second film is assets/video/ks-c-ad-60s.mp4 (re-encoded from ~/Videos/"KS_C AD 60sec.mp4", 100 MB -> 3.6 MB; Pages files are capped at 25 MiB).
+
 9a. APP SESSIONS (KS_C1 and any other native app of ours that is not KS_Link)
 -------------------------------------------------------------------------------
 A native app signs in at /api/app/* and holds its own session, one per device. Detail: functions/lib/app-sessions.js.
@@ -656,6 +665,13 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-23  KS_C added to the site (1.10.0): /products/ks-c/ with the 60 s film (assets/video, poster and showcase images in
+            assets/images/products), first in the home page product strip, in the nav/footer data (assets/js/shell.js) and the
+            terminal routes, a KS_C table on /downloads/, /api/ks-c/* downloads and scripts/publish-ks-c.mjs, FAQ, Security page and
+            technical overview sections. Terms v7 (new Section 15 KS_C; Governing Law and Contact are now 16 and 17), Privacy Section 12
+            KS_C (Changes and Contact are 13 and 14), Cookie Policy line; effective 2026-11-23. No-billing guard no longer lists "ollama"
+            (it only caught KS Stocks leftovers; KS_C names Ollama as a supported local server). NOT DEPLOYED: the installers must be
+            uploaded to R2 first; publishing a legal notice for Terms v7 is the operator's call (docs/LEGAL_NOTICES.md).
 2026-11-19  App sessions for native apps (KS_C1): /api/app/login, /two-factor, /two-factor-send, /session, /logout, /devices; migration
             021_app_sessions.sql (table app_sessions); functions/lib/app-sessions.js; revoked on password change/reset and 2FA removal,
             deleted with the account; admin: /api/admin/app-devices and appDevices in /api/admin/lookup, with Sign out buttons in the

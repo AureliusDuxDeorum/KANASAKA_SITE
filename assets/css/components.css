@@ -191,19 +191,52 @@
 }
 
 /* the Alpha tag is the one coloured element in the normal themes: KS purple fill, white text */
-.badge--alpha {
+.badge--alpha,
+.badge--beta {
   background: var(--ks-purple);
   border-color: rgba(223, 229, 235, 0.18);
   color: #DFE5EB;
 }
 
-[data-theme="accent"] .badge--alpha {
+[data-theme="accent"] .badge--alpha,
+[data-theme="accent"] .badge--beta {
   border-color: rgba(223, 229, 235, 0.1);
 }
 
 .badge--ok {
   color: var(--color-ok);
   border-color: var(--color-ok);
+}
+
+/* a download that is not available yet */
+.button[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Product video ── */
+
+.product-video {
+  margin: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+}
+
+.product-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1920 / 804;
+}
+
+.product-video figcaption {
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 /* ── Callout ── */
