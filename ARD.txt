@@ -665,18 +665,21 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-23  Migration 021_app_sessions.sql run on remote D1 (kanasaka-auth): the app_sessions table is live, so native-app sign-in
+            (/api/app/*, used by KS_C) can work once the site with those endpoints is deployed.
 2026-11-23  KS_C added to the site (1.10.0): /products/ks-c/ with the 60 s film (assets/video, poster and showcase images in
             assets/images/products), first in the home page product strip, in the nav/footer data (assets/js/shell.js) and the
             terminal routes, a KS_C table on /downloads/, /api/ks-c/* downloads and scripts/publish-ks-c.mjs, FAQ, Security page and
             technical overview sections. Terms v7 (new Section 15 KS_C; Governing Law and Contact are now 16 and 17), Privacy Section 12
             KS_C (Changes and Contact are 13 and 14), Cookie Policy line; effective 2026-11-23. No-billing guard no longer lists "ollama"
-            (it only caught KS Stocks leftovers; KS_C names Ollama as a supported local server). NOT DEPLOYED: the installers must be
-            uploaded to R2 first; publishing a legal notice for Terms v7 is the operator's call (docs/LEGAL_NOTICES.md).
+            (it only caught KS Stocks leftovers; KS_C names Ollama as a supported local server). Pushed to main 2026-11-23 (662383d).
+            Installer buttons on /downloads/ are disabled until the installers are uploaded to R2; publishing a legal notice for Terms v7
+            is the operator's call (docs/LEGAL_NOTICES.md).
 2026-11-19  App sessions for native apps (KS_C1): /api/app/login, /two-factor, /two-factor-send, /session, /logout, /devices; migration
             021_app_sessions.sql (table app_sessions); functions/lib/app-sessions.js; revoked on password change/reset and 2FA removal,
             deleted with the account; admin: /api/admin/app-devices and appDevices in /api/admin/lookup, with Sign out buttons in the
-            Developer panel (assets/js/auth.js; prerender re-run for the new ?v= hashes). tests/app-sessions.test.mjs. NOT DEPLOYED:
-            run migration 021 on remote D1, deploy, then add the two WAF rules in docs/CLOUDFLARE_WAF.md.
+            Developer panel (assets/js/auth.js; prerender re-run for the new ?v= hashes). tests/app-sessions.test.mjs. Migration 021 run
+            on remote D1 2026-11-23 (see that day's entry). Still to confirm: the WAF rules in docs/CLOUDFLARE_WAF.md.
 2026-11-13  KS_Link session revocation: functions/lib/ks-link-revoke.js signs (HMAC, shared client secret) and sends
             POST /v1/internal/revoke to the relay after a password change/reset, 2FA-disable ("credentials": the
             relay ends all KS_Link sessions) and account deletion ("deleted": the relay erases the KS_Link account).
