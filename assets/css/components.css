@@ -190,17 +190,12 @@
   white-space: nowrap;
 }
 
-/* the Alpha tag is the one coloured element in the normal themes: KS purple fill, white text */
+/* the Alpha and Beta tags: ice grey fill, dark text, in every theme */
 .badge--alpha,
 .badge--beta {
-  background: var(--ks-purple);
-  border-color: rgba(223, 229, 235, 0.18);
-  color: #DFE5EB;
-}
-
-[data-theme="accent"] .badge--alpha,
-[data-theme="accent"] .badge--beta {
-  border-color: rgba(223, 229, 235, 0.1);
+  background: #DFE5EB;
+  border-color: #DFE5EB;
+  color: #0c0c0c;
 }
 
 .badge--ok {
