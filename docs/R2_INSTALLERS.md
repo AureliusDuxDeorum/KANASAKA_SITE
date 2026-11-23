@@ -90,3 +90,16 @@ The optional last two arguments (version, notes) write `installers/ks-c/version.
 
 `GET /api/ks-c/download/<platform>` streams the object. A platform with nothing uploaded answers 404, so upload before
 deploying, or leave that button out of `/downloads/`.
+
+# Films (R2)
+
+Films are served from the same bucket under `media/videos/` by `functions/api/media/[[catchall]].js`
+(`GET /api/media/<name>`, Range requests supported, public). Pages caps static files at 25 MiB, so they cannot live in the repo.
+
+```bash
+ffmpeg -i source.mp4 -c copy -movflags +faststart ks-c-ad-60s.mp4   # moov first, so playback starts at once
+node scripts/publish-video.mjs ks-c-ad-60s.mp4 ./ks-c-ad-60s.mp4
+```
+
+Names are lowercase letters, digits and dashes ending `.mp4` or `.webm`. Until a film is uploaded its URL answers 404 and
+the page shows only the poster, so upload before deploying a page that uses it.

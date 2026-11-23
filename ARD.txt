@@ -597,7 +597,9 @@ GET /api/ks-c/version.json — { version, notes, pub_date, downloads } from inst
 Platforms: windows-exe, windows-msi, linux-deb, linux-rpm, linux-appimage (R2 keys under installers/ks-c/, see docs/R2_INSTALLERS.md)
 Upload: node scripts/publish-ks-c.mjs <platform> <file> [version] [notes]
 KS_C's own signed updates come from its release host, not from this site.
-The 60-second film is assets/video/ks-c-ad-60s.mp4 (re-encoded from ~/Videos/"KS_C AD 60sec.mp4", 100 MB -> 3.6 MB; Pages files are capped at 25 MiB).
+The 60-second film is served from R2 (media/videos/ks-c-ad-60s.mp4) by functions/api/media/[[catchall]].js at /api/media/<name>
+(Range support; names are lowercase a-z0-9-). It is the untouched original remuxed with +faststart (104 MB; Pages caps static
+files at 25 MiB). Upload: node scripts/publish-video.mjs ks-c-ad-60s.mp4 <file>. The page shows its poster until uploaded.
 
 9a. APP SESSIONS (KS_C1 and any other native app of ours that is not KS_Link)
 -------------------------------------------------------------------------------
@@ -667,8 +669,8 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 ---------------------------------
 2026-11-23  Migration 021_app_sessions.sql run on remote D1 (kanasaka-auth): the app_sessions table is live, so native-app sign-in
             (/api/app/*, used by KS_C) can work once the site with those endpoints is deployed.
-2026-11-23  KS_C added to the site (1.10.0): /products/ks-c/ with the 60 s film (assets/video, poster and showcase images in
-            assets/images/products), first in the home page product strip, in the nav/footer data (assets/js/shell.js) and the
+2026-11-23  KS_C added to the site (1.10.0): /products/ks-c/ with the 60 s film (poster and showcase images in
+            assets/images/products; the film itself is in R2), first in the home page product strip, in the nav/footer data (assets/js/shell.js) and the
             terminal routes, a KS_C table on /downloads/, /api/ks-c/* downloads and scripts/publish-ks-c.mjs, FAQ, Security page and
             technical overview sections. Terms v7 (new Section 15 KS_C; Governing Law and Contact are now 16 and 17), Privacy Section 12
             KS_C (Changes and Contact are 13 and 14), Cookie Policy line; effective 2026-11-23. No-billing guard no longer lists "ollama"
