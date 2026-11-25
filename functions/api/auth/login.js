@@ -8,7 +8,7 @@ import {
   sessionPayload,
 } from "../../lib/auth.js";
 import { authenticateLogin } from "../../lib/login-flow.js";
-import { purgeOldEvents, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
+import { runHousekeeping, logAuthEvent, notifyLogin, requireSameOrigin } from "../../lib/security.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -34,7 +34,7 @@ export async function onRequestPost(context) {
   const session = await createSession(env, user.id, remember);
   await logAuthEvent(env, "login_success", { ip, userId: user.id });
   // Retention housekeeping (no cron here): occasionally trim old audit rows.
-  if (Math.random() < 0.02) await purgeOldEvents(env);
+  if (Math.random() < 0.02) await runHousekeeping(env);
   await notifyLogin(env, user.email, { success: true, reason: "Signed in successfully.", location, userId: user.id });
 
   return jsonResponse(sessionPayload(user, env), 200, {

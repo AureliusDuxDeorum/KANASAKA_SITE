@@ -5,7 +5,13 @@ import { getSecurityPhrase } from "./security-phrase.js";
 import { timingSafeEqualString } from "./tokens.js";
 import { logEvent, tooManyRecentEvents } from "./throttle.js";
 
-export { countRecentEvents, tooManyRecentEvents, purgeOldEvents } from "./throttle.js";
+export {
+  countRecentEvents,
+  tooManyRecentEvents,
+  purgeOldEvents,
+  purgeExpiredRows,
+  runHousekeeping,
+} from "./throttle.js";
 
 export function clientIp(request) {
   const cfIp = request.headers.get("CF-Connecting-IP");

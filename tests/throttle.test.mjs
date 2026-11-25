@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { allowSend } from "../functions/lib/security.js";
-import { countRecentEvents, logEvent, purgeOldEvents, tooManyRecentEvents } from "../functions/lib/throttle.js";
+import { countRecentEvents, logEvent, purgeExpiredRows, purgeOldEvents, tooManyRecentEvents } from "../functions/lib/throttle.js";
 import { makeEnv } from "./helpers.mjs";
 
 test("counts events by ip, email and userId inside the window only", async () => {
@@ -68,4 +68,32 @@ test("allowSend limits per email and per ip, and blocked requests are not record
 
   for (let i = 0; i < 6; i += 1) await allowSend(env, "reset", { ip: "5.5.5.5", email: "n" + i + "@example.com" }, { email: 3, ip: 10 });
   assert.equal(await allowSend(env, "reset", { ip: "5.5.5.5", email: "fresh@example.com" }, { email: 3, ip: 10 }), false, "ip cap");
+});
+
+test("purgeExpiredRows removes long-expired rows and keeps live and recently expired ones", async () => {
+  const env = makeEnv();
+  const db = env.DB.raw;
+  db.exec("INSERT INTO users (id, email, password_hash) VALUES (1, 'a@x.com', 'h')");
+  const insert = db.prepare(
+    "INSERT INTO twofa_challenges (challenge_hash, user_id, expires_at) VALUES (?, 1, ?)"
+  );
+  insert.run("old", new Date(Date.now() - 3 * 86400000).toISOString());
+  insert.run("recent", new Date(Date.now() - 3600000).toISOString());
+  insert.run("live", new Date(Date.now() + 3600000).toISOString());
+
+  assert.equal(await purgeExpiredRows(env), 1);
+  const left = db.prepare("SELECT challenge_hash FROM twofa_challenges ORDER BY challenge_hash").all();
+  assert.deepEqual(left.map((r) => r.challenge_hash), ["live", "recent"]);
+});
+
+test("throttle lookups are served by the expression indexes", async () => {
+  const env = makeEnv();
+  for (const [field, index] of [["ip", "idx_auth_events_type_ip"], ["email", "idx_auth_events_type_email"], ["userId", "idx_auth_events_type_user"]]) {
+    const plan = env.DB.raw
+      .prepare(
+        `EXPLAIN QUERY PLAN SELECT COUNT(*) FROM auth_events WHERE event_type = ? AND json_extract(meta, '$.${field}') = ? AND created_at > datetime('now', ?)`
+      )
+      .all("t", "x", "-15 minutes");
+    assert.match(plan.map((r) => r.detail).join(" "), new RegExp(index));
+  }
 });

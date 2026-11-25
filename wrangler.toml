@@ -2,12 +2,12 @@ name = "kanasaka-site"
 compatibility_date = "2024-11-12"
 pages_build_output_dir = "."
 
-# D1 migrations (run in order on remote):
-#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/003_profile.sql
-#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/004_security.sql
-#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/005_auth_hardening.sql
-#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/006_repair_token_schema.sql
-#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/008_security_hardening.sql
+# D1 migrations: files in migrations/ run in filename order. 007, 012 (wipes) and the *_repair
+# files are one-offs, not part of a fresh setup. Apply a single one to the remote database with:
+#   npx wrangler d1 execute kanasaka-auth --remote --file=./migrations/<NNN_name>.sql
+# schema.sql is only the original 001 baseline; tests build their database from schema.sql plus
+# every migration, so production state = baseline + migrations/*.sql.
+# 022_throttle_indexes.sql adds the indexes behind the auth_events throttles (safe to re-run).
 # R2 installers bucket (create in dashboard, bind in Pages as INSTALLERS):
 #   bucket_name = kanasaka-installers
 # Upload installers:

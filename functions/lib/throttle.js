@@ -64,3 +64,35 @@ export async function purgeOldEvents(env, days = EVENT_RETENTION_DAYS) {
     return 0;
   }
 }
+
+// Expired credentials and challenges are otherwise only removed per user (on the next sign-in
+// or 2FA attempt), so rows for people who never come back would pile up. Each table keeps a
+// day of grace: expires_at is written both as ISO text and as datetime('now') text depending
+// on the table, and the two only compare reliably a day apart.
+const EXPIRING_TABLES = [
+  "sessions",
+  "email_tokens",
+  "sms_otp_codes",
+  "twofa_challenges",
+  "app_sessions",
+];
+
+export async function purgeExpiredRows(env) {
+  let removed = 0;
+  for (const table of EXPIRING_TABLES) {
+    try {
+      const result = await env.DB.prepare(
+        `DELETE FROM ${table} WHERE expires_at < datetime('now', '-1 day')`
+      ).run();
+      removed += (result && result.meta && result.meta.changes) || 0;
+    } catch {
+      // Table not migrated yet.
+    }
+  }
+  return removed;
+}
+
+// Everything the lazy housekeeping hook (no cron on Pages) should trim.
+export async function runHousekeeping(env) {
+  return (await purgeOldEvents(env)) + (await purgeExpiredRows(env));
+}

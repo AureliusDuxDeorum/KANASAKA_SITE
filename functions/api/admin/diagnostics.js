@@ -4,7 +4,7 @@ import {
   adminActorLabel,
   clientIp,
   logAuthEvent,
-  purgeOldEvents,
+  runHousekeeping,
   requireAdminAccess,
   requireSameOrigin,
   throttleAdminAction,
@@ -40,7 +40,7 @@ export async function onRequestGet(context) {
   }
 
   // Housekeeping rides along with this admin-only read (no cron trigger here).
-  await purgeOldEvents(env);
+  await runHousekeeping(env);
   await logAuthEvent(env, "admin_diagnostics_viewed", { ip: clientIp(request), email: actor });
 
   const build = await readBuildInfo(env, request);

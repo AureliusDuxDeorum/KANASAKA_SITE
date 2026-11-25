@@ -1,3 +1,6 @@
+-- Baseline (001) only. The current schema is this file plus every migration in migrations/, in
+-- filename order (see wrangler.toml). tests/helpers.mjs builds its test database that way.
+
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE COLLATE NOCASE,
