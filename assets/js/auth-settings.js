@@ -1202,6 +1202,7 @@
       }
     }
 
+    if (window.KanasakaAccountWire) window.KanasakaAccountWire.set(profile.accountId);
     if (displayNameInput) {
       displayNameInput.value = profile.displayName || "";
     }
@@ -1315,6 +1316,7 @@
         profile = Object.assign({ authenticated: true }, data);
         updateSession(profile);
         displayNameInput.value = profile.displayName || "";
+        if (window.KanasakaAccountWire) window.KanasakaAccountWire.set(profile.accountId);
         applyAccountIdFieldState(profile, accountIdInput, accountIdHint);
         showFormSuccess(profileForm, data.message || "Profile updated.");
       } catch (error) {

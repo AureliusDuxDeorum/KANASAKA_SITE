@@ -1,0 +1,270 @@
+/* Account Settings: mostly black void. A tall column on the left holds the account ID as a
+   wireframe (account-wire.js) and the section list; the content sits on the right with no boxes,
+   separated by hairlines and generous space. Loaded after style.css and redesign.css, so it
+   replaces their card styling for this page only. */
+
+.settings-page {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  isolation: auto;
+}
+
+.settings-page .auth-page-backdrop {
+  display: none;
+}
+
+.settings-layout {
+  max-width: none;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* ── left: void ── */
+
+.settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) clamp(var(--space-6), 4vw, var(--space-16));
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 600ms var(--auth-ease);
+}
+
+.auth-page.is-ready .settings-sidebar {
+  opacity: 1;
+}
+
+.settings-sidebar-head h1 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+}
+
+.settings-sidebar-head p {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: var(--text-sm);
+}
+
+.settings-void {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+}
+
+#settings-wire {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* section list: plain rows numbered like the HUD labels (//01, //02 ...) */
+.settings-nav {
+  gap: 0;
+  counter-reset: settings-nav;
+}
+
+.settings-nav-item {
+  padding: var(--space-3) 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.settings-nav-item::before,
+.settings-nav-icon {
+  display: none;
+}
+
+/* display:flex above would otherwise beat the [hidden] attribute, which is how the Developer entry
+   is kept from everyone but developers (auth-settings.js) */
+.settings-nav-item[hidden] {
+  display: none;
+}
+
+.settings-nav-label::before {
+  counter-increment: settings-nav;
+  content: "//" counter(settings-nav, decimal-leading-zero);
+  margin-right: var(--space-4);
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-wide);
+}
+
+.settings-nav-item:hover,
+.settings-nav-item.is-active {
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text);
+}
+
+.settings-nav-item.is-active .settings-nav-label::before {
+  color: var(--color-text);
+}
+
+/* ── right: content ── */
+
+.settings-main {
+  max-width: 880px;
+  padding: var(--space-12) var(--space-6) var(--space-24);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+  transition: opacity 600ms var(--auth-ease) 120ms;
+}
+
+.auth-page.is-ready .settings-main {
+  opacity: 1;
+}
+
+.settings-card-body {
+  padding: 0;
+  min-height: 0;
+}
+
+.settings-panel h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-2xl);
+}
+
+.settings-panel-intro {
+  margin: 0 0 var(--space-12);
+  max-width: 56ch;
+  color: var(--color-text-subtle);
+}
+
+/* sections are hairline-separated bands, not boxes */
+.settings-section {
+  margin: 0;
+  padding: var(--space-12) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-border);
+  background: transparent;
+}
+
+.settings-section:hover {
+  border-color: var(--color-border);
+}
+
+.settings-section-danger {
+  border-top-color: var(--color-danger);
+  background: transparent;
+}
+
+.settings-profile-card {
+  margin-bottom: var(--space-16);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settings-profile-card:hover {
+  border: 0;
+  box-shadow: none;
+}
+
+.settings-profile {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.settings-avatar {
+  width: 96px;
+  height: 96px;
+  border-width: 1px;
+  box-shadow: none;
+}
+
+.settings-profile-card:hover .settings-avatar {
+  transform: none;
+  box-shadow: none;
+}
+
+.settings-profile-actions {
+  justify-content: flex-start;
+}
+
+.settings-static-field,
+.settings-form {
+  margin-bottom: var(--space-8);
+}
+
+.settings-subsection-title {
+  margin-bottom: var(--space-6);
+}
+
+.theme-picker {
+  margin-bottom: var(--space-12);
+}
+
+/* ── wide screens: the void is a full-height column that stays put while the content scrolls ── */
+
+@media (min-width: 1024px) {
+  .settings-layout {
+    grid-template-columns: minmax(380px, 46%) minmax(0, 1fr);
+  }
+
+  .settings-layout:has(.settings-sidebar[hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-sidebar {
+    position: sticky;
+    top: 72px;
+    height: calc(100vh - 72px);
+    border-right: var(--border-width) solid var(--color-border);
+  }
+
+  .settings-main {
+    padding: var(--space-24) clamp(var(--space-8), 6vw, 112px) var(--space-32);
+  }
+}
+
+/* ── narrow screens: the void becomes a band above the list, the content follows ── */
+
+@media (max-width: 1023px) {
+  .settings-sidebar {
+    padding: var(--space-8) var(--space-6) 0;
+    gap: var(--space-6);
+  }
+
+  .settings-void {
+    flex: none;
+    height: 260px;
+    min-height: 0;
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0 var(--space-6);
+  }
+
+  .settings-main {
+    padding-top: var(--space-8);
+  }
+
+  .settings-profile {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-sidebar,
+  .settings-main {
+    transition: none;
+  }
+}

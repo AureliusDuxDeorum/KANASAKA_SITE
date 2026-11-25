@@ -223,7 +223,7 @@
   }
 
   function mountAmbientRails() {
-    if (document.querySelector(".kanasaka-rail") || document.getElementById("hero-wire")) {
+    if (document.querySelector(".kanasaka-rail") || document.getElementById("hero-wire") || document.querySelector(".settings-page")) {
       return;
     }
 
@@ -240,7 +240,7 @@
 
   function mountPageMark() {
     const main = document.querySelector("main");
-    if (!main || document.getElementById("hero-wire") || main.querySelector(".page-mark")) {
+    if (!main || document.getElementById("hero-wire") || document.querySelector(".settings-page") || main.querySelector(".page-mark")) {
       return;
     }
 
@@ -362,7 +362,9 @@
         return;
       }
 
-      loadScript("/assets/js/hero-wire.js?v=793e4a15").then(resolve);
+      loadScript("/assets/js/wire-font.js?v=587c236c").then(function () {
+        return loadScript("/assets/js/hero-wire.js?v=3ff72702");
+      }).then(resolve);
     });
   }
 

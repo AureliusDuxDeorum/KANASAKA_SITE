@@ -20,13 +20,16 @@
   <link rel="stylesheet" href="/assets/css/components.css?v=cae47bb7">
   <link rel="stylesheet" href="/assets/css/motion.css?v=c0319c42">
   <link rel="stylesheet" href="/assets/css/console.css?v=84f8057e">
+  <link rel="stylesheet" href="/assets/css/settings.css?v=f8bf18af">
   <script src="/assets/js/motion-boot.js?v=f8491e9f"></script>
   <script defer src="/assets/js/password-policy.js?v=798cda94"></script>
   <script defer src="/assets/js/qrcode.js?v=34689bb5"></script>
   <script defer src="/assets/js/auth.js?v=b9d469c0"></script>
-  <script defer src="/assets/js/auth-settings.js?v=4c076921"></script>
+  <script defer src="/assets/js/wire-font.js?v=587c236c"></script>
+  <script defer src="/assets/js/account-wire.js?v=02867201"></script>
+  <script defer src="/assets/js/auth-settings.js?v=1259b4d8"></script>
   <script defer src="/assets/js/shell.js?v=9aae1c9f"></script>
-  <script defer src="/assets/js/main.js?v=71083f71"></script>
+  <script defer src="/assets/js/main.js?v=6ea61d6d"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -41,12 +44,13 @@
     <div class="auth-page-backdrop" aria-hidden="true"></div>
 
     <div class="settings-layout">
-      <aside class="settings-sidebar settings-sidebar-card">
+      <aside class="settings-sidebar">
         <div class="settings-sidebar-head">
           <p class="auth-eyebrow">Account</p>
           <h1>Settings</h1>
           <p>Manage your profile, appearance, and account.</p>
         </div>
+        <div class="settings-void" aria-hidden="true"><canvas id="settings-wire"></canvas></div>
         <nav id="settings-nav" class="settings-nav" aria-label="Account settings sections">
           <button type="button" class="settings-nav-item is-active" data-settings-panel="personal">
             <svg class="settings-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5 L16.5 8 L12 12.5 L7.5 8 Z"/><path d="M4.5 20.5 V17 L8.5 13.5 H15.5 L19.5 17 V20.5"/></svg>
@@ -67,9 +71,8 @@
         </nav>
       </aside>
 
-      <div class="settings-main auth-card settings-card settings-card-elevated auth-card--modern">
-        <div class="auth-card-accent" aria-hidden="true"></div>
-        <div class="auth-card-body settings-card-body">
+      <div class="settings-main settings-card">
+        <div class="settings-card-body">
         <div id="settings-gate" class="auth-gate" hidden></div>
 
         <div id="settings-content" class="settings-panels-wrap" hidden>

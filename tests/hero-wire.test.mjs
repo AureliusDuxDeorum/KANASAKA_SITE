@@ -53,6 +53,7 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
     addEventListener() {},
   };
   const ctxV = vm.createContext(win);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/wire-font.js"), "utf8"), ctxV);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/hero-wire.js"), "utf8"), ctxV);
   win.KanasakaHeroWire.init();
   return { calls, frames, hudEl, listeners, store };
@@ -80,7 +81,7 @@ test("hero-wire starts as the tesseract with a tracker and readout", () => {
   const run = runHero();
   const text = labels(run.calls);
   assert.ok(text.includes("//OBJ_01 TESSERACT"));
-  assert.ok(text.includes("SEG 320"));
+  assert.ok(text.some((t) => /^SEG \d+$/.test(t)));
   assert.ok(text.some((t) => /^XW \d/.test(t)));
   assert.ok(text.includes("//TRACK 01 OBJ"));
   assert.equal(run.hudEl.textContent, "//KS_SYS  V9.9.9");
@@ -109,7 +110,7 @@ test("hero-wire never draws a NaN and never jumps between frames, including at t
   for (const frame of stepFrames(run, 47)) {
     for (const call of frame) for (const arg of call.slice(1)) if (typeof arg === "number") assert.ok(Number.isFinite(arg), call[0]);
     // segments are drawn grouped by depth, so compare the shape as a whole: its box and centroid
-    const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 640);
+    const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 2 * 768);
     const xs = pts.map((c) => c[1]);
     const ys = pts.map((c) => c[2]);
     const now = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys), xs.reduce((a, b) => a + b) / xs.length, ys.reduce((a, b) => a + b) / ys.length];
@@ -190,7 +191,7 @@ test("egg: the shape stays smooth into and out of the words, and the loop resume
   let worst = 0;
   for (const frame of stepFrames(run, 40)) {
     for (const call of frame) for (const arg of call.slice(1)) if (typeof arg === "number") assert.ok(Number.isFinite(arg), call[0]);
-    const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 640);
+    const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 2 * 768);
     const xs = pts.map((c) => c[1]);
     const ys = pts.map((c) => c[2]);
     const now = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];

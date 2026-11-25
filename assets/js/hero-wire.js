@@ -22,7 +22,7 @@
   // with live values) follows the whole shape, then each of the four segments.
   // Colours come from CSS (--color-text); everything honours the motion setting.
 
-  var SEGMENTS = 320;
+  var SEGMENTS = 768; // the words as solid beams need 528 of them; the tesseract is 32 edges x 24
   var CYCLE = 23; // seconds for one full loop (the mark holds for 6 of them)
   var STILL_AT = 11; // the frame shown when motion is off: the mark, held
   var INTRO_MS = 1400;
@@ -48,22 +48,7 @@
   var SESSION_KEY = "kanasaka-session-start"; // shared with hud.js
   var EGG_KEY = "kanasaka-egg-shown";
 
-  // A small stroke font, angular like the mark: only the letters the phrase needs. Each glyph is
-  // a list of polylines on a 4 x 6 grid (y down).
-  var GLYPHS = {
-    A: [[[0, 6], [0, 1.5], [1.5, 0], [2.5, 0], [4, 1.5], [4, 6]], [[0, 3.5], [4, 3.5]]],
-    N: [[[0, 6], [0, 0], [4, 6], [4, 0]]],
-    E: [[[4, 0], [0, 0], [0, 6], [4, 6]], [[0, 3], [3, 3]]],
-    W: [[[0, 0], [1, 6], [2, 2.5], [3, 6], [4, 0]]],
-    R: [[[0, 6], [0, 0], [3, 0], [4, 1], [4, 2], [3, 3], [0, 3]], [[2, 3], [4, 6]]],
-    O: [[[1, 0], [3, 0], [4, 1], [4, 5], [3, 6], [1, 6], [0, 5], [0, 1], [1, 0]]],
-    F: [[[4, 0], [0, 0], [0, 6]], [[0, 3], [3, 3]]],
-    V: [[[0, 0], [2, 6], [4, 0]]],
-    L: [[[0, 0], [0, 6], [4, 6]]],
-    U: [[[0, 0], [0, 5], [1, 6], [3, 6], [4, 5], [4, 0]]],
-    T: [[[0, 0], [4, 0]], [[2, 0], [2, 6]]],
-    I: [[[0.5, 0], [3.5, 0]], [[2, 0], [2, 6]], [[0.5, 6], [3.5, 6]]],
-  };
+  // The letters come from the shared stroke font (wire-font.js), loaded just before this file.
   var PHRASE_WIDE = ["A NEW ERA", "OF EVOLUTION"];
   var PHRASE_NARROW = ["A NEW ERA", "OF", "EVOLUTION"];
   var TEXT_WIDTH_WIDE = 4.4; // in object radii
@@ -190,40 +175,17 @@
     return edges;
   }
 
-  // The phrase as 3D edges in object units, centred, flat (z = 0).
+  // The phrase as solid 3D letters (one continuous beam per stroke, see wire-font.js), in object
+  // units, centred.
   function textEdges(lines, targetWidth) {
-    var ADV = 5;
-    var SPACE = 3;
-    var LINE_H = 9;
-    function lineWidth(line) {
-      var w = 0;
-      for (var i = 0; i < line.length; i += 1) w += line[i] === " " ? SPACE : ADV;
-      return w - 1;
-    }
-    var widest = Math.max.apply(null, lines.map(lineWidth));
-    var scale = targetWidth / widest;
-    var top = -((lines.length - 1) * LINE_H + 6) / 2;
-    var edges = [];
-    lines.forEach(function (line, row) {
-      var x = -lineWidth(line) / 2;
-      for (var i = 0; i < line.length; i += 1) {
-        var ch = line[i];
-        if (ch === " ") {
-          x += SPACE;
-          continue;
-        }
-        GLYPHS[ch].forEach(function (stroke) {
-          for (var k = 0; k + 1 < stroke.length; k += 1) {
-            edges.push([
-              [(x + stroke[k][0]) * scale, (top + row * LINE_H + stroke[k][1]) * scale, 0],
-              [(x + stroke[k + 1][0]) * scale, (top + row * LINE_H + stroke[k + 1][1]) * scale, 0],
-            ]);
-          }
-        });
-        x += ADV;
-      }
+    var block = window.KanasakaWireFont.beams(lines);
+    var scale = targetWidth / block.width;
+    return block.edges.map(function (e) {
+      return [
+        [e[0] * scale, e[1] * scale, e[2] * scale],
+        [e[3] * scale, e[4] * scale, e[5] * scale],
+      ];
     });
-    return edges;
   }
 
   function flat3(segs) {
@@ -309,6 +271,7 @@
   function init() {
     var hero = document.getElementById("hero-wire");
     var canvas = document.getElementById("hw-canvas");
+    if (!window.KanasakaWireFont) return;
     var hud = document.getElementById("hw-hud");
     if (!hero || !canvas || !canvas.getContext) return;
     var ctx = canvas.getContext("2d");
@@ -507,10 +470,14 @@
       function textPoint(o, base) {
         var x = text[base] * fit;
         var y = text[base + 1] * fit;
-        var z = text[base + 2];
-        rot(x, z, Math.sin(t * 0.5) * 0.1);
-        o[0] = out2[0];
-        o[1] = y;
+        var z = text[base + 2] * fit;
+        // a slow swing and tilt so the depth of the letters shows
+        rot(x, z, Math.sin(t * 0.5) * 0.45);
+        x = out2[0];
+        z = out2[1];
+        rot(y, z, 0.1 + Math.sin(t * 0.3) * 0.08);
+        o[0] = x;
+        o[1] = out2[0];
         o[2] = out2[1];
       }
 

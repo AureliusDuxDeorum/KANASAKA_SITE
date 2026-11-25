@@ -57,9 +57,17 @@ assets/js/hud.js            Quiet console-style labels: footer line (build, them
                             within the section, theme letter (d/l/a), layout class (01 phone <768, 02 tablet
                             <1024, 03 laptop <1700, 04 desktop). The home hero adds its own
                             //KS_SYS readout (hero-wire.js). All values are live or from the build, none invented.
+assets/js/wire-font.js      Shared angular stroke font (A-Z, 0-9, _ and -) as segments on a 4 x 6 grid; used by the hero
+                            easter egg and the account ID wireframe. KanasakaWireFont.layout(lines) gives strokes/segments;
+                            beams(lines) gives solid 3D letters: one continuous mitred square beam per stroke, rings only
+                            at free ends, so curves add no connecting lines.
+assets/js/account-wire.js   Account Settings: the account ID as a solid wireframe (square beams) on a 2D canvas (letters build on,
+                            slow swing, tracker with //ACC_ID, LEN, RY). KanasakaAccountWire.set(id) is called by
+                            auth-settings.js after the profile loads and after an ID change.
+assets/css/settings.css     Account Settings layout: void column on the left, content without cards on the right.
 assets/js/hero-wire.js      Home hero: one wireframe on a 2D canvas, no libraries, looping every 23 s (mark held 6 s): tesseract ->
                             fold (4th axis collapses) -> KS mark (extruded from ks-horizontal.svg) -> four product
-                            segments (KS_C, KS_Link, KS_K, KS_Unify) -> fuse -> unfold. 320 line segments matched
+                            segments (KS_C, KS_Link, KS_K, KS_Unify) -> fuse -> unfold. 768 line segments matched
                             one to one along a continuous path; each transition interpolates endpoints. HUD: bracket
                             box, dashed crosshair lines, label with a live stage parameter. Pointer tilt. Pauses off
                             screen / hidden tab; motion off = one still frame of the mark; "reduced" = half speed.
