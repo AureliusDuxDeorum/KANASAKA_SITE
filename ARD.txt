@@ -63,6 +63,8 @@ assets/js/hero-wire.js      Home hero: one wireframe on a 2D canvas, no librarie
                             one to one along a continuous path; each transition interpolates endpoints. HUD: bracket
                             box, dashed crosshair lines, label with a live stage parameter. Pointer tilt. Pauses off
                             screen / hidden tab; motion off = one still frame of the mark; "reduced" = half speed.
+                            Easter egg: session >= 10 min (sessionStorage kanasaka-session-start) -> the next tesseract
+                            becomes the words "A NEW ERA OF EVOLUTION" for 10 s, once per session; /?egg forces it.
 assets/js/product-showcase.js  Home product strip. The endless drift is the CSS animation showcase-scroll
                             (home.css), which runs on the compositor thread so it stays smooth while the main
                             thread is busy. The script only steers it via the Web Animations API: hover/focus

@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { ROOT } from "./helpers.mjs";
 
 // Runs hero-wire.js against a recording canvas stub and returns what it drew.
-export function runHero({ width = 1440, height = 900, motion = "full", reduce = false } = {}) {
+export function runHero({ width = 1440, height = 900, motion = "full", reduce = false, sessionAgeMin = null, search = "" } = {}) {
   const calls = [];
   const ctx = new Proxy(
     {},
@@ -41,6 +41,10 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
     MutationObserver: class { observe() {} },
     KanasakaMeta: { version: "9.9.9" },
   };
+  const store = {};
+  if (sessionAgeMin !== null) store["kanasaka-session-start"] = String(Date.now() - sessionAgeMin * 60000);
+  win.sessionStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => (store[k] = String(v)) };
+  win.location = { search };
   win.window = win;
   win.document = {
     hidden: false,
@@ -51,7 +55,7 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
   const ctxV = vm.createContext(win);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/hero-wire.js"), "utf8"), ctxV);
   win.KanasakaHeroWire.init();
-  return { calls, frames, hudEl, listeners };
+  return { calls, frames, hudEl, listeners, store };
 }
 
 const count = (calls, name) => calls.filter((c) => c[0] === name).length;
@@ -135,4 +139,63 @@ test("hero-wire survives pointer movement", () => {
   stepFrames(run, 1);
   run.listeners.pointerleave();
   stepFrames(run, 1);
+});
+
+// ── easter egg: the words, once the session is 10 minutes old ───────────────────────────────
+function stages(run, seconds) {
+  const seen = [];
+  for (const frame of stepFrames(run, seconds)) {
+    for (const text of labels(frame)) {
+      const m = text.match(/^\/\/OBJ_01 (\w+)$/);
+      if (m && seen[seen.length - 1] !== m[1]) seen.push(m[1]);
+    }
+  }
+  return seen;
+}
+
+test("egg: a session under 10 minutes never shows the words", () => {
+  const run = runHero({ sessionAgeMin: 9 });
+  assert.ok(!stages(run, 50).includes("EVOLUTION"));
+});
+
+test("egg: after 10 minutes the words replace the next tesseract, hold 10 s, then the loop goes on", () => {
+  const run = runHero({ sessionAgeMin: 11 });
+  const seen = stages(run, 40);
+  assert.deepEqual(seen.slice(0, 4), ["EVOLUTION", "TESSERACT", "FOLD", "RESOLVE"]);
+  assert.equal(run.store["kanasaka-egg-shown"], "1");
+});
+
+test("egg: shown once per session, and held for 10 seconds", () => {
+  const run = runHero({ sessionAgeMin: 11 });
+  let holdFrames = 0;
+  let again = 0;
+  for (const frame of stepFrames(run, 60)) {
+    const here = labels(frame).some((t) => t === "//OBJ_01 EVOLUTION");
+    if (here) holdFrames += 1;
+  }
+  // 13.2 s on screen in total at 50 ms a frame (10 s hold + 1.6 s each way)
+  assert.ok(holdFrames >= 255 && holdFrames <= 270, "frames showing EVOLUTION: " + holdFrames);
+  for (const frame of stepFrames(run, 30)) if (labels(frame).includes("//OBJ_01 EVOLUTION")) again += 1;
+  assert.equal(again, 0, "it does not come back");
+});
+
+test("egg: ?egg shows it straight away; motion off never does", () => {
+  assert.ok(labels(runHero({ search: "?egg" }).calls).includes("//OBJ_01 EVOLUTION"));
+  assert.ok(!labels(runHero({ search: "?egg", motion: "off" }).calls).includes("//OBJ_01 EVOLUTION"));
+});
+
+test("egg: the shape stays smooth into and out of the words, and the loop resumes where it stopped", () => {
+  const run = runHero({ sessionAgeMin: 11, width: 390, height: 780 });
+  let previous = null;
+  let worst = 0;
+  for (const frame of stepFrames(run, 40)) {
+    for (const call of frame) for (const arg of call.slice(1)) if (typeof arg === "number") assert.ok(Number.isFinite(arg), call[0]);
+    const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 640);
+    const xs = pts.map((c) => c[1]);
+    const ys = pts.map((c) => c[2]);
+    const now = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    if (previous) now.forEach((v, i) => (worst = Math.max(worst, Math.abs(v - previous[i]))));
+    previous = now;
+  }
+  assert.ok(worst < 80, "largest jump: " + worst.toFixed(0) + "px");
 });

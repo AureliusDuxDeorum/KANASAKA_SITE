@@ -12,6 +12,11 @@
   //   REFORM     the mark folds back into a cube
   //   UNFOLD     the 4th axis opens again: back to the tesseract
   //
+  // Easter egg: once the session is 10 minutes old (the clock hud.js keeps in sessionStorage), the
+  // next time the tesseract is due it morphs into the words "A NEW ERA OF EVOLUTION" instead,
+  // holds for 10 seconds, morphs back, and the loop carries on where it was. Once per session;
+  // add ?egg to the address to see it straight away.
+  //
   // Every state is the same SEGMENTS line segments, matched one to one, so a transition is just
   // an interpolation of endpoints. The HUD (bracket box, dashed crosshair lines, a short label
   // with live values) follows the whole shape, then each of the four segments.
@@ -34,6 +39,35 @@
     "M307.35,453.7 L387.48,533 L260.35,660.12 L101.6,660.12 Z";
   var LOGO_WIDTH = 2.8; // in object radii (the cube is 2 wide)
   var LOGO_HALF_DEPTH = 0.1;
+
+  var EGG_AFTER_MS = 10 * 60 * 1000;
+  var EGG_IN = 1.6; // seconds to morph into the words
+  var EGG_HOLD = 10;
+  var EGG_OUT = 1.6;
+  var EGG_TOTAL = EGG_IN + EGG_HOLD + EGG_OUT;
+  var SESSION_KEY = "kanasaka-session-start"; // shared with hud.js
+  var EGG_KEY = "kanasaka-egg-shown";
+
+  // A small stroke font, angular like the mark: only the letters the phrase needs. Each glyph is
+  // a list of polylines on a 4 x 6 grid (y down).
+  var GLYPHS = {
+    A: [[[0, 6], [0, 1.5], [1.5, 0], [2.5, 0], [4, 1.5], [4, 6]], [[0, 3.5], [4, 3.5]]],
+    N: [[[0, 6], [0, 0], [4, 6], [4, 0]]],
+    E: [[[4, 0], [0, 0], [0, 6], [4, 6]], [[0, 3], [3, 3]]],
+    W: [[[0, 0], [1, 6], [2, 2.5], [3, 6], [4, 0]]],
+    R: [[[0, 6], [0, 0], [3, 0], [4, 1], [4, 2], [3, 3], [0, 3]], [[2, 3], [4, 6]]],
+    O: [[[1, 0], [3, 0], [4, 1], [4, 5], [3, 6], [1, 6], [0, 5], [0, 1], [1, 0]]],
+    F: [[[4, 0], [0, 0], [0, 6]], [[0, 3], [3, 3]]],
+    V: [[[0, 0], [2, 6], [4, 0]]],
+    L: [[[0, 0], [0, 6], [4, 6]]],
+    U: [[[0, 0], [0, 5], [1, 6], [3, 6], [4, 5], [4, 0]]],
+    T: [[[0, 0], [4, 0]], [[2, 0], [2, 6]]],
+    I: [[[0.5, 0], [3.5, 0]], [[2, 0], [2, 6]], [[0.5, 6], [3.5, 6]]],
+  };
+  var PHRASE_WIDE = ["A NEW ERA", "OF EVOLUTION"];
+  var PHRASE_NARROW = ["A NEW ERA", "OF", "EVOLUTION"];
+  var TEXT_WIDTH_WIDE = 4.4; // in object radii
+  var TEXT_WIDTH_NARROW = 3.3;
 
   // left to right across the mark
   var PRODUCTS = [
@@ -156,6 +190,53 @@
     return edges;
   }
 
+  // The phrase as 3D edges in object units, centred, flat (z = 0).
+  function textEdges(lines, targetWidth) {
+    var ADV = 5;
+    var SPACE = 3;
+    var LINE_H = 9;
+    function lineWidth(line) {
+      var w = 0;
+      for (var i = 0; i < line.length; i += 1) w += line[i] === " " ? SPACE : ADV;
+      return w - 1;
+    }
+    var widest = Math.max.apply(null, lines.map(lineWidth));
+    var scale = targetWidth / widest;
+    var top = -((lines.length - 1) * LINE_H + 6) / 2;
+    var edges = [];
+    lines.forEach(function (line, row) {
+      var x = -lineWidth(line) / 2;
+      for (var i = 0; i < line.length; i += 1) {
+        var ch = line[i];
+        if (ch === " ") {
+          x += SPACE;
+          continue;
+        }
+        GLYPHS[ch].forEach(function (stroke) {
+          for (var k = 0; k + 1 < stroke.length; k += 1) {
+            edges.push([
+              [(x + stroke[k][0]) * scale, (top + row * LINE_H + stroke[k][1]) * scale, 0],
+              [(x + stroke[k + 1][0]) * scale, (top + row * LINE_H + stroke[k + 1][1]) * scale, 0],
+            ]);
+          }
+        });
+        x += ADV;
+      }
+    });
+    return edges;
+  }
+
+  function flat3(segs) {
+    var out = new Float64Array(SEGMENTS * 6);
+    segs.forEach(function (seg, j) {
+      for (var d = 0; d < 3; d += 1) {
+        out[j * 6 + d] = seg[0][d];
+        out[j * 6 + 3 + d] = seg[1][d];
+      }
+    });
+    return out;
+  }
+
   function buildMorph() {
     var tess = subdivide(tesseractEdges(), SEGMENTS);
     var logo = subdivide(logoEdges(), SEGMENTS);
@@ -178,7 +259,13 @@
       var mx = (l[0][0] + l[1][0]) / 2;
       group[j] = Math.max(0, Math.min(3, Math.floor((mx / LOGO_WIDTH + 0.5) * 4)));
     }
-    return { a4: a4, l3: l3, group: group };
+    return {
+      a4: a4,
+      l3: l3,
+      group: group,
+      textWide: flat3(subdivide(textEdges(PHRASE_WIDE, TEXT_WIDTH_WIDE), SEGMENTS)),
+      textNarrow: flat3(subdivide(textEdges(PHRASE_NARROW, TEXT_WIDTH_NARROW), SEGMENTS)),
+    };
   }
 
   // ── timeline ────────────────────────────────────────────────────────────────────────────
@@ -211,6 +298,7 @@
     var deg = function (rad) {
       return ((((rad * 180) / Math.PI) % 360) + 360) % 360;
     };
+    if (p.name === "EVOLUTION") return "T- " + Math.max(0, p.left).toFixed(1).padStart(4, "0");
     if (p.name === "TESSERACT") return "XW " + deg(state.wAngle).toFixed(1).padStart(5, "0");
     if (p.name === "FOLD" || p.name === "UNFOLD") return "W " + (1 - p.f).toFixed(2);
     if (p.name === "RESOLVE" || p.name === "REFORM") return "M " + p.m.toFixed(2);
@@ -245,6 +333,9 @@
     var clock = 0; // motion time: runs slower under "reduced"
     var last = 0;
     var motionOff = reducedMotion();
+    var shift = 0; // clock time spent inside the egg: the loop's own time is clock - shift
+    var egg = null; // { wall, clock, c0 } while the words are on screen
+    var lastCycle = -1;
 
     function reducedMotion() {
       return window.matchMedia("(prefers-reduced-motion: reduce)").matches || root.getAttribute("data-motion") === "off";
@@ -279,6 +370,65 @@
       return motionOff ? 1 : Math.min(1, elapsed / (INTRO_MS / 1000));
     }
 
+    function sessionAgeMs() {
+      var start = 0;
+      try {
+        start = Number(window.sessionStorage.getItem(SESSION_KEY)) || 0;
+        if (!start) {
+          start = Date.now();
+          window.sessionStorage.setItem(SESSION_KEY, String(start));
+        }
+      } catch (e) {
+        start = 0;
+      }
+      return start ? Date.now() - start : 0;
+    }
+
+    function eggShown() {
+      try {
+        return window.sessionStorage.getItem(EGG_KEY) === "1";
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function eggDue() {
+      if (motionOff || eggShown()) return false;
+      return /[?&]egg\b/.test((window.location && window.location.search) || "") || sessionAgeMs() >= EGG_AFTER_MS;
+    }
+
+    function startEgg(t) {
+      egg = { wall: elapsed, clock: t, c0: (t - shift) % CYCLE };
+      try {
+        window.sessionStorage.setItem(EGG_KEY, "1");
+      } catch (e) {
+        // storage blocked: it may show again on the next page view, which is harmless
+      }
+    }
+
+    // Which stage is on screen at motion time t. Called once per frame; it is also where the
+    // egg starts (when a new loop begins and the session is old enough) and ends.
+    function stage(t) {
+      if (!egg && !motionOff) {
+        var cycle = Math.floor((t - shift) / CYCLE);
+        if (cycle > lastCycle) {
+          lastCycle = cycle;
+          if (eggDue()) startEgg(t);
+        }
+      }
+      if (egg) {
+        var w = elapsed - egg.wall;
+        if (w >= EGG_TOTAL) {
+          shift += t - egg.clock; // the loop resumes exactly where it stopped
+          egg = null;
+        } else {
+          var amount = w < EGG_IN ? ease(w / EGG_IN) : w < EGG_IN + EGG_HOLD ? 1 : 1 - ease((w - EGG_IN - EGG_HOLD) / EGG_OUT);
+          return { name: "EVOLUTION", f: 0, m: 0, e: 0, spin: egg.c0, egg: amount, left: EGG_TOTAL - w };
+        }
+      }
+      return phaseAt(((t - shift) % CYCLE + CYCLE) % CYCLE);
+    }
+
     var out2 = [0, 0];
     function rot(x, y, ang) {
       var c = Math.cos(ang);
@@ -311,6 +461,9 @@
       var yaw = Math.sin(t * 0.5) * 0.5;
       var pitch = 0.08;
       var spread = compact ? 0.6 : 1;
+      var text = compact ? morph.textNarrow : morph.textWide;
+      // keep the words inside the screen on tall, narrow windows
+      var fit = Math.min(1, (width * 0.84) / ((compact ? TEXT_WIDTH_NARROW : TEXT_WIDTH_WIDE) * R));
 
       var box = { l: Infinity, r: -Infinity, t: Infinity, b: -Infinity };
       var groups = [0, 1, 2, 3].map(function () {
@@ -351,6 +504,16 @@
         o[2] = z;
       }
 
+      function textPoint(o, base) {
+        var x = text[base] * fit;
+        var y = text[base + 1] * fit;
+        var z = text[base + 2];
+        rot(x, z, Math.sin(t * 0.5) * 0.1);
+        o[0] = out2[0];
+        o[1] = y;
+        o[2] = out2[1];
+      }
+
       function grow(b, x, y) {
         b.l = Math.min(b.l, x);
         b.r = Math.max(b.r, x);
@@ -362,7 +525,12 @@
         var g = morph.group[i];
         for (var end = 0; end < 2; end += 1) {
           tesseractPoint(P, i * 8 + end * 4);
-          if (p.m > 0) {
+          if (p.egg > 0) {
+            textPoint(Q, i * 6 + end * 3);
+            P[0] += (Q[0] - P[0]) * p.egg;
+            P[1] += (Q[1] - P[1]) * p.egg;
+            P[2] += (Q[2] - P[2]) * p.egg;
+          } else if (p.m > 0) {
             logoPoint(Q, i * 6 + end * 3, g);
             P[0] += (Q[0] - P[0]) * p.m;
             P[1] += (Q[1] - P[1]) * p.m;
@@ -472,7 +640,7 @@
 
     function render(t) {
       var intro = introNow();
-      var p = phaseAt(t % CYCLE);
+      var p = stage(t);
       var state = layout(t, p);
       ctx.clearRect(0, 0, width, height);
       ctx.strokeStyle = ink;

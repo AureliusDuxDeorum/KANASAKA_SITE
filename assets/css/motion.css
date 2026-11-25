@@ -307,8 +307,20 @@ html[data-motion="full"] .button:not([disabled]):active {
   background: var(--color-surface);
 }
 
+/* The hover marker sits in the margin left of the first cell: the cell has no left padding, so an
+   inset marker would be drawn over the first letter. */
 .data-table tbody tr:hover > th:first-child {
-  box-shadow: inset 2px 0 0 var(--color-text);
+  position: relative;
+}
+
+.data-table tbody tr:hover > th:first-child::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--space-4) * -1);
+  width: 2px;
+  background: var(--color-text);
 }
 
 html[data-motion="full"][data-fx="1"] .badge--alpha::before,
