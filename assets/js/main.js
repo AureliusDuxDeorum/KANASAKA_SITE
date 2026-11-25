@@ -362,7 +362,7 @@
         return;
       }
 
-      loadScript("/assets/js/hero-wire.js?v=84dc97f4").then(resolve);
+      loadScript("/assets/js/hero-wire.js?v=120847a5").then(resolve);
     });
   }
 

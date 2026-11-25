@@ -87,7 +87,7 @@ test("one loop runs every stage in order and tracks the four products", () => {
   const run = runHero();
   const seen = [];
   const products = new Set();
-  for (const frame of stepFrames(run, 20.5)) {
+  for (const frame of stepFrames(run, 23.5)) {
     for (const text of labels(frame)) {
       const m = text.match(/^\/\/OBJ_01 (\w+)$/);
       if (m && seen[seen.length - 1] !== m[1]) seen.push(m[1]);
@@ -102,7 +102,7 @@ test("hero-wire never draws a NaN and never jumps between frames, including at t
   const run = runHero();
   let previous = null;
   let worst = 0;
-  for (const frame of stepFrames(run, 41)) {
+  for (const frame of stepFrames(run, 47)) {
     for (const call of frame) for (const arg of call.slice(1)) if (typeof arg === "number") assert.ok(Number.isFinite(arg), call[0]);
     // segments are drawn grouped by depth, so compare the shape as a whole: its box and centroid
     const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 640);
@@ -125,7 +125,7 @@ test("hero-wire with motion off draws one still frame of the mark and never loop
 test("hero-wire uses short centred labels on a phone", () => {
   const run = runHero({ width: 390, height: 780 });
   const names = new Set();
-  for (const frame of stepFrames(run, 15)) for (const t of labels(frame)) if (/^\/\/KS_/.test(t)) names.add(t);
+  for (const frame of stepFrames(run, 18.6)) for (const t of labels(frame)) if (/^\/\/KS_/.test(t)) names.add(t);
   assert.deepEqual([...names].sort(), ["//KS_C", "//KS_K", "//KS_LINK", "//KS_UNIFY"]);
 });
 

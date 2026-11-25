@@ -18,8 +18,8 @@
   // Colours come from CSS (--color-text); everything honours the motion setting.
 
   var SEGMENTS = 320;
-  var CYCLE = 20; // seconds for one full loop
-  var STILL_AT = 9.5; // the frame shown when motion is off: the mark, held
+  var CYCLE = 23; // seconds for one full loop (the mark holds for 6 of them)
+  var STILL_AT = 11; // the frame shown when motion is off: the mark, held
   var INTRO_MS = 1400;
   var CAMERA = 3.2; // perspective distance in object radii
   var D4 = 2.8; // distance of the 4D eye (nearer = the inner cube reads smaller)
@@ -198,12 +198,12 @@
     if (c < 4.5) return { name: "TESSERACT", f: 0, m: 0, e: 0, spin: c };
     if (c < 6) return { name: "FOLD", f: ease((c - 4.5) / 1.5), m: 0, e: 0, spin: 4.5 };
     if (c < 8) return { name: "RESOLVE", f: 1, m: ease((c - 6) / 2), e: 0, spin: 4.5 };
-    if (c < 11) return { name: "KANASAKA", f: 1, m: 1, e: 0, spin: 4.5 };
-    if (c < 12.5) return { name: "SPLIT", f: 1, m: 1, e: ease((c - 11) / 1.5), spin: 4.5 };
-    if (c < 15.5) return { name: "PRODUCTS", f: 1, m: 1, e: 1, spin: 4.5 };
-    if (c < 17) return { name: "FUSE", f: 1, m: 1, e: 1 - ease((c - 15.5) / 1.5), spin: 4.5 };
-    if (c < 18.5) return { name: "REFORM", f: 1, m: 1 - ease((c - 17) / 1.5), e: 0, spin: 4.5 };
-    return { name: "UNFOLD", f: 1 - ease((c - 18.5) / 1.5), m: 0, e: 0, spin: 0 };
+    if (c < 14) return { name: "KANASAKA", f: 1, m: 1, e: 0, spin: 4.5 };
+    if (c < 15.5) return { name: "SPLIT", f: 1, m: 1, e: ease((c - 14) / 1.5), spin: 4.5 };
+    if (c < 18.5) return { name: "PRODUCTS", f: 1, m: 1, e: 1, spin: 4.5 };
+    if (c < 20) return { name: "FUSE", f: 1, m: 1, e: 1 - ease((c - 18.5) / 1.5), spin: 4.5 };
+    if (c < 21.5) return { name: "REFORM", f: 1, m: 1 - ease((c - 20) / 1.5), e: 0, spin: 4.5 };
+    return { name: "UNFOLD", f: 1 - ease((c - 21.5) / 1.5), m: 0, e: 0, spin: 0 };
   }
 
   // the number shown under the name: a real parameter of the current stage
