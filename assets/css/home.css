@@ -53,66 +53,39 @@
   line-height: 14px;
 }
 
-/* Products: endless horizontal strip -- each product name next to a
-   picture of its UI. The group is duplicated (second copy aria-hidden)
-   and the track moves by exactly one group's width, so the loop is
-   seamless. It drifts on its own; while the mouse is over it the wheel
-   drives it instead (product-showcase.js). Swap /assets/images/products/preview.webp per product
-   once real screenshots exist. */
+/* Products: two linked tiles -- an index label (//01), the name and a picture of the UI.
+   Products that are not ready are not shown as tiles; one //NEXT line names them. */
 .product-showcase {
-  max-width: none;
-  padding-left: 0;
-  padding-right: 0;
-  overflow: hidden;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
-.showcase {
-  overflow: hidden;
-  contain: layout paint;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
-}
-.showcase-track {
-  display: flex;
-  width: max-content;
-  animation: showcase-scroll 70s linear infinite;
-  /* own compositor layer: the drift runs off the main thread */
-  will-change: transform;
-}
-/* Pure-CSS behaviour (no JS / no Web Animations): pause while hovered. With
-   product-showcase.js running (.showcase--js) the script eases the animation's
-   playbackRate instead, so this rule must not also freeze it. */
-.showcase:not(.showcase--js):hover .showcase-track,
-.showcase:not(.showcase--js):focus-within .showcase-track {
-  animation-play-state: paused;
-}
-.showcase-group {
-  display: flex;
-  align-items: center;
-  gap: clamp(40px, 6vw, 96px);
-  margin: 0;
-  padding: 0 clamp(40px, 6vw, 96px) 0 0;
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 4vw, 64px);
+  margin: var(--space-8) 0 0;
+  padding: 0;
   list-style: none;
 }
-.showcase-item {
-  flex-shrink: 0;
-}
-/* Whole name + picture is the hit area. Nothing changes visually on
-   hover -- only the cursor, and only where there is a page to go to. */
 .showcase-hit {
   display: flex;
-  align-items: center;
-  gap: clamp(24px, 3vw, 48px);
+  flex-direction: column;
+  gap: var(--space-3);
   color: inherit;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
-a.showcase-hit {
-  cursor: pointer;
+.showcase-index {
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
 }
 .showcase-name {
-  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(34px, 5vw, 76px);
+  font-size: var(--text-xl);
   line-height: 1;
   letter-spacing: var(--tracking-label);
   color: var(--color-text);
@@ -121,41 +94,27 @@ a.showcase-hit {
 .showcase-media {
   position: relative;
   display: block;
-  flex-shrink: 0;
+  margin-top: var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   overflow: hidden;
 }
 .showcase-shot {
   display: block;
-  height: clamp(170px, 22vw, 340px);
-  width: auto;
+  width: 100%;
+  height: auto;
 }
-/* Dimmed with a semi-transparent gray veil and labelled. Drop the
-   .showcase-soon span from a product once it is ready to show undimmed. */
-.showcase-soon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(12, 12, 12, 0.86);
-  color: rgba(223, 229, 235, 0.92);
-  font-family: "Tektur", Inter, system-ui, sans-serif;
-  font-weight: 600;
-  font-size: clamp(16px, 2.2vw, 34px);
+.showcase-next {
+  margin: var(--space-8) 0 0;
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
   letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  text-align: center;
 }
-@keyframes showcase-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .showcase { overflow-x: auto; }
-  .showcase-track { animation: none; }
-  .showcase-group[aria-hidden="true"] { display: none; }
+@media (max-width: 799px) {
+  .showcase-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ASCII hero character tiers (hero-ascii.js emits these classes; the page CSP

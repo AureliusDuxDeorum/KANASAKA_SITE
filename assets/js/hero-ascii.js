@@ -423,13 +423,10 @@
       layoutField();
       buildLetterMask();
 
-      const hudV = document.getElementById("ha-hud-v");
+      // one quiet readout: the system tag and the real build version once hud.js has loaded it
       if (hudH) {
-        hudH.textContent = "//GRID " + cols + "x" + rows + "  //CELL " + cellW.toFixed(1) + "x" + cellH.toFixed(0) + "PX";
-      }
-      if (hudV) {
-        hudV.textContent =
-          "//MASK " + activeLogo.name + " " + activeLogo.ratio + "  //SPAN " + Math.round(logoSpan * 100) + "%  //TICK " + tickLabel + "  //FLIP HEX " + FLIP_STEP_MS + "MS";
+        const meta = window.KanasakaMeta;
+        hudH.textContent = "//KS_SYS  " + (meta && meta.version ? "V" + meta.version : "ONLINE");
       }
     }
 
@@ -585,8 +582,6 @@
 
     function setTickLabel(label) {
       tickLabel = label;
-      const hudV = document.getElementById("ha-hud-v");
-      if (hudV) hudV.textContent = hudV.textContent.replace(/TICK \S+/, "TICK " + label);
     }
 
     function overlayUp() {

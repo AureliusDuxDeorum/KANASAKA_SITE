@@ -3453,27 +3453,11 @@ body.tos-open {
 
 /* Home hero: an L-shaped corner at the top right (the hero is taller than the
    first screen, so its bottom is below the fold). */
-.hud-hero-h,
-.hud-hero-v {
+.hud-hero-h {
   position: absolute;
   z-index: 5;
-  right: clamp(20px, 4vw, 64px);
-}
-
-.hud-hero-h {
   top: 24px;
-}
-
-.hud-hero-v {
-  top: 56px;
-  right: clamp(8px, 1.4vw, 22px);
-  white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  .hud-hero-v {
-    display: block;
-  }
+  right: clamp(20px, 4vw, 64px);
 }
 
 @media (max-width: 480px) {
