@@ -22,7 +22,7 @@
   // with live values) follows the whole shape, then each of the four segments.
   // Colours come from CSS (--color-text); everything honours the motion setting.
 
-  var SEGMENTS = 768; // the words as solid beams need 528 of them; the tesseract is 32 edges x 24
+  var SEGMENTS = 768; // the words as extruded outlines need about 620 of them; the tesseract is 32 edges x 24
   var CYCLE = 23; // seconds for one full loop (the mark holds for 6 of them)
   var STILL_AT = 11; // the frame shown when motion is off: the mark, held
   var INTRO_MS = 1400;
@@ -48,7 +48,7 @@
   var SESSION_KEY = "kanasaka-session-start"; // shared with hud.js
   var EGG_KEY = "kanasaka-egg-shown";
 
-  // The letters come from the shared stroke font (wire-font.js), loaded just before this file.
+  // The letters come from the shared 3D font (wire-font.js), loaded just before this file.
   var PHRASE_WIDE = ["A NEW ERA", "OF EVOLUTION"];
   var PHRASE_NARROW = ["A NEW ERA", "OF", "EVOLUTION"];
   var TEXT_WIDTH_WIDE = 4.4; // in object radii
@@ -175,10 +175,10 @@
     return edges;
   }
 
-  // The phrase as solid 3D letters (one continuous beam per stroke, see wire-font.js), in object
-  // units, centred.
+  // The phrase as solid 3D letters (extruded glyph outlines, see wire-font.js), in object units,
+  // centred.
   function textEdges(lines, targetWidth) {
-    var block = window.KanasakaWireFont.beams(lines);
+    var block = window.KanasakaWireFont.solid(lines);
     var scale = targetWidth / block.width;
     return block.edges.map(function (e) {
       return [

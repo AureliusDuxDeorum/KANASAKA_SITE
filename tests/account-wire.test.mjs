@@ -45,6 +45,7 @@ export function runAccountWire({ width = 700, height = 800, motion = "full", id 
     addEventListener() {},
   };
   const context = vm.createContext(win);
+  vm.runInContext(read("assets/js/wire-font-outlines.js"), context);
   vm.runInContext(read("assets/js/wire-font.js"), context);
   vm.runInContext(read("assets/js/account-wire.js"), context);
   if (id !== null) win.KanasakaAccountWire.set(id);
@@ -66,54 +67,66 @@ function stepFrames(run, seconds, stepMs = 50) {
   return out;
 }
 
-test("the stroke font covers every character an account ID may contain", () => {
+function loadFont() {
   const ctx = vm.createContext({ window: {} });
+  vm.runInContext(read("assets/js/wire-font-outlines.js"), ctx);
   vm.runInContext(read("assets/js/wire-font.js"), ctx);
-  const font = ctx.window.KanasakaWireFont;
+  return { font: ctx.window.KanasakaWireFont, data: ctx.window.KanasakaWireFontData };
+}
+
+test("the font covers every character an account ID may contain", () => {
+  const { font } = loadFont();
   for (const ch of "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") assert.ok(font.glyphs[ch], "missing glyph " + ch);
   const block = font.layout(["dev_ks"]);
-  assert.ok(block.segments.length > 10);
-  assert.equal(block.width, 29, "six letters, five gaps of 1 between 4-wide glyphs");
+  assert.equal(block.items.length, 6);
   assert.equal(block.height, 6);
+  assert.ok(block.width > 20 && block.width < 40, "width " + block.width);
 });
 
-test("every stroke is a solid beam: edges reach into all three dimensions and none is degenerate", () => {
+test("letters are extruded outlines: front, back and edges between them, in all three dimensions", () => {
   const { win } = runAccountWire();
   const shape = win.KanasakaAccountWire.build("i");
-  // "I" is three strokes (two bars and a stem); each beam has 4 long edges plus end caps
-  assert.ok(shape.count >= 3 * 4 + 8, "edges: " + shape.count);
+  // "I" is a plain 4-cornered outline: 4 front + 4 back + 4 connecting edges, one per corner
+  assert.equal(shape.count, 12);
   let minZ = Infinity;
   let maxZ = -Infinity;
+  let connectors = 0;
   for (let i = 0; i < shape.count; i += 1) {
     const e = Array.from(shape.pts.slice(i * 6, i * 6 + 6));
     assert.ok(Math.hypot(e[0] - e[3], e[1] - e[4], e[2] - e[5]) > 0.1, "degenerate edge " + i);
     minZ = Math.min(minZ, e[2], e[5]);
     maxZ = Math.max(maxZ, e[2], e[5]);
+    if (Math.abs(e[0] - e[3]) < 1e-9 && Math.abs(e[1] - e[4]) < 1e-9 && e[2] !== e[5]) connectors += 1;
   }
-  assert.ok(maxZ - minZ >= 1.2, "depth of the letters: " + (maxZ - minZ));
-
-  // a stem is a box: its long edges run along y at four different (x, z) corners
-  const stem = [];
-  for (let i = 0; i < shape.count; i += 1) {
-    const e = Array.from(shape.pts.slice(i * 6, i * 6 + 6));
-    if (Math.abs(e[0] - e[3]) < 1e-9 && Math.abs(e[1] - e[4]) > 5 && Math.abs(e[2] - e[5]) < 1e-9) stem.push(e);
-  }
-  assert.equal(stem.length, 4, "the stem has four long edges");
-  assert.equal(new Set(stem.map((e) => e[0].toFixed(2) + "/" + e[2].toFixed(2))).size, 4, "at four distinct corners");
+  assert.ok(maxZ - minZ >= 1.1, "depth of the letters: " + (maxZ - minZ));
+  assert.equal(connectors, 4);
 });
 
-test("curves cost nothing extra: one continuous beam per stroke, rings only at free ends", () => {
-  const ctx = vm.createContext({ window: {} });
-  vm.runInContext(read("assets/js/wire-font.js"), ctx);
-  const edges = (text) => ctx.window.KanasakaWireFont.beams([text]).edges;
-  // "O" is one closed ring of 8 pieces: 8 x 4 long edges and no cross-section rings at all
-  assert.equal(edges("O").length, 32);
-  // "L" is two pieces with free ends: 2 x 4 long edges + 2 end rings of 4
-  assert.equal(edges("L").length, 16);
-  // "S" is 11 pieces with two free ends: 11 x 4 + 2 x 4; a bend adds nothing
-  assert.equal(edges("S").length, 52);
-  // adding a bend to a stroke adds exactly its 4 long edges
-  assert.equal(edges("C").length, 7 * 4 + 8);
+test("letters are angular: curves are cut to a few facets and every connecting edge sits at a corner", () => {
+  const { font, data } = loadFont();
+  const turn = (a, b) => {
+    const dot = a[0] * b[0] + a[1] * b[1];
+    return (Math.acos(Math.max(-1, Math.min(1, dot / (Math.hypot(...a) * Math.hypot(...b))))) * 180) / Math.PI;
+  };
+  for (const [ch, [, contours]] of Object.entries(data.glyphs)) {
+    const expected = contours.reduce((sum, [pts, marks]) => sum + 2 * (pts.length / 2) + marks.length, 0);
+    assert.equal(font.solid([ch]).edges.length, expected, ch);
+    for (const [flat, marks] of contours) {
+      const n = flat.length / 2;
+      assert.ok(n <= 20, ch + " has " + n + " vertices on a loop: curves must be cut to facets");
+      if (marks.length === 2) continue; // a smooth loop, held together by its two silhouette edges
+      for (const k of marks) {
+        const p = (i) => [flat[((i + n) % n) * 2], flat[((i + n) % n) * 2 + 1]];
+        const a = p(k - 1);
+        const b = p(k);
+        const c = p(k + 1);
+        assert.ok(turn([b[0] - a[0], b[1] - a[1]], [c[0] - b[0], c[1] - b[1]]) > 15, ch + ": a connecting edge on a straight stretch");
+      }
+    }
+  }
+  // the round letters really are polygons now
+  assert.equal(data.glyphs.O[1][0][0].length / 2, 8, "an O is an octagon");
+  assert.ok(data.glyphs.S[1][0][0].length / 2 <= 20, "an S is a few facets, not 74 points");
 });
 
 test("without an ID the void says so instead of drawing nothing", () => {

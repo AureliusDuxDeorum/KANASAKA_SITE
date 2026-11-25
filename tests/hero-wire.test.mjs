@@ -53,6 +53,7 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
     addEventListener() {},
   };
   const ctxV = vm.createContext(win);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/wire-font-outlines.js"), "utf8"), ctxV);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/wire-font.js"), "utf8"), ctxV);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/hero-wire.js"), "utf8"), ctxV);
   win.KanasakaHeroWire.init();

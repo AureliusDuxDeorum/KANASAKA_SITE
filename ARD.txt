@@ -57,11 +57,13 @@ assets/js/hud.js            Quiet console-style labels: footer line (build, them
                             within the section, theme letter (d/l/a), layout class (01 phone <768, 02 tablet
                             <1024, 03 laptop <1700, 04 desktop). The home hero adds its own
                             //KS_SYS readout (hero-wire.js). All values are live or from the build, none invented.
-assets/js/wire-font.js      Shared angular stroke font (A-Z, 0-9, _ and -) as segments on a 4 x 6 grid; used by the hero
-                            easter egg and the account ID wireframe. KanasakaWireFont.layout(lines) gives strokes/segments;
-                            beams(lines) gives solid 3D letters: one continuous mitred square beam per stroke, rings only
-                            at free ends, so curves add no connecting lines.
-assets/js/account-wire.js   Account Settings: the account ID as a solid wireframe (square beams) on a 2D canvas (letters build on,
+assets/js/wire-font.js      Shared 3D letters for the hero easter egg and the account ID wireframe: each glyph outline is
+                            extruded (front + back outline joined at every corner; smooth loops get two anchor edges).
+                            KanasakaWireFont.layout(lines) / solid(lines).
+assets/js/wire-font-outlines.js  Generated glyph outlines for A-Z, 0-9, _ - and . derived from the VALORANT font and made
+                            angular (curves cut to facets, slight forward lean) by scripts/build-wire-font.py from a TTF
+                            that is not in the repo (provenance in docs/DESIGN.md).
+assets/js/account-wire.js   Account Settings: the account ID as a solid wireframe (extruded outlines) on a 2D canvas (letters build on,
                             slow swing, tracker with //ACC_ID, LEN, RY). KanasakaAccountWire.set(id) is called by
                             auth-settings.js after the profile loads and after an ID change.
 assets/css/settings.css     Account Settings layout: void column on the left, content without cards on the right.

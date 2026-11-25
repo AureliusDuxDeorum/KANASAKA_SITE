@@ -27,12 +27,12 @@
     return lines;
   }
 
-  // The ID as solid 3D letters: wire-font.js builds every stroke as one continuous square beam
-  // (curves add no connecting lines), ordered letter by letter so the build-on reads left to right.
+  // The ID as solid 3D letters: wire-font.js extrudes each glyph outline (curves get no connecting
+  // lines), ordered letter by letter so the build-on reads left to right.
   function buildEdges(id) {
     var font = window.KanasakaWireFont;
     if (!font || !id) return { pts: new Float64Array(0), count: 0, width: 1, height: 1 };
-    var block = font.beams(chunk(id));
+    var block = font.solid(chunk(id));
     var pts = new Float64Array(block.edges.length * 6);
     block.edges.forEach(function (edge, i) {
       for (var d = 0; d < 6; d += 1) pts[i * 6 + d] = edge[d];
