@@ -32,7 +32,7 @@ Direction: **disciplined deep-tech**. Keep the angular KS logo, Tektur and the b
 
 | Template | Used for |
 |---|---|
-| Home | `index.html`: ASCII hero, statement, product strip, CTA band |
+| Home | `index.html`: wireframe hero, statement, product tiles |
 | Product | `products/ks-link/`: page header, feature list, platform spec list, alpha callout, CTA band |
 | Listing | `downloads/`: page header, data table, prose notes |
 | Prose | `legal/security/`, install notes: `.container.prose` |
@@ -87,7 +87,7 @@ The **KS_Site terminal** (`assets/js/console.js`, `assets/css/console.css`) open
 
 ### Cadence
 
-The ASCII hero is **painted on a canvas**, not as DOM: each tick computes one glyph and one style per cell into two byte arrays and redraws only the cells that changed, from a pre-rendered glyph atlas (colours and opacities are read from the `.ha-a*` / `.ha-l*` classes in `home.css`, so the theme still drives them; the atlas is rebuilt on theme change, resize and DPR change). The `<pre id="ha-field">` stays as the font/cell-size reference and as the DOM-span fallback when no 2D canvas exists. (Rebuilding ~2000 spans per tick plus layout was more than a tablet could do inside one tick, which made the cost guard below stop the field.) The ASCII hero deliberately ticks at **15 Hz** (`TICK_MS` = 66 ms, the same on every device): it rewrites the field once per tick and every moving part steps on that tick (noise drift, hex flips, scan band, tear), and the text scramble in `motion.js` shares it (`KanasakaMotion.tickMs`). It reads as a terminal clock next to the display-rate, compositor-driven UI (strip, reveals, nav, sweeps). There is no adaptive rate, only a cost guard that is deliberately hard to trip (a false alarm freezes the hero): an up-front probe (best of three renders plus layout, must fit inside one tick) catches hopeless hardware; at runtime nothing is measured for the first 4 s or while the boot overlay, terms overlay or sign-in dialog is up, a window is the median of 30 samples (time from a render to the next frame, so layout and paint count), and it takes two bad windows (median > 90 % of the tick) in a row to act. The first action drops the field once to a fixed 7.5 Hz tick; two more bad windows there stop it on its current frame, and the next time the hero returns (tab shown, scrolled back into view) it gets one more try. The HUD `//TICK` readout shows `15HZ`, `8HZ` or `STATIC`. It never wanders between rates. **Diagnostics**: open `/?hero=debug` to get a panel on the hero with the median rAF interval, render time (compute + draw), frame time (what the guard judges), grid/canvas size and DPR, plus switches for the mask on the field, header backdrop blur, CSS animations and the guard, to find what a struggling device (e.g. iPad Safari) is choking on.
+The home hero (`hero-wire.js`) is a **2D canvas** drawing a few wireframe solids that turn slowly, each with a tracking HUD (bracket box, dashed crosshair lines through its centre, a short label with live values). It runs at the display rate because it is only a few dozen lines per frame; it pauses when off screen or in a hidden tab, `Motion: Off` / OS reduce-motion draws one finished still frame, and `reduced` halves the speed. Ink is `--color-text`, so every theme works. The text scramble in `motion.js` keeps its own 15 Hz tick.
 
 ## Voice
 
@@ -95,5 +95,5 @@ Plain, specific, third person. Sentence-case headings, no hype. Claims must matc
 
 ## Flourishes policy
 
-- ASCII hero: home only. HUD footer line: every page. Vertical page code and the KANASAKA edge rail: content pages (open question: move them behind a console toggle for a calmer look).
+- Wireframe hero: home only. HUD footer line: every page. Vertical page code and the KANASAKA edge rail: content pages (open question: move them behind a console toggle for a calmer look).
 - No new decorative effects without removing one.

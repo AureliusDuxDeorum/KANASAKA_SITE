@@ -223,7 +223,7 @@
   }
 
   function mountAmbientRails() {
-    if (document.querySelector(".kanasaka-rail") || document.getElementById("hero-ascii")) {
+    if (document.querySelector(".kanasaka-rail") || document.getElementById("hero-wire")) {
       return;
     }
 
@@ -240,7 +240,7 @@
 
   function mountPageMark() {
     const main = document.querySelector("main");
-    if (!main || document.getElementById("hero-ascii") || main.querySelector(".page-mark")) {
+    if (!main || document.getElementById("hero-wire") || main.querySelector(".page-mark")) {
       return;
     }
 
@@ -312,7 +312,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=aece0f2c").then(resolve);
+      loadScript("/assets/js/motion.js?v=b1a66e6d").then(resolve);
     });
   }
 
@@ -350,19 +350,19 @@
     });
   }
 
-  function loadHeroAscii() {
+  function loadHeroWire() {
     return new Promise(function (resolve) {
-      if (!document.getElementById("hero-ascii")) {
+      if (!document.getElementById("hero-wire")) {
         resolve();
         return;
       }
 
-      if (window.KanasakaHeroAscii) {
+      if (window.KanasakaHeroWire) {
         resolve();
         return;
       }
 
-      loadScript("/assets/js/hero-ascii.js?v=a7e1644d").then(resolve);
+      loadScript("/assets/js/hero-wire.js?v=7295ba61").then(resolve);
     });
   }
 
@@ -451,9 +451,9 @@
       window.KanasakaLogoAnimation.init();
     }
 
-    await loadHeroAscii();
-    if (window.KanasakaHeroAscii) {
-      window.KanasakaHeroAscii.init();
+    await loadHeroWire();
+    if (window.KanasakaHeroWire) {
+      window.KanasakaHeroWire.init();
     }
 
     await loadTerms();

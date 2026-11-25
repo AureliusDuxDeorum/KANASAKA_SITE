@@ -123,9 +123,8 @@
   // ── decode: hex scramble that resolves into the real text ───────────────
   var GLYPHS = "0123456789ABCDEF";
   var DECODE_MS = 720;
-  // The site's text/ASCII effects step on one fixed tick (about 15 Hz); the hero
-  // field (hero-ascii.js) reads this value too. Everything else on the page is
-  // compositor-driven and runs at the display rate.
+  // The site's text effects step on one fixed tick (about 15 Hz). Everything else on
+  // the page is compositor-driven and runs at the display rate.
   var TICK_MS = 66;
 
   function decode(el, force, lockWidth) {

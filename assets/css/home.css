@@ -1,17 +1,13 @@
-/* Home hero: generative ASCII field (hero-ascii.js) replacing the flat
-   K/S wordmark. Scoped to this page only — header/nav/footer untouched. */
-.hero-ascii {
+/* Home hero: wireframe solids with a tracking HUD, painted on one canvas (hero-wire.js).
+   Scoped to this page only; header, nav and footer are untouched. */
+.hero-wire {
   position: relative;
   min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  padding: 40px clamp(20px, 4vw, 64px);
+  min-height: 100svh;
   background: var(--color-base);
   overflow: hidden;
-  font-family: ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace;
 }
-.hero-ascii * { box-sizing: border-box; }
-.hero-ascii::after {
+.hero-wire::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
@@ -20,37 +16,12 @@
   z-index: 3;
   pointer-events: none;
 }
-
-.ha-field-wrap {
+#hw-canvas {
   position: absolute;
-  inset: 40px clamp(20px, 4vw, 64px);
-  z-index: 1;
-  pointer-events: none;
-  /* transitional void at the window edges instead of anything tied to
-     the letters -- the field simply dissolves before it reaches the
-     edge of the viewport. */
-  -webkit-mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
-  mask-image: radial-gradient(ellipse 68% 65% at center, black 48%, transparent 100%);
-}
-/* the field is painted on a canvas (hero-ascii.js); the <pre> stays only as the
-   font and cell-size reference, and is the DOM fallback when no canvas exists */
-#ha-field.is-canvas {
-  position: absolute;
-  visibility: hidden;
-}
-.ha-canvas {
-  position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
-}
-#ha-field {
-  white-space: pre;
-  color: var(--color-text-muted);
-  margin: 0;
-  user-select: none;
-  font-size: 12px;
-  line-height: 14px;
 }
 
 /* Products: two linked tiles -- an index label (//01), the name and a picture of the UI.
@@ -115,76 +86,4 @@
   .showcase-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-/* ASCII hero character tiers (hero-ascii.js emits these classes; the page CSP
-   forbids inline style attributes). a = ambient field, l = logo letters. */
-.ha-a1 { opacity: 0.36; color: inherit; }
-.ha-a2 { opacity: 0.46; color: inherit; }
-.ha-a3 { opacity: 0.56; color: inherit; }
-.ha-a4 { opacity: 0.66; color: inherit; }
-.ha-a5 { opacity: 1; color: inherit; }
-.ha-l0 { opacity: 0.68; color: var(--color-text); }
-.ha-l1 { opacity: 0.72; color: var(--color-text); }
-.ha-l2 { opacity: 0.75; color: var(--color-text); }
-.ha-l3 { opacity: 0.79; color: var(--color-text); }
-.ha-l4 { opacity: 0.82; color: var(--color-text); }
-.ha-l5 { opacity: 0.86; color: var(--color-text); }
-.ha-l6 { opacity: 0.89; color: var(--color-text); }
-.ha-l7 { opacity: 0.93; color: var(--color-text); }
-.ha-l8 { opacity: 0.96; color: var(--color-text); }
-.ha-l9 { opacity: 1.00; color: var(--color-text); }
-
-/* /?hero=debug diagnostics panel (hero-ascii.js) and its switches */
-.ha-debug {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 10;
-  max-width: calc(100% - 24px);
-  padding: 10px 12px;
-  background: var(--color-base);
-  border: 1px solid var(--color-border-light);
-  color: var(--color-text);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  line-height: 1.5;
-  pointer-events: auto;
-}
-.ha-debug pre {
-  margin: 0 0 8px;
-  white-space: pre-wrap;
-}
-.ha-debug-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.ha-debug-row button {
-  padding: 8px 10px;
-  border: 1px solid var(--color-border-light);
-  background: transparent;
-  color: var(--color-text);
-  font: inherit;
-  cursor: pointer;
-}
-.ha-debug-row button[aria-pressed="false"] {
-  background: var(--color-text);
-  color: var(--color-base);
-}
-html.dbg-nomask .ha-field-wrap {
-  -webkit-mask-image: none;
-  mask-image: none;
-}
-html.dbg-noblur *,
-html.dbg-noblur *::before,
-html.dbg-noblur *::after {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-html.dbg-noanim *,
-html.dbg-noanim *::before,
-html.dbg-noanim *::after {
-  animation: none !important;
-  transition: none !important;
 }

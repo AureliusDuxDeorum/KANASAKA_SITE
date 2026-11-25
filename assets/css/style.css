@@ -3130,7 +3130,7 @@ body.tos-open {
     font-weight: 600;
     font-size: var(--rail-fs);
     line-height: 0.8;
-    color: rgba(223, 229, 235, 0.09);
+    color: rgba(223, 229, 235, 0.13);
   }
 
   .kanasaka-rail span {
@@ -3141,7 +3141,7 @@ body.tos-open {
   /* echoes: the same column repeated to the left as outlines that fade out */
   .kanasaka-rail--echo {
     color: transparent;
-    -webkit-text-stroke: 1px rgba(223, 229, 235, 0.12);
+    -webkit-text-stroke: 1.5px rgba(223, 229, 235, 0.24);
   }
 
   .kanasaka-rail--echo-1 {
@@ -3150,24 +3150,24 @@ body.tos-open {
 
   .kanasaka-rail--echo-2 {
     right: calc(var(--rail-off) + var(--rail-fs) * 1.6);
-    -webkit-text-stroke-color: rgba(223, 229, 235, 0.06);
+    -webkit-text-stroke-color: rgba(223, 229, 235, 0.15);
   }
 
   [data-theme="light"] .kanasaka-rail {
-    color: rgba(0, 0, 0, 0.07);
+    color: rgba(0, 0, 0, 0.1);
   }
 
   [data-theme="light"] .kanasaka-rail--echo {
     color: transparent;
-    -webkit-text-stroke-color: rgba(0, 0, 0, 0.1);
+    -webkit-text-stroke-color: rgba(0, 0, 0, 0.2);
   }
 
   [data-theme="light"] .kanasaka-rail--echo-2 {
-    -webkit-text-stroke-color: rgba(0, 0, 0, 0.05);
+    -webkit-text-stroke-color: rgba(0, 0, 0, 0.12);
   }
 
   [data-theme="accent"] .kanasaka-rail {
-    color: rgba(223, 229, 235, 0.06);
+    color: rgba(223, 229, 235, 0.1);
   }
 
   [data-theme="accent"] .kanasaka-rail--echo {
@@ -3402,8 +3402,8 @@ body.tos-open {
 
 /* ── HUD labels ──
    Quiet console-style readouts in the corners (assets/js/hud.js, plus the
-   hero's own in hero-ascii.js). Decorative and aria-hidden, but every value is
-   real: build version, theme hex codes, route code, grid size. Gray on purpose,
+   hero's own in hero-wire.js). Decorative and aria-hidden, but every value is
+   real: build version, theme hex codes, route code. Gray on purpose,
    never full white. */
 :root,
 [data-theme="dark"] {

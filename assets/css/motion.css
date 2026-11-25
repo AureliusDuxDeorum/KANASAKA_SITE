@@ -521,9 +521,9 @@ html:not([data-motion="full"])::view-transition-new(root) {
   animation: none;
 }
 
-/* ── Atmosphere: grid floor, scanlines, pointer light ───────────────────────
+/* ── Atmosphere: scanlines, pointer light ────────────────────────────────────
    All of it only where fx >= 1 (Dark, Light, Accent). Continuous pieces are
-   transform-only. Budget: the home page runs the ASCII hero + the grid floor;
+   transform-only. Budget: the home page runs the wireframe hero canvas;
    content pages have no continuous effect. */
 
 :root {
