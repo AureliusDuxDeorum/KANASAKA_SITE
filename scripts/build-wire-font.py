@@ -268,6 +268,39 @@ def simplify(points, corners):
     return out, marks
 
 
+# Glyphs that are drawn here instead of read from the font. Every vertex of these is a corner.
+#
+# K is the K of the KS logo (assets/logo/ks-horizontal.svg), cut away from the S along the vertical
+# line through the tip of its upper arm (x = 761.75): the stem with its foot and counter, and the two
+# parallel diagonals. Logo units are y-down, 761.85 high; they are scaled to the cap height.
+#
+# O is a plain rectangle ring: the font's O box, with a counter one stroke (128) in.
+CAP = 700
+LOGO_HEIGHT = 761.85
+LOGO_K = [
+    [(0, 0), (101.6, 0), (101.6, 514.4), (615.98, 0), (761.75, 0), (380.73, 380.7), (460.22, 460.1),
+     (761.75, 158.57), (761.75, 304.45), (533.25, 533.0), (659.85, 660.12), (761.75, 660.12),
+     (761.75, 761.85), (615.98, 761.85), (460.22, 606.05), (307.35, 761.85), (0, 761.85)],
+    [(307.35, 453.7), (387.48, 533.0), (260.35, 660.12), (101.6, 660.12)],
+]
+BEARING = 73  # the font's left side bearing, kept so the spacing matches the other letters
+STROKE = 128
+
+
+def logo_k():
+    k = CAP / LOGO_HEIGHT
+    contours = [[(BEARING + x * k, (LOGO_HEIGHT - y) * k) for x, y in loop] for loop in LOGO_K]
+    width = max(x for loop in contours for x, _ in loop)
+    return contours, round(width + BEARING)
+
+
+def rect_o():
+    left, right = 45, 768
+    outer = [(left, 0), (right, 0), (right, CAP), (left, CAP)]
+    inner = [(left + STROKE, STROKE), (right - STROKE, STROKE), (right - STROKE, CAP - STROKE), (left + STROKE, CAP - STROKE)]
+    return [outer, inner], 809
+
+
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(__doc__)
@@ -280,6 +313,13 @@ def main():
         if gid is None:
             raise SystemExit("the font has no glyph for " + repr(ch))
         contours = []
+        if ch in ("K", "O"):
+            loops, adv = logo_k() if ch == "K" else rect_o()
+            for loop in loops:
+                pts = [(x + y * SLANT, y) for x, y in loop]
+                contours.append([[round(v) for xy in pts for v in xy], list(range(len(pts)))])
+            data[ch] = [adv, contours]
+            continue
         for c in outline(gid):
             pts, corners = flatten(c)
             pts, connectors = simplify(pts, corners)

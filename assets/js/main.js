@@ -362,7 +362,7 @@
         return;
       }
 
-      loadScript("/assets/js/wire-font-outlines.js?v=6e931ecf")
+      loadScript("/assets/js/wire-font-outlines.js?v=e1daf27e")
         .then(function () {
           return loadScript("/assets/js/wire-font.js?v=e68f9123");
         })

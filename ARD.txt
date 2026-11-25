@@ -61,7 +61,8 @@ assets/js/wire-font.js      Shared 3D letters for the hero easter egg and the ac
                             extruded (front + back outline joined at every corner; smooth loops get two anchor edges).
                             KanasakaWireFont.layout(lines) / solid(lines).
 assets/js/wire-font-outlines.js  Generated glyph outlines for A-Z, 0-9, _ - and . derived from the VALORANT font and made
-                            angular (curves cut to facets, slight forward lean) by scripts/build-wire-font.py from a TTF
+                            angular (curves cut to facets, slight forward lean; O = rectangle ring, K = the KS logo K)
+                            by scripts/build-wire-font.py from a TTF
                             that is not in the repo (provenance in docs/DESIGN.md).
 assets/js/account-wire.js   Account Settings: the account ID as a solid wireframe (extruded outlines) on a 2D canvas (letters build on,
                             slow swing, tracker with //ACC_ID, LEN, RY). KanasakaAccountWire.set(id) is called by

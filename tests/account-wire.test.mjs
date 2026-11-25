@@ -124,8 +124,13 @@ test("letters are angular: curves are cut to a few facets and every connecting e
       }
     }
   }
-  // the round letters really are polygons now
-  assert.equal(data.glyphs.O[1][0][0].length / 2, 8, "an O is an octagon");
+  // the O is a rectangle ring: two 4-cornered loops with a connecting edge at every corner
+  const shape = (ch) => JSON.stringify(data.glyphs[ch][1].map(([pts, marks]) => [pts.length / 2, marks.length]));
+  assert.equal(shape("O"), "[[4,4],[4,4]]");
+  // the K is the K of the KS logo: its outline (17 corners) and the small counter by the foot (4)
+  assert.equal(shape("K"), "[[17,17],[4,4]]");
+  const kx = data.glyphs.K[1][0][0].filter((_, i) => i % 2 === 0);
+  assert.ok(Math.max(...kx) - Math.min(...kx) > 650, "the K keeps the logo's wide proportions");
   assert.ok(data.glyphs.S[1][0][0].length / 2 <= 20, "an S is a few facets, not 74 points");
 });
 
