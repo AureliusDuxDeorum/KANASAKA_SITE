@@ -3138,12 +3138,40 @@ body.tos-open {
     transform: rotate(90deg);
   }
 
+  /* echoes: the same column repeated to the left as outlines that fade out */
+  .kanasaka-rail--echo {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(223, 229, 235, 0.12);
+  }
+
+  .kanasaka-rail--echo-1 {
+    right: calc(var(--rail-off) + var(--rail-fs) * 0.8);
+  }
+
+  .kanasaka-rail--echo-2 {
+    right: calc(var(--rail-off) + var(--rail-fs) * 1.6);
+    -webkit-text-stroke-color: rgba(223, 229, 235, 0.06);
+  }
+
   [data-theme="light"] .kanasaka-rail {
     color: rgba(0, 0, 0, 0.07);
   }
 
+  [data-theme="light"] .kanasaka-rail--echo {
+    color: transparent;
+    -webkit-text-stroke-color: rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme="light"] .kanasaka-rail--echo-2 {
+    -webkit-text-stroke-color: rgba(0, 0, 0, 0.05);
+  }
+
   [data-theme="accent"] .kanasaka-rail {
     color: rgba(223, 229, 235, 0.06);
+  }
+
+  [data-theme="accent"] .kanasaka-rail--echo {
+    color: transparent;
   }
 }
 

@@ -228,7 +228,14 @@
     }
 
     document.body.classList.add("has-rail");
-    (document.querySelector("main") || document.body).appendChild(buildAmbientRail("right"));
+    const host = document.querySelector("main") || document.body;
+    host.appendChild(buildAmbientRail("right"));
+    // two outlined copies fading away from the solid column
+    [1, 2].forEach(function (n) {
+      const echo = buildAmbientRail("right");
+      echo.classList.add("kanasaka-rail--echo", "kanasaka-rail--echo-" + n);
+      host.appendChild(echo);
+    });
   }
 
   function mountPageMark() {

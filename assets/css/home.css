@@ -188,36 +188,3 @@ html.dbg-noanim *::after {
   animation: none !important;
   transition: none !important;
 }
-
-/* Closing wordmark echo: the name repeated in outline, fading away from one solid row in the
-   middle. Decorative only (aria-hidden), static, theme colour via --color-text. */
-.wordmark-echo {
-  display: flex;
-  flex-direction: column;
-  max-width: var(--container);
-  margin: var(--space-16) auto 0;
-  padding: 0 var(--gutter) var(--space-16);
-  overflow: hidden;
-  user-select: none;
-}
-.wordmark-echo-row {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(40px, 11.5vw, 168px);
-  line-height: 0.92;
-  letter-spacing: var(--tracking-wide);
-  white-space: nowrap;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--color-text);
-}
-.wordmark-echo-row:nth-child(1),
-.wordmark-echo-row:nth-child(7) { opacity: 0.08; }
-.wordmark-echo-row:nth-child(2),
-.wordmark-echo-row:nth-child(6) { opacity: 0.16; }
-.wordmark-echo-row:nth-child(3),
-.wordmark-echo-row:nth-child(5) { opacity: 0.32; }
-.wordmark-echo-row:nth-child(4) {
-  color: var(--color-text);
-  -webkit-text-stroke: 0;
-}
