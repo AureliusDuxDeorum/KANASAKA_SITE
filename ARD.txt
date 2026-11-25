@@ -88,7 +88,7 @@ assets/css/tokens.css       Design tokens (type scale, tracking, space, radius, 
                             colours). Loaded first on every page. See docs/DESIGN.md.
 assets/css/components.css   Reusable components: page header, breadcrumb, section header, feature list, spec
                             list, badge, callout, card (chamfer), data table, CTA band, prose, footer columns.
-assets/fonts/               Inter (variable, latin, SIL OFL: Inter-OFL.txt) + Tektur SemiBold.
+assets/fonts/               Chakra Petch 400/600 + Share Tech Mono 400 (latin woff2, SIL OFL: *-OFL.txt) + Tektur SemiBold.
 assets/js/motion.js         Motion gate (data-motion / data-fx on <html>), shared rAF loop, reveal choreography,
                             heading decode, nav indicator, scroll-progress element, theme-change wipe.
                             Loaded by main.js. API: window.KanasakaMotion. User setting: localStorage

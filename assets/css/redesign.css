@@ -301,7 +301,7 @@ body::before {
 }
 
 h1 {
-  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-family: var(--font-display);
 }
 
 /* ── Sections & cards ── */

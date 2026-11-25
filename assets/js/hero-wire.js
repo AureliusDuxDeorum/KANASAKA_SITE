@@ -30,7 +30,7 @@
   var D4 = 2.8; // distance of the 4D eye (nearer = the inner cube reads smaller)
   var TESS_SCALE = 0.72; // the cube is drawn smaller than the mark so the two have the same presence
   var PHONE_MAX = 700;
-  var MONO = 'ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace';
+  var MONO = '"Share Tech Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
   // assets/logo/ks-horizontal.svg: one outline and two holes, straight lines only
   var LOGO_PATH =
@@ -408,9 +408,9 @@
     // around each of the four product segments.
     function layout(t, p) {
       var compact = width < PHONE_MAX;
-      var R = Math.min(height * 0.24, width * (compact ? 0.24 : 0.3));
+      var R = Math.min(height * 0.2, width * (compact ? 0.22 : 0.3));
       var cx = width / 2;
-      var cy = height * 0.46;
+      var cy = height * 0.38; // above the hero copy
       var open = 1 - p.f;
       var a = {
         xw: p.spin * 0.3 * open,
@@ -586,7 +586,7 @@
       // labels never land on a neighbour.
       var under = width < PHONE_MAX;
       var flip = !under && r + 150 > width;
-      ctx.font = "600 11px " + MONO;
+      ctx.font = "400 12px " + MONO;
       ctx.textBaseline = "top";
       var tx;
       var ty;
@@ -627,7 +627,7 @@
         drawTracker(box, rows, multi, intro, g % 2 ? "below" : "above");
       });
 
-      ctx.font = "600 11px " + MONO;
+      ctx.font = "400 12px " + MONO;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
       ctx.globalAlpha = 0.5 * easeOut(intro);
@@ -669,6 +669,12 @@
       hud.textContent = "//KS_SYS  " + (meta && meta.version ? "V" + meta.version : "ONLINE");
     }
 
+    // the labels are drawn with the site's mono face: make sure it is loaded, then repaint
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('400 12px "Share Tech Mono"').then(function () {
+        if (!running) render(stillOr(clock));
+      }).catch(function () {});
+    }
     readInk();
     resize();
     setHud();

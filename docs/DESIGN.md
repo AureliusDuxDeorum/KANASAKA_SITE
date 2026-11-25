@@ -16,13 +16,13 @@ Direction: **disciplined deep-tech**. Keep the angular KS logo, Tektur and the b
 
 ## Foundations
 
-- **Type:** Inter (self-hosted variable, `assets/fonts/`) for everything; Tektur 600 for display headings, nav, labels and buttons; mono only for ids/versions/hashes.
+- **Type:** angular faces, all self-hosted (`assets/fonts/`, SIL OFL texts alongside): **Chakra Petch** (400 and 600, cut corners like the logo) for body and UI text; **Tektur** 600 for display headings, nav, labels and buttons; **Share Tech Mono** (400) for the HUD, `//` codes, ids, versions and hashes, so the mono looks the same on every OS instead of being whatever the visitor has installed. The tokens `--font-body`, `--font-display` and `--font-mono` carry the stacks, so a page never names a font itself; the hero and account-wire canvases read the same mono (400 only: the face has no bold). Inter (the earlier body face, round and neutral) was removed.
   Scale: `--text-2xs 11 / xs 12 / sm 14 / md 16 / lg 18 / xl 24 / 2xl 32` + `--text-display-1 / -2` (fluid). Body line-height 1.6, display 1.15.
   Uppercase text uses `--tracking-label` (0.08em) or `--tracking-wide` (0.16em); large display type uses `--tracking-display` (-0.01em).
 - **Space:** 4 px base (`--space-1` ... `--space-32`). One container (`--container`, 1280 px) with `--gutter` side padding; sections use `--section-pad`. Header, content and footer share the same left and right edges (on pages with the vertical wordmark rail all three get the same right padding).
 - **Colour:** neutral ramp per theme + status colours (`--color-ok / warn / danger`, darker in the light theme). Dark is the default; light and accent are user options built from the same variables. Body text >= 4.5:1 in every theme (checked when tokens change). The KS colour is **KS purple `#3e0958`** (`--ks-purple`): the normal themes use no colour except the Alpha tag (`.badge--alpha`, purple fill, ice-grey text); the accent theme is the dark theme with near-black neutrals and almost no purple: the Alpha tag plus a dim tint (`--color-focus`, #7d4f9f) for focus rings, selected borders and active bars, because the brand purple itself is too dark to see on near-black. Glow, wordmark, borders and text stay neutral.
 - **Shape:** `--radius` 2 px everywhere (avatars `--radius-round`). Hairline borders instead of shadows. Signature motif: the chamfered corner (`.card--chamfer`), echoing the logo; use sparingly.
-- **Motion:** `--duration-fast` 150 ms, `--duration-base` 300 ms, one easing. Ambient motion only in the home hero and the product strip.
+- **Motion:** `--duration-fast` 150 ms, `--duration-base` 300 ms, one easing. Ambient motion only in the home hero.
 
 ## Components (`components.css`)
 
@@ -32,7 +32,7 @@ Direction: **disciplined deep-tech**. Keep the angular KS logo, Tektur and the b
 
 | Template | Used for |
 |---|---|
-| Home | `index.html`: morphing wireframe hero, statement, product tiles |
+| Home | `index.html`: morphing wireframe hero with the value sentence over its lower part (eyebrow with status badge, headline, one sentence, two buttons), then two product tiles |
 | Product | `products/ks-link/`: page header, feature list, platform spec list, alpha callout, CTA band |
 | Listing | `downloads/`: page header, data table, prose notes |
 | Prose | `legal/security/`, install notes: `.container.prose` |
@@ -92,6 +92,10 @@ The home hero (`hero-wire.js`) is a **2D canvas** with one wireframe that change
 ### Account Settings
 
 `account/settings/` is the one page laid out as void: on screens from 1024 px a tall black column on the left (sticky, a hairline on its right edge) holds the title, the **account ID as a solid 3D wireframe** (`account-wire.js`: each letter is its real outline extruded, so the letters have volume and not just a front and back face) and the section list numbered like HUD labels (`//01 ... //04`); the content sits on the right with no cards, boxes or glow, separated by hairlines and large gaps. Below 1024 px the wireframe becomes a 260 px band above the list and the content follows. The layout lives in `assets/css/settings.css` (loaded after `style.css` / `redesign.css` and replacing their card styling for this page only); the ambient rail and the `//` page mark are not mounted here. The wireframe builds on letter by letter, then swings slowly under the same tracker as the home hero (bracket box, dashed crosshair lines across the void, `//ACC_ID`, `LEN`, `RY`). `auth-settings.js` hands it the ID after the profile loads and again after a change. Motion off draws one finished frame. The letters come from the shared 3D font `wire-font.js`, which the home hero's easter egg uses as well. **Solid letters:** the shapes derive from the glyph outlines of the *VALORANT* typeface (`assets/js/wire-font-outlines.js`, generated from the TTF by `scripts/build-wire-font.py`: A-Z, 0-9, `_`, `-`, `.`; only these outlines ship, not the font file) but are made KANASAKA's own: every curve is cut down to a few straight facets (Douglas-Peucker, 30 font units: an S is a zigzag), stroke ends become square and the letters lean forward by `SLANT = 0.10`. Two letters are drawn by hand in the script: **O** is a plain rectangle ring (wider than the 0) and **K** is the K of the KS logo, cut away from the S at the tip of its upper arm (stem, foot, counter and the two parallel diagonals, 45° exact). `KanasakaWireFont.solid()` then extrudes each outline: the front and back outline, joined at every corner (after faceting every facet corner is a real one); a loop with fewer than two corners gets an edge at its left and right extremes so it does not float apart (`LOOP_ANCHORS = false` turns those off). **Provenance:** the outlines come from a third-party copy of the *VALORANT* typeface (supplied as `valorant.zip`, no licence file) and are reworked into the angular, slanted face above. Swapping the font means re-running the script on another TTF; `SIMPLIFY`, `FACET_DEGREES` and `SLANT` at the top of the script set how angular and how slanted the result is.
+
+### Home copy and product tiles
+
+The first screen has to say what the product is: the hero carries the headline ("Bring your own model."), one plain sentence and the two buttons over the lower part of the canvas (the wireframe sits in the upper part, `hero-wire.js`: centre at 38 % of the hero's height). Status is stated the same way everywhere: **Beta** for KS_C and **Alpha** for KS_Link as `.badge--beta` / `.badge--alpha` (hero eyebrow, tiles, product pages, hero HUD labels); the copy never calls a beta "the latest release". The product tiles are left-aligned like everything else and show a terminal-style read-out (`.showcase-panel`, mono, `> KEY  value` rows) instead of a picture, and every line is a fact taken from that product's page; replace it with a real capture of the app once there is one (dark, in the scanline style). Products that are not ready are not tiles: one `//NEXT` line names them.
 
 ## Voice
 

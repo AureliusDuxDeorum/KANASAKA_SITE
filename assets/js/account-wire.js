@@ -10,7 +10,7 @@
   //                                       and again after the ID is changed
 
   var LINE_CHARS = 12; // longer IDs wrap onto further lines
-  var MONO = 'ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace';
+  var MONO = '"Share Tech Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace';
   var STILL_YAW = 0.5;
   var STILL_PITCH = 0.18;
 
@@ -221,7 +221,7 @@
       ctx.moveTo(mx, my - 4); ctx.lineTo(mx, my + 4);
       ctx.stroke();
 
-      ctx.font = "600 11px " + MONO;
+      ctx.font = "400 12px " + MONO;
       ctx.textBaseline = "top";
       ctx.textAlign = "left";
       rows.forEach(function (text, i) {
@@ -234,7 +234,7 @@
       ctx.clearRect(0, 0, s.width, s.height);
       ctx.strokeStyle = s.ink;
       ctx.fillStyle = s.ink;
-      ctx.font = "600 11px " + MONO;
+      ctx.font = "400 12px " + MONO;
       ctx.textBaseline = "top";
 
       if (!s.shape.count) {
@@ -283,6 +283,12 @@
     }
 
     s.set = set;
+    // the labels are drawn with the site's mono face: make sure it is loaded, then repaint
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('400 12px "Share Tech Mono"').then(function () {
+        if (!s.running) render();
+      }).catch(function () {});
+    }
     readInk();
     resize();
     set(pending);

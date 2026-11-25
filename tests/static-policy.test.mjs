@@ -190,7 +190,10 @@ test("fonts: every @font-face and preload points at a file that exists", () => {
   for (const file of html) for (const m of read(file).matchAll(/href="(\/assets\/fonts\/[^"]+)"/g)) refs.add(m[1]);
   assert.ok(refs.size >= 2);
   for (const ref of refs) assert.ok(fs.existsSync(path.join(ROOT, ref.slice(1))), ref + " is missing");
-  assert.ok(read("assets/css/style.css").includes('font-family: "Inter"'), "Inter must be loaded, not assumed installed");
+  const faces = read("assets/css/style.css");
+  for (const family of ["Chakra Petch", "Share Tech Mono", "Tektur"]) {
+    assert.ok(faces.includes('font-family: "' + family + '"'), family + " must be loaded, not assumed installed");
+  }
 });
 
 test("type scale: no new off-scale font sizes, tracking or radii", () => {

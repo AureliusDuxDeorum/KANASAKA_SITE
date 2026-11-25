@@ -5,11 +5,27 @@
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: "Chakra Petch";
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
-  src: url("/assets/fonts/Inter-Variable-latin.woff2") format("woff2");
+  src: url("/assets/fonts/ChakraPetch-Regular-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Chakra Petch";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/fonts/ChakraPetch-SemiBold-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Share Tech Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/ShareTechMono-Regular-latin.woff2") format("woff2");
 }
 
 @font-face {
@@ -89,7 +105,7 @@ body {
   margin: 0;
   background: var(--color-base);
   color: var(--color-text);
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
@@ -371,7 +387,7 @@ main {
 }
 
 .kanasaka-logo.small .logo-center span {
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: var(--tracking-label);
 }
@@ -408,7 +424,7 @@ main {
 
 .logo-letter {
   fill: currentColor;
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
   font-size: 50px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -416,7 +432,7 @@ main {
 
 .logo-tag {
   fill: var(--color-text-muted);
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: var(--tracking-wide);
@@ -647,7 +663,7 @@ h1 {
 }
 
 .platform-file {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   word-break: break-all;
 }
@@ -675,7 +691,7 @@ h1 {
 }
 
 .download-notes code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--color-text);
 }
@@ -1203,7 +1219,7 @@ h1 {
 }
 
 .auth-card h1 {
-  font-family: "Tektur", "Inter", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(28px, 5vw, 42px);
   margin: 0 0 14px;
   letter-spacing: var(--tracking-wide);
@@ -1945,7 +1961,7 @@ body.auth-modal-open > #site-footer {
 
 .settings-sidebar-head h1 {
   margin: 0 0 10px;
-  font-family: "Tektur", "Inter", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(24px, 4vw, 34px);
   letter-spacing: var(--tracking-label);
 }
@@ -2163,7 +2179,7 @@ body.auth-modal-open > #site-footer {
 
 .settings-panel h2 {
   margin: 0 0 10px;
-  font-family: "Tektur", "Inter", sans-serif;
+  font-family: var(--font-display);
   font-size: var(--text-xl);
   letter-spacing: var(--tracking-label);
 }
@@ -3126,7 +3142,7 @@ body.tos-open {
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
-    font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+    font-family: var(--font-display);
     font-weight: 600;
     font-size: var(--rail-fs);
     line-height: 0.8;
@@ -3419,7 +3435,7 @@ body.tos-open {
 }
 
 .hud {
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: var(--text-2xs);
   line-height: 1;
@@ -3523,7 +3539,7 @@ body.has-page-mark main {
   top: 14px;
   left: 18px;
   z-index: 1;
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 28px;
   line-height: 1;
@@ -3558,13 +3574,13 @@ button,
 .auth-modal-close,
 .auth-password-toggle,
 .auth-modal-chooser-remove {
-  font-family: "Tektur", Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
 }
 
 /* The catalogue rows are list items, not calls to action: keep the body font
    so names and emails stay easy to scan. */
 .user-catalogue .user-catalogue-user {
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Developer panel: System Status + Self-Test Suite. FAIL follows the red-
@@ -3587,7 +3603,7 @@ button,
 .diag-group {
   margin: 0;
   padding: 10px 14px;
-  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-wide);
@@ -3612,7 +3628,7 @@ button,
 }
 
 .diag-badge {
-  font-family: "Tektur", Inter, system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);

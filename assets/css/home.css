@@ -2,8 +2,10 @@
    Scoped to this page only; header, nav and footer are untouched. */
 .hero-wire {
   position: relative;
-  min-height: 100vh;
-  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  min-height: max(100vh, 640px);
+  min-height: max(100svh, 640px);
   background: var(--color-base);
   overflow: hidden;
 }
@@ -11,10 +13,37 @@
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 22vh;
+  height: 34vh;
   background: linear-gradient(to bottom, transparent, var(--color-base));
   z-index: 3;
   pointer-events: none;
+}
+/* the sentence that says what this is: first thing on the page, not a scroll away */
+.hero-copy {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--gutter) clamp(var(--space-8), 8vh, var(--space-24));
+}
+.hero-eyebrow {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+}
+.hero-copy .statement {
+  max-width: 16ch;
+  font-size: var(--text-display-2);
+}
+.hero-sub {
+  max-width: 54ch;
+  margin: var(--space-6) 0 0;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  line-height: 1.55;
 }
 #hw-canvas {
   position: absolute;
@@ -30,6 +59,18 @@
   max-width: var(--container);
   margin-inline: auto;
   padding-inline: var(--gutter);
+}
+.product-showcase::before,
+.product-showcase h2::after {
+  display: none;
+}
+.product-showcase h2 {
+  margin: 0;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 .showcase-grid {
   display: grid;
@@ -47,6 +88,12 @@
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
+.showcase-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
 .showcase-index {
   color: var(--color-text-subtle);
   font-family: var(--font-mono);
@@ -62,6 +109,8 @@
   color: var(--color-text);
   white-space: nowrap;
 }
+/* what the product is, as a terminal-style read-out, in place of a picture: every line is a fact
+   from the product's own page. Swap for a real capture of the app when there is one. */
 .showcase-media {
   position: relative;
   display: block;
@@ -70,10 +119,32 @@
   border-radius: var(--radius);
   overflow: hidden;
 }
-.showcase-shot {
-  display: block;
-  width: 100%;
-  height: auto;
+.showcase-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 220px;
+  padding: var(--space-8) var(--space-6);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.showcase-row {
+  display: grid;
+  grid-template-columns: minmax(7.5em, 28%) minmax(0, 1fr);
+  gap: var(--space-4);
+}
+.showcase-key {
+  color: var(--color-text-subtle);
+}
+.showcase-key::before {
+  content: "> ";
+}
+.showcase-val {
+  color: var(--color-text);
 }
 .showcase-next {
   margin: var(--space-8) 0 0;
