@@ -57,12 +57,12 @@ assets/js/hud.js            Quiet console-style labels: footer line (build, them
                             within the section, theme letter (d/l/a), layout class (01 phone <768, 02 tablet
                             <1024, 03 laptop <1700, 04 desktop). The home hero adds its own
                             //KS_SYS readout (hero-wire.js). All values are live or from the build, none invented.
-assets/js/hero-wire.js      Home hero: slowly turning wireframe solids (icosahedron, torus, cube, octahedron,
-                            tetrahedron) on one 2D canvas, hand-projected, no libraries. Tracking HUD per
-                            object: bracket box, dashed crosshair lines through its centre, a short label
-                            (id, name, V/E counts, live rotation). Pointer parallax and nearest-object
-                            highlight. Phones show three objects. Pauses off screen / hidden tab; motion
-                            off = one finished still frame, "reduced" = half speed. Ink from --color-text.
+assets/js/hero-wire.js      Home hero: one wireframe on a 2D canvas, no libraries, looping every 20 s: tesseract ->
+                            fold (4th axis collapses) -> KS mark (extruded from ks-horizontal.svg) -> four product
+                            segments (KS_C, KS_Link, KS_K, KS_Unify) -> fuse -> unfold. 320 line segments matched
+                            one to one along a continuous path; each transition interpolates endpoints. HUD: bracket
+                            box, dashed crosshair lines, label with a live stage parameter. Pointer tilt. Pauses off
+                            screen / hidden tab; motion off = one still frame of the mark; "reduced" = half speed.
 assets/js/product-showcase.js  Home product strip. The endless drift is the CSS animation showcase-scroll
                             (home.css), which runs on the compositor thread so it stays smooth while the main
                             thread is busy. The script only steers it via the Web Animations API: hover/focus

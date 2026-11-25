@@ -1,138 +1,221 @@
 (function () {
   "use strict";
 
-  // Home hero: slowly turning wireframe solids with a tracking HUD (bracket box, crosshair
-  // lines through the centre, a short label). Painted on one 2D canvas, no libraries: the
-  // geometry is a few dozen vertices, projected by hand. Colours come from CSS (--color-text),
-  // so every theme works; everything that moves honours the motion setting.
+  // Home hero: one wireframe that never stops changing form, on a 2D canvas, no libraries.
+  //
+  //   TESSERACT  a rotating 4D hypercube (a cube inside a cube, turning through the 4th axis)
+  //   FOLD       the 4th axis collapses: the inner cube merges into the outer one
+  //   RESOLVE    the cube morphs into the KANASAKA mark, extruded into a thin slab
+  //   KANASAKA   the mark holds, swinging gently
+  //   SPLIT      it breaks into four segments, one per product, each tracked by the HUD
+  //   FUSE       the segments rejoin into the mark
+  //   REFORM     the mark folds back into a cube
+  //   UNFOLD     the 4th axis opens again: back to the tesseract
+  //
+  // Every state is the same SEGMENTS line segments, matched one to one, so a transition is just
+  // an interpolation of endpoints. The HUD (bracket box, dashed crosshair lines, a short label
+  // with live values) follows the whole shape, then each of the four segments.
+  // Colours come from CSS (--color-text); everything honours the motion setting.
 
-  var PHI = (1 + Math.sqrt(5)) / 2;
-  var MONO = 'ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace';
+  var SEGMENTS = 320;
+  var CYCLE = 20; // seconds for one full loop
+  var STILL_AT = 9.5; // the frame shown when motion is off: the mark, held
   var INTRO_MS = 1400;
   var CAMERA = 3.2; // perspective distance in object radii
+  var D4 = 2.8; // distance of the 4D eye (nearer = the inner cube reads smaller)
+  var TESS_SCALE = 0.72; // the cube is drawn smaller than the mark so the two have the same presence
   var PHONE_MAX = 700;
+  var MONO = 'ui-monospace, "SF Mono", "Roboto Mono", "JetBrains Mono", Consolas, monospace';
 
-  // ── geometry: vertices and edges, each solid scaled to a radius of 1 ───────────────────
-  function edgesByLength(v) {
-    var min = Infinity;
-    var i;
-    var j;
-    function dist(a, b) {
-      var dx = a[0] - b[0];
-      var dy = a[1] - b[1];
-      var dz = a[2] - b[2];
-      return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  // assets/logo/ks-horizontal.svg: one outline and two holes, straight lines only
+  var LOGO_PATH =
+    "M0,0 L101.6,0 L101.6,514.4 L615.98,0 L761.75,0 L380.73,380.7 L460.22,460.1 L920.35,0 L1523.6,0 L1523.6,101.8 L964.6,101.8 L863.1,203.08 L863.1,334.88 L1523.6,334.88 L1523.6,606.05 L1371.35,761.85 L615.98,761.85 L460.22,606.05 L307.35,761.85 L0,761.85 Z " +
+    "M761.75,304.45 L761.75,436.43 L1421.9,436.43 L1421.9,565.2 L1326.98,660.12 L659.85,660.12 L533.25,533 Z " +
+    "M307.35,453.7 L387.48,533 L260.35,660.12 L101.6,660.12 Z";
+  var LOGO_WIDTH = 2.8; // in object radii (the cube is 2 wide)
+  var LOGO_HALF_DEPTH = 0.1;
+
+  // left to right across the mark
+  var PRODUCTS = [
+    { name: "KS_C", status: "BETA" },
+    { name: "KS_LINK", status: "ALPHA" },
+    { name: "KS_K", status: "SOON" },
+    { name: "KS_UNIFY", status: "SOON" },
+  ];
+
+  // ── geometry ────────────────────────────────────────────────────────────────────────────
+  function lengthOf(a, b) {
+    var sum = 0;
+    for (var i = 0; i < a.length; i += 1) sum += (a[i] - b[i]) * (a[i] - b[i]);
+    return Math.sqrt(sum);
+  }
+
+  // Split a list of edges [a, b] into exactly `count` straight pieces, longer edges getting more.
+  function subdivide(edges, count) {
+    var total = 0;
+    var lengths = edges.map(function (edge) {
+      var len = lengthOf(edge[0], edge[1]);
+      total += len;
+      return len;
+    });
+    var spare = count - edges.length;
+    var share = lengths.map(function (len) {
+      return total ? (spare * len) / total : 0;
+    });
+    var pieces = share.map(function (s) {
+      return 1 + Math.floor(s);
+    });
+    var left =
+      count -
+      pieces.reduce(function (a, b) {
+        return a + b;
+      }, 0);
+    share
+      .map(function (s, i) {
+        return [s - Math.floor(s), i];
+      })
+      .sort(function (a, b) {
+        return b[0] - a[0];
+      })
+      .slice(0, Math.max(0, left))
+      .forEach(function (entry) {
+        pieces[entry[1]] += 1;
+      });
+
+    var out = [];
+    edges.forEach(function (edge, i) {
+      var a = edge[0];
+      var b = edge[1];
+      for (var k = 0; k < pieces[i]; k += 1) {
+        var t0 = k / pieces[i];
+        var t1 = (k + 1) / pieces[i];
+        out.push([
+          a.map(function (v, d) {
+            return v + (b[d] - v) * t0;
+          }),
+          a.map(function (v, d) {
+            return v + (b[d] - v) * t1;
+          }),
+        ]);
+      }
+    });
+    return out;
+  }
+
+  // Ordered so that neighbouring pieces are neighbours in space: first a closed loop through
+  // all 16 corners (Gray code), then the remaining 16 edges.
+  function tesseractEdges() {
+    function corner(i) {
+      return [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1];
     }
-    for (i = 0; i < v.length; i += 1) {
-      for (j = i + 1; j < v.length; j += 1) min = Math.min(min, dist(v[i], v[j]));
+    var loop = [];
+    var used = {};
+    for (var i = 0; i < 16; i += 1) {
+      var a = i ^ (i >> 1);
+      var b = (i + 1 < 16 ? i + 1 : 0) ^ ((i + 1 < 16 ? i + 1 : 0) >> 1);
+      loop.push([corner(a), corner(b)]);
+      used[Math.min(a, b) + "-" + Math.max(a, b)] = true;
     }
-    var edges = [];
-    for (i = 0; i < v.length; i += 1) {
-      for (j = i + 1; j < v.length; j += 1) {
-        if (dist(v[i], v[j]) < min * 1.001) edges.push([i, j]);
+    var rest = [];
+    for (var x = 0; x < 16; x += 1) {
+      for (var bit = 0; bit < 4; bit += 1) {
+        var y = x ^ (1 << bit);
+        if (x < y && !used[x + "-" + y]) rest.push([corner(x), corner(y)]);
       }
     }
+    return loop.concat(rest);
+  }
+
+  function logoEdges() {
+    var loops = [];
+    LOGO_PATH.split("Z").forEach(function (part) {
+      var nums = part.match(/-?\d+(\.\d+)?/g);
+      if (!nums || nums.length < 6) return;
+      var loop = [];
+      for (var i = 0; i < nums.length; i += 2) loop.push([+nums[i], +nums[i + 1]]);
+      loops.push(loop);
+    });
+    var scale = LOGO_WIDTH / 1523.6;
+    var cx = 1523.6 / 2;
+    var cy = 761.85 / 2;
+    var edges = [];
+    loops.forEach(function (loop) {
+      var pts = loop.map(function (p) {
+        return [(p[0] - cx) * scale, (p[1] - cy) * scale];
+      });
+      [LOGO_HALF_DEPTH, -LOGO_HALF_DEPTH].forEach(function (z) {
+        pts.forEach(function (p, i) {
+          var q = pts[(i + 1) % pts.length];
+          edges.push([[p[0], p[1], z], [q[0], q[1], z]]);
+        });
+      });
+      pts.forEach(function (p) {
+        edges.push([[p[0], p[1], LOGO_HALF_DEPTH], [p[0], p[1], -LOGO_HALF_DEPTH]]);
+      });
+    });
     return edges;
   }
 
-  function solid(verts, edges) {
-    var max = 0;
-    verts.forEach(function (p) {
-      max = Math.max(max, Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]));
-    });
-    return {
-      v: verts.map(function (p) {
-        return [p[0] / max, p[1] / max, p[2] / max];
-      }),
-      e: edges || edgesByLength(verts),
-    };
-  }
-
-  function cube() {
-    var v = [];
-    [-1, 1].forEach(function (x) {
-      [-1, 1].forEach(function (y) {
-        [-1, 1].forEach(function (z) {
-          v.push([x, y, z]);
-        });
-      });
-    });
-    return solid(v);
-  }
-
-  function octahedron() {
-    return solid([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]);
-  }
-
-  function tetrahedron() {
-    return solid([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]]);
-  }
-
-  function icosahedron() {
-    var v = [];
-    [-1, 1].forEach(function (a) {
-      [-1, 1].forEach(function (b) {
-        v.push([0, a, b * PHI], [a, b * PHI, 0], [b * PHI, 0, a]);
-      });
-    });
-    return solid(v);
-  }
-
-  function torus() {
-    var major = 12;
-    var minor = 6;
-    var v = [];
-    var e = [];
-    var i;
-    var j;
-    for (i = 0; i < major; i += 1) {
-      for (j = 0; j < minor; j += 1) {
-        var u = (i / major) * Math.PI * 2;
-        var w = (j / minor) * Math.PI * 2;
-        var ring = 1 + 0.38 * Math.cos(w);
-        v.push([ring * Math.cos(u), 0.38 * Math.sin(w), ring * Math.sin(u)]);
-        e.push([i * minor + j, i * minor + ((j + 1) % minor)]);
-        e.push([i * minor + j, ((i + 1) % major) * minor + j]);
+  function buildMorph() {
+    var tess = subdivide(tesseractEdges(), SEGMENTS);
+    var logo = subdivide(logoEdges(), SEGMENTS);
+    var a4 = new Float64Array(SEGMENTS * 8);
+    var l3 = new Float64Array(SEGMENTS * 6);
+    var group = new Uint8Array(SEGMENTS);
+    for (var j = 0; j < SEGMENTS; j += 1) {
+      var t = tess[j];
+      var l = logo[j];
+      var d;
+      for (d = 0; d < 4; d += 1) {
+        a4[j * 8 + d] = t[0][d];
+        a4[j * 8 + 4 + d] = t[1][d];
       }
+      for (d = 0; d < 3; d += 1) {
+        l3[j * 6 + d] = l[0][d];
+        l3[j * 6 + 3 + d] = l[1][d];
+      }
+      // which of the four product segments this piece of the mark belongs to (by its x)
+      var mx = (l[0][0] + l[1][0]) / 2;
+      group[j] = Math.max(0, Math.min(3, Math.floor((mx / LOGO_WIDTH + 0.5) * 4)));
     }
-    return solid(v, e);
+    return { a4: a4, l3: l3, group: group };
   }
 
-  // x, y: position (-1..1 of the half width / height), size: radius as a fraction of the
-  // smaller side, z: depth for parallax (0 near .. 1 far), spin: radians per second.
-  // phone: a different x / y / size on narrow screens; a solid without it is left out there.
-  var SPECS = [
-    { id: "01", name: "ICOSA", make: icosahedron, x: 0, y: -0.04, size: 0.28, z: 0, spin: [0.16, 0.27, 0.04], phone: { x: 0, y: -0.06, size: 0.4 } },
-    { id: "02", name: "TORUS", make: torus, x: -0.64, y: 0.3, size: 0.14, z: 0.45, spin: [0.3, 0.12, 0.18], phone: { x: -0.55, y: 0.66, size: 0.13 } },
-    { id: "03", name: "CUBE", make: cube, x: 0.66, y: -0.38, size: 0.105, z: 0.8, spin: [0.34, 0.21, 0.1], phone: { x: 0.6, y: -0.74, size: 0.1 } },
-    { id: "04", name: "OCTA", make: octahedron, x: 0.56, y: 0.4, size: 0.085, z: 0.6, spin: [0.22, 0.4, 0.06], wide: true },
-    { id: "05", name: "TETRA", make: tetrahedron, x: -0.58, y: -0.4, size: 0.075, z: 0.9, spin: [0.28, 0.18, 0.24], wide: true },
-  ];
-
-  function rotate(p, ax, ay, az) {
-    var x = p[0];
-    var y = p[1];
-    var z = p[2];
-    var c = Math.cos(ax);
-    var s = Math.sin(ax);
-    var t = y * c - z * s;
-    z = y * s + z * c;
-    y = t;
-    c = Math.cos(ay);
-    s = Math.sin(ay);
-    t = x * c + z * s;
-    z = -x * s + z * c;
-    x = t;
-    c = Math.cos(az);
-    s = Math.sin(az);
-    t = x * c - y * s;
-    y = x * s + y * c;
-    x = t;
-    return [x, y, z];
+  // ── timeline ────────────────────────────────────────────────────────────────────────────
+  function ease(t) {
+    t = Math.min(1, Math.max(0, t));
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
   function easeOut(t) {
     return 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+  }
+
+  // f: 4th axis collapsed (0 open .. 1 flat), m: cube -> mark (0 .. 1), e: segments apart (0 .. 1),
+  // spin: how far the 4D turn has run (it unwinds while folding and restarts from 0 on unfold,
+  // so the loop closes without a jump).
+  function phaseAt(c) {
+    if (c < 4.5) return { name: "TESSERACT", f: 0, m: 0, e: 0, spin: c };
+    if (c < 6) return { name: "FOLD", f: ease((c - 4.5) / 1.5), m: 0, e: 0, spin: 4.5 };
+    if (c < 8) return { name: "RESOLVE", f: 1, m: ease((c - 6) / 2), e: 0, spin: 4.5 };
+    if (c < 11) return { name: "KANASAKA", f: 1, m: 1, e: 0, spin: 4.5 };
+    if (c < 12.5) return { name: "SPLIT", f: 1, m: 1, e: ease((c - 11) / 1.5), spin: 4.5 };
+    if (c < 15.5) return { name: "PRODUCTS", f: 1, m: 1, e: 1, spin: 4.5 };
+    if (c < 17) return { name: "FUSE", f: 1, m: 1, e: 1 - ease((c - 15.5) / 1.5), spin: 4.5 };
+    if (c < 18.5) return { name: "REFORM", f: 1, m: 1 - ease((c - 17) / 1.5), e: 0, spin: 4.5 };
+    return { name: "UNFOLD", f: 1 - ease((c - 18.5) / 1.5), m: 0, e: 0, spin: 0 };
+  }
+
+  // the number shown under the name: a real parameter of the current stage
+  function readout(p, state) {
+    var deg = function (rad) {
+      return ((((rad * 180) / Math.PI) % 360) + 360) % 360;
+    };
+    if (p.name === "TESSERACT") return "XW " + deg(state.wAngle).toFixed(1).padStart(5, "0");
+    if (p.name === "FOLD" || p.name === "UNFOLD") return "W " + (1 - p.f).toFixed(2);
+    if (p.name === "RESOLVE" || p.name === "REFORM") return "M " + p.m.toFixed(2);
+    if (p.name === "SPLIT" || p.name === "FUSE" || p.name === "PRODUCTS") return "E " + p.e.toFixed(2);
+    return "RY " + deg(state.yaw).toFixed(1).padStart(5, "0");
   }
 
   function init() {
@@ -144,17 +227,21 @@
     if (!ctx) return;
 
     var root = document.documentElement;
+    var morph = buildMorph();
+    var pts = new Float64Array(SEGMENTS * 6); // screen x, y and depth for both ends
+    var depthOf = new Float64Array(SEGMENTS);
     var dpr = 1;
     var width = 0;
     var height = 0;
     var ink = "#dfe5eb";
-    var objects = [];
     var pointer = null;
+    var tiltX = 0;
+    var tiltY = 0;
     var running = false;
     var rafId = 0;
     var tabVisible = !document.hidden;
     var onScreen = true;
-    var elapsed = 0; // wall time since the page showed the hero: drives the lock-on intro
+    var elapsed = 0; // wall time since the hero showed: drives the lock-on intro
     var clock = 0; // motion time: runs slower under "reduced"
     var last = 0;
     var motionOff = reducedMotion();
@@ -173,24 +260,8 @@
       if (value) ink = value;
     }
 
-    function build() {
-      var compact = width < PHONE_MAX;
-      objects = SPECS.filter(function (spec) {
-        return !compact || spec.phone;
-      }).map(function (spec, index) {
-        var shape = spec.make();
-        return {
-          spec: spec,
-          v: shape.v,
-          e: shape.e,
-          seed: index * 1.7,
-          pts: new Array(shape.v.length),
-          cx: 0,
-          cy: 0,
-          box: null,
-          ry: 0,
-        };
-      });
+    function stillOr(t) {
+      return motionOff ? STILL_AT : t;
     }
 
     function resize() {
@@ -201,181 +272,231 @@
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      build();
-      if (!running) render(clock);
-    }
-
-    function place(obj, t, intro) {
-      var compact = width < PHONE_MAX;
-      var spec = compact ? Object.assign({}, obj.spec, obj.spec.phone) : obj.spec;
-      var base = Math.min(width, height);
-      var radius = spec.size * base;
-      var drift = speed() ? Math.sin(t * 0.35 + obj.seed) * 0.012 : 0;
-      var px = pointer ? (pointer.x / width - 0.5) * (1 - spec.z) * -18 : 0;
-      var py = pointer ? (pointer.y / height - 0.5) * (1 - spec.z) * -18 : 0;
-      var cx = width / 2 + spec.x * (width / 2) + px;
-      var cy = height * 0.47 + (spec.y + drift) * height * 0.5 + py;
-      var ax = obj.seed + t * spec.spin[0];
-      var ay = obj.seed * 0.6 + t * spec.spin[1];
-      var az = t * spec.spin[2];
-      var minX = Infinity;
-      var maxX = -Infinity;
-      var minY = Infinity;
-      var maxY = -Infinity;
-      var grow = 0.55 + 0.45 * easeOut(intro);
-
-      obj.v.forEach(function (point, i) {
-        var r = rotate(point, ax, ay, az);
-        var k = CAMERA / (CAMERA - r[2] * 0.6);
-        var x = cx + r[0] * radius * k * grow;
-        var y = cy + r[1] * radius * k * grow;
-        obj.pts[i] = [x, y, r[2]];
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
-      });
-
-      obj.cx = cx;
-      obj.cy = cy;
-      obj.box = { l: minX, r: maxX, t: minY, b: maxY };
-      obj.ry = ((ay * 180) / Math.PI) % 360;
-      obj.radius = radius;
-    }
-
-    function drawEdges(obj, alpha) {
-      // three depth buckets keep it to three strokes per solid
-      var buckets = [[], [], []];
-      obj.e.forEach(function (edge) {
-        var a = obj.pts[edge[0]];
-        var b = obj.pts[edge[1]];
-        var depth = (a[2] + b[2]) / 2;
-        buckets[depth < -0.35 ? 0 : depth < 0.3 ? 1 : 2].push(a, b);
-      });
-      var levels = [0.22, 0.5, 0.9];
-      ctx.lineWidth = 1;
-      buckets.forEach(function (list, index) {
-        if (!list.length) return;
-        ctx.globalAlpha = levels[index] * alpha;
-        ctx.beginPath();
-        for (var i = 0; i < list.length; i += 2) {
-          ctx.moveTo(list[i][0], list[i][1]);
-          ctx.lineTo(list[i + 1][0], list[i + 1][1]);
-        }
-        ctx.stroke();
-      });
-    }
-
-    function drawNodes(obj, alpha) {
-      if (obj.radius < 36 || obj.v.length > 20) return;
-      obj.pts.forEach(function (p) {
-        ctx.globalAlpha = (0.25 + 0.6 * ((p[2] + 1) / 2)) * alpha;
-        ctx.fillRect(p[0] - 1.5, p[1] - 1.5, 3, 3);
-      });
-    }
-
-    function drawTracking(obj, hot, intro) {
-      var box = obj.box;
-      var pad = 12 + (1 - easeOut(intro)) * 70;
-      var l = box.l - pad;
-      var r = box.r + pad;
-      var t = box.t - pad;
-      var b = box.b + pad;
-      var arm = Math.max(8, Math.min(20, (r - l) * 0.22));
-      var strong = hot ? 1 : 0.55;
-
-      // crosshair lines through the centre, broken around the bracket
-      ctx.save();
-      ctx.setLineDash([2, 5]);
-      ctx.globalAlpha = (hot ? 0.34 : 0.13) * easeOut(intro);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, obj.cy);
-      ctx.lineTo(l - 8, obj.cy);
-      ctx.moveTo(r + 8, obj.cy);
-      ctx.lineTo(width, obj.cy);
-      ctx.moveTo(obj.cx, 0);
-      ctx.lineTo(obj.cx, t - 8);
-      ctx.moveTo(obj.cx, b + 8);
-      ctx.lineTo(obj.cx, height);
-      ctx.stroke();
-      ctx.restore();
-
-      // corner brackets
-      ctx.globalAlpha = strong * easeOut(intro);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(l, t + arm); ctx.lineTo(l, t); ctx.lineTo(l + arm, t);
-      ctx.moveTo(r - arm, t); ctx.lineTo(r, t); ctx.lineTo(r, t + arm);
-      ctx.moveTo(l, b - arm); ctx.lineTo(l, b); ctx.lineTo(l + arm, b);
-      ctx.moveTo(r - arm, b); ctx.lineTo(r, b); ctx.lineTo(r, b - arm);
-      // centre mark
-      ctx.moveTo(obj.cx - 4, obj.cy); ctx.lineTo(obj.cx + 4, obj.cy);
-      ctx.moveTo(obj.cx, obj.cy - 4); ctx.lineTo(obj.cx, obj.cy + 4);
-      ctx.stroke();
-
-      // label, beside the bracket (on the left when there is no room on the right)
-      var small = obj.radius < 40;
-      var rows = ["//OBJ_" + obj.spec.id + " " + obj.spec.name];
-      if (!small) {
-        rows.push("V" + obj.v.length + " E" + obj.e.length);
-        rows.push("RY " + (obj.ry < 0 ? obj.ry + 360 : obj.ry).toFixed(1).padStart(5, "0"));
-      }
-      if (hot && !small) {
-        rows.push("X " + ((obj.cx / width) * 2 - 1).toFixed(2) + " Y " + ((obj.cy / height) * 2 - 1).toFixed(2));
-      }
-      // beside the bracket on wide screens (outward from the middle); centred under it on phones
-      var under = width < PHONE_MAX;
-      var flip = obj.cx < width * 0.42 || r + 150 > width;
-      ctx.font = "600 11px " + MONO;
-      ctx.textBaseline = "top";
-      ctx.textAlign = under ? "center" : flip ? "right" : "left";
-      var tx = under ? obj.cx : flip ? l - 10 : r + 10;
-      var ty = under ? b + 8 : t;
-      rows.forEach(function (text, i) {
-        ctx.globalAlpha = (i === 0 ? 0.92 : 0.55) * strong * easeOut(intro) * (hot || i === 0 ? 1 : 0.8);
-        ctx.fillText(text, tx, ty + i * 14);
-      });
+      if (!running) render(stillOr(clock));
     }
 
     function introNow() {
       return motionOff ? 1 : Math.min(1, elapsed / (INTRO_MS / 1000));
     }
 
+    var out2 = [0, 0];
+    function rot(x, y, ang) {
+      var c = Math.cos(ang);
+      var s = Math.sin(ang);
+      out2[0] = x * c - y * s;
+      out2[1] = x * s + y * c;
+    }
+
+    var OFF_X = [-0.5, -0.17, 0.17, 0.5];
+    var OFF_Y = [-0.3, 0.3, -0.3, 0.3];
+    var OFF_Z = [0.14, -0.1, 0.1, -0.14];
+
+    // Every segment's screen position for time t. Returns the box around the whole shape and
+    // around each of the four product segments.
+    function layout(t, p) {
+      var compact = width < PHONE_MAX;
+      var R = Math.min(height * 0.24, width * (compact ? 0.24 : 0.3));
+      var cx = width / 2;
+      var cy = height * 0.46;
+      var open = 1 - p.f;
+      var a = {
+        xw: p.spin * 0.3 * open,
+        yw: p.spin * 0.2 * open + 0.6 * open,
+        zw: -p.spin * 0.12 * open,
+        xy: t * 0.16,
+        yz: t * 0.22 + 0.5,
+        xz: t * 0.17,
+      };
+      var norm = D4 / (D4 - open);
+      var yaw = Math.sin(t * 0.5) * 0.5;
+      var pitch = 0.08;
+      var spread = compact ? 0.6 : 1;
+
+      var box = { l: Infinity, r: -Infinity, t: Infinity, b: -Infinity };
+      var groups = [0, 1, 2, 3].map(function () {
+        return { l: Infinity, r: -Infinity, t: Infinity, b: -Infinity };
+      });
+      var P = [0, 0, 0];
+      var Q = [0, 0, 0];
+
+      function tesseractPoint(o, base) {
+        var x = morph.a4[base];
+        var y = morph.a4[base + 1];
+        var z = morph.a4[base + 2];
+        var w = morph.a4[base + 3];
+        rot(x, w, a.xw); x = out2[0]; w = out2[1];
+        rot(y, w, a.yw); y = out2[0]; w = out2[1];
+        rot(z, w, a.zw); z = out2[0]; w = out2[1];
+        rot(x, y, a.xy); x = out2[0]; y = out2[1];
+        rot(y, z, a.yz); y = out2[0]; z = out2[1];
+        rot(x, z, a.xz); x = out2[0]; z = out2[1];
+        var k = (D4 / (D4 - w * open) / norm) * TESS_SCALE;
+        o[0] = x * k;
+        o[1] = y * k;
+        o[2] = z * k;
+      }
+
+      function logoPoint(o, base, g) {
+        var x = morph.l3[base];
+        var y = morph.l3[base + 1];
+        var z = morph.l3[base + 2];
+        var drift = Math.sin(t * 0.6 + g * 1.7) * 0.025 * p.e;
+        x += OFF_X[g] * p.e * spread;
+        y += (OFF_Y[g] * p.e + drift) * (compact ? 1.3 : 1);
+        z += OFF_Z[g] * p.e;
+        rot(x, z, yaw); x = out2[0]; z = out2[1];
+        rot(y, z, pitch); y = out2[0]; z = out2[1];
+        o[0] = x;
+        o[1] = y;
+        o[2] = z;
+      }
+
+      function grow(b, x, y) {
+        b.l = Math.min(b.l, x);
+        b.r = Math.max(b.r, x);
+        b.t = Math.min(b.t, y);
+        b.b = Math.max(b.b, y);
+      }
+
+      for (var i = 0; i < SEGMENTS; i += 1) {
+        var g = morph.group[i];
+        for (var end = 0; end < 2; end += 1) {
+          tesseractPoint(P, i * 8 + end * 4);
+          if (p.m > 0) {
+            logoPoint(Q, i * 6 + end * 3, g);
+            P[0] += (Q[0] - P[0]) * p.m;
+            P[1] += (Q[1] - P[1]) * p.m;
+            P[2] += (Q[2] - P[2]) * p.m;
+          }
+          // pointer tilt, then perspective
+          rot(P[0], P[2], tiltY);
+          var px = out2[0];
+          var pz = out2[1];
+          rot(P[1], pz, tiltX);
+          var py = out2[0];
+          pz = out2[1];
+          var k = CAMERA / (CAMERA - pz * 0.6);
+          var sx = cx + px * R * k;
+          var sy = cy + py * R * k;
+          pts[i * 6 + end * 3] = sx;
+          pts[i * 6 + end * 3 + 1] = sy;
+          pts[i * 6 + end * 3 + 2] = pz;
+          grow(box, sx, sy);
+          grow(groups[g], sx, sy);
+        }
+        depthOf[i] = (pts[i * 6 + 2] + pts[i * 6 + 5]) / 2;
+      }
+      return { box: box, groups: groups, yaw: yaw, wAngle: a.xw };
+    }
+
+    function drawEdges() {
+      var levels = [0.2, 0.4, 0.68, 0.95];
+      var buckets = [[], [], [], []];
+      for (var i = 0; i < SEGMENTS; i += 1) {
+        var d = depthOf[i];
+        buckets[d < -0.45 ? 0 : d < -0.05 ? 1 : d < 0.4 ? 2 : 3].push(i);
+      }
+      ctx.lineWidth = 1;
+      ctx.lineCap = "round";
+      buckets.forEach(function (list, index) {
+        if (!list.length) return;
+        ctx.globalAlpha = levels[index];
+        ctx.beginPath();
+        list.forEach(function (i) {
+          ctx.moveTo(pts[i * 6], pts[i * 6 + 1]);
+          ctx.lineTo(pts[i * 6 + 3], pts[i * 6 + 4]);
+        });
+        ctx.stroke();
+      });
+    }
+
+    // bracket box, dashed crosshair lines through its centre, and a short label
+    function drawTracker(box, rows, alpha, intro, labelSide) {
+      if (alpha <= 0.01 || !isFinite(box.l)) return;
+      var pad = 14 + (1 - easeOut(intro)) * 70;
+      var l = box.l - pad;
+      var r = box.r + pad;
+      var t = box.t - pad;
+      var b = box.b + pad;
+      var mx = (box.l + box.r) / 2;
+      var my = (box.t + box.b) / 2;
+      var arm = Math.max(8, Math.min(20, (r - l) * 0.2));
+      var fade = alpha * easeOut(intro);
+
+      ctx.save();
+      ctx.setLineDash([2, 5]);
+      ctx.globalAlpha = 0.16 * fade;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, my); ctx.lineTo(l - 8, my);
+      ctx.moveTo(r + 8, my); ctx.lineTo(width, my);
+      ctx.moveTo(mx, 0); ctx.lineTo(mx, t - 8);
+      ctx.moveTo(mx, b + 8); ctx.lineTo(mx, height);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.globalAlpha = 0.7 * fade;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(l, t + arm); ctx.lineTo(l, t); ctx.lineTo(l + arm, t);
+      ctx.moveTo(r - arm, t); ctx.lineTo(r, t); ctx.lineTo(r, t + arm);
+      ctx.moveTo(l, b - arm); ctx.lineTo(l, b); ctx.lineTo(l + arm, b);
+      ctx.moveTo(r - arm, b); ctx.lineTo(r, b); ctx.lineTo(r, b - arm);
+      ctx.moveTo(mx - 4, my); ctx.lineTo(mx + 4, my);
+      ctx.moveTo(mx, my - 4); ctx.lineTo(mx, my + 4);
+      ctx.stroke();
+
+      // The whole shape: beside its bracket (centred under it on phones). A product segment:
+      // above its bracket when it sits in the upper row, below it in the lower row, so the
+      // labels never land on a neighbour.
+      var under = width < PHONE_MAX;
+      var flip = !under && r + 150 > width;
+      ctx.font = "600 11px " + MONO;
+      ctx.textBaseline = "top";
+      var tx;
+      var ty;
+      if (labelSide === "above" || labelSide === "below") {
+        ctx.textAlign = under ? "center" : "left";
+        tx = under ? mx : l;
+        ty = labelSide === "above" ? t - 8 - rows.length * 14 : b + 8;
+      } else {
+        ctx.textAlign = under ? "center" : flip ? "right" : "left";
+        tx = under ? mx : flip ? l - 10 : r + 10;
+        ty = under ? b + 8 : t;
+      }
+      rows.forEach(function (text, i) {
+        ctx.globalAlpha = (i === 0 ? 0.92 : 0.55) * fade;
+        ctx.fillText(text, tx, ty + i * 14);
+      });
+    }
+
     function render(t) {
       var intro = introNow();
+      var p = phaseAt(t % CYCLE);
+      var state = layout(t, p);
       ctx.clearRect(0, 0, width, height);
       ctx.strokeStyle = ink;
       ctx.fillStyle = ink;
 
-      var hotIndex = -1;
-      if (pointer) {
-        var best = Math.min(width, height) * 0.24;
-        objects.forEach(function (obj, i) {
-          var d = Math.hypot(pointer.x - obj.cx, pointer.y - obj.cy);
-          if (d < best + obj.radius * 0.4) {
-            best = d;
-            hotIndex = i;
-          }
-        });
-      }
+      drawEdges();
 
-      objects.forEach(function (obj) {
-        place(obj, t, intro);
-      });
-      objects.forEach(function (obj, i) {
-        var hot = i === hotIndex;
-        drawEdges(obj, hot ? 1 : 0.85);
-        drawNodes(obj, hot ? 1 : 0.8);
-        drawTracking(obj, hot, intro);
+      var compact = width < PHONE_MAX;
+      var single = 1 - Math.min(1, p.e * 1.6);
+      var multi = Math.min(1, Math.max(0, (p.e - 0.35) / 0.65));
+      drawTracker(state.box, ["//OBJ_01 " + p.name, "SEG " + SEGMENTS, readout(p, state)], single, intro, null);
+      state.groups.forEach(function (box, g) {
+        var product = PRODUCTS[g];
+        var rows = compact
+          ? ["//" + product.name]
+          : ["//OBJ_0" + (g + 2) + " " + product.name, product.status, "SEG " + SEGMENTS / 4];
+        drawTracker(box, rows, multi, intro, g % 2 ? "below" : "above");
       });
 
-      // top-left: how many objects are tracked
       ctx.font = "600 11px " + MONO;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
       ctx.globalAlpha = 0.5 * easeOut(intro);
-      ctx.fillText("//TRACK " + String(objects.length).padStart(2, "0") + " OBJ", Math.max(20, width * 0.04), 24);
+      ctx.fillText("//TRACK " + (multi > 0.5 ? "04" : "01") + " OBJ", Math.max(20, width * 0.04), 24);
       ctx.globalAlpha = 1;
     }
 
@@ -385,6 +506,12 @@
       last = now;
       elapsed += dt;
       clock += dt * speed();
+      // the tilt follows the pointer with a little lag
+      var follow = Math.min(1, dt * 4);
+      var wantY = pointer ? (pointer.x / width - 0.5) * 0.5 : 0;
+      var wantX = pointer ? (pointer.y / height - 0.5) * -0.3 : 0;
+      tiltY += (wantY - tiltY) * follow;
+      tiltX += (wantX - tiltX) * follow;
       render(clock);
       rafId = window.requestAnimationFrame(frame);
     }
@@ -410,8 +537,6 @@
     readInk();
     resize();
     setHud();
-    // with motion off the single frame is already complete (introNow() is 1)
-    if (motionOff) render(clock);
     sync();
     window.setTimeout(setHud, 800);
 
@@ -442,18 +567,16 @@
         if (event.pointerType === "touch") return;
         var rect = hero.getBoundingClientRect();
         pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-        if (!running) render(clock);
       },
       { passive: true }
     );
     hero.addEventListener("pointerleave", function () {
       pointer = null;
-      if (!running) render(clock);
     });
 
     new MutationObserver(function () {
       readInk();
-      if (!running) render(clock);
+      if (!running) render(stillOr(clock));
     }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
 
     if (window.KanasakaMotion) {
@@ -464,7 +587,7 @@
         if (motionOff) {
           if (rafId) window.cancelAnimationFrame(rafId);
           running = false;
-          render(clock);
+          render(STILL_AT);
         } else {
           sync();
         }

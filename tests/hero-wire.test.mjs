@@ -56,45 +56,83 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
 
 const count = (calls, name) => calls.filter((c) => c[0] === name).length;
 
-test("hero-wire draws every solid with edges, brackets and labels", () => {
-  const { calls, hudEl } = runHero();
-  assert.ok(count(calls, "stroke") >= 5, "edges and tracking strokes");
-  assert.ok(count(calls, "fillText") >= 10, "labels");
-  const text = calls.filter((c) => c[0] === "fillText").map((c) => c[1]);
-  assert.ok(text.includes("//OBJ_01 ICOSA"));
-  assert.ok(text.some((t) => /^V12 E30$/.test(t)), "icosahedron has 12 vertices and 30 edges");
-  assert.ok(text.some((t) => /^V8 E12$/.test(t)), "cube has 8 vertices and 12 edges");
-  assert.ok(text.some((t) => /^V6 E12$/.test(t)), "octahedron has 6 vertices and 12 edges");
-  assert.ok(text.some((t) => /^V4 E6$/.test(t)), "tetrahedron has 4 vertices and 6 edges");
-  assert.equal(hudEl.textContent, "//KS_SYS  V9.9.9");
+// Steps the animation loop by `ms` and returns one array per frame holding that frame's draw calls.
+function stepFrames(run, seconds, stepMs = 50) {
+  const frames = [];
+  let start = run.calls.length;
+  let now = 0;
+  for (let t = 0; t < seconds * 1000; t += stepMs) {
+    now += stepMs;
+    run.frames.shift()(now);
+    frames.push(run.calls.slice(start));
+    start = run.calls.length;
+  }
+  return frames;
+}
+
+const labels = (calls) => calls.filter((c) => c[0] === "fillText").map((c) => c[1]);
+
+test("hero-wire starts as the tesseract with a tracker and readout", () => {
+  const run = runHero();
+  const text = labels(run.calls);
+  assert.ok(text.includes("//OBJ_01 TESSERACT"));
+  assert.ok(text.includes("SEG 320"));
+  assert.ok(text.some((t) => /^XW \d/.test(t)));
+  assert.ok(text.includes("//TRACK 01 OBJ"));
+  assert.equal(run.hudEl.textContent, "//KS_SYS  V9.9.9");
+  assert.ok(count(run.calls, "stroke") >= 4);
 });
 
-test("hero-wire animates: frames keep being scheduled and drawn", () => {
-  const { frames, calls } = runHero();
-  assert.equal(frames.length, 1);
-  const before = count(calls, "clearRect");
-  frames.shift()(16);
-  frames.shift()(32);
-  assert.ok(count(calls, "clearRect") > before);
-  assert.equal(frames.length, 1, "the loop reschedules itself");
+test("one loop runs every stage in order and tracks the four products", () => {
+  const run = runHero();
+  const seen = [];
+  const products = new Set();
+  for (const frame of stepFrames(run, 20.5)) {
+    for (const text of labels(frame)) {
+      const m = text.match(/^\/\/OBJ_01 (\w+)$/);
+      if (m && seen[seen.length - 1] !== m[1]) seen.push(m[1]);
+      if (/^\/\/OBJ_0[2-5] KS_/.test(text)) products.add(text.slice(9));
+    }
+  }
+  assert.deepEqual(seen.slice(0, 9), ["TESSERACT", "FOLD", "RESOLVE", "KANASAKA", "SPLIT", "FUSE", "REFORM", "UNFOLD", "TESSERACT"]);
+  assert.deepEqual([...products].sort(), ["KS_C", "KS_K", "KS_LINK", "KS_UNIFY"]);
 });
 
-test("hero-wire with motion off draws one still frame and never schedules a loop", () => {
+test("hero-wire never draws a NaN and never jumps between frames, including at the loop point", () => {
+  const run = runHero();
+  let previous = null;
+  let worst = 0;
+  for (const frame of stepFrames(run, 41)) {
+    for (const call of frame) for (const arg of call.slice(1)) if (typeof arg === "number") assert.ok(Number.isFinite(arg), call[0]);
+    // segments are drawn grouped by depth, so compare the shape as a whole: its box and centroid
+    const pts = frame.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").slice(0, 640);
+    const xs = pts.map((c) => c[1]);
+    const ys = pts.map((c) => c[2]);
+    const now = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys), xs.reduce((a, b) => a + b) / xs.length, ys.reduce((a, b) => a + b) / ys.length];
+    if (previous) now.forEach((v, i) => (worst = Math.max(worst, Math.abs(v - previous[i]))));
+    previous = now;
+  }
+  assert.ok(worst < 80, "largest jump of the shape between two frames: " + worst.toFixed(0) + "px");
+});
+
+test("hero-wire with motion off draws one still frame of the mark and never loops", () => {
   const { frames, calls } = runHero({ motion: "off" });
   assert.equal(frames.length, 0);
-  assert.equal(count(calls, "clearRect"), 2, "resize + the still render");
-  assert.ok(count(calls, "stroke") >= 5);
+  assert.ok(labels(calls).includes("//OBJ_01 KANASAKA"));
+  assert.equal(count(calls, "clearRect"), 1, "one render, at the first measure");
 });
 
-test("hero-wire shows three objects on a phone", () => {
-  const { calls } = runHero({ width: 390, height: 780 });
-  const names = calls.filter((c) => c[0] === "fillText" && /^\/\/OBJ_/.test(c[1])).map((c) => c[1]);
-  assert.equal(new Set(names).size, 3, "icosa, torus and cube on a phone");
+test("hero-wire uses short centred labels on a phone", () => {
+  const run = runHero({ width: 390, height: 780 });
+  const names = new Set();
+  for (const frame of stepFrames(run, 15)) for (const t of labels(frame)) if (/^\/\/KS_/.test(t)) names.add(t);
+  assert.deepEqual([...names].sort(), ["//KS_C", "//KS_K", "//KS_LINK", "//KS_UNIFY"]);
 });
 
 test("hero-wire survives pointer movement", () => {
-  const { listeners, frames } = runHero();
-  listeners.pointermove({ pointerType: "mouse", clientX: 700, clientY: 400 });
-  frames.shift()(16);
-  listeners.pointerleave();
+  const run = runHero();
+  run.listeners.pointermove({ pointerType: "mouse", clientX: 700, clientY: 400 });
+  stepFrames(run, 1);
+  run.listeners.pointerleave();
+  stepFrames(run, 1);
 });

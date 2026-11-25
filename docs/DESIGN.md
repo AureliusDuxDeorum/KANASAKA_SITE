@@ -32,7 +32,7 @@ Direction: **disciplined deep-tech**. Keep the angular KS logo, Tektur and the b
 
 | Template | Used for |
 |---|---|
-| Home | `index.html`: wireframe hero, statement, product tiles |
+| Home | `index.html`: morphing wireframe hero, statement, product tiles |
 | Product | `products/ks-link/`: page header, feature list, platform spec list, alpha callout, CTA band |
 | Listing | `downloads/`: page header, data table, prose notes |
 | Prose | `legal/security/`, install notes: `.container.prose` |
@@ -87,7 +87,7 @@ The **KS_Site terminal** (`assets/js/console.js`, `assets/css/console.css`) open
 
 ### Cadence
 
-The home hero (`hero-wire.js`) is a **2D canvas** drawing a few wireframe solids that turn slowly, each with a tracking HUD (bracket box, dashed crosshair lines through its centre, a short label with live values). It runs at the display rate because it is only a few dozen lines per frame; it pauses when off screen or in a hidden tab, `Motion: Off` / OS reduce-motion draws one finished still frame, and `reduced` halves the speed. Ink is `--color-text`, so every theme works. The text scramble in `motion.js` keeps its own 15 Hz tick.
+The home hero (`hero-wire.js`) is a **2D canvas** with one wireframe that changes form on a 20 s loop: a rotating tesseract, the 4th axis folds away (cube), the cube resolves into the extruded KS mark, the mark splits into four segments (KS_C, KS_Link, KS_K, KS_Unify, each tracked and labelled), the segments fuse back, and the 4th axis unfolds again. Every state is the same 320 line segments matched one to one along a continuous path, so each transition is a plain interpolation of endpoints (no mesh morphing). The HUD is a bracket box with dashed crosshair lines and a short label whose last row is a real parameter of the stage (XW angle, W, M, E, RY). It runs at the display rate (a few hundred lines per frame), pauses when off screen or in a hidden tab, `Motion: Off` / OS reduce-motion draws one still frame of the mark, and `reduced` halves the speed. Ink is `--color-text`, so every theme works. The text scramble in `motion.js` keeps its own 15 Hz tick.
 
 ## Voice
 
@@ -95,5 +95,5 @@ Plain, specific, third person. Sentence-case headings, no hype. Claims must matc
 
 ## Flourishes policy
 
-- Wireframe hero: home only. HUD footer line: every page. Vertical page code and the KANASAKA edge rail: content pages (open question: move them behind a console toggle for a calmer look).
+- Morphing wireframe hero: home only. HUD footer line: every page. Vertical page code and the KANASAKA edge rail: content pages (open question: move them behind a console toggle for a calmer look).
 - No new decorative effects without removing one.
