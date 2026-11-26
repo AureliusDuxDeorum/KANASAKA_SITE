@@ -54,7 +54,7 @@ export class RelayRoom {
   /** A new socket for an authenticated session. `conn` needs send(data) and close(code, reason). */
   attach(conn, { sessionId }) {
     const cid = this.next++;
-    this.conns.set(cid, { conn, sessionId, at: this.now(), entry: null, windowStart: this.now(), count: 0, replaced: false });
+    this.conns.set(cid, { cid, conn, sessionId, at: this.now(), entry: null, windowStart: this.now(), count: 0, replaced: false });
     return cid;
   }
 
@@ -62,21 +62,21 @@ export class RelayRoom {
     const c = this.conns.get(cid);
     if (!c || this.limited(c)) return;
     if (c.entry) return;
-    if (String(text).length > MAX_TEXT_BYTES) return c.conn.close(4400, "bad hello");
+    if (String(text).length > MAX_TEXT_BYTES) return this.drop(c, 4400, "bad hello");
     const entry = parseHello(text);
-    if (!entry) return c.conn.close(4400, "bad hello");
+    if (!entry) return this.drop(c, 4400, "bad hello");
 
     // One session is one device, and a device id belongs to the session that first used it.
     for (const other of this.conns.values()) {
-      if (other !== c && other.sessionId === c.sessionId && other.entry && other.entry.id !== entry.id) return c.conn.close(4403, "device id taken");
+      if (other !== c && other.sessionId === c.sessionId && other.entry && other.entry.id !== entry.id) return this.drop(c, 4403, "device id taken");
     }
     const ownerCid = this.devices.get(entry.id);
     const owner = ownerCid === undefined ? null : this.conns.get(ownerCid);
-    if (owner && owner.sessionId !== c.sessionId) return c.conn.close(4403, "device id taken");
-    if (!owner && this.devices.size >= MAX_DEVICES) return c.conn.close(4429, "too many devices");
+    if (owner && owner.sessionId !== c.sessionId) return this.drop(c, 4403, "device id taken");
+    if (!owner && this.devices.size >= MAX_DEVICES) return this.drop(c, 4429, "too many devices");
     if (owner) {
       owner.replaced = true;
-      owner.conn.close(4409, "replaced");
+      this.drop(owner, 4409, "replaced");
     }
 
     c.entry = entry;
@@ -89,7 +89,7 @@ export class RelayRoom {
   onBinary(cid, bytes) {
     const c = this.conns.get(cid);
     if (!c || this.limited(c) || !c.entry) return;
-    if (bytes.byteLength > MAX_MESSAGE_BYTES) return c.conn.close(4413, "message too big");
+    if (bytes.byteLength > MAX_MESSAGE_BYTES) return this.drop(c, 4413, "message too big");
     if (bytes.byteLength < 17) return;
     const targetCid = this.devices.get(hexOf(bytes.subarray(0, 16)));
     const target = targetCid === undefined || targetCid === cid ? null : this.conns.get(targetCid);
@@ -112,16 +112,29 @@ export class RelayRoom {
 
   /** Close the connections of these sessions (or every one), because they were signed out. */
   revoke(sessionIds) {
-    for (const c of this.conns.values()) {
-      if (sessionIds === "all" || sessionIds.includes(c.sessionId)) c.conn.close(4401, "signed out");
+    for (const c of [...this.conns.values()]) {
+      if (sessionIds === "all" || sessionIds.includes(c.sessionId)) this.drop(c, 4401, "signed out");
     }
   }
 
   /** Close connections that have lived too long, so a session that expired or was revoked cannot stay connected for ever. */
   sweep() {
-    for (const c of this.conns.values()) {
-      if (this.now() - c.at >= this.maxAgeMs) c.conn.close(4000, "sign in again");
+    for (const c of [...this.conns.values()]) {
+      if (this.now() - c.at >= this.maxAgeMs) this.drop(c, 4000, "sign in again");
     }
+  }
+
+  /**
+   * Close a connection and forget it at once. Waiting for the socket's own close event would let a client that ignores the close
+   * handshake stay registered, and keep receiving frames, after it was signed out.
+   */
+  drop(c, code, reason) {
+    try {
+      c.conn.close(code, reason);
+    } catch (_) {
+      // Already closed.
+    }
+    this.onClose(c.cid);
   }
 
   size() {
@@ -135,7 +148,7 @@ export class RelayRoom {
       c.count = 0;
     }
     if (++c.count > RATE_LIMIT) {
-      c.conn.close(4429, "too much traffic");
+      this.drop(c, 4429, "too much traffic");
       return true;
     }
     return false;
