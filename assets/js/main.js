@@ -367,7 +367,7 @@
           return loadScript("/assets/js/wire-font.js?v=e68f9123");
         })
         .then(function () {
-          return loadScript("/assets/js/hero-wire.js?v=de28918e");
+          return loadScript("/assets/js/hero-wire.js?v=46cb912c");
         })
         .then(resolve);
     });

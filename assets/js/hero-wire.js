@@ -408,9 +408,9 @@
     // around each of the four product segments.
     function layout(t, p) {
       var compact = width < PHONE_MAX;
-      var R = Math.min(height * 0.2, width * (compact ? 0.22 : 0.3));
+      var R = Math.min(height * 0.22, width * (compact ? 0.23 : 0.3));
       var cx = width / 2;
-      var cy = height * 0.38; // above the hero copy
+      var cy = height * 0.4; // above the headline
       var open = 1 - p.f;
       var a = {
         xw: p.spin * 0.3 * open,
@@ -675,6 +675,19 @@
         if (!running) render(stillOr(clock));
       }).catch(function () {});
     }
+    // the scroll hint goes for good at the first scroll
+    var hint = document.getElementById("scroll-hint");
+    if (hint) {
+      var dismiss = function () {
+        if ((window.scrollY || window.pageYOffset || 0) > 24) {
+          hint.classList.add("is-gone");
+          window.removeEventListener("scroll", dismiss);
+        }
+      };
+      window.addEventListener("scroll", dismiss, { passive: true });
+      dismiss();
+    }
+
     readInk();
     resize();
     setHud();

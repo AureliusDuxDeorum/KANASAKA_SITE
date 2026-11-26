@@ -30,13 +30,18 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
     addEventListener: (type, fn) => (listeners[type] = fn),
   };
   const frames = [];
+  const hintClasses = [];
+  const hint = { classList: { add: (name) => hintClasses.push(name) } };
+  const windowListeners = {};
   const win = {
+    scrollY: 0,
     devicePixelRatio: 1,
     matchMedia: () => ({ matches: reduce }),
     requestAnimationFrame: (fn) => frames.push(fn) && frames.length,
     cancelAnimationFrame() {},
     setTimeout() {},
-    addEventListener() {},
+    addEventListener: (type, fn) => (windowListeners[type] = fn),
+    removeEventListener: (type) => delete windowListeners[type],
     getComputedStyle: () => ({ getPropertyValue: () => "#dfe5eb" }),
     MutationObserver: class { observe() {} },
     KanasakaMeta: { version: "9.9.9" },
@@ -48,7 +53,7 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
   win.window = win;
   win.document = {
     hidden: false,
-    getElementById: (id) => ({ "hero-wire": heroEl, "hw-canvas": canvas, "hw-hud": hudEl })[id] || null,
+    getElementById: (id) => ({ "hero-wire": heroEl, "hw-canvas": canvas, "hw-hud": hudEl, "scroll-hint": hint })[id] || null,
     documentElement: { getAttribute: (name) => (name === "data-motion" ? motion : null) },
     addEventListener() {},
   };
@@ -57,7 +62,7 @@ export function runHero({ width = 1440, height = 900, motion = "full", reduce = 
   vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/wire-font.js"), "utf8"), ctxV);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "assets/js/hero-wire.js"), "utf8"), ctxV);
   win.KanasakaHeroWire.init();
-  return { calls, frames, hudEl, listeners, store };
+  return { calls, frames, hudEl, listeners, store, win, hintClasses, windowListeners };
 }
 
 const count = (calls, name) => calls.filter((c) => c[0] === name).length;
@@ -200,4 +205,28 @@ test("egg: the shape stays smooth into and out of the words, and the loop resume
     previous = now;
   }
   assert.ok(worst < 80, "largest jump: " + worst.toFixed(0) + "px");
+});
+
+// ── first screen: the headline only, a scroll hint, the rest after one scroll ───────────────
+test("the first screen holds only the headline; the status, sentence and buttons come after the hero", () => {
+  const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const hero = html.slice(html.indexOf('<section class="hero-wire"'), html.indexOf("</section>", html.indexOf('<section class="hero-wire"')));
+  const detail = html.slice(html.indexOf('<section class="section hero-detail"'));
+  assert.ok(hero.includes("Bring your own model."));
+  for (const later of ["coding agent", "Download KS_C", "Beta"]) assert.ok(!hero.includes(later), "not in the hero: " + later);
+  for (const here of ["coding agent", "Download KS_C", "Beta"]) assert.ok(detail.slice(0, detail.indexOf("</section>")).includes(here), "after the hero: " + here);
+  assert.match(hero, /id="scroll-hint"[^>]*href="#hero-detail"[^>]*aria-label=/);
+  assert.ok(html.includes('id="hero-detail"'));
+});
+
+test("the scroll hint stays until the page is scrolled, then goes for good", () => {
+  const run = runHero();
+  assert.deepEqual(run.hintClasses, []);
+  run.win.scrollY = 10;
+  run.windowListeners.scroll();
+  assert.deepEqual(run.hintClasses, [], "a tiny scroll does not dismiss it");
+  run.win.scrollY = 120;
+  run.windowListeners.scroll();
+  assert.deepEqual(run.hintClasses, ["is-gone"]);
+  assert.equal(run.windowListeners.scroll, undefined, "the listener removes itself");
 });

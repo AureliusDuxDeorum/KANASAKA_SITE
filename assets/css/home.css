@@ -4,8 +4,10 @@
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: max(100vh, 640px);
-  min-height: max(100svh, 640px);
+  /* ends at the fold (viewport minus the 72 px header): the first screen is the wireframe and the
+     headline, nothing else; the rest of the hero copy comes after one scroll */
+  min-height: max(calc(100vh - 72px), 560px);
+  min-height: max(calc(100svh - 72px), 560px);
   background: var(--color-base);
   overflow: hidden;
 }
@@ -13,19 +15,28 @@
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 34vh;
+  height: 30vh;
   background: linear-gradient(to bottom, transparent, var(--color-base));
   z-index: 3;
   pointer-events: none;
 }
-/* the sentence that says what this is: first thing on the page, not a scroll away */
 .hero-copy {
   position: relative;
   z-index: 4;
   width: 100%;
   max-width: var(--container);
   margin: 0 auto;
-  padding: 0 var(--gutter) clamp(var(--space-8), 8vh, var(--space-24));
+  /* room under the headline for the scroll hint */
+  padding: 0 var(--gutter) clamp(88px, 13vh, 128px);
+}
+.hero-copy .statement {
+  max-width: 16ch;
+  font-size: var(--text-display-2);
+}
+
+/* The rest of the hero copy: the status, the one plain sentence and the buttons. */
+.hero-detail {
+  scroll-margin-top: 72px;
 }
 .hero-eyebrow {
   margin: 0 0 var(--space-4);
@@ -34,10 +45,6 @@
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-wide);
 }
-.hero-copy .statement {
-  max-width: 16ch;
-  font-size: var(--text-display-2);
-}
 .hero-sub {
   max-width: 54ch;
   margin: var(--space-6) 0 0;
@@ -45,6 +52,51 @@
   font-size: var(--text-lg);
   line-height: 1.55;
 }
+/* Scroll hint: a mono label over a hairline, bottom centre of the first screen. A short bright
+   segment runs down the line (motion.css); it fades out for good at the first scroll
+   (hero-wire.js adds .is-gone). With motion off it is simply there. */
+.scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-6);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  transform: translateX(-50%);
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-decoration: none;
+  transition: opacity 500ms ease;
+}
+.scroll-hint:hover {
+  color: var(--color-text);
+}
+.scroll-hint-line {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 36px;
+  overflow: hidden;
+  background: var(--color-border-light);
+}
+.scroll-hint-line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 14px;
+  background: var(--color-text);
+}
+.scroll-hint.is-gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
 #hw-canvas {
   position: absolute;
   inset: 0;

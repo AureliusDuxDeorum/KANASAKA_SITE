@@ -652,3 +652,41 @@ html[data-motion="full"][data-fx="2"] .button:not([disabled]):active::after {
   opacity: 1;
   transform: translate(0, -50%);
 }
+
+/* ── Scroll hint (home): fades in after the hero's intro, a bright segment runs down the line ── */
+
+html[data-motion="full"] .scroll-hint,
+html[data-motion="reduced"] .scroll-hint {
+  animation: scroll-hint-in 800ms ease 2.4s backwards;
+}
+
+html[data-motion="full"] .scroll-hint-line::after {
+  animation: scroll-hint-run 2.4s cubic-bezier(0.65, 0, 0.35, 1) 3.2s infinite;
+}
+
+/* gone for good once the page has been scrolled: no animation may bring it back */
+html[data-motion] .scroll-hint.is-gone {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes scroll-hint-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scroll-hint-run {
+  0% {
+    transform: translateY(-14px);
+  }
+
+  70%,
+  100% {
+    transform: translateY(36px);
+  }
+}

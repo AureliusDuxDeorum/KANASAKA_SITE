@@ -80,6 +80,7 @@ With `off` the page is completely static and no motion code runs. Rules: animate
 | Live HUD (UTC clock, session timer, viewport, NET state, motion level) | yes | page code ticks on load |
 | KS_Site terminal (`//` in the header, Ctrl/Cmd+K, `/`) | yes | glitch on open/error; the `//` carries a blinking cursor |
 | Hero: morphing wireframe (tesseract, KS mark, four products) | yes | pointer tilt |
+| Hero: scroll hint (label over a hairline, a bright segment runs down it; gone after the first scroll) | yes | |
 | Scanlines | yes | |
 | Pointer light on cards/CTAs/features, product-strip hover (decode, reticle, scanlines) | yes | "COMING SOON" flicker |
 
@@ -95,7 +96,7 @@ The home hero (`hero-wire.js`) is a **2D canvas** with one wireframe that change
 
 ### Home copy and product tiles
 
-The first screen has to say what the product is: the hero carries the headline ("Bring your own model."), one plain sentence and the two buttons over the lower part of the canvas (the wireframe sits in the upper part, `hero-wire.js`: centre at 38 % of the hero's height). Status is stated the same way everywhere: **Beta** for KS_C and **Alpha** for KS_Link as `.badge--beta` / `.badge--alpha` (hero eyebrow, tiles, product pages, hero HUD labels); the copy never calls a beta "the latest release". The product tiles are left-aligned like everything else and show a terminal-style read-out (`.showcase-panel`, mono, `> KEY  value` rows) instead of a picture, and every line is a fact taken from that product's page; replace it with a real capture of the app once there is one (dark, in the scanline style). Products that are not ready are not tiles: one `//NEXT` line names them.
+The first screen is the wireframe and one line: the hero ends at the fold (`100svh` minus the 72 px header) and its only copy is the headline ("Bring your own model.") over the lower part of the canvas (wireframe centre at 40 % of the hero's height, `hero-wire.js`). The status eyebrow, the one plain sentence and the two buttons are the `.hero-detail` block directly after the hero, so they arrive with the first scroll. A **scroll hint** sits bottom centre of the first screen: a mono `//SCROLL` over a hairline with a short bright segment running down it (`.scroll-hint`, animations in `motion.css`, gated by `data-motion`). It fades in 2.4 s after load (after the wireframe's lock-on), runs only in Full and Reduced, is static with motion off, links to `#hero-detail`, and `hero-wire.js` removes it for good (`.is-gone`) at the first scroll past 24 px. Status is stated the same way everywhere: **Beta** for KS_C and **Alpha** for KS_Link as `.badge--beta` / `.badge--alpha` (hero eyebrow, tiles, product pages, hero HUD labels); the copy never calls a beta "the latest release". The product tiles are left-aligned like everything else and show a terminal-style read-out (`.showcase-panel`, mono, `> KEY  value` rows) instead of a picture, and every line is a fact taken from that product's page; replace it with a real capture of the app once there is one (dark, in the scanline style). Products that are not ready are not tiles: one `//NEXT` line names them.
 
 ## Voice
 
