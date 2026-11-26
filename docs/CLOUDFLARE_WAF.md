@@ -129,3 +129,11 @@ guesses) are shared with the website and are what stop slow guessing; the WAF sp
 `GET /api/app/session` is called by the app at start, every 15 minutes, and when its window regains focus: do not rate-limit it
 tightly (a 100 requests / 10 minutes per IP ceiling is plenty and still covers a shared office address).
 
+
+## Remote relay (added 2026-11-26)
+
+`GET /api/app/remote` is the WebSocket the KS_C1 phone remote uses (docs/REMOTE_RELAY.md). It is a GET under `/api/app/`, so the POST
+rules above do not touch it, and none is needed for it: each connection is one request, and traffic on an open socket is limited by
+the relay itself (600 messages per 10 seconds per socket, 10 devices per account). Do NOT add a managed challenge to it: the apps
+cannot solve one. If you want a speed limit on connection attempts, `http.request.uri.path eq "/api/app/remote"` at 60 requests per
+10 minutes per IP is plenty (a device reconnects with a growing delay of at most 30 seconds).

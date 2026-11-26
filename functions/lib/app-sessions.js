@@ -66,13 +66,10 @@ export async function createAppSession(env, { userId, client, device }) {
     .run();
 
   // Over the cap: drop the least recently used (the new one is the most recent, so it is never the one dropped).
-  await env.DB.prepare(
-    `DELETE FROM app_sessions WHERE token_hash IN (
-       SELECT token_hash FROM app_sessions WHERE user_id = ? ORDER BY last_used_at DESC, created_at DESC, rowid DESC LIMIT -1 OFFSET ?
-     )`
-  )
-    .bind(uid, MAX_APP_DEVICES)
-    .run();
+  const overCap = `SELECT token_hash FROM app_sessions WHERE user_id = ? ORDER BY last_used_at DESC, created_at DESC, rowid DESC LIMIT -1 OFFSET ?`;
+  const evicted = (await env.DB.prepare(`SELECT id FROM app_sessions WHERE token_hash IN (${overCap})`).bind(uid, MAX_APP_DEVICES).all()).results.map((r) => r.id);
+  await env.DB.prepare(`DELETE FROM app_sessions WHERE token_hash IN (${overCap})`).bind(uid, MAX_APP_DEVICES).run();
+  await revokeAtRelay(env, uid, evicted);
 
   return { token, expiresAt };
 }
@@ -150,13 +147,33 @@ export function appPlan() {
   return { id: "free", paid: false };
 }
 
+/**
+ * Tell the account's remote relay (a Durable Object, bound as REMOTE_RELAY once the relay Worker is deployed: see docs/REMOTE_RELAY.md)
+ * that these sessions are gone, so it closes their sockets at once. `sessions` is a list of public session ids, or "all". Best effort:
+ * signing out must work with no relay bound, and with one that is down (its sockets also end by themselves within hours).
+ */
+export async function revokeAtRelay(env, userId, sessions) {
+  const ns = env.REMOTE_RELAY;
+  if (!ns || (sessions !== "all" && sessions.length === 0)) return;
+  try {
+    const stub = ns.get(ns.idFromName("user:" + Math.trunc(Number(userId))));
+    await stub.fetch(new Request("https://relay/revoke", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessions }) }));
+  } catch (_) {
+    // Ignored on purpose.
+  }
+}
+
 export async function deleteAppSession(env, token) {
   if (!token) return;
-  await env.DB.prepare("DELETE FROM app_sessions WHERE token_hash = ?").bind(await hashSecret(token, env)).run();
+  const tokenHash = await hashSecret(token, env);
+  const row = await env.DB.prepare("SELECT id, user_id FROM app_sessions WHERE token_hash = ?").bind(tokenHash).first();
+  await env.DB.prepare("DELETE FROM app_sessions WHERE token_hash = ?").bind(tokenHash).run();
+  if (row) await revokeAtRelay(env, row.user_id, [row.id]);
 }
 
 export async function deleteAllAppSessions(env, userId) {
   await env.DB.prepare("DELETE FROM app_sessions WHERE user_id = ?").bind(Math.trunc(Number(userId))).run();
+  await revokeAtRelay(env, userId, "all");
 }
 
 export async function listAppSessions(env, userId) {
@@ -175,13 +192,16 @@ export async function deleteAppSessionById(env, userId, id) {
   const result = await env.DB.prepare("DELETE FROM app_sessions WHERE user_id = ? AND id = ?")
     .bind(Math.trunc(Number(userId)), String(id || ""))
     .run();
-  return Boolean(result.meta && result.meta.changes > 0);
+  const removed = Boolean(result.meta && result.meta.changes > 0);
+  if (removed) await revokeAtRelay(env, userId, [String(id)]);
+  return removed;
 }
 
 /** Sign out every device except the one named (or all of them when none is named). Returns how many were removed. */
 export async function deleteOtherAppSessions(env, userId, keepId) {
-  const result = await env.DB.prepare("DELETE FROM app_sessions WHERE user_id = ? AND id != ?")
-    .bind(Math.trunc(Number(userId)), String(keepId || ""))
-    .run();
+  const uid = Math.trunc(Number(userId));
+  const gone = (await env.DB.prepare("SELECT id FROM app_sessions WHERE user_id = ? AND id != ?").bind(uid, String(keepId || "")).all()).results.map((r) => r.id);
+  const result = await env.DB.prepare("DELETE FROM app_sessions WHERE user_id = ? AND id != ?").bind(uid, String(keepId || "")).run();
+  await revokeAtRelay(env, uid, gone);
   return Number((result.meta && result.meta.changes) || 0);
 }

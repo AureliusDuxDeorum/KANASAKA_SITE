@@ -12,6 +12,7 @@ import {
 import { deleteAvatar } from "../../lib/profile.js";
 import { logAuthEvent, requireSameOrigin } from "../../lib/security.js";
 import { notifyKsLink } from "../../lib/ks-link-revoke.js";
+import { deleteAllAppSessions } from "../../lib/app-sessions.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -55,7 +56,7 @@ export async function onRequestPost(context) {
   await deleteAvatar(env, user.id);
   await env.DB.prepare("DELETE FROM email_tokens WHERE user_id = ?").bind(user.id).run();
   await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
-  await env.DB.prepare("DELETE FROM app_sessions WHERE user_id = ?").bind(user.id).run();
+  await deleteAllAppSessions(env, user.id);
   await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(user.id).run();
 
   await logAuthEvent(env, "account_deleted", { userId: user.id });

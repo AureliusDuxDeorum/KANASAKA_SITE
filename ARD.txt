@@ -619,6 +619,7 @@ A native app signs in at /api/app/* and holds its own session, one per device. D
   GET    /api/app/session         Bearer -> { authenticated, profile, plan, device } | 401
   POST   /api/app/logout          Bearer -> signs this device out (always 200)
   GET    /api/app/devices         Bearer -> this account's devices, the current one marked
+  GET    /api/app/remote          Bearer + WebSocket upgrade -> the remote-control relay (9c)
   DELETE /api/app/devices?id=<id> | ?others=1    Bearer -> sign one device, or every other one, out
   POST   /api/admin/app-devices   { q, deviceId | all:true } -> admin signs a user's devices out (session-or-secret, 2FA required on the
                                   session path; audited as admin_app_devices_revoked). /api/admin/lookup lists them as appDevices.
@@ -634,6 +635,18 @@ A native app signs in at /api/app/* and holds its own session, one per device. D
 - `plan` is { id: "free", paid: false } until paid plans exist; appPlan() is the one place that will change.
 - WAF: see "KS_C1 app sign-in endpoints" in docs/CLOUDFLARE_WAF.md. NO managed challenge under /api/app/ (a native app cannot solve it).
 - Registration, email confirmation and password reset stay on /api/auth/* (they need no session).
+
+9c. REMOTE RELAY (KS_C1 phone remote)
+-------------------------------------
+GET /api/app/remote (functions/api/app/remote.js) authenticates an app session and hands the WebSocket to a Durable Object, one per
+account ("user:<id>"), class AccountRelay in the separate Worker kanasaka-relay (scripts/relay/, config scripts/relay/wrangler.toml;
+logic in scripts/relay/room.js, tested in tests/relay-room.test.mjs). It forwards encrypted frames between the account's devices (a
+desktop running KS_C1 and the phones) and cannot read them. The Worker has no public route: the Pages project reaches it through the
+REMOTE_RELAY Durable Object binding (added in the dashboard AFTER the Worker is deployed, never in wrangler.toml: a binding to an
+undeployed Worker would fail the Pages deploy). With no binding the endpoint answers 503. Ending a session (logout, device removal,
+password change/reset, 2FA off, account deletion, eviction over the 10-device cap) calls revokeAtRelay() in lib/app-sessions.js, which
+closes that device's socket; sockets also close after 12 hours so an expired session cannot stay connected. The API middleware lets a
+101 response through unchanged. Wire contract, limits, deploy steps: docs/REMOTE_RELAY.md. Client side: KS_C1 src-tauri/src/remote/.
 
 9b. KS_LINK ACCOUNTS (a KS_Link account IS a KANASAKA account)
 --------------------------------------------------------------
@@ -676,6 +689,11 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-26  Remote relay for the KS_C1 phone remote (branch feature/remote-relay, NOT deployed): GET /api/app/remote, the kanasaka-relay
+            Worker with the AccountRelay Durable Object (scripts/relay/), revokeAtRelay() on every way an app session ends, API middleware
+            passes 101 responses through, account deletion now goes through deleteAllAppSessions. Tests: tests/relay-room.test.mjs,
+            tests/remote-relay.test.mjs. Deploy steps (Worker first, then the dashboard binding) in docs/REMOTE_RELAY.md; WAF note in
+            docs/CLOUDFLARE_WAF.md.
 2026-11-23  Migration 021_app_sessions.sql run on remote D1 (kanasaka-auth): the app_sessions table is live, so native-app sign-in
             (/api/app/*, used by KS_C) can work once the site with those endpoints is deployed.
 2026-11-23  KS_C added to the site (1.10.0): /products/ks-c/ with the 60 s film (poster and showcase images in
