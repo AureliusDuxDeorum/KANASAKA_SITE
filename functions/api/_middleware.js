@@ -50,5 +50,8 @@ export async function onRequest(context) {
     }
   }
 
-  return applyApiHeaders(await context.next());
+  const response = await context.next();
+  // A WebSocket upgrade (the remote relay) must reach the client as it is: rebuilding the response would drop the socket.
+  if (response.status === 101) return response;
+  return applyApiHeaders(response);
 }

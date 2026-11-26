@@ -1,0 +1,15 @@
+# The remote relay Worker. Deploy it from the repo root BEFORE binding it to the Pages project (docs/REMOTE_RELAY.md):
+#   npx wrangler deploy -c scripts/relay/wrangler.toml
+# It is deliberately not part of the Pages deploy (Pages cannot define a Durable Object class) and has no public URL.
+name = "kanasaka-relay"
+main = "index.js"
+compatibility_date = "2024-11-12"
+workers_dev = false
+
+[[durable_objects.bindings]]
+name = "ACCOUNT_RELAY"
+class_name = "AccountRelay"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AccountRelay"]
