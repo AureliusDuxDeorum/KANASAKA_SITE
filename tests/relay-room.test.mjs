@@ -181,3 +181,33 @@ test("text after the hello is ignored, and a second hello cannot change the devi
   assert.equal(desk.conn.sent.length, before);
   assert.equal(phone.conn.closed, null);
 });
+
+test("a closed device is dropped at once, even if its socket never acknowledges the close", () => {
+  const room = new RelayRoom();
+  const desk = join(room, "s1", "desktop", hex("d"), "Desk", 1);
+  const phone = join(room, "s2", "phone", hex("a"), "Pixel", 2);
+  room.revoke(["s2"]); // no onClose call: a client that ignores the close handshake
+  assert.equal(phone.conn.closed?.code, 4401);
+  assert.deepEqual(desk.conn.texts().at(-1), { "peer-left": hex("a") });
+  desk.conn.sent.length = 0;
+  room.onBinary(desk.cid, new Uint8Array([...idBytes(hex("a")), 2, 1, 1]));
+  assert.equal(phone.conn.frames().length, 0, "a revoked device must not receive anything more");
+  assert.equal(room.size(), 1);
+});
+
+test("the same holds for a device closed by the sweep, the rate limit, or an oversize frame", () => {
+  let t = 0;
+  const room = new RelayRoom({ now: () => t, maxAgeMs: 1000 });
+  const desk = join(room, "s1", "desktop", hex("d"), "Desk", 1);
+  const phone = join(room, "s2", "phone", hex("a"), "Pixel", 2);
+  t = 2000;
+  room.sweep();
+  assert.equal(room.size(), 0);
+  assert.ok(desk.conn.closed && phone.conn.closed);
+
+  const room2 = new RelayRoom();
+  join(room2, "s1", "desktop", hex("d"), "Desk", 1);
+  const big = join(room2, "s2", "phone", hex("a"), "Pixel", 2);
+  room2.onBinary(big.cid, new Uint8Array(MAX_MESSAGE_BYTES + 1));
+  assert.equal(room2.size(), 1);
+});
