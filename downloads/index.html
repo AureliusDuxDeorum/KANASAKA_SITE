@@ -36,13 +36,15 @@
   <link rel="stylesheet" href="/assets/css/style.css?v=40f42eba">
   <link rel="stylesheet" href="/assets/css/redesign.css?v=dd7f619c">
   <link rel="stylesheet" href="/assets/css/components.css?v=cae47bb7">
-  <link rel="stylesheet" href="/assets/css/motion.css?v=baa62b6e">
+  <link rel="stylesheet" href="/assets/css/motion.css?v=28822d53">
   <link rel="stylesheet" href="/assets/css/console.css?v=84f8057e">
+  <link rel="stylesheet" href="/assets/css/downloads.css?v=67e23aed">
   <script src="/assets/js/motion-boot.js?v=f8491e9f"></script>
   <script defer src="/assets/js/password-policy.js?v=798cda94"></script>
   <script defer src="/assets/js/auth.js?v=b9d469c0"></script>
   <script defer src="/assets/js/shell.js?v=9aae1c9f"></script>
-  <script defer src="/assets/js/main.js?v=761e887e"></script>
+  <script defer src="/assets/js/product-wire.js?v=a67a8b54"></script>
+  <script defer src="/assets/js/main.js?v=1b90afbc"></script>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -59,99 +61,75 @@
         <a href="/">Home</a><span aria-hidden="true">/</span><span aria-current="page">Downloads</span>
       </nav>
       <h1>Downloads</h1>
-      <p class="page-lead">Installers for KS_C, the coding agent, and KS_Link, the end-to-end encrypted messenger.</p>
+      <p class="page-lead">Installers for KS_C and KS_Link.</p>
     </div>
   </section>
 
-  <section id="ks-c" class="section">
+  <section class="section">
+    <div class="container">
+      <article class="dl-product" id="ks-c">
+        <div class="dl-wire"><canvas class="product-wire" data-wire="ks-c" data-tag="//KS_C  BETA" aria-hidden="true"></canvas></div>
+        <div class="dl-body">
+          <span class="kicker">//KS_C</span>
+          <h2>Coding agent <span class="badge badge--beta">Beta</span></h2>
+          <p>Runs on a local or cloud model you provide. Needs a KANASAKA account.</p>
+          <div class="dl-actions">
+            <a class="button" href="/api/ks-c/download/windows-exe">Windows .exe</a>
+            <a class="button secondary" href="/api/ks-c/download/linux-deb">Linux .deb</a>
+            <a class="button secondary" href="/api/ks-c/download/linux-appimage">AppImage</a>
+          </div>
+          <p class="dl-links"><a href="/products/ks-c/">About KS_C</a><a href="/legal/products/#ks_c">Technical overview</a></p>
+        </div>
+      </article>
+
+      <article class="dl-product" id="ks-link">
+        <div class="dl-wire"><canvas class="product-wire" data-wire="ks-link" data-tag="//KS_LINK  ALPHA" aria-hidden="true"></canvas></div>
+        <div class="dl-body">
+          <span class="kicker">//KS_LINK</span>
+          <h2>Encrypted messenger <span class="badge badge--alpha">Alpha</span></h2>
+          <p>End-to-end encrypted messaging. Early alpha: builds change quickly between releases.</p>
+          <div class="dl-actions">
+            <a class="button" href="/api/ks-link-updater/download/windows-x86_64">Windows .exe</a>
+            <a class="button secondary" href="/api/ks-link-updater/download/linux-deb">Linux .deb</a>
+            <a class="button secondary" href="/api/ks-link-updater/download/linux-rpm">.rpm</a>
+            <a class="button secondary" href="/api/ks-link-updater/download/linux-appimage">AppImage</a>
+            <a class="button secondary" href="/api/ks-link-updater/download/android">Android .apk</a>
+          </div>
+          <p class="dl-links"><a href="/products/ks-link/">About KS_Link</a><a href="/legal/products/#ks_link">Technical overview</a></p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section dl-specs" id="requirements">
     <div class="container">
       <div class="section-header">
-        <span class="kicker">KS_C</span>
-        <h2>Coding agent for your own models <span class="badge badge--beta">Beta</span></h2>
-        <p>Needs a KANASAKA account and a model endpoint you provide, local or cloud. <a href="/products/ks-c/">About KS_C</a> &middot; <a href="/legal/products/#ks_c">Technical overview</a></p>
+        <span class="kicker">//REQUIREMENTS</span>
+        <h2>Packages and requirements</h2>
       </div>
 
+      <h3>KS_C</h3>
       <table class="data-table">
         <thead>
-          <tr><th scope="col">Platform</th><th scope="col">Package</th><th scope="col">Requirements</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Download</span></th></tr>
+          <tr><th scope="col">Platform</th><th scope="col">Package</th><th scope="col">Requirements</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">Windows</th>
-            <td>x64 installer (.exe)</td>
-            <td>Windows 10/11, 64-bit</td>
-            <td><span class="badge badge--beta">Beta</span></td>
-            <td class="cell-actions">
-              <a class="button" href="/api/ks-c/download/windows-exe">Download .exe</a>
-                          </td>
-          </tr>
-          <tr>
-            <th scope="row">Linux</th>
-            <td>.deb, AppImage</td>
-            <td>Debian/Ubuntu, Fedora/RHEL, or any distribution</td>
-            <td><span class="badge badge--beta">Beta</span></td>
-            <td class="cell-actions">
-              <a class="button" href="/api/ks-c/download/linux-deb">.deb</a>
-                            <a class="button secondary" href="/api/ks-c/download/linux-appimage">AppImage</a>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">macOS</th>
-            <td>&mdash;</td>
-            <td>Not available yet</td>
-            <td><span class="badge">Planned</span></td>
-            <td class="cell-actions"></td>
-          </tr>
+          <tr><th scope="row">Windows</th><td>x64 installer (.exe)</td><td>Windows 10/11, 64-bit</td></tr>
+          <tr><th scope="row">Linux</th><td>.deb, AppImage</td><td>Debian/Ubuntu, or any distribution (AppImage)</td></tr>
+          <tr><th scope="row">macOS</th><td>&mdash;</td><td>Planned, not available yet</td></tr>
         </tbody>
       </table>
-    </div>
-  </section>
 
-  <section id="ks-link" class="section">
-    <div class="container">
-      <div class="section-header">
-        <span class="kicker">KS_Link</span>
-        <h2>End-to-end encrypted messaging <span class="badge badge--alpha">Alpha</span></h2>
-        <p>Early alpha: expect rough edges, and builds may change quickly between releases. <a href="/products/ks-link/">About KS_Link</a> &middot; <a href="/legal/products/#ks_link">Technical overview</a></p>
-      </div>
-
+      <h3>KS_Link</h3>
       <table class="data-table">
         <thead>
-          <tr><th scope="col">Platform</th><th scope="col">Package</th><th scope="col">Requirements</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Download</span></th></tr>
+          <tr><th scope="col">Platform</th><th scope="col">Package</th><th scope="col">Requirements</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">Windows</th>
-            <td>x64 installer (.exe)</td>
-            <td>Windows 10/11, 64-bit</td>
-            <td><span class="badge badge--alpha">Alpha</span></td>
-            <td class="cell-actions"><a class="button" href="/api/ks-link-updater/download/windows-x86_64">Download .exe</a></td>
-          </tr>
-          <tr>
-            <th scope="row">Linux</th>
-            <td>.deb, .rpm, AppImage</td>
-            <td>Debian/Ubuntu, Fedora/RHEL, or any distribution</td>
-            <td><span class="badge badge--alpha">Alpha</span></td>
-            <td class="cell-actions">
-              <a class="button" href="/api/ks-link-updater/download/linux-deb">.deb</a>
-              <a class="button secondary" href="/api/ks-link-updater/download/linux-rpm">.rpm</a>
-              <a class="button secondary" href="/api/ks-link-updater/download/linux-appimage">AppImage</a>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Android</th>
-            <td>APK (arm64)</td>
-            <td>Self-signed; enable &ldquo;install from unknown sources&rdquo;</td>
-            <td><span class="badge badge--alpha">Alpha</span></td>
-            <td class="cell-actions"><a class="button" href="/api/ks-link-updater/download/android">Download .apk</a></td>
-          </tr>
-          <tr>
-            <th scope="row">iOS</th>
-            <td>&mdash;</td>
-            <td>iPhone and iPad support is planned</td>
-            <td><span class="badge">Planned</span></td>
-            <td class="cell-actions"></td>
-          </tr>
+          <tr><th scope="row">Windows</th><td>x64 installer (.exe)</td><td>Windows 10/11, 64-bit</td></tr>
+          <tr><th scope="row">Linux</th><td>.deb, .rpm, AppImage</td><td>Debian/Ubuntu, Fedora/RHEL, or any distribution</td></tr>
+          <tr><th scope="row">Android</th><td>APK (arm64)</td><td>Self-signed; enable &ldquo;install from unknown sources&rdquo;</td></tr>
+          <tr><th scope="row">iOS</th><td>&mdash;</td><td>Planned, not available yet</td></tr>
         </tbody>
       </table>
     </div>

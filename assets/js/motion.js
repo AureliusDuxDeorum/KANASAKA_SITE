@@ -385,78 +385,12 @@
     }, ms || 140);
   }
 
-  // ── atmosphere: pointer light, product-strip hover ─────────────────────────
+  // ── atmosphere: product-strip hover ─────────────────────────
   var atmosphereMounted = false;
 
   function mountAtmosphere() {
     if (atmosphereMounted || state.motion === "off") return;
     atmosphereMounted = true;
-
-    // pointer light: only the element under a fine pointer is updated, once per frame
-    if (window.matchMedia("(pointer: fine)").matches) {
-      var LIGHT_SEL = ".card:not(.card--chamfer), .cta-band, .callout, .feature";
-      document.querySelectorAll(LIGHT_SEL).forEach(function (el) {
-        el.classList.add("pl-on");
-      });
-
-      var current = null;
-      var px = 0;
-      var py = 0;
-      var queued = false;
-
-      function update() {
-        queued = false;
-        if (!current) return;
-        var rect = current.getBoundingClientRect();
-        current.style.setProperty("--mx", px - rect.left + "px");
-        current.style.setProperty("--my", py - rect.top + "px");
-      }
-
-      document.addEventListener(
-        "pointermove",
-        function (event) {
-          if (state.motion !== "full" || event.pointerType !== "mouse") return;
-          var target = event.target.closest ? event.target.closest(".pl-on") : null;
-          if (target !== current) {
-            if (current) current.classList.remove("is-lit");
-            current = target;
-            if (current) current.classList.add("is-lit");
-          }
-          if (!current) return;
-          px = event.clientX;
-          py = event.clientY;
-          if (!queued) {
-            queued = true;
-            window.requestAnimationFrame(update);
-          }
-        },
-        { passive: true }
-      );
-
-      document.addEventListener("pointerleave", function () {
-        if (current) current.classList.remove("is-lit");
-        current = null;
-      });
-    }
-
-    // touch: a press lights the spot where the finger lands, then it fades
-    document.addEventListener(
-      "pointerdown",
-      function (event) {
-        if (state.motion !== "full" || event.pointerType !== "touch") return;
-        var target = event.target.closest ? event.target.closest(".card, .cta-band, .callout, .feature") : null;
-        if (!target) return;
-        target.classList.add("pl-on");
-        var rect = target.getBoundingClientRect();
-        target.style.setProperty("--mx", event.clientX - rect.left + "px");
-        target.style.setProperty("--my", event.clientY - rect.top + "px");
-        target.classList.add("is-lit");
-        window.setTimeout(function () {
-          target.classList.remove("is-lit");
-        }, 600);
-      },
-      { passive: true }
-    );
 
     // product strip: hovering a linked product decodes its name
     document.addEventListener("pointerover", function (event) {

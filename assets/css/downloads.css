@@ -1,0 +1,82 @@
+/* Downloads: one open row per product (a wireframe beside the name and the download buttons),
+   with packages and requirements further down the page. */
+
+.dl-product {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-12);
+  align-items: center;
+  padding: var(--space-16) 0;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.dl-product:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.dl-wire {
+  position: relative;
+  min-height: 240px;
+}
+
+.dl-wire .product-wire {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dl-body h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.dl-body p {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.dl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-8) 0 var(--space-6);
+}
+
+.dl-links {
+  font-size: var(--text-sm);
+}
+
+.dl-links a + a::before {
+  content: "\00b7";
+  margin: 0 var(--space-2);
+  color: var(--color-text-subtle);
+}
+
+.dl-specs .data-table + .data-table {
+  margin-top: var(--space-12);
+}
+
+.dl-specs h3 {
+  margin: var(--space-12) 0 var(--space-4);
+}
+
+.dl-specs h3:first-of-type {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .dl-product {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    padding: var(--space-12) 0;
+  }
+
+  .dl-wire {
+    min-height: 180px;
+  }
+}

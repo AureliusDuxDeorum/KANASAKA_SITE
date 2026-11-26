@@ -312,7 +312,7 @@
         return;
       }
 
-      loadScript("/assets/js/motion.js?v=b1a66e6d").then(resolve);
+      loadScript("/assets/js/motion.js?v=62dd30cd").then(resolve);
     });
   }
 
