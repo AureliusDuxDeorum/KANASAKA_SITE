@@ -78,23 +78,21 @@
         <tbody>
           <tr>
             <th scope="row">Windows</th>
-            <td>x64 installer (.exe), .msi</td>
+            <td>x64 installer (.exe)</td>
             <td>Windows 10/11, 64-bit</td>
             <td><span class="badge badge--beta">Beta</span></td>
             <td class="cell-actions">
-              <button type="button" class="button" disabled aria-disabled="true" title="Not available yet">Download .exe</button>
-              <button type="button" class="button secondary" disabled aria-disabled="true" title="Not available yet">.msi</button>
-            </td>
+              <a class="button" href="/api/ks-c/download/windows-exe">Download .exe</a>
+                          </td>
           </tr>
           <tr>
             <th scope="row">Linux</th>
-            <td>.deb, .rpm, AppImage</td>
+            <td>.deb, AppImage</td>
             <td>Debian/Ubuntu, Fedora/RHEL, or any distribution</td>
             <td><span class="badge badge--beta">Beta</span></td>
             <td class="cell-actions">
-              <button type="button" class="button" disabled aria-disabled="true" title="Not available yet">.deb</button>
-              <button type="button" class="button secondary" disabled aria-disabled="true" title="Not available yet">.rpm</button>
-              <button type="button" class="button secondary" disabled aria-disabled="true" title="Not available yet">AppImage</button>
+              <a class="button" href="/api/ks-c/download/linux-deb">.deb</a>
+                            <a class="button secondary" href="/api/ks-c/download/linux-appimage">AppImage</a>
             </td>
           </tr>
           <tr>
@@ -166,7 +164,7 @@
         <li><strong>Account:</strong> KS_C opens with a KANASAKA account. You sign in or register inside the app.</li>
         <li><strong>Model:</strong> add a provider under Settings &rarr; Providers: a local server, or a cloud provider with your own API key. KS_C does not include model access.</li>
         <li><strong>Windows:</strong> you may see a SmartScreen warning because the installer is not code-signed. Choose &ldquo;More info&rdquo;, then &ldquo;Run anyway&rdquo;. Windows has no command sandbox, so every command asks first.</li>
-        <li><strong>Linux:</strong> install the <code>.deb</code> with <code>sudo dpkg -i KS_C.deb</code> or the <code>.rpm</code> with <code>sudo rpm -i KS_C.rpm</code>. The AppImage only needs <code>chmod +x</code>. Install <code>bubblewrap</code> to get the command sandbox.</li>
+        <li><strong>Linux:</strong> install the <code>.deb</code> with <code>sudo dpkg -i KS_C.deb</code>. The AppImage only needs <code>chmod +x</code>. Install <code>bubblewrap</code> to get the command sandbox.</li>
       </ul>
       <h2>KS_Link install notes</h2>
       <p>KS_Link is in active alpha development. The Windows build self-updates in-app once installed (Settings &rarr; Account &rarr; Check for updates).</p>
