@@ -36,10 +36,10 @@ The desktop and the phone app speak the same thing (the KS_C1 side is `src-tauri
 
 1. Deploy the Worker first: `npx wrangler deploy -c scripts/relay/wrangler.toml`. (Durable Objects with SQLite storage are available
    on the free plan. If your plan does not allow them, the deploy says so.)
-2. In the Pages project (Settings, Functions, Durable Object bindings) add a binding named `REMOTE_RELAY` to the class `AccountRelay`
-   in the Worker `kanasaka-relay`, for Production. Do this **before** relying on the endpoint: until the binding exists,
-   `/api/app/remote` answers 503 "Remote is not available yet", which is safe. Do not add it to `wrangler.toml`: a binding to a Worker
-   that is not deployed would make the Pages deploy fail.
+2. The Pages project binds it through `wrangler.toml` (`[[durable_objects.bindings]]`: name `REMOTE_RELAY`, class `AccountRelay`, script
+   `kanasaka-relay`). That file is the source of truth for the project's bindings: a binding added only in the dashboard is dropped by the
+   next deploy. Merging a change to it deploys it. The Worker must exist first (step 1), because a binding to a Worker that is not deployed
+   fails the Pages deploy. Until the binding is live, `/api/app/remote` answers 503 "Remote is not available yet", which is safe.
 3. WAF: see `docs/CLOUDFLARE_WAF.md` ("Remote relay"). The endpoint is a GET under `/api/app/`; do not add a managed challenge.
 4. Optional, before deploying: `node scripts/relay/smoke.mjs` runs the Worker in the real Workers runtime (workerd, through Miniflare)
    and checks join, forwarding, a stolen device id, revocation and leave. It needs the runtime `npx wrangler` installs.
