@@ -80,3 +80,11 @@
     min-height: 180px;
   }
 }
+
+.dl-actions:has(+ .dl-actions--sub) {
+  margin-bottom: var(--space-3);
+}
+
+.dl-actions--sub {
+  margin-top: 0;
+}

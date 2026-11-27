@@ -7,7 +7,7 @@
 //   node scripts/publish-ks-c.mjs <platform> <path-to-file> [version] [notes]
 //
 // platform is one of: windows-exe, windows-msi, linux-deb, linux-rpm,
-// linux-appimage
+// linux-appimage, android-remote (the KS_C Remote app)
 //
 // Give the version (for example 1.0.0) on the last platform of a release: it
 // writes installers/ks-c/version.json, which /api/ks-c/version.json serves.
@@ -29,6 +29,7 @@ const PLATFORM_KEYS = {
   "linux-deb": "installers/ks-c/linux-deb/KS_C.deb",
   "linux-rpm": "installers/ks-c/linux-rpm/KS_C.rpm",
   "linux-appimage": "installers/ks-c/linux-appimage/KS_C.AppImage",
+  "android-remote": "installers/ks-c/android-remote/KS_C_Remote.apk",
 };
 
 const [, , platform, filePath, version, notes] = process.argv;
