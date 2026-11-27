@@ -366,3 +366,18 @@ test("session: sliding stops at 150 days after sign-in, however often the device
   const list = await json(await get(devicesGet, env, "/api/app/devices", bearer(fresh.token)));
   assert.deepEqual(list.devices.map((d) => d.label), ["Second"], "the over-age one is not shown");
 });
+
+test("login: the phone app signs in under its own client name, and an unknown name is still refused", async () => {
+  const env = makeEnv();
+  const user = await account(env);
+  const ok = await post(appLogin, env, "/api/app/login", { email: user.email, password: PASSWORD, client: "ks-c1-mobile", device: "Phone (Android)" });
+  assert.equal(ok.status, 200, await ok.clone().text());
+  const row = await env.DB.prepare("SELECT client, device_label FROM app_sessions WHERE user_id = ?").bind(user.id).first();
+  assert.deepEqual([row.client, row.device_label], ["ks-c1-mobile", "Phone (Android)"]);
+
+  for (const client of ["ks-c1-mobile2", "KS-C1-MOBILE ", "ks-c2", ""]) {
+    const res = await post(appLogin, env, "/api/app/login", { email: user.email, password: PASSWORD, client, device: "x" });
+    if (client.trim().toLowerCase() === "ks-c1-mobile") continue; // case and spaces are normalised, so this one is the phone again
+    assert.notEqual(res.status, 200, `client "${client}" must be refused`);
+  }
+});
