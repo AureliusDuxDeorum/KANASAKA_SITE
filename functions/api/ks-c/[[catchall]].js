@@ -17,6 +17,8 @@ const PLATFORMS = {
   "linux-deb": { key: "installers/ks-c/linux-deb/KS_C.deb", filename: "KS_C.deb" },
   "linux-rpm": { key: "installers/ks-c/linux-rpm/KS_C.rpm", filename: "KS_C.rpm" },
   "linux-appimage": { key: "installers/ks-c/linux-appimage/KS_C.AppImage", filename: "KS_C.AppImage" },
+  // KS_C Remote, the mobile app
+  "android-remote": { key: "installers/ks-c/android-remote/KS_C_Remote.apk", filename: "KS_C_Remote.apk" },
 };
 
 const VERSION_KEY = "installers/ks-c/version.json";

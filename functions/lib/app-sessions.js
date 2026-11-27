@@ -23,8 +23,8 @@ function dbTime(value) {
 export const MAX_APP_DEVICES = 10;
 /** A check writes to the database at most this often, so reading a session is not a write every time. */
 export const SLIDE_AFTER_MS = 60 * 60 * 1000;
-/** The apps allowed to sign in this way. KS_Link has its own service and does not use these endpoints. */
-export const APP_CLIENTS = new Set(["ks-c1"]);
+/** The apps allowed to sign in this way: KS_C1 on a computer ("ks-c1") and the KS_C1 Remote phone app ("ks-c1-mobile"). KS_Link has its own service and does not use these endpoints. */
+export const APP_CLIENTS = new Set(["ks-c1", "ks-c1-mobile"]);
 
 const TOKEN_RE = /^Bearer ([A-Za-z0-9_-]{32,128})$/;
 
