@@ -642,8 +642,8 @@ GET /api/app/remote (functions/api/app/remote.js) authenticates an app session a
 account ("user:<id>"), class AccountRelay in the separate Worker kanasaka-relay (scripts/relay/, config scripts/relay/wrangler.toml;
 logic in scripts/relay/room.js, tested in tests/relay-room.test.mjs). It forwards encrypted frames between the account's devices (a
 desktop running KS_C1 and the phones) and cannot read them. The Worker has no public route: the Pages project reaches it through the
-REMOTE_RELAY Durable Object binding (added in the dashboard AFTER the Worker is deployed, never in wrangler.toml: a binding to an
-undeployed Worker would fail the Pages deploy). With no binding the endpoint answers 503. Ending a session (logout, device removal,
+REMOTE_RELAY Durable Object binding, declared in wrangler.toml (the source of truth for this Pages project: a dashboard-only binding is
+dropped by the next deploy). The Worker must be deployed first: a binding to an undeployed Worker fails the Pages deploy. With no binding the endpoint answers 503. Ending a session (logout, device removal,
 password change/reset, 2FA off, account deletion, eviction over the 10-device cap) calls revokeAtRelay() in lib/app-sessions.js, which
 closes that device's socket; sockets also close after 12 hours so an expired session cannot stay connected. The API middleware lets a
 101 response through unchanged. Wire contract, limits, deploy steps: docs/REMOTE_RELAY.md. Client side: KS_C1 src-tauri/src/remote/.
@@ -689,6 +689,9 @@ Full notes: KS_Link docs/ARCHITECTURE.md section 9. Privacy policy must disclose
 
 11. CHANGE LOG (agent-maintained)
 ---------------------------------
+2026-11-27  The REMOTE_RELAY Durable Object binding is declared in wrangler.toml (script_name kanasaka-relay). A binding added only in the
+            dashboard is dropped on deploy, because wrangler.toml is the source of truth for this Pages project. The kanasaka-relay Worker was
+            deployed first (npx wrangler deploy -c scripts/relay/wrangler.toml). Docs corrected (docs/REMOTE_RELAY.md, section 9c).
 2026-11-26  Remote relay for the KS_C1 phone remote (branch feature/remote-relay, NOT deployed): GET /api/app/remote, the kanasaka-relay
             Worker with the AccountRelay Durable Object (scripts/relay/), revokeAtRelay() on every way an app session ends, API middleware
             passes 101 responses through, account deletion now goes through deleteAllAppSessions. Tests: tests/relay-room.test.mjs,

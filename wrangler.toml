@@ -31,6 +31,15 @@ binding = "DB"
 database_name = "kanasaka-auth"
 database_id = "b76e77d3-4056-4ba2-8356-c69fb65a13d9"
 
+# The remote relay (KS_C1 phone remote): one Durable Object per account, defined in the separate Worker kanasaka-relay
+# (scripts/relay/, docs/REMOTE_RELAY.md). This file is the source of truth for the Pages project's bindings, so the binding lives
+# here and not in the dashboard (a dashboard-only binding is dropped on the next deploy). The Worker must be deployed first
+# (npx wrangler deploy -c scripts/relay/wrangler.toml); a binding to a Worker that does not exist fails the Pages deploy.
+[[durable_objects.bindings]]
+name = "REMOTE_RELAY"
+class_name = "AccountRelay"
+script_name = "kanasaka-relay"
+
 [vars]
 SESSION_DAYS = "30"
 SITE_URL = "https://kanasaka.com"
