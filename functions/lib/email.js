@@ -346,11 +346,17 @@ export async function sendTwoFactorCodeEmail(env, email, code, context) {
     <p>If you did not request this, you can ignore this email and your account will remain unchanged.</p>
   `;
 
-  return sendEmail(env, {
+  const result = await sendEmail(env, {
     to: email,
     subject: copy.subject,
     html,
   });
+  // A code that could not be sent must not look like a code that was: callers
+  // (sign-in, setup, disable) would otherwise tell the person to check their inbox.
+  if (!result.ok) {
+    throw new Error(result.reason || "Could not send the verification code.");
+  }
+  return result;
 }
 
 export async function sendLegalNoticeEmail(env, email, { title, summary, url }) {

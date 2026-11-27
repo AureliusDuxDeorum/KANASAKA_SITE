@@ -16,6 +16,11 @@ import { generateBackupCodes, OTP_MAX_FAILURES, twoFactorMethodsFromUser } from 
 import { findTotpStep, generateTotpCode, openSecret, sealSecret, verifyTotpCode } from "../functions/lib/totp.js";
 import { insertUser, json, makeEnv, req, sessionCookieFor } from "./helpers.mjs";
 
+// Mail goes nowhere in tests: a stand-in for Resend that accepts everything. (A code that cannot be sent is
+// an error now, so the flows that email one need a working mail service to reach their next step.)
+globalThis.fetch = async () => new Response(JSON.stringify({ id: "mail_1" }), { status: 200 });
+const MAIL = { RESEND_API_KEY: "re_test" };
+
 const PASSWORD = "Correct-Horse-Battery-9!x";
 const IP = { "CF-Connecting-IP": "203.0.113.9" };
 
@@ -297,7 +302,7 @@ test("email codes can be added next to an authenticator", async () => {
 });
 
 test("with both methods nothing is sent at login until the user asks for the emailed code", async () => {
-  const env = makeEnv();
+  const env = makeEnv(MAIL);
   const { user, setup } = await bothMethods(env);
 
   const start = await json(await call(login, env, "/api/auth/login", { email: user.email, password: PASSWORD }));
@@ -378,7 +383,7 @@ test("removing the email method leaves the authenticator working", async () => {
 });
 
 test("before migration 020 the site still works: email is inferred, a second method is refused", async () => {
-  const env = makeEnv();
+  const env = makeEnv(MAIL);
   env.DB.raw.exec("ALTER TABLE users DROP COLUMN twofa_email_enabled");
   const { clearAuthSchemaCache } = await import("../functions/lib/schema.js");
   clearAuthSchemaCache();
